@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:autolab_core/autolab_core.dart';
 
-void main() {
+import 'core/di/injection_container.dart' as di;
+import 'core/di/injection_container.dart';
+import 'core/router/app_router.dart';
+import 'common/bloc/authentication_cubit.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await di.init();
+
   runApp(const MyApp());
 }
 
@@ -10,11 +20,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text(CoreTest.hello()),
-        ),
+    // Prueba mínima de integración con autolab_core
+    // ignore: unused_local_variable
+    final coreMsg = CoreTest.hello();
+
+    final authCubit = sl<AuthenticationCubit>();
+    final router = AppRouter(authCubit).router;
+
+    return BlocProvider.value(
+      value: authCubit,
+      child: MaterialApp.router(
+        title: 'Autolab Customer',
+        routerConfig: router,
       ),
     );
   }
