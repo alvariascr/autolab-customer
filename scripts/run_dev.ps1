@@ -1,1 +1,1 @@
-flutter run --dart-define-from-file=.env.development
+flutter run --dart-define-from-file=.env.development.json

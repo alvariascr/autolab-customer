@@ -10,6 +10,12 @@ import 'common/bloc/authentication_cubit.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 🔐 Carga y valida variables de entorno (fail-fast)
+  final config = AutolabCoreBootstrap.loadConfig();
+  // (opcional) si no lo usas aún, no pasa nada. La validación ya se ejecutó.
+  // ignore: unused_local_variable
+  final _ = config;
+
   await di.init();
 
   runApp(const MyApp());

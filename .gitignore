@@ -2,7 +2,7 @@
 # Secrets / Env (NO COMMIT)
 # =========================
 .env*
-!.env.example
+!.env.example.json
 
 # =========================
 # OS / Misc
