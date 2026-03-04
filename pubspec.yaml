@@ -13,7 +13,9 @@ dependencies:
 
   # Foundation package
   autolab_core:
-    path: ../autolab_core
+    git:
+    url: https://github.com/lmurilloBzCR/autolab-core
+    ref: develop
 
   # Navigation
   go_router: ^14.2.7
