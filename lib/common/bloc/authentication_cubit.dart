@@ -1,9 +1,10 @@
+/*
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/auth/usecases/get_auth_status.dart';
-import '../../domain/auth/usecases/login.dart';
-import '../../domain/auth/usecases/logout.dart';
+import '../domain.auth/usecases/get_auth_status.dart';
+import '../domain.auth/usecases/login.dart';
+import '../domain.auth/usecases/logout.dart';
 
 part 'authentication_state.dart';
 
@@ -42,4 +43,4 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     await _logout();
     refresh();
   }
-}
+}*/

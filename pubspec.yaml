@@ -11,6 +11,16 @@ dependencies:
   flutter:
     sdk: flutter
 
+
+
+  # Functional / Either
+  dartz: ^0.10.1
+
+  # Supabase
+  supabase_flutter: ^2.8.3
+
+  # External links
+  url_launcher: ^6.3.0
   # Foundation package
   autolab_core:
     path: ../autolab_core

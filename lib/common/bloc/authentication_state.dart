@@ -1,3 +1,4 @@
+/*
 part of 'authentication_cubit.dart';
 
 class AuthenticationState extends Equatable {
@@ -10,4 +11,4 @@ class AuthenticationState extends Equatable {
 
   @override
   List<Object?> get props => [authenticated];
-}
+}*/
