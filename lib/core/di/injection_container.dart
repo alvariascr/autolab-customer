@@ -1,43 +1,23 @@
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../common/bloc/authentication_cubit.dart';
-import '../../data/auth/datasources/auth_local_datasource.dart';
-import '../../data/auth/repositories/auth_repository_impl.dart';
-import '../../domain/auth/repositories/auth_repository.dart';
-import '../../domain/auth/usecases/get_auth_status.dart';
-import '../../domain/auth/usecases/login.dart';
-import '../../domain/auth/usecases/logout.dart';
+import '../../features/auth/bloc/auth_bloc.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/repository/auth_repository.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // ---------------------------
-  // DataSources
-  // ---------------------------
-  sl.registerLazySingleton<AuthLocalDataSource>(() => AuthLocalDataSource());
+  // External
+  sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
 
-  // ---------------------------
-  // Repositories
-  // ---------------------------
+  // Auth
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl<AuthLocalDataSource>()),
+    () => AuthRepositoryImpl(sl<SupabaseClient>()),
   );
 
-  // ---------------------------
-  // UseCases
-  // ---------------------------
-  sl.registerLazySingleton(() => GetAuthStatus(sl<AuthRepository>()));
-  sl.registerLazySingleton(() => Login(sl<AuthRepository>()));
-  sl.registerLazySingleton(() => Logout(sl<AuthRepository>()));
-
-  // ---------------------------
-  // Cubits / Bloc
-  // ---------------------------
-  sl.registerLazySingleton(
-    () => AuthenticationCubit(
-      getAuthStatus: sl<GetAuthStatus>(),
-      login: sl<Login>(),
-      logout: sl<Logout>(),
-    ),
-  );
+  sl.registerFactory<AuthBloc>(() => AuthBloc(sl<AuthRepository>()));
 }
+
+
+
