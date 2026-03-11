@@ -14,7 +14,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, AppUser>> login(String email, String password) async {
     try {
       final res = await client.auth.signInWithPassword(
-        email: email,
+        email: email.trim().toLowerCase(),
         password: password,
       );
 
@@ -24,8 +24,20 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Right(AppUser(id: user.id, email: user.email));
+    } on AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+
+      if (msg.contains('invalid login credentials')) {
+        return Left(Failure('Correo o contraseña incorrectos'));
+      }
+
+      if (msg.contains('email not confirmed')) {
+        return Left(Failure('Debes confirmar tu correo antes de iniciar sesión'));
+      }
+
+      return Left(Failure('No se pudo iniciar sesión'));
     } catch (e) {
-      return Left(Failure('Error de login: ${e.toString()}'));
+      return Left(Failure('Error inesperado al iniciar sesión'));
     }
   }
 
