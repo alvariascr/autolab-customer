@@ -30,9 +30,9 @@ class _LoginPageState extends State<LoginPage> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
 
         if (state is AuthSuccess) {
@@ -47,9 +47,7 @@ class _LoginPageState extends State<LoginPage> {
         final isLoading = state is AuthLoading;
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Iniciar sesión'),
-          ),
+          appBar: AppBar(title: const Text('Iniciar sesión')),
           body: Stack(
             children: [
               Center(
@@ -77,7 +75,9 @@ class _LoginPageState extends State<LoginPage> {
                               Center(
                                 child: Text(
                                   'Bienvenido',
-                                  style: Theme.of(context).textTheme.headlineSmall,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -111,7 +111,8 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _isPasswordVisible = !_isPasswordVisible;
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
                                       });
                                     },
                                   ),
@@ -127,18 +128,20 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               const SizedBox(height: 20),
                               ElevatedButton(
-                                onPressed: isLoading ? null : () => _handleLogin(context),
+                                onPressed: isLoading
+                                    ? null
+                                    : () => _handleLogin(context),
                                 child: const SizedBox(
                                   height: 48,
-                                  child: Center(
-                                    child: Text('Iniciar sesión'),
-                                  ),
+                                  child: Center(child: Text('Iniciar sesión')),
                                 ),
                               ),
                               const SizedBox(height: 12),
                               TextButton(
                                 onPressed: isLoading ? null : _showHelp,
-                                child: const Text('¿Problemas para iniciar sesión?'),
+                                child: const Text(
+                                  '¿Problemas para iniciar sesión?',
+                                ),
                               ),
                             ],
                           ),
@@ -151,9 +154,7 @@ class _LoginPageState extends State<LoginPage> {
               if (isLoading)
                 Container(
                   color: Colors.black45,
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: const Center(child: CircularProgressIndicator()),
                 ),
             ],
           ),
@@ -176,8 +177,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showHelp() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contacte al soporte.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Contacte al soporte.')));
   }
 }

@@ -21,9 +21,7 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Text('Ruta privada ✅'),
-      ),
+      body: const Center(child: Text('Ruta privada ✅')),
     );
   }
 }

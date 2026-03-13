@@ -1,9 +1,8 @@
+import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flip_card/flip_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../core/di/injection_container.dart';
-import '../repository/auth_repository.dart';
+
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -18,11 +17,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
 
-  // Login
   final _formKeyLogin = GlobalKey<FormState>();
   final TextEditingController _emailLoginCtrl = TextEditingController();
   final TextEditingController _passLoginCtrl = TextEditingController();
-  bool _isPasswordLoginVisible = true;
+
+  bool _isPasswordHidden = true;
 
   InputDecoration _inputDec({
     required String label,
@@ -88,19 +87,16 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
-          }
-
           if (state is AuthSuccess) {
-            //Aqui va donde se redirigue a la otra pantalla
-            //Navigator.pushReplacementNamed(context, HomeScreen.routeName);
+            // Aquí va la redirección a la siguiente pantalla
+            // Navigator.pushReplacementNamed(context, HomeScreen.routeName);
           }
         },
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
+          final String? errorMessage = state is AuthError
+              ? state.message
+              : null;
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -128,8 +124,9 @@ class _LoginPageState extends State<LoginPage> {
                     cardHeight,
                     logoSize,
                     isLoading,
+                    errorMessage,
                   ),
-                  back: Icon(Icons.arrow_back),
+                  back: const Icon(Icons.arrow_back),
                 ),
               );
             },
@@ -144,6 +141,7 @@ class _LoginPageState extends State<LoginPage> {
     double cardHeight,
     double logoSize,
     bool isLoading,
+    String? errorMessage,
   ) {
     return Material(
       elevation: 15,
@@ -172,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           children: [
                             const Text(
-                              "Iniciar Sesión",
+                              'Iniciar Sesión',
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -180,24 +178,63 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 20),
 
+                            if (errorMessage != null) ...[
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  border: Border.all(
+                                    color: Colors.red.shade200,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red.shade700,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        errorMessage,
+                                        style: TextStyle(
+                                          color: Colors.red.shade700,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                            ],
+
                             TextFormField(
                               controller: _emailLoginCtrl,
                               keyboardType: TextInputType.emailAddress,
                               decoration: _inputDec(
-                                label: "Email",
-                                hint: "Ingrese su email",
+                                label: 'Email',
+                                hint: 'Ingrese su email',
                                 icon: Icons.email_outlined,
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return "El correo es obligatorio";
+                                  return 'El correo es obligatorio';
                                 }
 
                                 final emailRegex = RegExp(
                                   r'^[^@]+@[^@]+\.[^@]+$',
                                 );
                                 if (!emailRegex.hasMatch(value.trim())) {
-                                  return "Correo inválido";
+                                  return 'Correo inválido';
                                 }
 
                                 return null;
@@ -208,32 +245,31 @@ class _LoginPageState extends State<LoginPage> {
 
                             TextFormField(
                               controller: _passLoginCtrl,
-                              obscureText: _isPasswordLoginVisible,
+                              obscureText: _isPasswordHidden,
                               decoration: _inputDec(
-                                label: "Contraseña",
-                                hint: "Ingrese la contraseña",
+                                label: 'Contraseña',
+                                hint: 'Ingrese la contraseña',
                                 icon: Icons.lock_outline,
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _isPasswordLoginVisible
+                                    _isPasswordHidden
                                         ? Icons.visibility_off
                                         : Icons.visibility,
                                     color: Colors.grey.shade700,
                                   ),
                                   onPressed: () {
                                     setState(() {
-                                      _isPasswordLoginVisible =
-                                          !_isPasswordLoginVisible;
+                                      _isPasswordHidden = !_isPasswordHidden;
                                     });
                                   },
                                 ),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return "La contraseña es obligatoria";
+                                  return 'La contraseña es obligatoria';
                                 }
                                 if (value.length < 6) {
-                                  return "Mínimo 6 caracteres";
+                                  return 'Mínimo 6 caracteres';
                                 }
                                 return null;
                               },
@@ -263,7 +299,7 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       )
                                     : const Text(
-                                        "Iniciar Sesión",
+                                        'Iniciar Sesión',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -280,7 +316,7 @@ class _LoginPageState extends State<LoginPage> {
                                 // Luego aquí puedes conectar recover password
                               },
                               child: const Text(
-                                "Olvidó su contraseña",
+                                'Olvidó su contraseña',
                                 style: TextStyle(color: Colors.grey),
                               ),
                             ),
@@ -288,7 +324,7 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 10),
 
                             const Text(
-                              "O iniciar sesión con:",
+                              'O iniciar sesión con:',
                               style: TextStyle(color: Colors.grey),
                             ),
 
@@ -304,7 +340,7 @@ class _LoginPageState extends State<LoginPage> {
                                       color: Colors.white,
                                     ),
                                     label: const Text(
-                                      "Google",
+                                      'Google',
                                       style: TextStyle(color: Colors.white),
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -328,7 +364,7 @@ class _LoginPageState extends State<LoginPage> {
                                       color: Colors.white,
                                     ),
                                     label: const Text(
-                                      "Facebook",
+                                      'Facebook',
                                       style: TextStyle(color: Colors.white),
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -352,7 +388,7 @@ class _LoginPageState extends State<LoginPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "¿No tienes cuenta?",
+                                  '¿No tienes cuenta?',
                                   style: TextStyle(color: Colors.grey[700]),
                                 ),
                                 TextButton(
@@ -368,7 +404,7 @@ class _LoginPageState extends State<LoginPage> {
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: const Text(
-                                    "Registrarse",
+                                    'Registrarse',
                                     style: TextStyle(
                                       color: Colors.lightBlue,
                                       fontWeight: FontWeight.bold,
@@ -387,11 +423,10 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-
             Positioned(
               top: 0,
               child: Image.asset(
-                "assets/images/virtual/Mesa de trabajo 10@2x.png",
+                'assets/images/virtual/Mesa de trabajo 10@2x.png',
                 width: logoSize,
                 height: logoSize,
               ),
