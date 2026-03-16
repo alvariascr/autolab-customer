@@ -1,5 +1,5 @@
-import 'package:dartz/dartz.dart';
 import 'package:autolab_core/autolab_core.dart';
+import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/app_user.dart';
@@ -7,8 +7,9 @@ import '../../repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient client;
+  final GlobalErrorHandler globalErrorHandler;
 
-  AuthRepositoryImpl(this.client);
+  AuthRepositoryImpl(this.client, this.globalErrorHandler);
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -20,43 +21,96 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final user = res.user;
       if (user == null) {
-        return Left(Failure('Respuesta inválida: usuario nulo'));
+        globalErrorHandler.logger.w(
+          'Login fallido: respuesta inválida, usuario no disponible',
+        );
+
+        return const Left(
+          AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
+        );
       }
 
       return Right(AppUser(id: user.id, email: user.email));
-    } on AuthException catch (e) {
+    } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
       if (msg.contains('invalid login credentials')) {
-        return Left(Failure('Correo o contraseña incorrectos'));
+        globalErrorHandler.logger.w(
+          'Intento de login con credenciales inválidas',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(message: 'Correo o contraseña incorrectos'),
+        );
       }
 
       if (msg.contains('email not confirmed')) {
-        return Left(Failure('Debes confirmar tu correo antes de iniciar sesión'));
+        globalErrorHandler.logger.w(
+          'Intento de login con correo no confirmado',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(
+            message: 'Debes confirmar tu correo antes de iniciar sesión',
+          ),
+        );
       }
 
-      return Left(Failure('No se pudo iniciar sesión'));
-    } catch (e) {
-      return Left(Failure('Error inesperado al iniciar sesión'));
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
+    } catch (e, st) {
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
     }
   }
 
   @override
-  Future<Either<Failure, AppUser>> register(String email, String password) async {
+  Future<Either<Failure, AppUser>> register(
+    String email,
+    String password,
+  ) async {
     try {
       final res = await client.auth.signUp(
-        email: email,
+        email: email.trim().toLowerCase(),
         password: password,
       );
 
       final user = res.user;
       if (user == null) {
-        return Left(Failure('Respuesta inválida: usuario nulo'));
+        globalErrorHandler.logger.w(
+          'Registro fallido: respuesta inválida, usuario no disponible',
+        );
+
+        return const Left(
+          AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
+        );
       }
 
       return Right(AppUser(id: user.id, email: user.email));
-    } catch (e) {
-      return Left(Failure('Error de registro: ${e.toString()}'));
+    } on AuthException catch (e, st) {
+      final msg = e.message.toLowerCase();
+
+      if (msg.contains('already registered')) {
+        globalErrorHandler.logger.w(
+          'Intento de registro con correo ya existente',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(message: 'Este correo ya se encuentra registrado'),
+        );
+      }
+
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
+    } catch (e, st) {
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
     }
   }
 
@@ -65,8 +119,9 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await client.auth.signOut();
       return const Right(unit);
-    } catch (e) {
-      return Left(Failure('Error de logout: ${e.toString()}'));
+    } catch (e, st) {
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
     }
   }
 
@@ -74,6 +129,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<AppUser?> getCurrentUser() async {
     final user = client.auth.currentUser;
     if (user == null) return null;
+
     return AppUser(id: user.id, email: user.email);
   }
 }

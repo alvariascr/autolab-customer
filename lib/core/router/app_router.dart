@@ -24,14 +24,8 @@ class AppRouter {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (_, __) => const LoginPage(),
-      ),
-      GoRoute(
-        path: '/home',
-        builder: (_, __) => const HomePage(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(path: '/home', builder: (context, state) => const HomePage()),
     ],
   );
 }

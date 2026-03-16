@@ -37,7 +37,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  Future<void> _onRegister(RegisterRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onRegister(
+    RegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoading());
 
     final result = await repository.register(event.email, event.password);
@@ -48,7 +51,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  Future<void> _onRestoreSession(RestoreSession event, Emitter<AuthState> emit) async {
+  Future<void> _onRestoreSession(
+    RestoreSession event,
+    Emitter<AuthState> emit,
+  ) async {
     final user = await repository.getCurrentUser();
 
     if (user != null) {

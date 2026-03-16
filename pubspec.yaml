@@ -14,7 +14,7 @@ dependencies:
   crypto: ^3.0.3
   flutter:
     sdk: flutter
-
+  mocktail: ^1.0.4
 
 
   # Functional / Either
@@ -27,7 +27,7 @@ dependencies:
   url_launcher: ^6.3.0
   # Foundation package
   autolab_core:
-    path: ../autolab-core
+    path: ../autolab_core
 
   # Navigation
   go_router: ^14.2.7
@@ -52,5 +52,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/real/
     - assets/images/virtual/

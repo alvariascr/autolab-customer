@@ -1,7 +1,7 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:autolab_core/autolab_core.dart';
 
 import 'core/di/injection_container.dart' as di;
 import 'core/di/injection_container.dart';
@@ -12,17 +12,17 @@ import 'features/auth/bloc/auth_event.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carga y valida variables de entorno (fail-fast)
+  // Carga y valida variables de entorno desde autolab_core
   final config = AutolabCoreBootstrap.loadConfig();
 
-  // Inicializa Supabase ANTES de usar GetIt
+  // Inicializa Supabase
   await Supabase.initialize(
     url: config.supabaseUrl.toString(),
     anonKey: config.supabaseAnonKey,
   );
 
   // Inicializa dependencias
-  await di.init();
+  await di.init(config: config);
 
   final authBloc = sl<AuthBloc>()..add(const RestoreSession());
   final router = AppRouter(authBloc).router;
@@ -34,11 +34,7 @@ class MyApp extends StatelessWidget {
   final AuthBloc authBloc;
   final dynamic router;
 
-  const MyApp({
-    super.key,
-    required this.authBloc,
-    required this.router,
-  });
+  const MyApp({super.key, required this.authBloc, required this.router});
 
   @override
   Widget build(BuildContext context) {
