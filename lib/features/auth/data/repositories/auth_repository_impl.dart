@@ -24,6 +24,10 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception('Rol no definido para el usuario');
     }
 
+    if (role != 'customer' && role != 'admin') {
+      throw Exception('Rol no autorizado');
+    }
+
     return role;
   }
 
