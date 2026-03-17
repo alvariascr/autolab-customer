@@ -52,9 +52,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onRestoreSession(
-    RestoreSession event,
-    Emitter<AuthState> emit,
-  ) async {
+      RestoreSession event,
+      Emitter<AuthState> emit,
+      ) async {
     final user = await repository.getCurrentUser();
 
     if (user != null) {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,8 +10,13 @@ import '../../repository/auth_repository.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient client;
   final GlobalErrorHandler globalErrorHandler;
+  final SessionLocalDataSource sessionLocalDataSource;
 
-  AuthRepositoryImpl(this.client, this.globalErrorHandler);
+  AuthRepositoryImpl(
+    this.client,
+    this.globalErrorHandler,
+    this.sessionLocalDataSource,
+  );
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -20,15 +27,27 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       final user = res.user;
-      if (user == null) {
+      final session = res.session;
+
+      if (user == null || session == null) {
         globalErrorHandler.logger.w(
-          'Login fallido: respuesta inválida, usuario no disponible',
+          'Login fallido: respuesta inválida, usuario o sesión no disponible',
         );
 
         return const Left(
-          AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
+          AuthFailure(
+            message: 'Respuesta inválida: usuario o sesión no disponible',
+          ),
         );
       }
+      await sessionLocalDataSource.saveAccessToken(session.accessToken);
+
+      final refreshToken = session.refreshToken;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await sessionLocalDataSource.saveRefreshToken(refreshToken);
+      }
+      final sessionJson = jsonEncode({'id': user.id, 'email': user.email});
+      await sessionLocalDataSource.saveUserSession(sessionJson);
 
       return Right(AppUser(id: user.id, email: user.email));
     } on AuthException catch (e, st) {
@@ -118,6 +137,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
+      await sessionLocalDataSource.clearSession();
       return const Right(unit);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);
@@ -127,9 +147,37 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AppUser?> getCurrentUser() async {
-    final user = client.auth.currentUser;
-    if (user == null) return null;
+    final supabaseUser = client.auth.currentUser;
 
-    return AppUser(id: user.id, email: user.email);
+    if (supabaseUser != null) {
+      globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
+      return AppUser(id: supabaseUser.id, email: supabaseUser.email);
+    }
+
+    final sessionJson = await sessionLocalDataSource.getUserSession();
+    if (sessionJson == null || sessionJson.isEmpty) {
+      globalErrorHandler.logger.i('No se encontró sesión persistida localmente');
+      return null;
+    }
+
+    try {
+      final map = jsonDecode(sessionJson) as Map<String, dynamic>;
+
+      globalErrorHandler.logger.i(
+        'Sesión reconstruida desde secure storage',
+      );
+
+      return AppUser(
+        id: map['id'] as String,
+        email: map['email'] as String?,
+      );
+    } catch (e, st) {
+      globalErrorHandler.logger.w(
+        'No se pudo reconstruir la sesión desde secure storage',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    }
   }
 }
