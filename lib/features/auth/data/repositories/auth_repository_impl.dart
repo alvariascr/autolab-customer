@@ -70,13 +70,25 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String name,
+      String email,
+      String phone,
+      String password,
+      ) async {
     try {
+      final cleanName = name.trim();
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPhone = phone.trim();
+      final cleanPassword = password.trim();
+
       final res = await client.auth.signUp(
-        email: email.trim().toLowerCase(),
-        password: password,
+        email: cleanEmail,
+        password: cleanPassword,
+        data: {
+          'name': cleanName,
+          'phone': cleanPhone,
+          'role': 'customer',
+        },
       );
 
       final user = res.user;
@@ -106,6 +118,46 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
+      if (msg.contains('invalid email')) {
+        globalErrorHandler.logger.w(
+          'Intento de registro con correo inválido',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(message: 'El correo ingresado no es válido'),
+        );
+      }
+
+      if (msg.contains('password')) {
+        globalErrorHandler.logger.w(
+          'Intento de registro con contraseña inválida',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(message: 'La contraseña no cumple los requisitos'),
+        );
+      }
+
+      if (msg.contains('email rate limit exceeded') ||
+          msg.contains('rate limit exceeded')) {
+        globalErrorHandler.logger.w(
+          'Límite de intentos de registro alcanzado',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(
+            message:
+            'Se alcanzó el límite de intentos de registro. Intenta nuevamente en unos minutos',
+          ),
+        );
+      }
+
       final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     } catch (e, st) {
@@ -113,6 +165,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(failure);
     }
   }
+
 
   @override
   Future<Either<Failure, Unit>> logout() async {

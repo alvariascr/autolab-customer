@@ -22,13 +22,21 @@ class LogoutRequested extends AuthEvent {
 }
 
 class RegisterRequested extends AuthEvent {
+  final String name;
   final String email;
+  final String phone;
   final String password;
 
-  const RegisterRequested({required this.email, required this.password});
+  const RegisterRequested({
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.password,
+  });
+
 
   @override
-  List<Object?> get props => [email, password];
+  List<Object?> get props => [name, email, phone, password];
 }
 
 class RestoreSession extends AuthEvent {

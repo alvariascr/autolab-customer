@@ -2,7 +2,7 @@ import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import '../ui/register_card.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -126,7 +126,15 @@ class _LoginPageState extends State<LoginPage> {
                     isLoading,
                     errorMessage,
                   ),
-                  back: const Icon(Icons.arrow_back),
+                  back: RegisterCard(
+                    cardWidth: cardWidth,
+                    cardHeight: cardHeight,
+                    logoSize: logoSize,
+                    isLoading: isLoading,
+                    onBackToLogin: () {
+                      cardKey.currentState?.toggleCard();
+                    },
+                  ),
                 ),
               );
             },
@@ -137,12 +145,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLogin(
-    double cardWidth,
-    double cardHeight,
-    double logoSize,
-    bool isLoading,
-    String? errorMessage,
-  ) {
+      double cardWidth,
+      double cardHeight,
+      double logoSize,
+      bool isLoading,
+      String? errorMessage,
+      ) {
     return Material(
       elevation: 15,
       borderRadius: BorderRadius.circular(20),
@@ -164,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                       child: Form(
                         key: _formKeyLogin,
                         child: Column(
@@ -291,21 +299,21 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 child: isLoading
                                     ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
                                     : const Text(
-                                        'Iniciar Sesión',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                  'Iniciar Sesión',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
 
@@ -401,7 +409,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     minimumSize: Size.zero,
                                     tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
+                                    MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: const Text(
                                     'Registrarse',
