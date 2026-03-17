@@ -11,6 +11,22 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl(this.client, this.globalErrorHandler);
 
+  Future<String> _getUserRole(String userId) async {
+    final response = await client
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+
+    final role = response['role'] as String?;
+
+    if (role == null || role.isEmpty) {
+      throw Exception('Rol no definido para el usuario');
+    }
+
+    return role;
+  }
+
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
     try {
@@ -30,7 +46,15 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Right(AppUser(id: user.id, email: user.email));
+      final role = await _getUserRole(user.id);
+
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
+      );
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -70,9 +94,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
@@ -90,7 +114,15 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Right(AppUser(id: user.id, email: user.email));
+      final role = await _getUserRole(user.id);
+
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
+      );
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -130,6 +162,16 @@ class AuthRepositoryImpl implements AuthRepository {
     final user = client.auth.currentUser;
     if (user == null) return null;
 
-    return AppUser(id: user.id, email: user.email);
+    try {
+      final role = await _getUserRole(user.id);
+
+      return AppUser(
+        id: user.id,
+        email: user.email,
+        role: role,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }
