@@ -52,7 +52,7 @@ void main() {
       when(() => mockAppLogger.w(any())).thenReturn(null);
       when(() => mockAppLogger.i(any())).thenReturn(null);
       when(
-            () => mockAppLogger.w(
+        () => mockAppLogger.w(
           any(),
           error: any(named: 'error'),
           stackTrace: any(named: 'stackTrace'),
@@ -60,19 +60,24 @@ void main() {
       ).thenReturn(null);
 
       when(
-            () => mockGlobalErrorHandler.handle(any(), any()),
+        () => mockGlobalErrorHandler.handle(any(), any()),
       ).thenReturn(const UnknownFailure());
 
-      when(() => mockSessionLocalDataSource.saveAccessToken(any()))
-          .thenAnswer((_) async {});
-      when(() => mockSessionLocalDataSource.saveRefreshToken(any()))
-          .thenAnswer((_) async {});
-      when(() => mockSessionLocalDataSource.saveUserSession(any()))
-          .thenAnswer((_) async {});
-      when(() => mockSessionLocalDataSource.clearSession())
-          .thenAnswer((_) async {});
-      when(() => mockSessionLocalDataSource.getUserSession())
-          .thenAnswer((_) async => null);
+      when(
+        () => mockSessionLocalDataSource.saveAccessToken(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => mockSessionLocalDataSource.saveRefreshToken(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => mockSessionLocalDataSource.saveUserSession(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => mockSessionLocalDataSource.clearSession(),
+      ).thenAnswer((_) async {});
+      when(
+        () => mockSessionLocalDataSource.getUserSession(),
+      ).thenAnswer((_) async => null);
 
       when(() => mockSession.accessToken).thenReturn('access-token-123');
       when(() => mockSession.refreshToken).thenReturn('refresh-token-123');
@@ -86,7 +91,7 @@ void main() {
 
     test(
       'login retorna Right(AppUser) cuando signInWithPassword es exitoso',
-          () async {
+      () async {
         final user = User(
           id: 'user-123',
           appMetadata: const {},
@@ -99,7 +104,7 @@ void main() {
         final authResponse = AuthResponse(session: mockSession, user: user);
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -116,31 +121,32 @@ void main() {
         });
 
         verify(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: 'test@test.com',
             password: '123456',
           ),
         ).called(1);
 
-        verify(() => mockSessionLocalDataSource.saveAccessToken('access-token-123'))
-            .called(1);
         verify(
-              () => mockSessionLocalDataSource.saveRefreshToken(
-            'refresh-token-123',
-          ),
+          () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
         ).called(1);
-        verify(() => mockSessionLocalDataSource.saveUserSession(any()))
-            .called(1);
+        verify(
+          () =>
+              mockSessionLocalDataSource.saveRefreshToken('refresh-token-123'),
+        ).called(1);
+        verify(
+          () => mockSessionLocalDataSource.saveUserSession(any()),
+        ).called(1);
       },
     );
 
     test(
       'login retorna Left(AuthFailure) cuando user o session son null',
-          () async {
+      () async {
         final authResponse = AuthResponse(session: null, user: null);
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -164,9 +170,9 @@ void main() {
 
     test(
       'login retorna Left(AuthFailure) cuando credenciales son inválidas',
-          () async {
+      () async {
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -182,7 +188,7 @@ void main() {
         }, (_) => fail('Se esperaba Left(Failure)'));
 
         verify(
-              () => mockAppLogger.w(
+          () => mockAppLogger.w(
             any(),
             error: any(named: 'error'),
             stackTrace: any(named: 'stackTrace'),
@@ -199,14 +205,14 @@ void main() {
       );
 
       when(
-            () => mockGoTrueClient.signInWithPassword(
+        () => mockGoTrueClient.signInWithPassword(
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
       ).thenThrow(exception);
 
       when(
-            () => mockGlobalErrorHandler.handle(any(), any()),
+        () => mockGlobalErrorHandler.handle(any(), any()),
       ).thenReturn(mappedFailure);
 
       final result = await repository.login('test@test.com', '123456');
@@ -244,7 +250,7 @@ void main() {
       final authResponse = AuthResponse(session: null, user: user);
 
       when(
-            () => mockGoTrueClient.signUp(
+        () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),

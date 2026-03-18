@@ -11,7 +11,7 @@ import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 class FakeSuccessAuthRepository implements AuthRepository {
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
-    return Right(AppUser(id: '123', email: email));
+    return Right(AppUser(id: '123', email: email, role: 'customer'));
   }
 
   @override
@@ -19,7 +19,7 @@ class FakeSuccessAuthRepository implements AuthRepository {
     String email,
     String password,
   ) async {
-    return Right(AppUser(id: '123', email: email));
+    return Right(AppUser(id: '123', email: email, role: 'customer'));
   }
 
   @override
@@ -77,7 +77,10 @@ void main() {
 
       await expectLater(
         bloc.stream,
-        emitsInOrder([const AuthLoading(), const AuthSuccess('123')]),
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthSuccess(userId: '123', role: 'customer'),
+        ]),
       );
 
       await bloc.close();

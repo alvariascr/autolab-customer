@@ -3,9 +3,5 @@ class AppUser {
   final String? email;
   final String role;
 
-  const AppUser({
-    required this.id,
-    this.email,
-    required this.role,
-  });
+  const AppUser({required this.id, this.email, required this.role});
 }

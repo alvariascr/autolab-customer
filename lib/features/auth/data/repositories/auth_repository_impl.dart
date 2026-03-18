@@ -14,10 +14,10 @@ class AuthRepositoryImpl implements AuthRepository {
   final SessionLocalDataSource sessionLocalDataSource;
 
   AuthRepositoryImpl(
-      this.client,
-      this.globalErrorHandler,
-      this.sessionLocalDataSource,
-      );
+    this.client,
+    this.globalErrorHandler,
+    this.sessionLocalDataSource,
+  );
 
   Future<String> _getUserRole(String userId) async {
     final response = await client
@@ -44,10 +44,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AppUser>> login(
-      String email,
-      String password,
-      ) async {
+  Future<Either<Failure, AppUser>> login(String email, String password) async {
     try {
       final res = await client.auth.signInWithPassword(
         email: email.trim().toLowerCase(),
@@ -85,13 +82,7 @@ class AuthRepositoryImpl implements AuthRepository {
       });
       await sessionLocalDataSource.saveUserSession(sessionJson);
 
-      return Right(
-        AppUser(
-          id: user.id,
-          email: user.email,
-          role: role,
-        ),
-      );
+      return Right(AppUser(id: user.id, email: user.email, role: role));
     } on AuthFailure catch (failure) {
       return Left(failure);
     } on AuthException catch (e, st) {
@@ -133,9 +124,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-      String email,
-      String password,
-      ) async {
+    String email,
+    String password,
+  ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
@@ -154,11 +145,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Right(
-        AppUser(
-          id: user.id,
-          email: user.email,
-          role: UserRoles.customer,
-        ),
+        AppUser(id: user.id, email: user.email, role: UserRoles.customer),
       );
     } on AuthFailure catch (failure) {
       return Left(failure);
@@ -231,16 +218,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final sessionJson = await sessionLocalDataSource.getUserSession();
     if (sessionJson == null || sessionJson.isEmpty) {
-      globalErrorHandler.logger.i('No se encontró sesión persistida localmente');
+      globalErrorHandler.logger.i(
+        'No se encontró sesión persistida localmente',
+      );
       return null;
     }
 
     try {
       final map = jsonDecode(sessionJson) as Map<String, dynamic>;
 
-      globalErrorHandler.logger.i(
-        'Sesión reconstruida desde secure storage',
-      );
+      globalErrorHandler.logger.i('Sesión reconstruida desde secure storage');
 
       final role = map['role'] as String?;
 
