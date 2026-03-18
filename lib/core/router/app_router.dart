@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/bloc/auth_bloc.dart';
 import '../../features/auth/bloc/auth_state.dart';
+import '../../features/auth/domain/constants/user_roles.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/home/home_customer_page.dart';
 import '../../features/home/home_page.dart';
@@ -17,28 +18,30 @@ class AppRouter {
     refreshListenable: GoRouterRefreshStream(authBloc.stream),
     redirect: (context, state) {
       final authState = authBloc.state;
-      final currentLocation = state.matchedLocation;
-      final goingToLogin = currentLocation == '/login';
+      final String location = state.matchedLocation;
+      final bool isLoggingIn = location == '/login';
 
       if (authState is! AuthSuccess) {
-        return goingToLogin ? null : '/login';
+        return isLoggingIn ? null : '/login';
       }
 
-      if (authState.role == 'customer') {
-        if (currentLocation != '/home-customer') {
-          return '/home-customer';
-        }
-        return null;
+      final String role = authState.role;
+
+      if (isLoggingIn) {
+        if (role == UserRoles.admin) return '/home';
+        if (role == UserRoles.customer) return '/home-customer';
+        return '/login';
       }
 
-      if (authState.role == 'admin') {
-        if (currentLocation != '/home') {
-          return '/home';
-        }
-        return null;
+      if (role == UserRoles.customer && location == '/home') {
+        return '/home-customer';
       }
 
-      return '/login';
+      if (role == UserRoles.admin && location == '/home-customer') {
+        return '/home';
+      }
+
+      return null;
     },
     routes: [
       GoRoute(
