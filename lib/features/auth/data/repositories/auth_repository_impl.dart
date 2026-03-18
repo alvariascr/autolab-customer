@@ -4,6 +4,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/constants/user_roles.dart';
 import '../../domain/entities/app_user.dart';
 import '../../repository/auth_repository.dart';
 
@@ -13,13 +14,40 @@ class AuthRepositoryImpl implements AuthRepository {
   final SessionLocalDataSource sessionLocalDataSource;
 
   AuthRepositoryImpl(
-    this.client,
-    this.globalErrorHandler,
-    this.sessionLocalDataSource,
-  );
+      this.client,
+      this.globalErrorHandler,
+      this.sessionLocalDataSource,
+      );
+
+  Future<String> _getUserRole(String userId) async {
+    final response = await client
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (response == null) {
+      throw const AuthFailure(message: 'Perfil de usuario no encontrado');
+    }
+
+    final role = response['role'] as String?;
+
+    if (role == null || role.isEmpty) {
+      throw const AuthFailure(message: 'Rol no definido para el usuario');
+    }
+
+    if (!UserRoles.isValid(role)) {
+      throw const AuthFailure(message: 'Rol no autorizado');
+    }
+
+    return role;
+  }
 
   @override
-  Future<Either<Failure, AppUser>> login(String email, String password) async {
+  Future<Either<Failure, AppUser>> login(
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signInWithPassword(
         email: email.trim().toLowerCase(),
@@ -40,16 +68,32 @@ class AuthRepositoryImpl implements AuthRepository {
           ),
         );
       }
+
+      final role = await _getUserRole(user.id);
+
       await sessionLocalDataSource.saveAccessToken(session.accessToken);
 
       final refreshToken = session.refreshToken;
       if (refreshToken != null && refreshToken.isNotEmpty) {
         await sessionLocalDataSource.saveRefreshToken(refreshToken);
       }
-      final sessionJson = jsonEncode({'id': user.id, 'email': user.email});
+
+      final sessionJson = jsonEncode({
+        'id': user.id,
+        'email': user.email,
+        'role': role,
+      });
       await sessionLocalDataSource.saveUserSession(sessionJson);
 
-      return Right(AppUser(id: user.id, email: user.email));
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
+      );
+    } on AuthFailure catch (failure) {
+      return Left(failure);
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -89,9 +133,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
@@ -109,7 +153,15 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Right(AppUser(id: user.id, email: user.email));
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: UserRoles.customer,
+        ),
+      );
+    } on AuthFailure catch (failure) {
+      return Left(failure);
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -150,8 +202,31 @@ class AuthRepositoryImpl implements AuthRepository {
     final supabaseUser = client.auth.currentUser;
 
     if (supabaseUser != null) {
-      globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
-      return AppUser(id: supabaseUser.id, email: supabaseUser.email);
+      try {
+        final role = await _getUserRole(supabaseUser.id);
+
+        globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
+
+        return AppUser(
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          role: role,
+        );
+      } on AuthFailure catch (failure, st) {
+        globalErrorHandler.logger.e(
+          'No fue posible restaurar la sesión por problema de rol/perfil',
+          error: failure,
+          stackTrace: st,
+        );
+        return null;
+      } catch (e, st) {
+        globalErrorHandler.logger.e(
+          'Error restaurando sesión del usuario',
+          error: e,
+          stackTrace: st,
+        );
+        return null;
+      }
     }
 
     final sessionJson = await sessionLocalDataSource.getUserSession();
@@ -167,9 +242,19 @@ class AuthRepositoryImpl implements AuthRepository {
         'Sesión reconstruida desde secure storage',
       );
 
+      final role = map['role'] as String?;
+
+      if (role == null || role.isEmpty || !UserRoles.isValid(role)) {
+        globalErrorHandler.logger.w(
+          'La sesión local no contiene un rol válido',
+        );
+        return null;
+      }
+
       return AppUser(
         id: map['id'] as String,
         email: map['email'] as String?,
+        role: role,
       );
     } catch (e, st) {
       globalErrorHandler.logger.w(
