@@ -17,17 +17,15 @@ class AuthRepositoryImpl implements AuthRepository {
         .from('user_profiles')
         .select('role')
         .eq('user_id', userId)
-        .single();
-
+        .maybeSingle();
+    if (response == null) {
+      throw const AuthFailure(message: 'Perfil de usuario no encontrado');
+    }
     final role = response['role'] as String?;
 
     if (role == null || role.isEmpty) {
-      throw Exception('Rol no definido para el usuario');
+      throw AuthFailure(message: 'Rol no definido para el usuario');
     }
-
-    /*if (role != 'customer' && role != 'admin') {
-      throw Exception('Rol no autorizado');
-    }*/
     if (!UserRoles.isValid(role)) {
       throw const AuthFailure(message: 'Rol no autorizado');
     }
@@ -36,7 +34,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AppUser>> login(String email, String password) async {
+  Future<Either<Failure, AppUser>> login(
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signInWithPassword(
         email: email.trim().toLowerCase(),
@@ -49,15 +50,24 @@ class AuthRepositoryImpl implements AuthRepository {
           AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
         );
       }
+
+      final role = await _getUserRole(user.id);
+
       return Right(
-        AppUser(id: user.id, email: user.email, role: UserRoles.customer),
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
       );
+    } on AuthFailure catch (failure) {
+      return Left(failure);
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
-      if (msg.contains('already registered')) {
+      if (msg.contains('invalid login credentials')) {
         return const Left(
-          AuthFailure(message: 'Este correo ya se encuentra registrado'),
+          AuthFailure(message: 'Correo o contraseña incorrectos'),
         );
       }
       final failure = globalErrorHandler.handle(e, st);
