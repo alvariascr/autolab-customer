@@ -22,17 +22,17 @@ Future<void> init({required AppConfig config}) async {
   sl.registerLazySingleton<GlobalErrorHandler>(() => core.globalErrorHandler);
   sl.registerLazySingleton<SecureStorage>(() => core.storage);
   sl.registerLazySingleton<SessionLocalDataSource>(
-        () => core.sessionLocalDataSource,
+    () => core.sessionLocalDataSource,
   );
 
   // Auth data sources
   sl.registerLazySingleton<UserRoleDataSource>(
-        () => UserRoleDataSourceImpl(sl<SupabaseClient>()),
+    () => UserRoleDataSourceImpl(sl<SupabaseClient>()),
   );
 
   // Auth
   sl.registerLazySingleton<AuthRepository>(
-        () => AuthRepositoryImpl(
+    () => AuthRepositoryImpl(
       sl<SupabaseClient>(),
       sl<GlobalErrorHandler>(),
       sl<SessionLocalDataSource>(),

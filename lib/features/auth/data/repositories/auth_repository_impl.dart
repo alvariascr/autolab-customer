@@ -16,11 +16,11 @@ class AuthRepositoryImpl implements AuthRepository {
   final UserRoleDataSource userRoleDataSource;
 
   AuthRepositoryImpl(
-      this.client,
-      this.globalErrorHandler,
-      this.sessionLocalDataSource,
-      this.userRoleDataSource,
-      );
+    this.client,
+    this.globalErrorHandler,
+    this.sessionLocalDataSource,
+    this.userRoleDataSource,
+  );
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -103,9 +103,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-      String email,
-      String password,
-      ) async {
+    String email,
+    String password,
+  ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
