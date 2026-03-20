@@ -1,5 +1,7 @@
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +18,8 @@ class MockAppLogger extends Mock implements AppLogger {}
 
 class MockSessionLocalDataSource extends Mock
     implements SessionLocalDataSource {}
+
+class MockUserRoleDataSource extends Mock implements UserRoleDataSource {}
 
 class MockSession extends Mock implements Session {}
 
@@ -35,6 +39,7 @@ void main() {
     late MockGlobalErrorHandler mockGlobalErrorHandler;
     late MockAppLogger mockAppLogger;
     late MockSessionLocalDataSource mockSessionLocalDataSource;
+    late MockUserRoleDataSource mockUserRoleDataSource;
     late MockSession mockSession;
     late AuthRepositoryImpl repository;
 
@@ -44,6 +49,7 @@ void main() {
       mockGlobalErrorHandler = MockGlobalErrorHandler();
       mockAppLogger = MockAppLogger();
       mockSessionLocalDataSource = MockSessionLocalDataSource();
+      mockUserRoleDataSource = MockUserRoleDataSource();
       mockSession = MockSession();
 
       when(() => mockSupabaseClient.auth).thenReturn(mockGoTrueClient);
@@ -52,7 +58,7 @@ void main() {
       when(() => mockAppLogger.w(any())).thenReturn(null);
       when(() => mockAppLogger.i(any())).thenReturn(null);
       when(
-        () => mockAppLogger.w(
+            () => mockAppLogger.w(
           any(),
           error: any(named: 'error'),
           stackTrace: any(named: 'stackTrace'),
@@ -60,24 +66,28 @@ void main() {
       ).thenReturn(null);
 
       when(
-        () => mockGlobalErrorHandler.handle(any(), any()),
-      ).thenReturn(const UnknownFailure());
+            () => mockGlobalErrorHandler.handle(any(), any()),
+      ).thenReturn(const UnknownFailure(message: 'Unexpected error'));
 
       when(
-        () => mockSessionLocalDataSource.saveAccessToken(any()),
+            () => mockSessionLocalDataSource.saveAccessToken(any()),
       ).thenAnswer((_) async {});
       when(
-        () => mockSessionLocalDataSource.saveRefreshToken(any()),
+            () => mockSessionLocalDataSource.saveRefreshToken(any()),
       ).thenAnswer((_) async {});
       when(
-        () => mockSessionLocalDataSource.saveUserSession(any()),
+            () => mockSessionLocalDataSource.saveUserSession(any()),
       ).thenAnswer((_) async {});
       when(
-        () => mockSessionLocalDataSource.clearSession(),
+            () => mockSessionLocalDataSource.clearSession(),
       ).thenAnswer((_) async {});
       when(
-        () => mockSessionLocalDataSource.getUserSession(),
+            () => mockSessionLocalDataSource.getUserSession(),
       ).thenAnswer((_) async => null);
+
+      when(
+            () => mockUserRoleDataSource.getUserRole(any()),
+      ).thenAnswer((_) async => UserRoles.customer);
 
       when(() => mockSession.accessToken).thenReturn('access-token-123');
       when(() => mockSession.refreshToken).thenReturn('refresh-token-123');
@@ -86,12 +96,13 @@ void main() {
         mockSupabaseClient,
         mockGlobalErrorHandler,
         mockSessionLocalDataSource,
+        mockUserRoleDataSource,
       );
     });
 
     test(
-      'login retorna Right(AppUser) cuando signInWithPassword es exitoso',
-      () async {
+      'login returns Right(AppUser) and resolves user role',
+          () async {
         final user = User(
           id: 'user-123',
           appMetadata: const {},
@@ -104,7 +115,7 @@ void main() {
         final authResponse = AuthResponse(session: mockSession, user: user);
 
         when(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -114,39 +125,47 @@ void main() {
 
         expect(result.isRight(), true);
 
-        result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
+        result.fold((_) => fail('Expected Right(AppUser)'), (appUser) {
           expect(appUser, isA<AppUser>());
           expect(appUser.id, 'user-123');
           expect(appUser.email, 'test@test.com');
+          expect(appUser.role, UserRoles.customer);
         });
 
         verify(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: 'test@test.com',
             password: '123456',
           ),
         ).called(1);
 
+        verify(() => mockUserRoleDataSource.getUserRole('user-123')).called(1);
+
         verify(
-          () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+              () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
         ).called(1);
+
         verify(
-          () =>
-              mockSessionLocalDataSource.saveRefreshToken('refresh-token-123'),
+              () => mockSessionLocalDataSource.saveRefreshToken(
+            'refresh-token-123',
+          ),
         ).called(1);
-        verify(
-          () => mockSessionLocalDataSource.saveUserSession(any()),
-        ).called(1);
+
+        final captured = verify(
+              () => mockSessionLocalDataSource.saveUserSession(captureAny()),
+        ).captured.single as String;
+
+        expect(captured, contains('"role":"customer"'));
       },
     );
 
     test(
-      'login retorna Left(AuthFailure) cuando user o session son null',
-      () async {
+      'login returns Left(AuthFailure) when user or session is null',
+          () async {
         final authResponse = AuthResponse(session: null, user: null);
 
         when(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -162,17 +181,17 @@ void main() {
             failure.message,
             'Respuesta inválida: usuario o sesión no disponible',
           );
-        }, (_) => fail('Se esperaba Left(Failure)'));
+        }, (_) => fail('Expected Left(Failure)'));
 
         verify(() => mockAppLogger.w(any())).called(1);
       },
     );
 
     test(
-      'login retorna Left(AuthFailure) cuando credenciales son inválidas',
-      () async {
+      'login returns Left(AuthFailure) when credentials are invalid',
+          () async {
         when(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -185,10 +204,10 @@ void main() {
         result.fold((failure) {
           expect(failure, isA<AuthFailure>());
           expect(failure.message, 'Correo o contraseña incorrectos');
-        }, (_) => fail('Se esperaba Left(Failure)'));
+        }, (_) => fail('Expected Left(Failure)'));
 
         verify(
-          () => mockAppLogger.w(
+              () => mockAppLogger.w(
             any(),
             error: any(named: 'error'),
             stackTrace: any(named: 'stackTrace'),
@@ -197,36 +216,39 @@ void main() {
       },
     );
 
-    test('login usa GlobalErrorHandler para errores no controlados', () async {
-      final exception = Exception('random error');
-      final mappedFailure = UnknownFailure(
-        message: 'Ocurrió un error inesperado',
-        cause: exception,
-      );
+    test(
+      'login uses GlobalErrorHandler for unexpected errors',
+          () async {
+        final exception = Exception('random error');
+        final mappedFailure = UnknownFailure(
+          message: 'Ocurrió un error inesperado',
+          cause: exception,
+        );
 
-      when(
-        () => mockGoTrueClient.signInWithPassword(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ),
-      ).thenThrow(exception);
+        when(
+              () => mockGoTrueClient.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(exception);
 
-      when(
-        () => mockGlobalErrorHandler.handle(any(), any()),
-      ).thenReturn(mappedFailure);
+        when(
+              () => mockGlobalErrorHandler.handle(any(), any()),
+        ).thenReturn(mappedFailure);
 
-      final result = await repository.login('test@test.com', '123456');
+        final result = await repository.login('test@test.com', '123456');
 
-      expect(result.isLeft(), true);
+        expect(result.isLeft(), true);
 
-      result.fold((failure) {
-        expect(failure, mappedFailure);
-      }, (_) => fail('Se esperaba Left(Failure)'));
+        result.fold((failure) {
+          expect(failure, mappedFailure);
+        }, (_) => fail('Expected Left(Failure)'));
 
-      verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
-    });
+        verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
+      },
+    );
 
-    test('logout retorna Right(unit) cuando signOut es exitoso', () async {
+    test('logout returns Right(unit) when signOut succeeds', () async {
       when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
 
       final result = await repository.logout();
@@ -237,7 +259,7 @@ void main() {
       verify(() => mockSessionLocalDataSource.clearSession()).called(1);
     });
 
-    test('register retorna Right(AppUser) cuando signUp es exitoso', () async {
+    test('register returns Right(AppUser) when signUp succeeds', () async {
       final user = User(
         id: 'user-456',
         appMetadata: const {},
@@ -250,7 +272,7 @@ void main() {
       final authResponse = AuthResponse(session: null, user: user);
 
       when(
-        () => mockGoTrueClient.signUp(
+            () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
@@ -260,9 +282,10 @@ void main() {
 
       expect(result.isRight(), true);
 
-      result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
+      result.fold((_) => fail('Expected Right(AppUser)'), (appUser) {
         expect(appUser.id, 'user-456');
         expect(appUser.email, 'new@test.com');
+        expect(appUser.role, UserRoles.customer);
       });
     });
   });

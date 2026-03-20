@@ -107,12 +107,18 @@ void main() {
       await bloc.close();
     });
 
-    test('restore session sin usuario emite AuthInitial', () async {
+    test('restore session sin usuario emite AuthLoading y luego AuthInitial', () async {
       final bloc = AuthBloc(FakeSuccessAuthRepository());
 
       bloc.add(const RestoreSession());
 
-      await expectLater(bloc.stream, emitsInOrder([const AuthInitial()]));
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthInitial(),
+        ]),
+      );
 
       await bloc.close();
     });

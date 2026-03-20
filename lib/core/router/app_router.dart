@@ -21,6 +21,8 @@ class AppRouter {
       final String location = state.matchedLocation;
       final bool isLoggingIn = location == '/login';
 
+      if (authState is AuthLoading) return null;
+
       if (authState is! AuthSuccess) {
         return isLoggingIn ? null : '/login';
       }
@@ -28,9 +30,7 @@ class AppRouter {
       final String role = authState.role;
 
       if (isLoggingIn) {
-        if (role == UserRoles.admin) return '/home';
-        if (role == UserRoles.customer) return '/home-customer';
-        return '/login';
+        return role == UserRoles.admin ? '/home' : '/home-customer';
       }
 
       if (role == UserRoles.customer && location == '/home') {

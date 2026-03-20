@@ -7,41 +7,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/constants/user_roles.dart';
 import '../../domain/entities/app_user.dart';
 import '../../repository/auth_repository.dart';
+import '../datasources/user_role_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient client;
   final GlobalErrorHandler globalErrorHandler;
   final SessionLocalDataSource sessionLocalDataSource;
+  final UserRoleDataSource userRoleDataSource;
 
   AuthRepositoryImpl(
-    this.client,
-    this.globalErrorHandler,
-    this.sessionLocalDataSource,
-  );
-
-  Future<String> _getUserRole(String userId) async {
-    final response = await client
-        .from('user_profiles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-    if (response == null) {
-      throw const AuthFailure(message: 'Perfil de usuario no encontrado');
-    }
-
-    final role = response['role'] as String?;
-
-    if (role == null || role.isEmpty) {
-      throw const AuthFailure(message: 'Rol no definido para el usuario');
-    }
-
-    if (!UserRoles.isValid(role)) {
-      throw const AuthFailure(message: 'Rol no autorizado');
-    }
-
-    return role;
-  }
+      this.client,
+      this.globalErrorHandler,
+      this.sessionLocalDataSource,
+      this.userRoleDataSource,
+      );
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -66,7 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      final role = await _getUserRole(user.id);
+      final role = await userRoleDataSource.getUserRole(user.id);
 
       await sessionLocalDataSource.saveAccessToken(session.accessToken);
 
@@ -124,9 +103,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
@@ -190,7 +169,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
     if (supabaseUser != null) {
       try {
-        final role = await _getUserRole(supabaseUser.id);
+        final role = await userRoleDataSource.getUserRole(supabaseUser.id);
 
         globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
 
@@ -199,19 +178,33 @@ class AuthRepositoryImpl implements AuthRepository {
           email: supabaseUser.email,
           role: role,
         );
-      } on AuthFailure catch (failure, st) {
-        globalErrorHandler.logger.e(
-          'No fue posible restaurar la sesión por problema de rol/perfil',
-          error: failure,
-          stackTrace: st,
-        );
-        return null;
       } catch (e, st) {
-        globalErrorHandler.logger.e(
-          'Error restaurando sesión del usuario',
+        globalErrorHandler.logger.w(
+          'No fue posible restaurar la sesión desde red, intentando fallback local',
           error: e,
           stackTrace: st,
         );
+
+        final sessionJson = await sessionLocalDataSource.getUserSession();
+
+        if (sessionJson != null && sessionJson.isNotEmpty) {
+          try {
+            final map = jsonDecode(sessionJson) as Map<String, dynamic>;
+
+            return AppUser(
+              id: map['id'] as String,
+              email: map['email'] as String?,
+              role: (map['role'] as String?) ?? UserRoles.customer,
+            );
+          } catch (localError, localStack) {
+            globalErrorHandler.logger.w(
+              'Fallback local de sesión inválido',
+              error: localError,
+              stackTrace: localStack,
+            );
+          }
+        }
+
         return null;
       }
     }
@@ -226,9 +219,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
     try {
       final map = jsonDecode(sessionJson) as Map<String, dynamic>;
-
-      globalErrorHandler.logger.i('Sesión reconstruida desde secure storage');
-
       final role = map['role'] as String?;
 
       if (role == null || role.isEmpty || !UserRoles.isValid(role)) {
