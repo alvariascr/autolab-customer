@@ -21,22 +21,31 @@ class AppRouter {
       final String location = state.matchedLocation;
       final bool isLoggingIn = location == '/login';
 
+      // Si el estado está cargando, no redirigir todavía.
+      // Esto evita el salto visual temporal hacia /login
+      // mientras se restaura la sesión.
       if (authState is AuthLoading) return null;
 
+      // Si no está autenticado, solo puede quedarse en /login.
       if (authState is! AuthSuccess) {
         return isLoggingIn ? null : '/login';
       }
 
       final String role = authState.role;
 
+      // Si ya está autenticado y está en login,
+      // redirigir al home correspondiente según rol.
       if (isLoggingIn) {
         return role == UserRoles.admin ? '/home' : '/home-customer';
       }
 
+      // Protección de rutas por rol:
+      // customer no puede entrar al home de admin.
       if (role == UserRoles.customer && location == '/home') {
         return '/home-customer';
       }
 
+      // admin no puede entrar al home de customer.
       if (role == UserRoles.admin && location == '/home-customer') {
         return '/home';
       }
