@@ -12,14 +12,17 @@ void main() {
       final result = mapper.map(TimeoutException('timeout'));
 
       expect(result, isA<TimeoutFailure>());
-      expect(result.message, 'La operación tardó demasiado. Intenta de nuevo.');
+      expect(
+        result.message,
+        'La solicitud tardó demasiado tiempo. Intenta nuevamente.',
+      );
     });
 
     test('mapea SocketException a NetworkFailure', () {
       final result = mapper.map(const SocketException('sin internet'));
 
       expect(result, isA<NetworkFailure>());
-      expect(result.message, 'Error de conexión. Verifica tu internet.');
+      expect(result.message, 'No se pudo establecer conexión a internet.');
     });
 
     test('mapea error desconocido a UnknownFailure', () {

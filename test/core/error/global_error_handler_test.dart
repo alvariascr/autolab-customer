@@ -44,7 +44,10 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(crashReporter.capturedError, error);
-      expect(crashReporter.capturedReason, failure.message);
+      expect(
+        crashReporter.capturedReason,
+        '[NET_002] La solicitud tardó demasiado tiempo. Intenta nuevamente.',
+      );
     });
   });
 }

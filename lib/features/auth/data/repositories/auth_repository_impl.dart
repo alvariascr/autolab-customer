@@ -171,6 +171,13 @@ class AuthRepositoryImpl implements AuthRepository {
       try {
         final role = await userRoleDataSource.getUserRole(supabaseUser.id);
 
+        final sessionJson = jsonEncode({
+          'id': supabaseUser.id,
+          'email': supabaseUser.email,
+          'role': role,
+        });
+        await sessionLocalDataSource.saveUserSession(sessionJson);
+
         globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
 
         return AppUser(
@@ -179,41 +186,30 @@ class AuthRepositoryImpl implements AuthRepository {
           role: role,
         );
       } catch (e, st) {
-        globalErrorHandler.logger.w(
-          'No fue posible restaurar la sesión desde red, intentando fallback local',
+        final localSession = await _recoverUserFromLocal();
+
+        if (localSession != null && localSession.id == supabaseUser.id) {
+          globalErrorHandler.logger.i(
+            'Sesión recuperada desde almacenamiento local por fallo de red',
+          );
+          return localSession;
+        }
+
+        globalErrorHandler.logger.e(
+          'No fue posible restaurar la sesión desde red ni desde local',
           error: e,
           stackTrace: st,
         );
-
-        final sessionJson = await sessionLocalDataSource.getUserSession();
-
-        if (sessionJson != null && sessionJson.isNotEmpty) {
-          try {
-            final map = jsonDecode(sessionJson) as Map<String, dynamic>;
-
-            return AppUser(
-              id: map['id'] as String,
-              email: map['email'] as String?,
-              role: (map['role'] as String?) ?? UserRoles.customer,
-            );
-          } catch (localError, localStack) {
-            globalErrorHandler.logger.w(
-              'Fallback local de sesión inválido',
-              error: localError,
-              stackTrace: localStack,
-            );
-          }
-        }
-
         return null;
       }
     }
 
+    return await _recoverUserFromLocal();
+  }
+
+  Future<AppUser?> _recoverUserFromLocal() async {
     final sessionJson = await sessionLocalDataSource.getUserSession();
     if (sessionJson == null || sessionJson.isEmpty) {
-      globalErrorHandler.logger.i(
-        'No se encontró sesión persistida localmente',
-      );
       return null;
     }
 
@@ -221,25 +217,21 @@ class AuthRepositoryImpl implements AuthRepository {
       final map = jsonDecode(sessionJson) as Map<String, dynamic>;
       final role = map['role'] as String?;
 
-      if (role == null || role.isEmpty || !UserRoles.isValid(role)) {
-        globalErrorHandler.logger.w(
-          'La sesión local no contiene un rol válido',
+      if (role != null && UserRoles.isValid(role)) {
+        return AppUser(
+          id: map['id'] as String,
+          email: map['email'] as String?,
+          role: role,
         );
-        return null;
       }
-
-      return AppUser(
-        id: map['id'] as String,
-        email: map['email'] as String?,
-        role: role,
-      );
     } catch (e, st) {
       globalErrorHandler.logger.w(
-        'No se pudo reconstruir la sesión desde secure storage',
+        'No se pudo reconstruir la sesión desde almacenamiento local',
         error: e,
         stackTrace: st,
       );
-      return null;
     }
+
+    return null;
   }
 }
