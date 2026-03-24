@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,26 +8,24 @@ import '../../domain/constants/user_roles.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/failures/auth_rate_limit_failure.dart';
 import '../../repository/auth_repository.dart';
+import '../datasources/user_role_data_source.dart';
 import '../services/login_attempt_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  // Cliente de Supabase para autenticación
   final SupabaseClient client;
-
-  // Manejador global de errores del proyecto
   final GlobalErrorHandler globalErrorHandler;
-
-  // Servicio encargado de controlar intentos de login
+  final SessionLocalDataSource sessionLocalDataSource;
+  final UserRoleDataSource userRoleDataSource;
   final LoginAttemptService loginAttemptService;
 
-  // Constructor con inyección de dependencias
   AuthRepositoryImpl(
-    this.client,
-    this.globalErrorHandler,
-    this.loginAttemptService,
-  );
+      this.client,
+      this.globalErrorHandler,
+      this.sessionLocalDataSource,
+      this.userRoleDataSource,
+      this.loginAttemptService,
+      );
 
-  // Función para formatear duración
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
@@ -35,100 +35,113 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     return '${seconds}s';
   }
-  // Obtiene el rol del usuario desde la tabla user_profiles
-  Future<String> _getUserRole(String userId) async {
-    final response = await client
-        .from('user_profiles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-    // Si no existe el perfil
-    if (response == null) {
-      throw const AuthFailure(message: 'Perfil de usuario no encontrado');
-    }
-    final role = response['role'] as String?;
-
-    // Validaciones del rol
-    if (role == null || role.isEmpty) {
-      throw AuthFailure(message: 'Rol no definido para el usuario');
-    }
-    if (!UserRoles.isValid(role)) {
-      throw const AuthFailure(message: 'Rol no autorizado');
-    }
-
-    return role;
-  }
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
-    // Limpieza de datos
     final cleanEmail = email.trim().toLowerCase();
     final cleanPassword = password.trim();
 
     try {
-      // Verifica si el usuario está bloqueado
-      final state = await loginAttemptService.getState(cleanEmail);
-      if (state.isBlocked) {
-        final remaining = state.remainingTime;
-        // Si está bloqueado, no intenta login
+      final attemptState = await loginAttemptService.getState(cleanEmail);
+
+      if (attemptState.isBlocked) {
+        final remaining = attemptState.remainingTime;
+
         return Left(
           AuthRateLimitFailure(
             remaining: remaining,
-            message:
-                'Has excedido el número de intentos permitidos. '
+            message: 'Has excedido el número de intentos permitidos. '
                 'Intenta nuevamente en ${_formatDuration(remaining)}.',
           ),
         );
       }
-      // Intenta autenticarse con Supabase
+
       final res = await client.auth.signInWithPassword(
         email: cleanEmail,
         password: cleanPassword,
       );
 
       final user = res.user;
-      // Validación de respuesta
-      if (user == null) {
+      final session = res.session;
+
+      if (user == null || session == null) {
+        globalErrorHandler.logger.w(
+          'Login fallido: respuesta inválida, usuario o sesión no disponible',
+        );
+
         return const Left(
-          AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
+          AuthFailure(
+            message: 'Respuesta inválida: usuario o sesión no disponible',
+          ),
         );
       }
-      //Obtiene el rol del usuario
-      final role = await _getUserRole(user.id);
-      // Si login es exitoso → reinicia intentos
+
+      final role = await userRoleDataSource.getUserRole(user.id);
+
+      await sessionLocalDataSource.saveAccessToken(session.accessToken);
+
+      final refreshToken = session.refreshToken;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await sessionLocalDataSource.saveRefreshToken(refreshToken);
+      }
+
+      final sessionJson = jsonEncode({
+        'id': user.id,
+        'email': user.email,
+        'role': role,
+      });
+      await sessionLocalDataSource.saveUserSession(sessionJson);
+
       await loginAttemptService.registerSuccess(cleanEmail);
-      // Retorna usuario autenticado
+
       return Right(AppUser(id: user.id, email: user.email, role: role));
     } on AuthFailure catch (failure) {
       return Left(failure);
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
-      // Si las credenciales son incorrectas
       if (msg.contains('invalid login credentials')) {
-        // Registra intento fallido
+        globalErrorHandler.logger.w(
+          'Intento de login con credenciales inválidas',
+          error: e,
+          stackTrace: st,
+        );
+
         final updatedState = await loginAttemptService.registerFailure(
           cleanEmail,
         );
-        // Si ya llegó al límite → bloquear
+
         if (updatedState.isBlocked) {
           final remaining = updatedState.remainingTime;
 
           return Left(
             AuthRateLimitFailure(
               remaining: remaining,
-              message:
-                  'Has excedido el número de intentos permitidos. '
+              message: 'Has excedido el número de intentos permitidos. '
                   'Intenta nuevamente en ${_formatDuration(remaining)}.',
             ),
           );
         }
-        // Si aún no llega al límite
+
         return const Left(
           AuthFailure(message: 'Correo o contraseña incorrectos'),
         );
       }
-      // Otros errores manejados globalmente
+
+      if (msg.contains('email not confirmed')) {
+        globalErrorHandler.logger.w(
+          'Intento de login con correo no confirmado',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(
+            message: 'Debes confirmar tu correo antes de iniciar sesión',
+          ),
+        );
+      }
+
       final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     } catch (e, st) {
@@ -139,9 +152,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
@@ -158,6 +171,7 @@ class AuthRepositoryImpl implements AuthRepository {
           AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
         );
       }
+
       return Right(
         AppUser(id: user.id, email: user.email, role: UserRoles.customer),
       );
@@ -165,6 +179,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(failure);
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
+
       if (msg.contains('already registered')) {
         globalErrorHandler.logger.w(
           'Intento de registro con correo ya existente',
@@ -189,6 +204,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
+      await sessionLocalDataSource.clearSession();
       return const Right(unit);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);
@@ -198,27 +214,73 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<AppUser?> getCurrentUser() async {
-    final user = client.auth.currentUser;
-    if (user == null) return null;
+    final supabaseUser = client.auth.currentUser;
+
+    if (supabaseUser != null) {
+      try {
+        final role = await userRoleDataSource.getUserRole(supabaseUser.id);
+
+        final sessionJson = jsonEncode({
+          'id': supabaseUser.id,
+          'email': supabaseUser.email,
+          'role': role,
+        });
+        await sessionLocalDataSource.saveUserSession(sessionJson);
+
+        globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
+
+        return AppUser(
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          role: role,
+        );
+      } catch (e, st) {
+        final localSession = await _recoverUserFromLocal();
+
+        if (localSession != null && localSession.id == supabaseUser.id) {
+          globalErrorHandler.logger.i(
+            'Sesión recuperada desde almacenamiento local por fallo de red',
+          );
+          return localSession;
+        }
+
+        globalErrorHandler.logger.e(
+          'No fue posible restaurar la sesión desde red ni desde local',
+          error: e,
+          stackTrace: st,
+        );
+        return null;
+      }
+    }
+
+    return await _recoverUserFromLocal();
+  }
+
+  Future<AppUser?> _recoverUserFromLocal() async {
+    final sessionJson = await sessionLocalDataSource.getUserSession();
+    if (sessionJson == null || sessionJson.isEmpty) {
+      return null;
+    }
 
     try {
-      final role = await _getUserRole(user.id);
+      final map = jsonDecode(sessionJson) as Map<String, dynamic>;
+      final role = map['role'] as String?;
 
-      return AppUser(id: user.id, email: user.email, role: role);
-    } on AuthFailure catch (failure, st) {
-      globalErrorHandler.logger.e(
-        'No fue posible restaurar la sesión por problema de rol/perfil',
-        error: failure,
-        stackTrace: st,
-      );
-      return null;
+      if (role != null && UserRoles.isValid(role)) {
+        return AppUser(
+          id: map['id'] as String,
+          email: map['email'] as String?,
+          role: role,
+        );
+      }
     } catch (e, st) {
-      globalErrorHandler.logger.e(
-        'Error restaurando sesión del usuario',
+      globalErrorHandler.logger.w(
+        'No se pudo reconstruir la sesión desde almacenamiento local',
         error: e,
         stackTrace: st,
       );
-      return null;
     }
+
+    return null;
   }
 }

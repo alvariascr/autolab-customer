@@ -22,12 +22,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
           (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(
-        AuthSuccess(
-          userId: user.id,
-          role: user.role,
-        ),
-      ),
+          (user) => emit(AuthSuccess(userId: user.id, role: user.role)),
     );
   }
 
@@ -52,12 +47,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
           (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(
-        AuthSuccess(
-          userId: user.id,
-          role: user.role,
-        ),
-      ),
+          (user) => emit(AuthSuccess(userId: user.id, role: user.role)),
     );
   }
 
@@ -65,16 +55,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       RestoreSession event,
       Emitter<AuthState> emit,
       ) async {
-    final user = await repository.getCurrentUser();
+    emit(const AuthLoading());
 
-    if (user != null) {
-      emit(
-        AuthSuccess(
-          userId: user.id,
-          role: user.role,
-        ),
-      );
-    } else {
+    try {
+      final user = await repository.getCurrentUser();
+
+      if (user != null) {
+        emit(AuthSuccess(userId: user.id, role: user.role));
+      } else {
+        emit(const AuthInitial());
+      }
+    } catch (_) {
       emit(const AuthInitial());
     }
   }

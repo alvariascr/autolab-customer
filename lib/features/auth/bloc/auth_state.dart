@@ -19,10 +19,7 @@ class AuthSuccess extends AuthState {
   final String userId;
   final String role;
 
-  const AuthSuccess({
-    required this.userId,
-    required this.role,
-  });
+  const AuthSuccess({required this.userId, required this.role});
 
   @override
   List<Object?> get props => [userId, role];
