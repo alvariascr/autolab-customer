@@ -252,7 +252,7 @@ class AuthRepositoryImpl implements AuthRepository {
         }
 
         globalErrorHandler.logger.e(
-          'No fue posible restaurar la sesión desde red ni desde local',
+          '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
           error: e,
           stackTrace: st,
         );
@@ -282,7 +282,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } catch (e, st) {
       globalErrorHandler.logger.w(
-        'No se pudo reconstruir la sesión desde almacenamiento local',
+        '[${ErrorCatalog.localSessionRecoveryFailed.code}] ${ErrorCatalog.localSessionRecoveryFailed.message}',
         error: e,
         stackTrace: st,
       );
