@@ -6,28 +6,59 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/constants/user_roles.dart';
 import '../../domain/entities/app_user.dart';
+import '../../domain/failures/auth_rate_limit_failure.dart';
 import '../../repository/auth_repository.dart';
 import '../datasources/user_role_data_source.dart';
+import '../services/login_attempt_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient client;
   final GlobalErrorHandler globalErrorHandler;
   final SessionLocalDataSource sessionLocalDataSource;
   final UserRoleDataSource userRoleDataSource;
+  final LoginAttemptService loginAttemptService;
 
   AuthRepositoryImpl(
-    this.client,
-    this.globalErrorHandler,
-    this.sessionLocalDataSource,
-    this.userRoleDataSource,
-  );
+      this.client,
+      this.globalErrorHandler,
+      this.sessionLocalDataSource,
+      this.userRoleDataSource,
+      this.loginAttemptService,
+      );
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+
+    if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    }
+    return '${seconds}s';
+  }
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanPassword = password.trim();
+
     try {
+      final attemptState = await loginAttemptService.getState(cleanEmail);
+
+      if (attemptState.isBlocked) {
+        final remaining = attemptState.remainingTime;
+
+        return Left(
+          AuthRateLimitFailure(
+            remaining: remaining,
+            message: 'Has excedido el número de intentos permitidos. '
+                'Intenta nuevamente en ${_formatDuration(remaining)}.',
+          ),
+        );
+      }
+
       final res = await client.auth.signInWithPassword(
-        email: email.trim().toLowerCase(),
-        password: password,
+        email: cleanEmail,
+        password: cleanPassword,
       );
 
       final user = res.user;
@@ -61,6 +92,8 @@ class AuthRepositoryImpl implements AuthRepository {
       });
       await sessionLocalDataSource.saveUserSession(sessionJson);
 
+      await loginAttemptService.registerSuccess(cleanEmail);
+
       return Right(AppUser(id: user.id, email: user.email, role: role));
     } on AuthFailure catch (failure) {
       return Left(failure);
@@ -73,6 +106,22 @@ class AuthRepositoryImpl implements AuthRepository {
           error: e,
           stackTrace: st,
         );
+
+        final updatedState = await loginAttemptService.registerFailure(
+          cleanEmail,
+        );
+
+        if (updatedState.isBlocked) {
+          final remaining = updatedState.remainingTime;
+
+          return Left(
+            AuthRateLimitFailure(
+              remaining: remaining,
+              message: 'Has excedido el número de intentos permitidos. '
+                  'Intenta nuevamente en ${_formatDuration(remaining)}.',
+            ),
+          );
+        }
 
         return const Left(
           AuthFailure(message: 'Correo o contraseña incorrectos'),
@@ -103,9 +152,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String email,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
