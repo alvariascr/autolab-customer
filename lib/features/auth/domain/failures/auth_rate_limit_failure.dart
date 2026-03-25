@@ -6,5 +6,11 @@ class AuthRateLimitFailure extends Failure {
   const AuthRateLimitFailure({
     required this.remaining,
     required String message,
-  }) : super(message);
+    String? code,
+    Object? cause,
+  }) : super(
+    message,
+    code: code,
+    cause: cause,
+  );
 }

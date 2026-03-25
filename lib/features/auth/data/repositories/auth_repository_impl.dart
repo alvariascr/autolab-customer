@@ -50,8 +50,9 @@ class AuthRepositoryImpl implements AuthRepository {
         return Left(
           AuthRateLimitFailure(
             remaining: remaining,
-            message: 'Has excedido el número de intentos permitidos. '
-                'Intenta nuevamente en ${_formatDuration(remaining)}.',
+            code: ErrorCatalog.authRateLimit.code,
+            message:
+            '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
           ),
         );
       }
@@ -66,13 +67,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (user == null || session == null) {
         globalErrorHandler.logger.w(
-          'Login fallido: respuesta inválida, usuario o sesión no disponible',
+          '[${ErrorCatalog.invalidAuthResponse.code}] ${ErrorCatalog.invalidAuthResponse.message}',
         );
 
-        return const Left(
-          AuthFailure(
-            message: 'Respuesta inválida: usuario o sesión no disponible',
-          ),
+        return Left(
+          AuthFailure.fromErrorItem(ErrorCatalog.invalidAuthResponse),
         );
       }
 
@@ -102,7 +101,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (msg.contains('invalid login credentials')) {
         globalErrorHandler.logger.w(
-          'Intento de login con credenciales inválidas',
+          '[${ErrorCatalog.invalidCredentials.code}] ${ErrorCatalog.invalidCredentials.message}',
           error: e,
           stackTrace: st,
         );
@@ -117,27 +116,32 @@ class AuthRepositoryImpl implements AuthRepository {
           return Left(
             AuthRateLimitFailure(
               remaining: remaining,
-              message: 'Has excedido el número de intentos permitidos. '
-                  'Intenta nuevamente en ${_formatDuration(remaining)}.',
+              code: ErrorCatalog.authRateLimit.code,
+              message:
+              '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
             ),
           );
         }
 
-        return const Left(
-          AuthFailure(message: 'Correo o contraseña incorrectos'),
+        return Left(
+          AuthFailure.fromErrorItem(
+            ErrorCatalog.invalidCredentials,
+            cause: e,
+          ),
         );
       }
 
       if (msg.contains('email not confirmed')) {
         globalErrorHandler.logger.w(
-          'Intento de login con correo no confirmado',
+          '[${ErrorCatalog.unconfirmedEmail.code}] ${ErrorCatalog.unconfirmedEmail.message}',
           error: e,
           stackTrace: st,
         );
 
-        return const Left(
-          AuthFailure(
-            message: 'Debes confirmar tu correo antes de iniciar sesión',
+        return Left(
+          AuthFailure.fromErrorItem(
+            ErrorCatalog.unconfirmedEmail,
+            cause: e,
           ),
         );
       }
@@ -164,11 +168,11 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = res.user;
       if (user == null) {
         globalErrorHandler.logger.w(
-          'Registro fallido: respuesta inválida, usuario no disponible',
+          '[${ErrorCatalog.invalidRegisterResponse.code}] ${ErrorCatalog.invalidRegisterResponse.message}',
         );
 
-        return const Left(
-          AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
+        return Left(
+          AuthFailure.fromErrorItem(ErrorCatalog.invalidRegisterResponse),
         );
       }
 
@@ -182,13 +186,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (msg.contains('already registered')) {
         globalErrorHandler.logger.w(
-          'Intento de registro con correo ya existente',
+          '[${ErrorCatalog.emailAlreadyRegistered.code}] ${ErrorCatalog.emailAlreadyRegistered.message}',
           error: e,
           stackTrace: st,
         );
 
-        return const Left(
-          AuthFailure(message: 'Este correo ya se encuentra registrado'),
+        return Left(
+          AuthFailure.fromErrorItem(
+            ErrorCatalog.emailAlreadyRegistered,
+            cause: e,
+          ),
         );
       }
 
