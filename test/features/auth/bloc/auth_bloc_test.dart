@@ -65,8 +65,8 @@ void main() {
         when(
               () => mockAuthRepository.login('test@test.com', 'wrong-password'),
         ).thenAnswer(
-              (_) async => const Left(
-            AuthFailure(message: 'Correo o contraseña incorrectos'),
+              (_) async => Left(
+            AuthFailure.fromErrorItem(ErrorCatalog.invalidCredentials),
           ),
         );
 
@@ -81,7 +81,7 @@ void main() {
           authBloc.stream,
           emitsInOrder([
             const AuthLoading(),
-            const AuthError('Correo o contraseña incorrectos'),
+            AuthError(ErrorCatalog.invalidCredentials.message),
           ]),
         );
 

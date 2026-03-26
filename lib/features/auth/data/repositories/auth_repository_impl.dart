@@ -50,8 +50,9 @@ class AuthRepositoryImpl implements AuthRepository {
         return Left(
           AuthRateLimitFailure(
             remaining: remaining,
-            message: 'Has excedido el número de intentos permitidos. '
-                'Intenta nuevamente en ${_formatDuration(remaining)}.',
+            code: ErrorCatalog.authRateLimit.code,
+            message:
+            '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
           ),
         );
       }
@@ -66,13 +67,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (user == null || session == null) {
         globalErrorHandler.logger.w(
-          'Login fallido: respuesta inválida, usuario o sesión no disponible',
+          '[${ErrorCatalog.invalidAuthResponse.code}] ${ErrorCatalog.invalidAuthResponse.message}',
         );
 
-        return const Left(
-          AuthFailure(
-            message: 'Respuesta inválida: usuario o sesión no disponible',
-          ),
+        return Left(
+          AuthFailure.fromErrorItem(ErrorCatalog.invalidAuthResponse),
         );
       }
 
@@ -90,23 +89,23 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': user.email,
         'role': role,
       });
-      await sessionLocalDataSource.saveUserSession(sessionJson);
 
+      await sessionLocalDataSource.saveUserSession(sessionJson);
       await loginAttemptService.registerSuccess(cleanEmail);
 
-      return Right(AppUser(id: user.id, email: user.email, role: role));
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
+      );
     } on AuthFailure catch (failure) {
       return Left(failure);
-    } on AuthException catch (e, st) {
-      final msg = e.message.toLowerCase();
+    } catch (e, st) {
+      final failure = globalErrorHandler.handle(e, st);
 
-      if (msg.contains('invalid login credentials')) {
-        globalErrorHandler.logger.w(
-          'Intento de login con credenciales inválidas',
-          error: e,
-          stackTrace: st,
-        );
-
+      if (failure.code == ErrorCatalog.invalidCredentials.code) {
         final updatedState = await loginAttemptService.registerFailure(
           cleanEmail,
         );
@@ -117,35 +116,16 @@ class AuthRepositoryImpl implements AuthRepository {
           return Left(
             AuthRateLimitFailure(
               remaining: remaining,
-              message: 'Has excedido el número de intentos permitidos. '
-                  'Intenta nuevamente en ${_formatDuration(remaining)}.',
+              code: ErrorCatalog.authRateLimit.code,
+              message:
+              '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
+              cause: failure.cause ?? e,
+              stackTrace: failure.stackTrace ?? st,
             ),
           );
         }
-
-        return const Left(
-          AuthFailure(message: 'Correo o contraseña incorrectos'),
-        );
       }
 
-      if (msg.contains('email not confirmed')) {
-        globalErrorHandler.logger.w(
-          'Intento de login con correo no confirmado',
-          error: e,
-          stackTrace: st,
-        );
-
-        return const Left(
-          AuthFailure(
-            message: 'Debes confirmar tu correo antes de iniciar sesión',
-          ),
-        );
-      }
-
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
-    } catch (e, st) {
-      final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     }
   }
@@ -164,35 +144,22 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = res.user;
       if (user == null) {
         globalErrorHandler.logger.w(
-          'Registro fallido: respuesta inválida, usuario no disponible',
+          '[${ErrorCatalog.invalidRegisterResponse.code}] ${ErrorCatalog.invalidRegisterResponse.message}',
         );
 
-        return const Left(
-          AuthFailure(message: 'Respuesta inválida: usuario no disponible'),
+        return Left(
+          AuthFailure.fromErrorItem(ErrorCatalog.invalidRegisterResponse),
         );
       }
 
       return Right(
-        AppUser(id: user.id, email: user.email, role: UserRoles.customer),
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: UserRoles.customer,
+        ),
       );
     } on AuthFailure catch (failure) {
-      return Left(failure);
-    } on AuthException catch (e, st) {
-      final msg = e.message.toLowerCase();
-
-      if (msg.contains('already registered')) {
-        globalErrorHandler.logger.w(
-          'Intento de registro con correo ya existente',
-          error: e,
-          stackTrace: st,
-        );
-
-        return const Left(
-          AuthFailure(message: 'Este correo ya se encuentra registrado'),
-        );
-      }
-
-      final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);
@@ -225,6 +192,7 @@ class AuthRepositoryImpl implements AuthRepository {
           'email': supabaseUser.email,
           'role': role,
         });
+
         await sessionLocalDataSource.saveUserSession(sessionJson);
 
         globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
@@ -245,19 +213,21 @@ class AuthRepositoryImpl implements AuthRepository {
         }
 
         globalErrorHandler.logger.e(
-          'No fue posible restaurar la sesión desde red ni desde local',
+          '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
           error: e,
           stackTrace: st,
         );
+
         return null;
       }
     }
 
-    return await _recoverUserFromLocal();
+    return _recoverUserFromLocal();
   }
 
   Future<AppUser?> _recoverUserFromLocal() async {
     final sessionJson = await sessionLocalDataSource.getUserSession();
+
     if (sessionJson == null || sessionJson.isEmpty) {
       return null;
     }
@@ -275,7 +245,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } catch (e, st) {
       globalErrorHandler.logger.w(
-        'No se pudo reconstruir la sesión desde almacenamiento local',
+        '[${ErrorCatalog.localSessionRecoveryFailed.code}] ${ErrorCatalog.localSessionRecoveryFailed.message}',
         error: e,
         stackTrace: st,
       );
