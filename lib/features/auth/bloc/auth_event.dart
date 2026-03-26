@@ -11,7 +11,10 @@ class LoginRequested extends AuthEvent {
   final String email;
   final String password;
 
-  const LoginRequested({required this.email, required this.password});
+  const LoginRequested({
+    required this.email,
+    required this.password,
+  });
 
   @override
   List<Object?> get props => [email, password];
@@ -34,11 +37,14 @@ class RegisterRequested extends AuthEvent {
     required this.password,
   });
 
-
   @override
   List<Object?> get props => [name, email, phone, password];
 }
 
 class RestoreSession extends AuthEvent {
   const RestoreSession();
+}
+
+class ClearAuthState extends AuthEvent {
+  const ClearAuthState();
 }

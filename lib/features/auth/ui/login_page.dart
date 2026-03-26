@@ -2,10 +2,11 @@ import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../ui/register_card.dart';
+
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'register_card.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -87,6 +88,17 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
+          if (state is AuthRegisterSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Registro exitoso. Revisa tu correo para confirmar tu cuenta'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            cardKey.currentState?.toggleCard();
+          }
+
           if (state is AuthSuccess) {
             // Aquí va la redirección a la siguiente pantalla
             // Navigator.pushReplacementNamed(context, HomeScreen.routeName);
@@ -94,9 +106,7 @@ class _LoginPageState extends State<LoginPage> {
         },
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
-          final String? errorMessage = state is AuthError
-              ? state.message
-              : null;
+          final String? errorMessage = state is AuthError ? state.message : null;
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -248,7 +258,6 @@ class _LoginPageState extends State<LoginPage> {
                                 return null;
                               },
                             ),
-
                             const SizedBox(height: 15),
 
                             TextFormField(
@@ -282,7 +291,6 @@ class _LoginPageState extends State<LoginPage> {
                                 return null;
                               },
                             ),
-
                             const SizedBox(height: 20),
 
                             SizedBox(

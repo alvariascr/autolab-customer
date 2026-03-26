@@ -43,7 +43,7 @@ void main() {
 
       when(() => mockAppLogger.w(any())).thenReturn(null);
       when(
-        () => mockAppLogger.w(
+            () => mockAppLogger.w(
           any(),
           error: any(named: 'error'),
           stackTrace: any(named: 'stackTrace'),
@@ -51,7 +51,7 @@ void main() {
       ).thenReturn(null);
 
       when(
-        () => mockGlobalErrorHandler.handle(any(), any()),
+            () => mockGlobalErrorHandler.handle(any(), any()),
       ).thenReturn(const UnknownFailure());
 
       repository = AuthRepositoryImpl(
@@ -62,7 +62,7 @@ void main() {
 
     test(
       'login retorna Right(AppUser) cuando signInWithPassword es exitoso',
-      () async {
+          () async {
         final user = User(
           id: 'user-123',
           appMetadata: const {},
@@ -72,10 +72,13 @@ void main() {
           email: 'test@test.com',
         );
 
-        final authResponse = AuthResponse(session: null, user: user);
+        final authResponse = AuthResponse(
+          session: null,
+          user: user,
+        );
 
         when(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -92,7 +95,7 @@ void main() {
         });
 
         verify(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: 'test@test.com',
             password: '123456',
           ),
@@ -100,11 +103,14 @@ void main() {
       },
     );
 
-    test('login retorna Left(AuthFailure) cuando user es null', () async {
-      final authResponse = AuthResponse(session: null, user: null);
+    test('login retorna Left cuando user es null', () async {
+      final authResponse = AuthResponse(
+        session: null,
+        user: null,
+      );
 
       when(
-        () => mockGoTrueClient.signInWithPassword(
+            () => mockGoTrueClient.signInWithPassword(
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
@@ -115,7 +121,7 @@ void main() {
       expect(result.isLeft(), true);
 
       result.fold((failure) {
-        expect(failure, isA<AuthFailure>());
+        expect(failure, isA<Failure>());
         expect(failure.message, 'Respuesta inválida: usuario no disponible');
       }, (_) => fail('Se esperaba Left(Failure)'));
 
@@ -123,10 +129,10 @@ void main() {
     });
 
     test(
-      'login retorna Left(AuthFailure) cuando credenciales son inválidas',
-      () async {
+      'login retorna Left cuando credenciales son inválidas',
+          () async {
         when(
-          () => mockGoTrueClient.signInWithPassword(
+              () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -137,12 +143,12 @@ void main() {
         expect(result.isLeft(), true);
 
         result.fold((failure) {
-          expect(failure, isA<AuthFailure>());
+          expect(failure, isA<Failure>());
           expect(failure.message, 'Correo o contraseña incorrectos');
         }, (_) => fail('Se esperaba Left(Failure)'));
 
         verify(
-          () => mockAppLogger.w(
+              () => mockAppLogger.w(
             any(),
             error: any(named: 'error'),
             stackTrace: any(named: 'stackTrace'),
@@ -159,14 +165,14 @@ void main() {
       );
 
       when(
-        () => mockGoTrueClient.signInWithPassword(
+            () => mockGoTrueClient.signInWithPassword(
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
       ).thenThrow(exception);
 
       when(
-        () => mockGlobalErrorHandler.handle(any(), any()),
+            () => mockGlobalErrorHandler.handle(any(), any()),
       ).thenReturn(mappedFailure);
 
       final result = await repository.login('test@test.com', '123456');
@@ -200,16 +206,25 @@ void main() {
         email: 'new@test.com',
       );
 
-      final authResponse = AuthResponse(session: null, user: user);
+      final authResponse = AuthResponse(
+        session: null,
+        user: user,
+      );
 
       when(
-        () => mockGoTrueClient.signUp(
+            () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
+          data: any(named: 'data'),
         ),
       ).thenAnswer((_) async => authResponse);
 
-      final result = await repository.register('new@test.com', '123456');
+      final result = await repository.register(
+        'Luis',
+        'new@test.com',
+        '88888888',
+        '123456',
+      );
 
       expect(result.isRight(), true);
 

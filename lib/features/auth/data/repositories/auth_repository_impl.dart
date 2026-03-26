@@ -78,15 +78,54 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final cleanName = name.trim();
       final cleanEmail = email.trim().toLowerCase();
-      final cleanPhone = phone.trim();
       final cleanPassword = password.trim();
+
+      // Verificar si la cuenta ya existe antes de registrar
+      try {
+        final loginRes = await client.auth.signInWithPassword(
+          email: cleanEmail,
+          password: cleanPassword,
+        );
+
+        if (loginRes.user != null) {
+          globalErrorHandler.logger.w(
+            'Intento de registro con cuenta ya existente',
+          );
+
+          return const Left(
+            AuthFailure(message: 'Esta cuenta ya existe. Inicia sesión'),
+          );
+        }
+      } on AuthException catch (e, st) {
+        final msg = e.message.toLowerCase();
+
+        if (msg.contains('email not confirmed')) {
+          globalErrorHandler.logger.w(
+            'Intento de registro con cuenta existente no confirmada',
+            error: e,
+            stackTrace: st,
+          );
+
+          return const Left(
+            AuthFailure(
+              message: 'Esta cuenta ya existe, pero debes confirmar tu correo',
+            ),
+          );
+        }
+
+        if (msg.contains('invalid login credentials')) {
+          // Este caso nos sirve para continuar con el registro
+        } else {
+          final failure = globalErrorHandler.handle(e, st);
+          return Left(failure);
+        }
+      }
 
       final res = await client.auth.signUp(
         email: cleanEmail,
         password: cleanPassword,
         data: {
           'name': cleanName,
-          'phone': cleanPhone,
           'role': 'customer',
         },
       );
@@ -105,18 +144,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(AppUser(id: user.id, email: user.email));
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
-
-      if (msg.contains('already registered')) {
-        globalErrorHandler.logger.w(
-          'Intento de registro con correo ya existente',
-          error: e,
-          stackTrace: st,
-        );
-
-        return const Left(
-          AuthFailure(message: 'Este correo ya se encuentra registrado'),
-        );
-      }
 
       if (msg.contains('invalid email')) {
         globalErrorHandler.logger.w(
@@ -165,7 +192,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(failure);
     }
   }
-
 
   @override
   Future<Either<Failure, Unit>> logout() async {
