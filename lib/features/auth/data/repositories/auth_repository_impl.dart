@@ -70,64 +70,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-      String name,
-      String email,
-      String phone,
-      String password,
-      ) async {
+    String email,
+    String password,
+  ) async {
     try {
-      final cleanName = name.trim();
-      final cleanEmail = email.trim().toLowerCase();
-      final cleanPassword = password.trim();
-
-      // Verificar si la cuenta ya existe antes de registrar
-      try {
-        final loginRes = await client.auth.signInWithPassword(
-          email: cleanEmail,
-          password: cleanPassword,
-        );
-
-        if (loginRes.user != null) {
-          globalErrorHandler.logger.w(
-            'Intento de registro con cuenta ya existente',
-          );
-
-          return const Left(
-            AuthFailure(message: 'Esta cuenta ya existe. Inicia sesión'),
-          );
-        }
-      } on AuthException catch (e, st) {
-        final msg = e.message.toLowerCase();
-
-        if (msg.contains('email not confirmed')) {
-          globalErrorHandler.logger.w(
-            'Intento de registro con cuenta existente no confirmada',
-            error: e,
-            stackTrace: st,
-          );
-
-          return const Left(
-            AuthFailure(
-              message: 'Esta cuenta ya existe, pero debes confirmar tu correo',
-            ),
-          );
-        }
-
-        if (msg.contains('invalid login credentials')) {
-          // Este caso nos sirve para continuar con el registro
-        } else {
-          final failure = globalErrorHandler.handle(e, st);
-          return Left(failure);
-        }
-      }
-
       final res = await client.auth.signUp(
-        email: cleanEmail,
-        password: cleanPassword,
-        data: {
-          'name': cleanName,
-          'role': 'customer',
-        },
+        email: email.trim().toLowerCase(),
+        password: password,
       );
 
       final user = res.user;
@@ -145,43 +94,15 @@ class AuthRepositoryImpl implements AuthRepository {
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
-      if (msg.contains('invalid email')) {
+      if (msg.contains('already registered')) {
         globalErrorHandler.logger.w(
-          'Intento de registro con correo inválido',
+          'Intento de registro con correo ya existente',
           error: e,
           stackTrace: st,
         );
 
         return const Left(
-          AuthFailure(message: 'El correo ingresado no es válido'),
-        );
-      }
-
-      if (msg.contains('password')) {
-        globalErrorHandler.logger.w(
-          'Intento de registro con contraseña inválida',
-          error: e,
-          stackTrace: st,
-        );
-
-        return const Left(
-          AuthFailure(message: 'La contraseña no cumple los requisitos'),
-        );
-      }
-
-      if (msg.contains('email rate limit exceeded') ||
-          msg.contains('rate limit exceeded')) {
-        globalErrorHandler.logger.w(
-          'Límite de intentos de registro alcanzado',
-          error: e,
-          stackTrace: st,
-        );
-
-        return const Left(
-          AuthFailure(
-            message:
-            'Se alcanzó el límite de intentos de registro. Intenta nuevamente en unos minutos',
-          ),
+          AuthFailure(message: 'Este correo ya se encuentra registrado'),
         );
       }
 

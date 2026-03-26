@@ -17,11 +17,12 @@ class AuthLoading extends AuthState {
 
 class AuthSuccess extends AuthState {
   final String userId;
+  final String role;
 
-  const AuthSuccess(this.userId);
+  const AuthSuccess({required this.userId, required this.role});
 
   @override
-  List<Object?> get props => [userId];
+  List<Object?> get props => [userId, role];
 }
 
 class AuthRegisterSuccess extends AuthState {

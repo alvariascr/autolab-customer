@@ -1,5 +1,5 @@
-import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:autolab_core/autolab_core.dart';
 
 import '../repository/auth_repository.dart';
 import 'auth_event.dart';
@@ -13,60 +13,48 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogout);
     on<RegisterRequested>(_onRegister);
     on<RestoreSession>(_onRestoreSession);
-    on<ClearAuthState>(_onClearAuthState);
   }
 
-  Future<void> _onLogin(
-      LoginRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+  Future<void> _onLogin(LoginRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading());
 
     final result = await repository.login(event.email, event.password);
 
     result.fold(
-          (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(AuthSuccess(user.id)),
+      (Failure failure) => emit(AuthError(failure.message)),
+      (user) => emit(AuthSuccess(user.id)),
     );
   }
 
-  Future<void> _onLogout(
-      LogoutRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+  Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading());
 
     final result = await repository.logout();
 
     result.fold(
-          (Failure failure) => emit(AuthError(failure.message)),
-          (_) => emit(const AuthInitial()),
+      (Failure failure) => emit(AuthError(failure.message)),
+      (_) => emit(const AuthInitial()),
     );
   }
 
   Future<void> _onRegister(
-      RegisterRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    RegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoading());
 
-    final result = await repository.register(
-      event.name,
-      event.email,
-      event.phone,
-      event.password,
-    );
+    final result = await repository.register(event.email, event.password);
 
     result.fold(
-          (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(AuthRegisterSuccess(user.id)),
+      (Failure failure) => emit(AuthError(failure.message)),
+      (user) => emit(AuthSuccess(user.id)),
     );
   }
 
   Future<void> _onRestoreSession(
-      RestoreSession event,
-      Emitter<AuthState> emit,
-      ) async {
+    RestoreSession event,
+    Emitter<AuthState> emit,
+  ) async {
     final user = await repository.getCurrentUser();
 
     if (user != null) {
@@ -74,12 +62,5 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } else {
       emit(const AuthInitial());
     }
-  }
-
-  Future<void> _onClearAuthState(
-      ClearAuthState event,
-      Emitter<AuthState> emit,
-      ) async {
-    emit(const AuthInitial());
   }
 }

@@ -1,6 +1,7 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:autolab_core/autolab_core.dart';
+
 import 'package:autolab_customer/features/auth/bloc/auth_bloc.dart';
 import 'package:autolab_customer/features/auth/bloc/auth_event.dart';
 import 'package:autolab_customer/features/auth/bloc/auth_state.dart';
@@ -15,11 +16,9 @@ class FakeSuccessAuthRepository implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-      String name,
-      String email,
-      String phone,
-      String password,
-      ) async {
+    String email,
+    String password,
+  ) async {
     return Right(AppUser(id: '123', email: email));
   }
 
@@ -37,22 +36,20 @@ class FakeSuccessAuthRepository implements AuthRepository {
 class FakeFailureAuthRepository implements AuthRepository {
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
-    return Left(AuthFailure(message: 'Correo o contraseña incorrectos'));
+    return const Left(AuthFailure(message: 'Correo o contraseña incorrectos'));
   }
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String name,
     String email,
-    String phone,
     String password,
   ) async {
-    return Left(AuthFailure(message: 'No se pudo registrar'));
+    return const Left(AuthFailure(message: 'No se pudo registrar'));
   }
 
   @override
   Future<Either<Failure, Unit>> logout() async {
-    return Left(AuthFailure(message: 'No se pudo cerrar sesión'));
+    return const Left(AuthFailure(message: 'No se pudo cerrar sesión'));
   }
 
   @override
