@@ -89,23 +89,23 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': user.email,
         'role': role,
       });
-      await sessionLocalDataSource.saveUserSession(sessionJson);
 
+      await sessionLocalDataSource.saveUserSession(sessionJson);
       await loginAttemptService.registerSuccess(cleanEmail);
 
-      return Right(AppUser(id: user.id, email: user.email, role: role));
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
+      );
     } on AuthFailure catch (failure) {
       return Left(failure);
-    } on AuthException catch (e, st) {
-      final msg = e.message.toLowerCase();
+    } catch (e, st) {
+      final failure = globalErrorHandler.handle(e, st);
 
-      if (msg.contains('invalid login credentials')) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.invalidCredentials.code}] ${ErrorCatalog.invalidCredentials.message}',
-          error: e,
-          stackTrace: st,
-        );
-
+      if (failure.code == ErrorCatalog.invalidCredentials.code) {
         final updatedState = await loginAttemptService.registerFailure(
           cleanEmail,
         );
@@ -119,37 +119,13 @@ class AuthRepositoryImpl implements AuthRepository {
               code: ErrorCatalog.authRateLimit.code,
               message:
               '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
+              cause: failure.cause ?? e,
+              stackTrace: failure.stackTrace ?? st,
             ),
           );
         }
-
-        return Left(
-          AuthFailure.fromErrorItem(
-            ErrorCatalog.invalidCredentials,
-            cause: e,
-          ),
-        );
       }
 
-      if (msg.contains('email not confirmed')) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.unconfirmedEmail.code}] ${ErrorCatalog.unconfirmedEmail.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        return Left(
-          AuthFailure.fromErrorItem(
-            ErrorCatalog.unconfirmedEmail,
-            cause: e,
-          ),
-        );
-      }
-
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
-    } catch (e, st) {
-      final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     }
   }
@@ -177,29 +153,13 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Right(
-        AppUser(id: user.id, email: user.email, role: UserRoles.customer),
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: UserRoles.customer,
+        ),
       );
     } on AuthFailure catch (failure) {
-      return Left(failure);
-    } on AuthException catch (e, st) {
-      final msg = e.message.toLowerCase();
-
-      if (msg.contains('already registered')) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.emailAlreadyRegistered.code}] ${ErrorCatalog.emailAlreadyRegistered.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        return Left(
-          AuthFailure.fromErrorItem(
-            ErrorCatalog.emailAlreadyRegistered,
-            cause: e,
-          ),
-        );
-      }
-
-      final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);
@@ -232,6 +192,7 @@ class AuthRepositoryImpl implements AuthRepository {
           'email': supabaseUser.email,
           'role': role,
         });
+
         await sessionLocalDataSource.saveUserSession(sessionJson);
 
         globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
@@ -256,15 +217,17 @@ class AuthRepositoryImpl implements AuthRepository {
           error: e,
           stackTrace: st,
         );
+
         return null;
       }
     }
 
-    return await _recoverUserFromLocal();
+    return _recoverUserFromLocal();
   }
 
   Future<AppUser?> _recoverUserFromLocal() async {
     final sessionJson = await sessionLocalDataSource.getUserSession();
+
     if (sessionJson == null || sessionJson.isEmpty) {
       return null;
     }
