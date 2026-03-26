@@ -1,3 +1,4 @@
+import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -316,21 +317,43 @@ class _RegisterCardState extends State<RegisterCard> {
                                   },
                                 ),
                                 const SizedBox(height: 10),
-                                CheckboxListTile(
-                                  value: _acceptsTerms,
-                                  onChanged: (v) {
-                                    setState(() {
-                                      _acceptsTerms = v ?? false;
-                                    });
-                                  },
-                                  controlAffinity:
-                                  ListTileControlAffinity.leading,
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text(
-                                    'Acepto términos y condiciones',
-                                    style:
-                                    TextStyle(color: Colors.grey.shade800),
-                                  ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Checkbox(
+                                      value: _acceptsTerms,
+                                      onChanged: (v) {
+                                        setState(() {
+                                          _acceptsTerms = v ?? false;
+                                        });
+                                      },
+                                    ),
+                                    Expanded(
+                                      child: Wrap(
+                                        children: [
+                                          const Text("Acepto "),
+                                          GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => const TermsPage(),
+                                                ),
+                                              );
+                                            },
+                                            child: const Text(
+                                              "Términos y Condiciones",
+                                              style: TextStyle(
+                                                color: Colors.blue,
+                                                decoration: TextDecoration.underline,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 10),
                                 SizedBox(
