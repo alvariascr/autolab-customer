@@ -1,4 +1,7 @@
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
+import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
+import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,8 +11,17 @@ import '../../repository/auth_repository.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient client;
   final GlobalErrorHandler globalErrorHandler;
+  final SessionLocalDataSource sessionLocalDataSource;
+  final UserRoleDataSource userRoleDataSource;
+  final LoginAttemptService loginAttemptService;
 
-  AuthRepositoryImpl(this.client, this.globalErrorHandler);
+  AuthRepositoryImpl(
+      this.client,
+      this.globalErrorHandler,
+      this.sessionLocalDataSource,
+      this.userRoleDataSource,
+      this.loginAttemptService,
+      );
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -30,7 +42,15 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Right(AppUser(id: user.id, email: user.email));
+      final role = await userRoleDataSource.getUserRole(user.id);
+
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: role,
+        ),
+      );
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -70,13 +90,20 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, AppUser>> register(
-    String email,
-    String password,
-  ) async {
+      String name,
+      String email,
+      String phone,
+      String password,
+      ) async {
     try {
       final res = await client.auth.signUp(
         email: email.trim().toLowerCase(),
         password: password,
+        data: {
+          'name': name.trim(),
+          'phone': phone.trim(),
+          'role': UserRoles.customer,
+        },
       );
 
       final user = res.user;
@@ -90,7 +117,13 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Right(AppUser(id: user.id, email: user.email));
+      return Right(
+        AppUser(
+          id: user.id,
+          email: user.email,
+          role: UserRoles.customer,
+        ),
+      );
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -130,6 +163,12 @@ class AuthRepositoryImpl implements AuthRepository {
     final user = client.auth.currentUser;
     if (user == null) return null;
 
-    return AppUser(id: user.id, email: user.email);
+    final role = await userRoleDataSource.getUserRole(user.id);
+
+    return AppUser(
+      id: user.id,
+      email: user.email,
+      role: role,
+    );
   }
 }
