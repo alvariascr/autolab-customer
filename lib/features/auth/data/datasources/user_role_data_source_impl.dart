@@ -18,17 +18,17 @@ class UserRoleDataSourceImpl implements UserRoleDataSource {
         .maybeSingle();
 
     if (response == null) {
-      throw const AuthFailure(message: 'Perfil de usuario no encontrado');
+      throw AuthFailure.fromErrorItem(ErrorCatalog.userProfileNotFound);
     }
 
     final role = response['role'] as String?;
 
     if (role == null || role.isEmpty) {
-      throw const AuthFailure(message: 'Rol no definido para el usuario');
+      throw AuthFailure.fromErrorItem(ErrorCatalog.undefinedUserRole);
     }
 
     if (!UserRoles.isValid(role)) {
-      throw const AuthFailure(message: 'Rol no autorizado');
+      throw AuthFailure.fromErrorItem(ErrorCatalog.unauthorized);
     }
 
     return role;

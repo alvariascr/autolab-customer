@@ -13,11 +13,11 @@ class FakeCrashReporter implements CrashReporter {
 
   @override
   Future<void> recordError(
-    Object error,
-    StackTrace? stackTrace, {
-    String? reason,
-    bool fatal = false,
-  }) async {
+      Object error,
+      StackTrace? stackTrace, {
+        String? reason,
+        bool fatal = false,
+      }) async {
     capturedError = error;
     capturedStackTrace = stackTrace;
     capturedReason = reason;
@@ -40,13 +40,16 @@ void main() {
       final failure = handler.handle(error, stackTrace);
 
       expect(failure, isA<TimeoutFailure>());
+      expect(failure.message, ErrorCatalog.requestTimeout.message);
+      expect(failure.code, ErrorCatalog.requestTimeout.code);
 
       await Future<void>.delayed(Duration.zero);
 
       expect(crashReporter.capturedError, error);
+      expect(crashReporter.capturedStackTrace, stackTrace);
       expect(
         crashReporter.capturedReason,
-        '[NET_002] La solicitud tardó demasiado tiempo. Intenta nuevamente.',
+        '[${ErrorCatalog.requestTimeout.code}] ${ErrorCatalog.requestTimeout.message}',
       );
     });
   });
