@@ -318,7 +318,8 @@ class _RegisterCardState extends State<RegisterCard> {
                                 ),
                                 const SizedBox(height: 10),
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.center,
                                   children: [
                                     Checkbox(
                                       value: _acceptsTerms,
@@ -331,21 +332,23 @@ class _RegisterCardState extends State<RegisterCard> {
                                     Expanded(
                                       child: Wrap(
                                         children: [
-                                          const Text("Acepto "),
+                                          const Text('Acepto '),
                                           GestureDetector(
                                             onTap: () {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (_) => const TermsPage(),
+                                                  builder: (_) =>
+                                                  const TermsPage(),
                                                 ),
                                               );
                                             },
                                             child: const Text(
-                                              "Términos y Condiciones",
+                                              'Términos y Condiciones',
                                               style: TextStyle(
                                                 color: Colors.blue,
-                                                decoration: TextDecoration.underline,
+                                                decoration:
+                                                TextDecoration.underline,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),

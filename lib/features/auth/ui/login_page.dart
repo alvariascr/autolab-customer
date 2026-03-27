@@ -23,6 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passLoginCtrl = TextEditingController();
 
   bool _isPasswordHidden = true;
+  bool _showLoginError = false;
 
   InputDecoration _inputDec({
     required String label,
@@ -75,6 +76,10 @@ class _LoginPageState extends State<LoginPage> {
 
     FocusScope.of(context).unfocus();
 
+    setState(() {
+      _showLoginError = true;
+    });
+
     context.read<AuthBloc>().add(
       LoginRequested(
         email: _emailLoginCtrl.text.trim(),
@@ -91,11 +96,14 @@ class _LoginPageState extends State<LoginPage> {
           if (state is AuthRegisterSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Registro exitoso. Revisa tu correo para confirmar tu cuenta'),
+                content: Text(
+                  'Registro exitoso. Revisa tu correo para confirmar tu cuenta',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
 
+            context.read<AuthBloc>().add(const ClearAuthState());
             cardKey.currentState?.toggleCard();
           }
 
@@ -106,7 +114,8 @@ class _LoginPageState extends State<LoginPage> {
         },
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
-          final String? errorMessage = state is AuthError ? state.message : null;
+          final String? errorMessage =
+          state is AuthError && _showLoginError ? state.message : null;
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -142,6 +151,9 @@ class _LoginPageState extends State<LoginPage> {
                     logoSize: logoSize,
                     isLoading: isLoading,
                     onBackToLogin: () {
+                      setState(() {
+                        _showLoginError = false;
+                      });
                       cardKey.currentState?.toggleCard();
                     },
                   ),
@@ -195,7 +207,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 20),
-
                             if (errorMessage != null) ...[
                               Container(
                                 width: double.infinity,
@@ -234,7 +245,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               const SizedBox(height: 15),
                             ],
-
                             TextFormField(
                               controller: _emailLoginCtrl,
                               keyboardType: TextInputType.emailAddress,
@@ -259,7 +269,6 @@ class _LoginPageState extends State<LoginPage> {
                               },
                             ),
                             const SizedBox(height: 15),
-
                             TextFormField(
                               controller: _passLoginCtrl,
                               obscureText: _isPasswordHidden,
@@ -292,7 +301,6 @@ class _LoginPageState extends State<LoginPage> {
                               },
                             ),
                             const SizedBox(height: 20),
-
                             SizedBox(
                               width: 220,
                               height: 50,
@@ -324,9 +332,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 12),
-
                             TextButton(
                               onPressed: () {
                                 // Luego aquí puedes conectar recover password
@@ -336,16 +342,12 @@ class _LoginPageState extends State<LoginPage> {
                                 style: TextStyle(color: Colors.grey),
                               ),
                             ),
-
                             const SizedBox(height: 10),
-
                             const Text(
                               'O iniciar sesión con:',
                               style: TextStyle(color: Colors.grey),
                             ),
-
                             const SizedBox(height: 12),
-
                             Row(
                               children: [
                                 Expanded(
@@ -397,9 +399,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 30),
-
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -409,6 +409,12 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 TextButton(
                                   onPressed: () {
+                                    context
+                                        .read<AuthBloc>()
+                                        .add(const ClearAuthState());
+                                    setState(() {
+                                      _showLoginError = false;
+                                    });
                                     cardKey.currentState?.toggleCard();
                                   },
                                   style: TextButton.styleFrom(
@@ -429,7 +435,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 10),
                           ],
                         ),
