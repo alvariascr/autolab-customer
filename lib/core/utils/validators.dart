@@ -11,19 +11,6 @@ class Validators {
 
   static String? email(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'El email es obligatorio';
-    }
-
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-    if (!emailRegex.hasMatch(value.trim())) {
-      return 'Email inválido';
-    }
-
-    return null;
-  }
-
-  static String? loginEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
       return 'El correo es obligatorio';
     }
 

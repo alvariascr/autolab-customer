@@ -362,7 +362,7 @@ class _LoginPageState extends State<LoginPage> {
                                 hint: 'Ingrese su email',
                                 icon: Icons.email_outlined,
                               ),
-                              validator: Validators.loginEmail,
+                              validator: Validators.email,
                             ),
                             const SizedBox(height: 15),
                             TextFormField(
