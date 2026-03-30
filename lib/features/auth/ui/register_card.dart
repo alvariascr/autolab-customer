@@ -1,6 +1,8 @@
 import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/validators.dart';
+
 class RegisterCard extends StatefulWidget {
   final double cardWidth;
   final double cardHeight;
@@ -169,15 +171,7 @@ class RegisterCardState extends State<RegisterCard> {
                                 hint: 'Ingrese su nombre',
                                 icon: Icons.person_outline,
                               ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'El nombre es obligatorio';
-                                }
-                                if (v.trim().length < 3) {
-                                  return 'Mínimo 3 caracteres';
-                                }
-                                return null;
-                              },
+                              validator: Validators.name,
                             ),
                             const SizedBox(height: 15),
                             TextFormField(
@@ -188,19 +182,7 @@ class RegisterCardState extends State<RegisterCard> {
                                 hint: 'Ingrese su email',
                                 icon: Icons.email_outlined,
                               ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'El email es obligatorio';
-                                }
-
-                                final emailRegex =
-                                RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                                if (!emailRegex.hasMatch(v.trim())) {
-                                  return 'Email inválido';
-                                }
-
-                                return null;
-                              },
+                              validator: Validators.email,
                             ),
                             const SizedBox(height: 15),
                             TextFormField(
@@ -211,15 +193,7 @@ class RegisterCardState extends State<RegisterCard> {
                                 hint: 'Ingrese su teléfono',
                                 icon: Icons.phone_outlined,
                               ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'El teléfono es obligatorio';
-                                }
-                                if (v.trim().length < 8) {
-                                  return 'Teléfono inválido';
-                                }
-                                return null;
-                              },
+                              validator: Validators.phone,
                             ),
                             const SizedBox(height: 15),
                             TextFormField(
@@ -243,15 +217,7 @@ class RegisterCardState extends State<RegisterCard> {
                                   },
                                 ),
                               ),
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'La contraseña es obligatoria';
-                                }
-                                if (v.length < 6) {
-                                  return 'Mínimo 6 caracteres';
-                                }
-                                return null;
-                              },
+                              validator: Validators.password,
                             ),
                             const SizedBox(height: 15),
                             TextFormField(
@@ -276,15 +242,8 @@ class RegisterCardState extends State<RegisterCard> {
                                   },
                                 ),
                               ),
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return 'Confirme la contraseña';
-                                }
-                                if (v != _passCtrl.text) {
-                                  return 'Las contraseñas no coinciden';
-                                }
-                                return null;
-                              },
+                              validator: (v) =>
+                                  Validators.confirmPassword(v, _passCtrl.text),
                             ),
                             const SizedBox(height: 10),
                             Row(

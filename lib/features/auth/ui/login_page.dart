@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/utils/validators.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -66,6 +67,43 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  bool _isCredentialError(String message) {
+    final msg = message.toLowerCase();
+
+    return msg.contains('correo o contraseña incorrect') ||
+        msg.contains('cuenta no confirmada') ||
+        msg.contains('email not confirmed') ||
+        msg.contains('invalid login credentials') ||
+        msg.contains('credenciales inválidas') ||
+        msg.contains('credenciales invalidas');
+  }
+
+  bool _isSystemError(String message) {
+    final msg = message.toLowerCase();
+
+    return msg.contains('network') ||
+        msg.contains('socket') ||
+        msg.contains('timeout') ||
+        msg.contains('internet') ||
+        msg.contains('conexión') ||
+        msg.contains('conexion') ||
+        msg.contains('servidor') ||
+        msg.contains('server') ||
+        msg.contains('inesperado') ||
+        msg.contains('unexpected') ||
+        msg.contains('rate limit') ||
+        msg.contains('429');
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailLoginCtrl.dispose();
@@ -122,13 +160,16 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            if (_isShowingRegister) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
-                ),
-              );
+            final bool isLoginCredentialError =
+                !_isShowingRegister && _isCredentialError(state.message);
+
+            final bool shouldShowSnackBar =
+                _isShowingRegister ||
+                    _isSystemError(state.message) ||
+                    !isLoginCredentialError;
+
+            if (shouldShowSnackBar) {
+              _showErrorSnackBar(state.message);
             }
           }
 
@@ -160,8 +201,12 @@ class _LoginPageState extends State<LoginPage> {
         },
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
+
           final String? errorMessage =
-          state is AuthError && _showLoginError && !_isShowingRegister
+          state is AuthError &&
+              _showLoginError &&
+              !_isShowingRegister &&
+              _isCredentialError(state.message)
               ? state.message
               : null;
 
@@ -317,19 +362,7 @@ class _LoginPageState extends State<LoginPage> {
                                 hint: 'Ingrese su email',
                                 icon: Icons.email_outlined,
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'El correo es obligatorio';
-                                }
-
-                                final emailRegex =
-                                RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                                if (!emailRegex.hasMatch(value.trim())) {
-                                  return 'Correo inválido';
-                                }
-
-                                return null;
-                              },
+                              validator: Validators.loginEmail,
                             ),
                             const SizedBox(height: 15),
                             TextFormField(
@@ -353,15 +386,7 @@ class _LoginPageState extends State<LoginPage> {
                                   },
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'La contraseña es obligatoria';
-                                }
-                                if (value.length < 6) {
-                                  return 'Mínimo 6 caracteres';
-                                }
-                                return null;
-                              },
+                              validator: Validators.password,
                             ),
                             const SizedBox(height: 20),
                             SizedBox(
