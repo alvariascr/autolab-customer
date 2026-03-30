@@ -17,6 +17,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
+  final GlobalKey<RegisterCardState> registerCardKey =
+  GlobalKey<RegisterCardState>();
 
   final _formKeyLogin = GlobalKey<FormState>();
   final TextEditingController _emailLoginCtrl = TextEditingController();
@@ -24,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isPasswordHidden = true;
   bool _showLoginError = false;
+  bool _isShowingRegister = false;
 
   InputDecoration _inputDec({
     required String label,
@@ -78,6 +81,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       _showLoginError = true;
+      _isShowingRegister = false;
     });
 
     context.read<AuthBloc>().add(
@@ -88,11 +92,46 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _goToRegister() {
+    context.read<AuthBloc>().add(const ClearAuthState());
+
+    setState(() {
+      _showLoginError = false;
+      _isShowingRegister = true;
+    });
+
+    cardKey.currentState?.toggleCard();
+  }
+
+  void _goToLoginFromRegister() {
+    context.read<AuthBloc>().add(const ClearAuthState());
+
+    registerCardKey.currentState?.cleanRegistry();
+
+    setState(() {
+      _showLoginError = false;
+      _isShowingRegister = false;
+    });
+
+    cardKey.currentState?.toggleCard();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
+          if (state is AuthError) {
+            if (_isShowingRegister) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+
           if (state is AuthRegisterSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -103,7 +142,14 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
 
+            registerCardKey.currentState?.cleanRegistry();
             context.read<AuthBloc>().add(const ClearAuthState());
+
+            setState(() {
+              _showLoginError = false;
+              _isShowingRegister = false;
+            });
+
             cardKey.currentState?.toggleCard();
           }
 
@@ -115,7 +161,9 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
           final String? errorMessage =
-          state is AuthError && _showLoginError ? state.message : null;
+          state is AuthError && _showLoginError && !_isShowingRegister
+              ? state.message
+              : null;
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -146,15 +194,31 @@ class _LoginPageState extends State<LoginPage> {
                     errorMessage,
                   ),
                   back: RegisterCard(
+                    key: registerCardKey,
                     cardWidth: cardWidth,
                     cardHeight: cardHeight,
                     logoSize: logoSize,
                     isLoading: isLoading,
-                    onBackToLogin: () {
+                    onBackToLogin: _goToLoginFromRegister,
+                    onRegisterRequested: ({
+                      required String name,
+                      required String email,
+                      required String phone,
+                      required String password,
+                    }) {
                       setState(() {
                         _showLoginError = false;
+                        _isShowingRegister = true;
                       });
-                      cardKey.currentState?.toggleCard();
+
+                      context.read<AuthBloc>().add(
+                        RegisterRequested(
+                          name: name,
+                          email: email,
+                          phone: phone,
+                          password: password,
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -258,9 +322,8 @@ class _LoginPageState extends State<LoginPage> {
                                   return 'El correo es obligatorio';
                                 }
 
-                                final emailRegex = RegExp(
-                                  r'^[^@]+@[^@]+\.[^@]+$',
-                                );
+                                final emailRegex =
+                                RegExp(r'^[^@]+@[^@]+\.[^@]+$');
                                 if (!emailRegex.hasMatch(value.trim())) {
                                   return 'Correo inválido';
                                 }
@@ -408,15 +471,7 @@ class _LoginPageState extends State<LoginPage> {
                                   style: TextStyle(color: Colors.grey[700]),
                                 ),
                                 TextButton(
-                                  onPressed: () {
-                                    context
-                                        .read<AuthBloc>()
-                                        .add(const ClearAuthState());
-                                    setState(() {
-                                      _showLoginError = false;
-                                    });
-                                    cardKey.currentState?.toggleCard();
-                                  },
+                                  onPressed: _goToRegister,
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 5,
