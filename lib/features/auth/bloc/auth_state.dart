@@ -25,6 +25,15 @@ class AuthSuccess extends AuthState {
   List<Object?> get props => [userId, role];
 }
 
+class AuthRegisterSuccess extends AuthState {
+  final String userId;
+
+  const AuthRegisterSuccess(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
+}
+
 class AuthError extends AuthState {
   final String message;
 

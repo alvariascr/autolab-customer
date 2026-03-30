@@ -6,189 +6,290 @@ import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+class FakeSuccessAuthRepository implements AuthRepository {
+  @override
+  Future<Either<Failure, AppUser>> login(String email, String password) async {
+    return Right(
+      AppUser(
+        id: '123',
+        email: email,
+        role: 'customer',
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, AppUser>> register(
+      String name,
+      String email,
+      String phone,
+      String password,
+      ) async {
+    return Right(
+      AppUser(
+        id: '123',
+        email: email,
+        role: 'customer',
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, Unit>> logout() async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<AppUser?> getCurrentUser() async {
+    return null;
+  }
+}
+
+class FakeFailureAuthRepository implements AuthRepository {
+  @override
+  Future<Either<Failure, AppUser>> login(String email, String password) async {
+    return const Left(
+      AuthFailure(message: 'Correo o contraseña incorrectos'),
+    );
+  }
+
+  @override
+  Future<Either<Failure, AppUser>> register(
+      String name,
+      String email,
+      String phone,
+      String password,
+      ) async {
+    return const Left(
+      AuthFailure(message: 'No se pudo registrar'),
+    );
+  }
+
+  @override
+  Future<Either<Failure, Unit>> logout() async {
+    return const Left(
+      AuthFailure(message: 'No se pudo cerrar sesión'),
+    );
+  }
+
+  @override
+  Future<AppUser?> getCurrentUser() async {
+    return null;
+  }
+}
+
+class FakeRestoreSessionAuthRepository implements AuthRepository {
+  @override
+  Future<Either<Failure, AppUser>> login(String email, String password) async {
+    return Right(
+      AppUser(
+        id: '123',
+        email: email,
+        role: 'customer',
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, AppUser>> register(
+      String name,
+      String email,
+      String phone,
+      String password,
+      ) async {
+    return Right(
+      AppUser(
+        id: '123',
+        email: email,
+        role: 'customer',
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, Unit>> logout() async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<AppUser?> getCurrentUser() async {
+    return AppUser(
+      id: '123',
+      email: 'test@test.com',
+      role: 'customer',
+    );
+  }
+}
 
 void main() {
-  late AuthBloc authBloc;
-  late MockAuthRepository mockAuthRepository;
-
-  setUp(() {
-    mockAuthRepository = MockAuthRepository();
-    authBloc = AuthBloc(mockAuthRepository);
-  });
-
-  tearDown(() async {
-    await authBloc.close();
-  });
-
   group('AuthBloc', () {
     test('estado inicial es AuthInitial', () {
-      expect(authBloc.state, const AuthInitial());
+      final bloc = AuthBloc(FakeSuccessAuthRepository());
+
+      expect(bloc.state, const AuthInitial());
+
+      bloc.close();
+    });
+
+    test('login exitoso emite AuthLoading y luego AuthSuccess', () async {
+      final bloc = AuthBloc(FakeSuccessAuthRepository());
+
+      bloc.add(
+        const LoginRequested(
+          email: 'test@test.com',
+          password: '123456',
+        ),
+      );
+
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthSuccess(userId: '123', role: 'customer'),
+        ]),
+      );
+
+      await bloc.close();
+    });
+
+    test('login fallido emite AuthLoading y luego AuthError', () async {
+      final bloc = AuthBloc(FakeFailureAuthRepository());
+
+      bloc.add(
+        const LoginRequested(
+          email: 'test@test.com',
+          password: 'wrong-password',
+        ),
+      );
+
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthError('Correo o contraseña incorrectos'),
+        ]),
+      );
+
+      await bloc.close();
     });
 
     test(
-      'login exitoso consulta al repositorio y emite AuthLoading y AuthSuccess',
+      'register exitoso emite AuthLoading y luego AuthRegisterSuccess',
           () async {
-        final user = AppUser(
-          id: '123',
-          email: 'test@test.com',
-          role: 'customer',
-        );
+        final bloc = AuthBloc(FakeSuccessAuthRepository());
 
-        when(
-              () => mockAuthRepository.login('test@test.com', '123456'),
-        ).thenAnswer((_) async => Right(user));
-
-        authBloc.add(
-          const LoginRequested(email: 'test@test.com', password: '123456'),
-        );
-
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthLoading(),
-            const AuthSuccess(userId: '123', role: 'customer'),
-          ]),
-        );
-
-        verify(
-              () => mockAuthRepository.login('test@test.com', '123456'),
-        ).called(1);
-      },
-    );
-
-    test(
-      'login fallido consulta al repositorio y emite AuthLoading y AuthError',
-          () async {
-        when(
-              () => mockAuthRepository.login('test@test.com', 'wrong-password'),
-        ).thenAnswer(
-              (_) async => Left(
-            AuthFailure.fromErrorItem(ErrorCatalog.invalidCredentials),
-          ),
-        );
-
-        authBloc.add(
-          const LoginRequested(
-            email: 'test@test.com',
-            password: 'wrong-password',
+        bloc.add(
+          const RegisterRequested(
+            name: 'Luis',
+            email: 'new@test.com',
+            phone: '88888888',
+            password: '123456',
           ),
         );
 
         await expectLater(
-          authBloc.stream,
+          bloc.stream,
           emitsInOrder([
             const AuthLoading(),
-            AuthError(ErrorCatalog.invalidCredentials.message),
+            const AuthRegisterSuccess('123'),
           ]),
         );
 
-        verify(
-              () => mockAuthRepository.login('test@test.com', 'wrong-password'),
-        ).called(1);
+        await bloc.close();
       },
     );
 
-    test(
-      'restore session sin usuario consulta al repositorio y emite AuthLoading y AuthInitial',
-          () async {
-        when(
-              () => mockAuthRepository.getCurrentUser(),
-        ).thenAnswer((_) async => null);
+    test('register fallido emite AuthLoading y luego AuthError', () async {
+      final bloc = AuthBloc(FakeFailureAuthRepository());
 
-        authBloc.add(const RestoreSession());
-
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthLoading(),
-            const AuthInitial(),
-          ]),
-        );
-
-        verify(() => mockAuthRepository.getCurrentUser()).called(1);
-      },
-    );
-
-    test(
-      'restore session con usuario consulta al repositorio y emite AuthLoading y AuthSuccess',
-          () async {
-        final user = AppUser(
-          id: '123',
-          email: 'test@test.com',
-          role: 'customer',
-        );
-
-        when(
-              () => mockAuthRepository.getCurrentUser(),
-        ).thenAnswer((_) async => user);
-
-        authBloc.add(const RestoreSession());
-
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthLoading(),
-            const AuthSuccess(userId: '123', role: 'customer'),
-          ]),
-        );
-
-        verify(() => mockAuthRepository.getCurrentUser()).called(1);
-      },
-    );
-
-    test(
-      'logout exitoso consulta al repositorio y emite AuthLoading y AuthInitial',
-          () async {
-        when(
-              () => mockAuthRepository.logout(),
-        ).thenAnswer((_) async => const Right(unit));
-
-        authBloc.add(const LogoutRequested());
-
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthLoading(),
-            const AuthInitial(),
-          ]),
-        );
-
-        verify(() => mockAuthRepository.logout()).called(1);
-      },
-    );
-
-    test(
-      'register exitoso consulta al repositorio y emite AuthLoading y AuthSuccess',
-          () async {
-        final user = AppUser(
-          id: '123',
+      bloc.add(
+        const RegisterRequested(
+          name: 'Luis',
           email: 'new@test.com',
-          role: 'customer',
-        );
+          phone: '88888888',
+          password: '123456',
+        ),
+      );
 
-        when(
-              () => mockAuthRepository.register('new@test.com', '123456'),
-        ).thenAnswer((_) async => Right(user));
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthError('No se pudo registrar'),
+        ]),
+      );
 
-        authBloc.add(
-          const RegisterRequested(email: 'new@test.com', password: '123456'),
-        );
+      await bloc.close();
+    });
+
+    test('logout fallido emite AuthLoading y luego AuthError', () async {
+      final bloc = AuthBloc(FakeFailureAuthRepository());
+
+      bloc.add(const LogoutRequested());
+
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthError('No se pudo cerrar sesión'),
+        ]),
+      );
+
+      await bloc.close();
+    });
+
+    test(
+      'restore session sin usuario emite AuthLoading y luego AuthInitial',
+          () async {
+        final bloc = AuthBloc(FakeSuccessAuthRepository());
+
+        bloc.add(const RestoreSession());
 
         await expectLater(
-          authBloc.stream,
+          bloc.stream,
+          emitsInOrder([
+            const AuthLoading(),
+            const AuthInitial(),
+          ]),
+        );
+
+        await bloc.close();
+      },
+    );
+
+    test(
+      'restore session con usuario emite AuthLoading y luego AuthSuccess',
+          () async {
+        final bloc = AuthBloc(FakeRestoreSessionAuthRepository());
+
+        bloc.add(const RestoreSession());
+
+        await expectLater(
+          bloc.stream,
           emitsInOrder([
             const AuthLoading(),
             const AuthSuccess(userId: '123', role: 'customer'),
           ]),
         );
 
-        verify(
-              () => mockAuthRepository.register('new@test.com', '123456'),
-        ).called(1);
+        await bloc.close();
       },
     );
+
+    test('clear auth state emite AuthInitial', () async {
+      final bloc = AuthBloc(FakeSuccessAuthRepository());
+
+      bloc.add(const ClearAuthState());
+
+      await expectLater(
+        bloc.stream,
+        emitsInOrder([
+          const AuthInitial(),
+        ]),
+      );
+
+      await bloc.close();
+    });
   });
 }

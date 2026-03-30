@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/utils/validators.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import 'register_card.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,12 +18,16 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
+  final GlobalKey<RegisterCardState> registerCardKey =
+  GlobalKey<RegisterCardState>();
 
   final _formKeyLogin = GlobalKey<FormState>();
   final TextEditingController _emailLoginCtrl = TextEditingController();
   final TextEditingController _passLoginCtrl = TextEditingController();
 
   bool _isPasswordHidden = true;
+  bool _showLoginError = false;
+  bool _isShowingRegister = false;
 
   InputDecoration _inputDec({
     required String label,
@@ -61,6 +67,43 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  bool _isCredentialError(String message) {
+    final msg = message.toLowerCase();
+
+    return msg.contains('correo o contraseña incorrect') ||
+        msg.contains('cuenta no confirmada') ||
+        msg.contains('email not confirmed') ||
+        msg.contains('invalid login credentials') ||
+        msg.contains('credenciales inválidas') ||
+        msg.contains('credenciales invalidas');
+  }
+
+  bool _isSystemError(String message) {
+    final msg = message.toLowerCase();
+
+    return msg.contains('network') ||
+        msg.contains('socket') ||
+        msg.contains('timeout') ||
+        msg.contains('internet') ||
+        msg.contains('conexión') ||
+        msg.contains('conexion') ||
+        msg.contains('servidor') ||
+        msg.contains('server') ||
+        msg.contains('inesperado') ||
+        msg.contains('unexpected') ||
+        msg.contains('rate limit') ||
+        msg.contains('429');
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailLoginCtrl.dispose();
@@ -74,6 +117,11 @@ class _LoginPageState extends State<LoginPage> {
 
     FocusScope.of(context).unfocus();
 
+    setState(() {
+      _showLoginError = true;
+      _isShowingRegister = false;
+    });
+
     context.read<AuthBloc>().add(
       LoginRequested(
         email: _emailLoginCtrl.text.trim(),
@@ -82,11 +130,70 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _goToRegister() {
+    context.read<AuthBloc>().add(const ClearAuthState());
+
+    setState(() {
+      _showLoginError = false;
+      _isShowingRegister = true;
+    });
+
+    cardKey.currentState?.toggleCard();
+  }
+
+  void _goToLoginFromRegister() {
+    context.read<AuthBloc>().add(const ClearAuthState());
+
+    registerCardKey.currentState?.cleanRegistry();
+
+    setState(() {
+      _showLoginError = false;
+      _isShowingRegister = false;
+    });
+
+    cardKey.currentState?.toggleCard();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
+          if (state is AuthError) {
+            final bool isLoginCredentialError =
+                !_isShowingRegister && _isCredentialError(state.message);
+
+            final bool shouldShowSnackBar =
+                _isShowingRegister ||
+                    _isSystemError(state.message) ||
+                    !isLoginCredentialError;
+
+            if (shouldShowSnackBar) {
+              _showErrorSnackBar(state.message);
+            }
+          }
+
+          if (state is AuthRegisterSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Registro exitoso. Revisa tu correo para confirmar tu cuenta',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            registerCardKey.currentState?.cleanRegistry();
+            context.read<AuthBloc>().add(const ClearAuthState());
+
+            setState(() {
+              _showLoginError = false;
+              _isShowingRegister = false;
+            });
+
+            cardKey.currentState?.toggleCard();
+          }
+
           if (state is AuthSuccess) {
             // Aquí va la redirección a la siguiente pantalla
             // Navigator.pushReplacementNamed(context, HomeScreen.routeName);
@@ -94,7 +201,12 @@ class _LoginPageState extends State<LoginPage> {
         },
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
-          final String? errorMessage = state is AuthError
+
+          final String? errorMessage =
+          state is AuthError &&
+              _showLoginError &&
+              !_isShowingRegister &&
+              _isCredentialError(state.message)
               ? state.message
               : null;
 
@@ -126,7 +238,34 @@ class _LoginPageState extends State<LoginPage> {
                     isLoading,
                     errorMessage,
                   ),
-                  back: const Icon(Icons.arrow_back),
+                  back: RegisterCard(
+                    key: registerCardKey,
+                    cardWidth: cardWidth,
+                    cardHeight: cardHeight,
+                    logoSize: logoSize,
+                    isLoading: isLoading,
+                    onBackToLogin: _goToLoginFromRegister,
+                    onRegisterRequested: ({
+                      required String name,
+                      required String email,
+                      required String phone,
+                      required String password,
+                    }) {
+                      setState(() {
+                        _showLoginError = false;
+                        _isShowingRegister = true;
+                      });
+
+                      context.read<AuthBloc>().add(
+                        RegisterRequested(
+                          name: name,
+                          email: email,
+                          phone: phone,
+                          password: password,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               );
             },
@@ -137,12 +276,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLogin(
-    double cardWidth,
-    double cardHeight,
-    double logoSize,
-    bool isLoading,
-    String? errorMessage,
-  ) {
+      double cardWidth,
+      double cardHeight,
+      double logoSize,
+      bool isLoading,
+      String? errorMessage,
+      ) {
     return Material(
       elevation: 15,
       borderRadius: BorderRadius.circular(20),
@@ -164,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                       child: Form(
                         key: _formKeyLogin,
                         child: Column(
@@ -177,7 +316,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 20),
-
                             if (errorMessage != null) ...[
                               Container(
                                 width: double.infinity,
@@ -216,7 +354,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               const SizedBox(height: 15),
                             ],
-
                             TextFormField(
                               controller: _emailLoginCtrl,
                               keyboardType: TextInputType.emailAddress,
@@ -225,24 +362,9 @@ class _LoginPageState extends State<LoginPage> {
                                 hint: 'Ingrese su email',
                                 icon: Icons.email_outlined,
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'El correo es obligatorio';
-                                }
-
-                                final emailRegex = RegExp(
-                                  r'^[^@]+@[^@]+\.[^@]+$',
-                                );
-                                if (!emailRegex.hasMatch(value.trim())) {
-                                  return 'Correo inválido';
-                                }
-
-                                return null;
-                              },
+                              validator: Validators.email,
                             ),
-
                             const SizedBox(height: 15),
-
                             TextFormField(
                               controller: _passLoginCtrl,
                               obscureText: _isPasswordHidden,
@@ -264,19 +386,9 @@ class _LoginPageState extends State<LoginPage> {
                                   },
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'La contraseña es obligatoria';
-                                }
-                                if (value.length < 6) {
-                                  return 'Mínimo 6 caracteres';
-                                }
-                                return null;
-                              },
+                              validator: Validators.password,
                             ),
-
                             const SizedBox(height: 20),
-
                             SizedBox(
                               width: 220,
                               height: 50,
@@ -291,26 +403,24 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 child: isLoading
                                     ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
                                     : const Text(
-                                        'Iniciar Sesión',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                  'Iniciar Sesión',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
-
                             const SizedBox(height: 12),
-
                             TextButton(
                               onPressed: () {
                                 // Luego aquí puedes conectar recover password
@@ -320,16 +430,12 @@ class _LoginPageState extends State<LoginPage> {
                                 style: TextStyle(color: Colors.grey),
                               ),
                             ),
-
                             const SizedBox(height: 10),
-
                             const Text(
                               'O iniciar sesión con:',
                               style: TextStyle(color: Colors.grey),
                             ),
-
                             const SizedBox(height: 12),
-
                             Row(
                               children: [
                                 Expanded(
@@ -381,9 +487,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 30),
-
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -392,16 +496,14 @@ class _LoginPageState extends State<LoginPage> {
                                   style: TextStyle(color: Colors.grey[700]),
                                 ),
                                 TextButton(
-                                  onPressed: () {
-                                    cardKey.currentState?.toggleCard();
-                                  },
+                                  onPressed: _goToRegister,
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 5,
                                     ),
                                     minimumSize: Size.zero,
                                     tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
+                                    MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: const Text(
                                     'Registrarse',
@@ -413,7 +515,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 10),
                           ],
                         ),

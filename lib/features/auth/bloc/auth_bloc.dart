@@ -13,9 +13,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogout);
     on<RegisterRequested>(_onRegister);
     on<RestoreSession>(_onRestoreSession);
+    on<ClearAuthState>(_onClearAuthState);
   }
 
-  Future<void> _onLogin(LoginRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogin(
+      LoginRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(const AuthLoading());
 
     final result = await repository.login(event.email, event.password);
@@ -26,7 +30,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-  Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogout(
+      LogoutRequested event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(const AuthLoading());
 
     final result = await repository.logout();
@@ -43,11 +50,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ) async {
     emit(const AuthLoading());
 
-    final result = await repository.register(event.email, event.password);
+    final result = await repository.register(
+      event.name,
+      event.email,
+      event.phone,
+      event.password,
+    );
 
     result.fold(
           (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(AuthSuccess(userId: user.id, role: user.role)),
+          (user) => emit(AuthRegisterSuccess(user.id)),
     );
   }
 
@@ -68,5 +80,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (_) {
       emit(const AuthInitial());
     }
+  }
+
+  Future<void> _onClearAuthState(
+      ClearAuthState event,
+      Emitter<AuthState> emit,
+      ) async {
+    emit(const AuthInitial());
   }
 }

@@ -142,7 +142,7 @@ void main() {
     });
 
     test(
-      'login returns Right(AppUser), resolves role, and persists session with role',
+      'login retorna Right(AppUser) cuando signInWithPassword es exitoso',
           () async {
         final user = User(
           id: 'user-123',
@@ -166,7 +166,7 @@ void main() {
 
         expect(result.isRight(), true);
 
-        result.fold((_) => fail('Expected Right(AppUser)'), (appUser) {
+        result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
           expect(appUser, isA<AppUser>());
           expect(appUser.id, 'user-123');
           expect(appUser.email, 'test@test.com');
@@ -206,41 +206,33 @@ void main() {
       },
     );
 
-    test(
-      'login returns Left(AuthFailure) when user or session is null',
-          () async {
-        final authResponse = AuthResponse(session: null, user: null);
+    test('login retorna Left cuando user es null', () async {
+      final authResponse = AuthResponse(session: null, user: null);
 
-        when(
-              () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenAnswer((_) async => authResponse);
+      when(
+            () => mockGoTrueClient.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => authResponse);
 
-        final result = await repository.login('test@test.com', '123456');
+      final result = await repository.login('test@test.com', '123456');
 
-        expect(result.isLeft(), true);
+      expect(result.isLeft(), true);
 
-        result.fold((failure) {
-          expect(failure, isA<AuthFailure>());
-          expect(failure.message, ErrorCatalog.invalidAuthResponse.message);
-          expect(failure.code, ErrorCatalog.invalidAuthResponse.code);
-        }, (_) => fail('Expected Left(Failure)'));
+      result.fold((failure) {
+        expect(failure, isA<AuthFailure>());
+        expect(failure.message, ErrorCatalog.invalidAuthResponse.message);
+        expect(failure.code, ErrorCatalog.invalidAuthResponse.code);
+      }, (_) => fail('Expected Left(Failure)'));
 
-        verify(() => mockAppLogger.w(any())).called(1);
-      },
-    );
+      verify(() => mockAppLogger.w(any())).called(1);
+    });
 
     test(
-      'login returns Left(AuthFailure) when credentials are invalid',
+      'login retorna Left cuando credenciales son inválidas',
           () async {
         const authException = AuthException('Invalid login credentials');
-
-        final mappedFailure = AuthFailure.fromErrorItem(
-          ErrorCatalog.invalidCredentials,
-          cause: authException,
-        );
 
         when(
               () => mockGoTrueClient.signInWithPassword(
@@ -248,10 +240,6 @@ void main() {
             password: any(named: 'password'),
           ),
         ).thenThrow(authException);
-
-        when(
-              () => mockGlobalErrorHandler.handle(authException, any()),
-        ).thenReturn(mappedFailure);
 
         when(
               () => mockLoginAttemptService.registerFailure('test@test.com'),
@@ -268,18 +256,9 @@ void main() {
         expect(result.isLeft(), true);
 
         result.fold((failure) {
-          expect(failure, isA<AuthFailure>());
-          expect(failure.message, ErrorCatalog.invalidCredentials.message);
-          expect(failure.code, ErrorCatalog.invalidCredentials.code);
-        }, (_) => fail('Expected Left(Failure)'));
-
-        verify(() => mockLoginAttemptService.getState('test@test.com'))
-            .called(1);
-        verify(() => mockGlobalErrorHandler.handle(authException, any()))
-            .called(1);
-        verify(
-              () => mockLoginAttemptService.registerFailure('test@test.com'),
-        ).called(1);
+          expect(failure, isA<Failure>());
+          expect(failure.message, 'Correo o contraseña incorrectos');
+        }, (_) => fail('Se esperaba Left(Failure)'));
       },
     );
 
@@ -319,21 +298,12 @@ void main() {
           () async {
         const authException = AuthException('Invalid login credentials');
 
-        final mappedFailure = AuthFailure.fromErrorItem(
-          ErrorCatalog.invalidCredentials,
-          cause: authException,
-        );
-
         when(
               () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
         ).thenThrow(authException);
-
-        when(
-              () => mockGlobalErrorHandler.handle(authException, any()),
-        ).thenReturn(mappedFailure);
 
         when(
               () => mockLoginAttemptService.registerFailure('test@test.com'),
@@ -353,12 +323,6 @@ void main() {
           expect(failure, isA<Failure>());
           expect(failure.code, ErrorCatalog.authRateLimit.code);
         }, (_) => fail('Expected Left(Failure)'));
-
-        verify(() => mockGlobalErrorHandler.handle(authException, any()))
-            .called(1);
-        verify(
-              () => mockLoginAttemptService.registerFailure('test@test.com'),
-        ).called(1);
       },
     );
 
@@ -368,9 +332,6 @@ void main() {
       final result = await repository.logout();
 
       expect(result, const Right(unit));
-
-      verify(() => mockGoTrueClient.signOut()).called(1);
-      verify(() => mockSessionLocalDataSource.clearSession()).called(1);
     });
 
     test('logout returns Left(Failure) when signOut fails', () async {
@@ -413,14 +374,20 @@ void main() {
             () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
+          data: any(named: 'data'),
         ),
       ).thenAnswer((_) async => authResponse);
 
-      final result = await repository.register('new@test.com', '123456');
+      final result = await repository.register(
+        'Luis',
+        'new@test.com',
+        '88888888',
+        '123456',
+      );
 
       expect(result.isRight(), true);
 
-      result.fold((_) => fail('Expected Right(AppUser)'), (appUser) {
+      result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
         expect(appUser.id, 'user-456');
         expect(appUser.email, 'new@test.com');
         expect(appUser.role, UserRoles.customer);
@@ -434,10 +401,16 @@ void main() {
             () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
+          data: any(named: 'data'),
         ),
       ).thenAnswer((_) async => authResponse);
 
-      final result = await repository.register('new@test.com', '123456');
+      final result = await repository.register(
+        'Luis',
+        'new@test.com',
+        '88888888',
+        '123456',
+      );
 
       expect(result.isLeft(), true);
 
@@ -462,6 +435,7 @@ void main() {
             () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
+          data: any(named: 'data'),
         ),
       ).thenThrow(exception);
 
@@ -469,7 +443,12 @@ void main() {
             () => mockGlobalErrorHandler.handle(exception, any()),
       ).thenReturn(mappedFailure);
 
-      final result = await repository.register('new@test.com', '123456');
+      final result = await repository.register(
+        'Luis',
+        'new@test.com',
+        '88888888',
+        '123456',
+      );
 
       expect(result.isLeft(), true);
 

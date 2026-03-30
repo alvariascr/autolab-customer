@@ -1,15 +1,15 @@
 import 'dart:convert';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
+import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
+import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../domain/constants/user_roles.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/failures/auth_rate_limit_failure.dart';
 import '../../repository/auth_repository.dart';
-import '../datasources/user_role_data_source.dart';
-import '../services/login_attempt_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient client;
@@ -25,16 +25,6 @@ class AuthRepositoryImpl implements AuthRepository {
       this.userRoleDataSource,
       this.loginAttemptService,
       );
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-
-    if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    }
-    return '${seconds}s';
-  }
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -65,7 +55,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = res.user;
       final session = res.session;
 
-      if (user == null || session == null) {
+      if (user == null) {
         globalErrorHandler.logger.w(
           '[${ErrorCatalog.invalidAuthResponse.code}] ${ErrorCatalog.invalidAuthResponse.message}',
         );
@@ -77,11 +67,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final role = await userRoleDataSource.getUserRole(user.id);
 
-      await sessionLocalDataSource.saveAccessToken(session.accessToken);
+      if (session != null) {
+        await sessionLocalDataSource.saveAccessToken(session.accessToken);
 
-      final refreshToken = session.refreshToken;
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        await sessionLocalDataSource.saveRefreshToken(refreshToken);
+        final refreshToken = session.refreshToken;
+        if (refreshToken!.isNotEmpty) {
+          await sessionLocalDataSource.saveRefreshToken(refreshToken!);
+        }
       }
 
       final sessionJson = jsonEncode({
@@ -100,12 +92,10 @@ class AuthRepositoryImpl implements AuthRepository {
           role: role,
         ),
       );
-    } on AuthFailure catch (failure) {
-      return Left(failure);
-    } catch (e, st) {
-      final failure = globalErrorHandler.handle(e, st);
+    } on AuthException catch (e, st) {
+      final msg = e.message.toLowerCase();
 
-      if (failure.code == ErrorCatalog.invalidCredentials.code) {
+      if (msg.contains('invalid login credentials')) {
         final updatedState = await loginAttemptService.registerFailure(
           cleanEmail,
         );
@@ -119,26 +109,112 @@ class AuthRepositoryImpl implements AuthRepository {
               code: ErrorCatalog.authRateLimit.code,
               message:
               '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
-              cause: failure.cause ?? e,
-              stackTrace: failure.stackTrace ?? st,
+              cause: e,
+              stackTrace: st,
             ),
           );
         }
+
+        globalErrorHandler.logger.w(
+          'Intento de login con credenciales inválidas',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(message: 'Correo o contraseña incorrectos'),
+        );
       }
 
+      if (msg.contains('email not confirmed')) {
+        globalErrorHandler.logger.w(
+          'Intento de login con correo no confirmado',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(
+            message: 'Debes confirmar tu correo antes de iniciar sesión',
+          ),
+        );
+      }
+
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
+    } on AuthFailure catch (failure) {
+      return Left(failure);
+    } catch (e, st) {
+      final failure = globalErrorHandler.handle(e, st);
       return Left(failure);
     }
   }
 
   @override
   Future<Either<Failure, AppUser>> register(
+      String name,
       String email,
+      String phone,
       String password,
       ) async {
     try {
+      final cleanName = name.trim();
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPhone = phone.trim();
+      final cleanPassword = password.trim();
+
+      // Verificar si la cuenta ya existe antes de registrar
+      try {
+        final loginRes = await client.auth.signInWithPassword(
+          email: cleanEmail,
+          password: cleanPassword,
+        );
+
+        if (loginRes.user != null) {
+          // Cerramos sesión por si Supabase autenticó al usuario
+          await client.auth.signOut();
+
+          globalErrorHandler.logger.w(
+            'Intento de registro con cuenta ya existente',
+          );
+
+          return const Left(
+            AuthFailure(message: 'Esta cuenta ya existe. Inicia sesión'),
+          );
+        }
+      } on AuthException catch (e, st) {
+        final msg = e.message.toLowerCase();
+
+        if (msg.contains('email not confirmed')) {
+          globalErrorHandler.logger.w(
+            'Intento de registro con cuenta existente no confirmada',
+            error: e,
+            stackTrace: st,
+          );
+
+          return const Left(
+            AuthFailure(
+              message: 'Esta cuenta ya existe, pero debes confirmar tu correo',
+            ),
+          );
+        }
+
+        if (msg.contains('invalid login credentials')) {
+          // Este caso nos sirve para continuar con el registro
+        } else {
+          final failure = globalErrorHandler.handle(e, st);
+          return Left(failure);
+        }
+      }
+
       final res = await client.auth.signUp(
-        email: email.trim().toLowerCase(),
-        password: password,
+        email: cleanEmail,
+        password: cleanPassword,
+        data: {
+          'name': cleanName,
+          'phone': cleanPhone,
+          'role': UserRoles.customer,
+        },
       );
 
       final user = res.user;
@@ -159,6 +235,23 @@ class AuthRepositoryImpl implements AuthRepository {
           role: UserRoles.customer,
         ),
       );
+    } on AuthException catch (e, st) {
+      final msg = e.message.toLowerCase();
+
+      if (msg.contains('already registered')) {
+        globalErrorHandler.logger.w(
+          'Intento de registro con correo ya existente',
+          error: e,
+          stackTrace: st,
+        );
+
+        return const Left(
+          AuthFailure(message: 'Este correo ya se encuentra registrado'),
+        );
+      }
+
+      final failure = globalErrorHandler.handle(e, st);
+      return Left(failure);
     } on AuthFailure catch (failure) {
       return Left(failure);
     } catch (e, st) {
@@ -166,12 +259,10 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(failure);
     }
   }
-
   @override
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
-      await sessionLocalDataSource.clearSession();
       return const Right(unit);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);
@@ -252,5 +343,15 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     return null;
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+
+    if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    }
+    return '${seconds}s';
   }
 }
