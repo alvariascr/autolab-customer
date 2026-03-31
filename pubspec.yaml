@@ -28,7 +28,7 @@ dependencies:
 
   # Foundation package
   autolab_core:
-    path: ../autolab-core
+    path: ../autolab_core
 
   # Navigation
   go_router: ^14.2.7
@@ -37,7 +37,7 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # Dependency Injection
-  get_it: ^8.0.3
+  get_it: ^9.2.1
 
   # Value equality (recomendado para estados/entidades)
   equatable: ^2.0.5
@@ -54,5 +54,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/real/
     - assets/images/virtual/
