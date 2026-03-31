@@ -72,7 +72,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
         final refreshToken = session.refreshToken;
         if (refreshToken!.isNotEmpty) {
-          await sessionLocalDataSource.saveRefreshToken(refreshToken!);
+          await sessionLocalDataSource.saveRefreshToken(refreshToken);
         }
       }
 
