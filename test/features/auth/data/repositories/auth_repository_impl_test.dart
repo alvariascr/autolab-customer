@@ -371,6 +371,13 @@ void main() {
       final authResponse = AuthResponse(session: null, user: user);
 
       when(
+            () => mockGoTrueClient.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthException('Invalid login credentials'));
+
+      when(
             () => mockGoTrueClient.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
@@ -392,10 +399,36 @@ void main() {
         expect(appUser.email, 'new@test.com');
         expect(appUser.role, UserRoles.customer);
       });
+
+      verify(
+            () => mockGoTrueClient.signInWithPassword(
+          email: 'new@test.com',
+          password: '123456',
+        ),
+      ).called(1);
+
+      verify(
+            () => mockGoTrueClient.signUp(
+          email: 'new@test.com',
+          password: '123456',
+          data: {
+            'name': 'Luis',
+            'phone': '88888888',
+            'role': UserRoles.customer,
+          },
+        ),
+      ).called(1);
     });
 
     test('register returns Left(AuthFailure) when user is null', () async {
       final authResponse = AuthResponse(session: null, user: null);
+
+      when(
+            () => mockGoTrueClient.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthException('Invalid login credentials'));
 
       when(
             () => mockGoTrueClient.signUp(
@@ -420,6 +453,25 @@ void main() {
         expect(failure.code, ErrorCatalog.invalidRegisterResponse.code);
       }, (_) => fail('Expected Left(Failure)'));
 
+      verify(
+            () => mockGoTrueClient.signInWithPassword(
+          email: 'new@test.com',
+          password: '123456',
+        ),
+      ).called(1);
+
+      verify(
+            () => mockGoTrueClient.signUp(
+          email: 'new@test.com',
+          password: '123456',
+          data: {
+            'name': 'Luis',
+            'phone': '88888888',
+            'role': UserRoles.customer,
+          },
+        ),
+      ).called(1);
+
       verify(() => mockAppLogger.w(any())).called(1);
     });
 
@@ -430,6 +482,13 @@ void main() {
         code: ErrorCatalog.unknownError.code,
         cause: exception,
       );
+
+      when(
+            () => mockGoTrueClient.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(const AuthException('Invalid login credentials'));
 
       when(
             () => mockGoTrueClient.signUp(
@@ -455,6 +514,25 @@ void main() {
       result.fold((failure) {
         expect(failure, mappedFailure);
       }, (_) => fail('Expected Left(Failure)'));
+
+      verify(
+            () => mockGoTrueClient.signInWithPassword(
+          email: 'new@test.com',
+          password: '123456',
+        ),
+      ).called(1);
+
+      verify(
+            () => mockGoTrueClient.signUp(
+          email: 'new@test.com',
+          password: '123456',
+          data: {
+            'name': 'Luis',
+            'phone': '88888888',
+            'role': UserRoles.customer,
+          },
+        ),
+      ).called(1);
 
       verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
     });
