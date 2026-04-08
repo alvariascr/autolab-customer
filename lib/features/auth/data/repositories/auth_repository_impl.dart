@@ -38,12 +38,7 @@ class AuthRepositoryImpl implements AuthRepository {
         final remaining = attemptState.remainingTime;
 
         return Left(
-          AuthRateLimitFailure(
-            remaining: remaining,
-            code: ErrorCatalog.authRateLimit.code,
-            message:
-            '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
-          ),
+          _createAuthRateLimitFailure(remaining),
         );
       }
 
@@ -68,30 +63,17 @@ class AuthRepositoryImpl implements AuthRepository {
       final role = await userRoleDataSource.getUserRole(user.id);
 
       if (session != null) {
-        await sessionLocalDataSource.saveAccessToken(session.accessToken);
-
-        final refreshToken = session.refreshToken;
-        if (refreshToken != null && refreshToken.isNotEmpty) {
-          await sessionLocalDataSource.saveRefreshToken(refreshToken);
-        }
+        await _persistSessionTokens(session);
       }
 
-      final sessionJson = jsonEncode({
-        'id': user.id,
-        'email': user.email,
-        'role': role,
-      });
-
-      await sessionLocalDataSource.saveUserSession(sessionJson);
+      await _saveUserSession(
+        id: user.id,
+        email: user.email,
+        role: role,
+      );
       await loginAttemptService.registerSuccess(cleanEmail);
 
-      return Right(
-        AppUser(
-          id: user.id,
-          email: user.email,
-          role: role,
-        ),
-      );
+      return Right(_buildAppUser(id: user.id, email: user.email, role: role));
     } on AuthException catch (e, st) {
       final msg = e.message.toLowerCase();
 
@@ -104,11 +86,8 @@ class AuthRepositoryImpl implements AuthRepository {
           final remaining = updatedState.remainingTime;
 
           return Left(
-            AuthRateLimitFailure(
-              remaining: remaining,
-              code: ErrorCatalog.authRateLimit.code,
-              message:
-              '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
+            _createAuthRateLimitFailure(
+              remaining,
               cause: e,
               stackTrace: st,
             ),
@@ -116,26 +95,32 @@ class AuthRepositoryImpl implements AuthRepository {
         }
 
         globalErrorHandler.logger.w(
-          'Intento de login con credenciales inválidas',
+          '[${ErrorCatalog.invalidCredentials.code}] ${ErrorCatalog.invalidCredentials.message}',
           error: e,
           stackTrace: st,
         );
 
-        return const Left(
-          AuthFailure(message: 'Correo o contraseña incorrectos'),
+        return Left(
+          AuthFailure.fromErrorItem(
+            ErrorCatalog.invalidCredentials,
+            cause: e,
+            stackTrace: st,
+          ),
         );
       }
 
       if (msg.contains('email not confirmed')) {
         globalErrorHandler.logger.w(
-          'Intento de login con correo no confirmado',
+          '[${ErrorCatalog.unconfirmedEmail.code}] ${ErrorCatalog.unconfirmedEmail.message}',
           error: e,
           stackTrace: st,
         );
 
-        return const Left(
-          AuthFailure(
-            message: 'Debes confirmar tu correo antes de iniciar sesión',
+        return Left(
+          AuthFailure.fromErrorItem(
+            ErrorCatalog.unconfirmedEmail,
+            cause: e,
+            stackTrace: st,
           ),
         );
       }
@@ -175,11 +160,11 @@ class AuthRepositoryImpl implements AuthRepository {
           await client.auth.signOut();
 
           globalErrorHandler.logger.w(
-            'Intento de registro con cuenta ya existente',
+            '[${ErrorCatalog.accountAlreadyExists.code}] ${ErrorCatalog.accountAlreadyExists.message}',
           );
 
-          return const Left(
-            AuthFailure(message: 'Esta cuenta ya existe. Inicia sesión'),
+          return Left(
+            AuthFailure.fromErrorItem(ErrorCatalog.accountAlreadyExists),
           );
         }
       } on AuthException catch (e, st) {
@@ -187,14 +172,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
         if (msg.contains('email not confirmed')) {
           globalErrorHandler.logger.w(
-            'Intento de registro con cuenta existente no confirmada',
+            '[${ErrorCatalog.emailNotConfirmedRegister.code}] ${ErrorCatalog.emailNotConfirmedRegister.message}',
             error: e,
             stackTrace: st,
           );
 
-          return const Left(
-            AuthFailure(
-              message: 'Esta cuenta ya existe, pero debes confirmar tu correo',
+          return Left(
+            AuthFailure.fromErrorItem(
+              ErrorCatalog.emailNotConfirmedRegister,
+              cause: e,
+              stackTrace: st,
             ),
           );
         }
@@ -229,7 +216,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Right(
-        AppUser(
+        _buildAppUser(
           id: user.id,
           email: user.email,
           role: UserRoles.customer,
@@ -240,13 +227,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (msg.contains('already registered')) {
         globalErrorHandler.logger.w(
-          'Intento de registro con correo ya existente',
+          '[${ErrorCatalog.emailAlreadyRegistered.code}] ${ErrorCatalog.emailAlreadyRegistered.message}',
           error: e,
           stackTrace: st,
         );
 
-        return const Left(
-          AuthFailure(message: 'Este correo ya se encuentra registrado'),
+        return Left(
+          AuthFailure.fromErrorItem(
+            ErrorCatalog.emailAlreadyRegistered,
+            cause: e,
+            stackTrace: st,
+          ),
         );
       }
 
@@ -277,18 +268,15 @@ class AuthRepositoryImpl implements AuthRepository {
     if (supabaseUser != null) {
       try {
         final role = await userRoleDataSource.getUserRole(supabaseUser.id);
-
-        final sessionJson = jsonEncode({
-          'id': supabaseUser.id,
-          'email': supabaseUser.email,
-          'role': role,
-        });
-
-        await sessionLocalDataSource.saveUserSession(sessionJson);
+        await _saveUserSession(
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          role: role,
+        );
 
         globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
 
-        return AppUser(
+        return _buildAppUser(
           id: supabaseUser.id,
           email: supabaseUser.email,
           role: role,
@@ -328,7 +316,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final role = map['role'] as String?;
 
       if (role != null && UserRoles.isValid(role)) {
-        return AppUser(
+        return _buildAppUser(
           id: map['id'] as String,
           email: map['email'] as String?,
           role: role,
@@ -353,5 +341,55 @@ class AuthRepositoryImpl implements AuthRepository {
       return '${minutes}m ${seconds}s';
     }
     return '${seconds}s';
+  }
+
+  Future<void> _persistSessionTokens(Session session) async {
+    await sessionLocalDataSource.saveAccessToken(session.accessToken);
+
+    final refreshToken = session.refreshToken;
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await sessionLocalDataSource.saveRefreshToken(refreshToken);
+    }
+  }
+
+  Future<void> _saveUserSession({
+    required String id,
+    required String? email,
+    required String role,
+  }) {
+    final sessionJson = jsonEncode({
+      'id': id,
+      'email': email,
+      'role': role,
+    });
+
+    return sessionLocalDataSource.saveUserSession(sessionJson);
+  }
+
+  AppUser _buildAppUser({
+    required String id,
+    required String? email,
+    required String role,
+  }) {
+    return AppUser(
+      id: id,
+      email: email,
+      role: role,
+    );
+  }
+
+  AuthRateLimitFailure _createAuthRateLimitFailure(
+    Duration remaining, {
+    Object? cause,
+    StackTrace? stackTrace,
+  }) {
+    return AuthRateLimitFailure(
+      remaining: remaining,
+      code: ErrorCatalog.authRateLimit.code,
+      message:
+          '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
+      cause: cause,
+      stackTrace: stackTrace,
+    );
   }
 }

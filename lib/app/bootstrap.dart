@@ -11,33 +11,43 @@ import '../features/auth/bloc/auth_event.dart';
 import 'app.dart';
 
 Future<void> bootstrap() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  final config = AutolabCoreBootstrap.loadConfig();
-
-  await Supabase.initialize(
-    url: config.supabaseUrl.toString(),
-    anonKey: config.supabaseAnonKey,
-  );
-
-  await di.init(config: config);
-
-  CoreDI.get<GlobalErrorHandler>().registerFlutterHandlers();
-
-  final authBloc = di.sl<AuthBloc>()..add(const RestoreSession());
-  final router = AppRouter(authBloc).router;
+  final completer = Completer<void>();
 
   runZonedGuarded(
-        () {
-      runApp(
-        MyApp(
-          authBloc: authBloc,
-          router: router,
-        ),
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      final config = AutolabCoreBootstrap.loadConfig();
+
+      await Supabase.initialize(
+        url: config.supabaseUrl.toString(),
+        anonKey: config.supabaseAnonKey,
       );
+
+      await di.init(config: config);
+
+      final authBloc = di.sl<AuthBloc>()..add(const RestoreSession());
+      final router = AppRouter(authBloc).router;
+
+      runApp(MyApp(authBloc: authBloc, router: router));
+
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
     },
-        (error, stackTrace) {
-      CoreDI.get<GlobalErrorHandler>().handle(error, stackTrace);
+    (error, stackTrace) {
+      if (CoreDI.instance.isRegistered<GlobalErrorHandler>()) {
+        CoreDI.get<GlobalErrorHandler>().handle(error, stackTrace);
+      } else {
+        debugPrint('[bootstrap] error antes de DI: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+
+      if (!completer.isCompleted) {
+        completer.completeError(error, stackTrace);
+      }
     },
   );
+
+  await completer.future;
 }

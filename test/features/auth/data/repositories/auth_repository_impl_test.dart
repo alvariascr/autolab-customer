@@ -259,7 +259,8 @@ void main() {
 
           result.fold((failure) {
             expect(failure, isA<Failure>());
-            expect(failure.message, 'Correo o contraseña incorrectos');
+            expect(failure.message, ErrorCatalog.invalidCredentials.message);
+            expect(failure.code, ErrorCatalog.invalidCredentials.code);
           }, (_) => fail('Se esperaba Left(Failure)'));
         },
       );
@@ -278,7 +279,10 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('confirmar tu correo')),
+              (failure) {
+            expect(failure.message, ErrorCatalog.unconfirmedEmail.message);
+            expect(failure.code, ErrorCatalog.unconfirmedEmail.code);
+          },
               (_) => fail('Debería ser Left'),
         );
         verify(() => mockAppLogger.w(any(), error: authException, stackTrace: any(named: 'stackTrace'))).called(1);
@@ -475,7 +479,10 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('cuenta ya existe')),
+              (failure) {
+            expect(failure.message, ErrorCatalog.accountAlreadyExists.message);
+            expect(failure.code, ErrorCatalog.accountAlreadyExists.code);
+          },
               (_) => fail('Debería ser Left'),
         );
         verify(() => mockGoTrueClient.signOut()).called(1);
@@ -500,7 +507,16 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('ya existe, pero debes confirmar')),
+              (failure) {
+            expect(
+              failure.message,
+              ErrorCatalog.emailNotConfirmedRegister.message,
+            );
+            expect(
+              failure.code,
+              ErrorCatalog.emailNotConfirmedRegister.code,
+            );
+          },
               (_) => fail('Debería ser Left'),
         );
       });
@@ -568,7 +584,16 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('correo ya se encuentra registrado')),
+              (failure) {
+            expect(
+              failure.message,
+              ErrorCatalog.emailAlreadyRegistered.message,
+            );
+            expect(
+              failure.code,
+              ErrorCatalog.emailAlreadyRegistered.code,
+            );
+          },
               (_) => fail('Debería ser Left'),
         );
       });
