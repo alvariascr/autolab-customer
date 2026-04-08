@@ -16,38 +16,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ClearAuthState>(_onClearAuthState);
   }
 
-  Future<void> _onLogin(
-      LoginRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+  Future<void> _onLogin(LoginRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading());
 
     final result = await repository.login(event.email, event.password);
 
     result.fold(
-          (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(AuthSuccess(userId: user.id, role: user.role)),
+      (Failure failure) => emit(AuthError(failure.message, code: failure.code)),
+      (user) => emit(AuthSuccess(userId: user.id, role: user.role)),
     );
   }
 
-  Future<void> _onLogout(
-      LogoutRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+  Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading());
 
     final result = await repository.logout();
 
     result.fold(
-          (Failure failure) => emit(AuthError(failure.message)),
-          (_) => emit(const AuthInitial()),
+      (Failure failure) => emit(AuthError(failure.message, code: failure.code)),
+      (_) => emit(const AuthInitial()),
     );
   }
 
   Future<void> _onRegister(
-      RegisterRequested event,
-      Emitter<AuthState> emit,
-      ) async {
+    RegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoading());
 
     final result = await repository.register(
@@ -58,15 +52,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     result.fold(
-          (Failure failure) => emit(AuthError(failure.message)),
-          (user) => emit(AuthRegisterSuccess(user.id)),
+      (Failure failure) => emit(AuthError(failure.message, code: failure.code)),
+      (user) => emit(AuthRegisterSuccess(user.id)),
     );
   }
 
   Future<void> _onRestoreSession(
-      RestoreSession event,
-      Emitter<AuthState> emit,
-      ) async {
+    RestoreSession event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthLoading());
 
     try {
@@ -83,9 +77,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onClearAuthState(
-      ClearAuthState event,
-      Emitter<AuthState> emit,
-      ) async {
+    ClearAuthState event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(const AuthInitial());
   }
 }
