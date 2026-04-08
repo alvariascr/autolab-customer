@@ -254,6 +254,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
+      await sessionLocalDataSource.clearSession();
       return const Right(unit);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);
@@ -266,46 +267,99 @@ class AuthRepositoryImpl implements AuthRepository {
     final supabaseUser = client.auth.currentUser;
 
     if (supabaseUser != null) {
-      try {
-        final role = await userRoleDataSource.getUserRole(supabaseUser.id);
-        await _saveUserSession(
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-          role: role,
-        );
+      return _restoreUserFromSupabase(supabaseUser);
+    }
 
-        globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
-
-        return _buildAppUser(
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-          role: role,
-        );
-      } catch (e, st) {
-        final localSession = await _recoverUserFromLocal();
-
-        if (localSession != null && localSession.id == supabaseUser.id) {
-          globalErrorHandler.logger.i(
-            'Sesión recuperada desde almacenamiento local por fallo de red',
-          );
-          return localSession;
-        }
-
-        globalErrorHandler.logger.e(
-          '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        return null;
-      }
+    final restoredUser = await _restoreSupabaseSessionFromLocalTokens();
+    if (restoredUser != null) {
+      return restoredUser;
     }
 
     return _recoverUserFromLocal();
   }
 
+  Future<AppUser?> _restoreUserFromSupabase(User supabaseUser) async {
+    try {
+      final role = await userRoleDataSource.getUserRole(supabaseUser.id);
+      await _saveUserSession(
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        role: role,
+      );
+
+      globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
+
+      return _buildAppUser(
+        id: supabaseUser.id,
+        email: supabaseUser.email,
+        role: role,
+      );
+    } catch (e, st) {
+      final localSession = await _recoverUserFromLocal();
+
+      if (localSession != null && localSession.id == supabaseUser.id) {
+        globalErrorHandler.logger.i(
+          'Sesión recuperada desde almacenamiento local por fallo de red',
+        );
+        return localSession;
+      }
+
+      globalErrorHandler.logger.e(
+        '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
+        error: e,
+        stackTrace: st,
+      );
+
+      return null;
+    }
+  }
+
+  Future<AppUser?> _restoreSupabaseSessionFromLocalTokens() async {
+    try {
+      final refreshToken = await sessionLocalDataSource.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        return null;
+      }
+
+      final response = await client.auth.setSession(refreshToken);
+      final session = response.session;
+      final user = response.user;
+
+      if (session == null || user == null) {
+        return null;
+      }
+
+      await _persistSessionTokens(session);
+      return _restoreUserFromSupabase(user);
+    } on AuthException catch (e, st) {
+      globalErrorHandler.logger.w(
+        '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    } catch (e, st) {
+      globalErrorHandler.logger.w(
+        '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    }
+  }
+
   Future<AppUser?> _recoverUserFromLocal() async {
-    final sessionJson = await sessionLocalDataSource.getUserSession();
+    String? sessionJson;
+    try {
+      sessionJson = await sessionLocalDataSource.getUserSession();
+    } catch (e, st) {
+      globalErrorHandler.logger.w(
+        '[${ErrorCatalog.localSessionRecoveryFailed.code}] ${ErrorCatalog.localSessionRecoveryFailed.message}',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    }
 
     if (sessionJson == null || sessionJson.isEmpty) {
       return null;
