@@ -1,5 +1,4 @@
 import 'package:flip_card/flip_card.dart';
-import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -68,17 +67,12 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  bool _isCredentialErrorCode(String? code) {
-    return code == ErrorCatalog.invalidCredentials.code ||
-        code == ErrorCatalog.unconfirmedEmail.code;
-  }
-
   bool _shouldShowInlineLoginError(AuthError state) {
     if (_isShowingRegister) {
       return false;
     }
 
-    return _isCredentialErrorCode(state.code);
+    return _showLoginError;
   }
 
   void _showErrorSnackBar(String message) {
