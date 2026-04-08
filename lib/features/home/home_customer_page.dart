@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/location/location_permission_gate.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
 
@@ -82,101 +83,97 @@ class HomeCustomerPage extends StatelessWidget {
       ),
     ];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F4EF),
-      appBar: AppBar(
+    return LocationPermissionGate(
+      child: Scaffold(
         backgroundColor: const Color(0xFFF8F4EF),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        titleSpacing: 20,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
-              'Autolab Repuestos',
-              style: TextStyle(
-                color: Color(0xFF181411),
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF8F4EF),
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          titleSpacing: 20,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Autolab Repuestos',
+                style: TextStyle(
+                  color: Color(0xFF181411),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                ),
               ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              'Compra repuestos compatibles y agenda instalación.',
-              style: TextStyle(
-                color: Color(0xFF6B5F57),
-                fontSize: 12,
+              SizedBox(height: 2),
+              Text(
+                'Compra repuestos compatibles y agenda instalación.',
+                style: TextStyle(color: Color(0xFF6B5F57), fontSize: 12),
               ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              onPressed: () {
+                context.read<AuthBloc>().add(const LogoutRequested());
+              },
+              icon: const Icon(Icons.logout, color: Color(0xFF181411)),
             ),
+            const SizedBox(width: 8),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Cerrar sesión',
-            onPressed: () {
-              context.read<AuthBloc>().add(const LogoutRequested());
-            },
-            icon: const Icon(Icons.logout, color: Color(0xFF181411)),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MarketplaceHero(categories: categories),
-                  const SizedBox(height: 24),
-                  _SectionHeader(
-                    title: 'Repuestos para tu vehículo',
-                    subtitle:
-                        'Sugerencias pensadas para el carro que tienes registrado.',
-                  ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: recommendedParts
-                        .map((part) => _PartCard(data: part))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 28),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth >= 980;
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _MarketplaceHero(categories: categories),
+                    const SizedBox(height: 24),
+                    _SectionHeader(
+                      title: 'Repuestos para tu vehículo',
+                      subtitle:
+                          'Sugerencias pensadas para el carro que tienes registrado.',
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: recommendedParts
+                          .map((part) => _PartCard(data: part))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 28),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 980;
 
-                      if (!isWide) {
-                        return Column(
+                        if (!isWide) {
+                          return Column(
+                            children: [
+                              _QuickDealsSection(items: fastDeals),
+                              const SizedBox(height: 20),
+                              const _CartSummaryCard(),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _QuickDealsSection(items: fastDeals),
-                            const SizedBox(height: 20),
-                            const _CartSummaryCard(),
+                            Expanded(
+                              flex: 3,
+                              child: _QuickDealsSection(items: fastDeals),
+                            ),
+                            const SizedBox(width: 20),
+                            const Expanded(flex: 2, child: _CartSummaryCard()),
                           ],
                         );
-                      }
-
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: _QuickDealsSection(items: fastDeals),
-                          ),
-                          const SizedBox(width: 20),
-                          const Expanded(
-                            flex: 2,
-                            child: _CartSummaryCard(),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -260,10 +257,7 @@ class _MarketplaceHero extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Buscar por repuesto, marca o placa del vehículo',
-                    style: TextStyle(
-                      color: Color(0xFF7B6F67),
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: Color(0xFF7B6F67), fontSize: 15),
                   ),
                 ),
                 SizedBox(width: 12),
@@ -330,10 +324,7 @@ class _SearchVehicleButton extends StatelessWidget {
       ),
       child: const Text(
         'Mi vehículo',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -401,10 +392,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: const TextStyle(
-            color: Color(0xFF6B5F57),
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: Color(0xFF6B5F57), fontSize: 14),
         ),
       ],
     );
@@ -431,7 +419,9 @@ class _PartCard extends StatelessWidget {
           Container(
             height: 170,
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               gradient: LinearGradient(
                 colors: [
                   data.accent.withValues(alpha: 0.96),
@@ -688,10 +678,7 @@ class _CartSummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             '2 repuestos y 1 instalación sugerida.',
-            style: TextStyle(
-              color: Color(0xFFD6CCC3),
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Color(0xFFD6CCC3), fontSize: 14),
           ),
           const SizedBox(height: 22),
           const _CartLine(label: 'Subtotal', value: '₡83,400'),
@@ -700,11 +687,7 @@ class _CartSummaryCard extends StatelessWidget {
           const SizedBox(height: 10),
           const _CartLine(label: 'Envío', value: 'Gratis'),
           const Divider(color: Color(0x33FFFFFF), height: 28),
-          const _CartLine(
-            label: 'Total',
-            value: '₡101,400',
-            emphasized: true,
-          ),
+          const _CartLine(label: 'Total', value: '₡101,400', emphasized: true),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(14),
