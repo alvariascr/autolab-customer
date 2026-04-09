@@ -107,6 +107,9 @@ void main() {
       when(
             () => mockSessionLocalDataSource.getUserSession(),
       ).thenAnswer((_) async => null);
+      when(
+            () => mockSessionLocalDataSource.getRefreshToken(),
+      ).thenAnswer((_) async => null);
 
       when(
             () => mockUserRoleDataSource.getUserRole(any()),
@@ -259,7 +262,8 @@ void main() {
 
           result.fold((failure) {
             expect(failure, isA<Failure>());
-            expect(failure.message, 'Correo o contraseña incorrectos');
+            expect(failure.message, ErrorCatalog.invalidCredentials.message);
+            expect(failure.code, ErrorCatalog.invalidCredentials.code);
           }, (_) => fail('Se esperaba Left(Failure)'));
         },
       );
@@ -278,7 +282,10 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('confirmar tu correo')),
+              (failure) {
+            expect(failure.message, ErrorCatalog.unconfirmedEmail.message);
+            expect(failure.code, ErrorCatalog.unconfirmedEmail.code);
+          },
               (_) => fail('Debería ser Left'),
         );
         verify(() => mockAppLogger.w(any(), error: authException, stackTrace: any(named: 'stackTrace'))).called(1);
@@ -356,6 +363,7 @@ void main() {
         final result = await repository.logout();
 
         expect(result, const Right(unit));
+        verify(() => mockSessionLocalDataSource.clearSession()).called(1);
       });
 
       test('returns Left(Failure) when signOut fails', () async {
@@ -475,7 +483,10 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('cuenta ya existe')),
+              (failure) {
+            expect(failure.message, ErrorCatalog.accountAlreadyExists.message);
+            expect(failure.code, ErrorCatalog.accountAlreadyExists.code);
+          },
               (_) => fail('Debería ser Left'),
         );
         verify(() => mockGoTrueClient.signOut()).called(1);
@@ -500,7 +511,16 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('ya existe, pero debes confirmar')),
+              (failure) {
+            expect(
+              failure.message,
+              ErrorCatalog.emailNotConfirmedRegister.message,
+            );
+            expect(
+              failure.code,
+              ErrorCatalog.emailNotConfirmedRegister.code,
+            );
+          },
               (_) => fail('Debería ser Left'),
         );
       });
@@ -568,7 +588,16 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold(
-              (failure) => expect(failure.message, contains('correo ya se encuentra registrado')),
+              (failure) {
+            expect(
+              failure.message,
+              ErrorCatalog.emailAlreadyRegistered.message,
+            );
+            expect(
+              failure.code,
+              ErrorCatalog.emailAlreadyRegistered.code,
+            );
+          },
               (_) => fail('Debería ser Left'),
         );
       });
@@ -684,6 +713,48 @@ void main() {
           expect(result.role, UserRoles.customer);
 
           verify(() => mockAppLogger.i(any())).called(greaterThanOrEqualTo(1));
+        },
+      );
+
+      test(
+        'restores session from refresh token when currentUser is null',
+            () async {
+          final user = User(
+            id: 'user-123',
+            appMetadata: const {},
+            userMetadata: const {},
+            aud: 'authenticated',
+            createdAt: DateTime.now().toIso8601String(),
+            email: 'test@test.com',
+          );
+
+          when(() => mockGoTrueClient.currentUser).thenReturn(null);
+          when(
+                () => mockSessionLocalDataSource.getRefreshToken(),
+          ).thenAnswer((_) async => 'refresh-token-123');
+          when(
+                () => mockGoTrueClient.setSession('refresh-token-123'),
+          ).thenAnswer((_) async => AuthResponse(session: mockSession, user: user));
+          when(
+                () => mockUserRoleDataSource.getUserRole('user-123'),
+          ).thenAnswer((_) async => UserRoles.customer);
+
+          final result = await repository.getCurrentUser();
+
+          expect(result, isNotNull);
+          expect(result!.id, 'user-123');
+          expect(result.email, 'test@test.com');
+          expect(result.role, UserRoles.customer);
+
+          verify(() => mockGoTrueClient.setSession('refresh-token-123')).called(1);
+          verify(
+                () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+          ).called(1);
+          verify(
+                () => mockSessionLocalDataSource.saveRefreshToken(
+              'refresh-token-123',
+            ),
+          ).called(1);
         },
       );
 

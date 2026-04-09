@@ -1,6 +1,7 @@
 import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/errors/customer_error_catalog.dart';
 import '../../../core/utils/validators.dart';
 
 class RegisterCard extends StatefulWidget {
@@ -10,11 +11,12 @@ class RegisterCard extends StatefulWidget {
   final bool isLoading;
   final VoidCallback onBackToLogin;
   final Function({
-  required String name,
-  required String email,
-  required String phone,
-  required String password,
-  }) onRegisterRequested;
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+  })
+  onRegisterRequested;
 
   const RegisterCard({
     super.key,
@@ -86,9 +88,7 @@ class RegisterCardState extends State<RegisterCard> {
 
     if (!_acceptsTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debes aceptar términos y condiciones'),
-        ),
+        SnackBar(content: Text(CustomerErrorCatalog.termsRequired.message)),
       );
       return;
     }
@@ -151,7 +151,7 @@ class RegisterCardState extends State<RegisterCard> {
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       child: Form(
                         key: _formKeyRegister,
                         child: Column(
@@ -237,7 +237,7 @@ class RegisterCardState extends State<RegisterCard> {
                                   onPressed: () {
                                     setState(() {
                                       _isConfrimPasswordVisible =
-                                      !_isConfrimPasswordVisible;
+                                          !_isConfrimPasswordVisible;
                                     });
                                   },
                                 ),
@@ -266,8 +266,7 @@ class RegisterCardState extends State<RegisterCard> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) =>
-                                              const TermsPage(),
+                                              builder: (_) => const TermsPage(),
                                             ),
                                           );
                                         },
@@ -276,7 +275,7 @@ class RegisterCardState extends State<RegisterCard> {
                                           style: TextStyle(
                                             color: Colors.blue,
                                             decoration:
-                                            TextDecoration.underline,
+                                                TextDecoration.underline,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -291,8 +290,7 @@ class RegisterCardState extends State<RegisterCard> {
                               width: double.infinity,
                               height: 50,
                               child: ElevatedButton(
-                                onPressed:
-                                widget.isLoading ? null : _register,
+                                onPressed: widget.isLoading ? null : _register,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.black,
                                   elevation: 5,
@@ -302,21 +300,21 @@ class RegisterCardState extends State<RegisterCard> {
                                 ),
                                 child: widget.isLoading
                                     ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
                                     : const Text(
-                                  'Registrarse',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                        'Registrarse',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -328,9 +326,7 @@ class RegisterCardState extends State<RegisterCard> {
                                   onPressed: widget.onBackToLogin,
                                   child: const Text(
                                     'Iniciar sesión',
-                                    style: TextStyle(
-                                      color: Colors.lightBlue,
-                                    ),
+                                    style: TextStyle(color: Colors.lightBlue),
                                   ),
                                 ),
                               ],
