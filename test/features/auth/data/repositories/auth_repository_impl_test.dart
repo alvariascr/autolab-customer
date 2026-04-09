@@ -107,6 +107,9 @@ void main() {
       when(
             () => mockSessionLocalDataSource.getUserSession(),
       ).thenAnswer((_) async => null);
+      when(
+            () => mockSessionLocalDataSource.getRefreshToken(),
+      ).thenAnswer((_) async => null);
 
       when(
             () => mockUserRoleDataSource.getUserRole(any()),
@@ -360,6 +363,7 @@ void main() {
         final result = await repository.logout();
 
         expect(result, const Right(unit));
+        verify(() => mockSessionLocalDataSource.clearSession()).called(1);
       });
 
       test('returns Left(Failure) when signOut fails', () async {
@@ -709,6 +713,48 @@ void main() {
           expect(result.role, UserRoles.customer);
 
           verify(() => mockAppLogger.i(any())).called(greaterThanOrEqualTo(1));
+        },
+      );
+
+      test(
+        'restores session from refresh token when currentUser is null',
+            () async {
+          final user = User(
+            id: 'user-123',
+            appMetadata: const {},
+            userMetadata: const {},
+            aud: 'authenticated',
+            createdAt: DateTime.now().toIso8601String(),
+            email: 'test@test.com',
+          );
+
+          when(() => mockGoTrueClient.currentUser).thenReturn(null);
+          when(
+                () => mockSessionLocalDataSource.getRefreshToken(),
+          ).thenAnswer((_) async => 'refresh-token-123');
+          when(
+                () => mockGoTrueClient.setSession('refresh-token-123'),
+          ).thenAnswer((_) async => AuthResponse(session: mockSession, user: user));
+          when(
+                () => mockUserRoleDataSource.getUserRole('user-123'),
+          ).thenAnswer((_) async => UserRoles.customer);
+
+          final result = await repository.getCurrentUser();
+
+          expect(result, isNotNull);
+          expect(result!.id, 'user-123');
+          expect(result.email, 'test@test.com');
+          expect(result.role, UserRoles.customer);
+
+          verify(() => mockGoTrueClient.setSession('refresh-token-123')).called(1);
+          verify(
+                () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+          ).called(1);
+          verify(
+                () => mockSessionLocalDataSource.saveRefreshToken(
+              'refresh-token-123',
+            ),
+          ).called(1);
         },
       );
 
