@@ -1,12 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/di/app_injection.dart';
+import '../../core/location/current_location.dart';
+import '../../core/location/current_location_data_source.dart';
 import '../../core/location/location_permission_gate.dart';
+import '../../core/location/location_place_resolver.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
 
-class HomeCustomerPage extends StatelessWidget {
+class HomeCustomerPage extends StatefulWidget {
   const HomeCustomerPage({super.key});
+
+  @override
+  State<HomeCustomerPage> createState() => _HomeCustomerPageState();
+}
+
+class _HomeCustomerPageState extends State<HomeCustomerPage> {
+  late final Future<_LocationCardState> _locationFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _locationFuture = _loadCurrentLocation();
+  }
+
+  Future<_LocationCardState> _loadCurrentLocation() async {
+    final result = await sl<CurrentLocationDataSource>().getCurrentLocation();
+
+    return await result.fold(
+      (failure) async => _LocationCardState.error(failure.message),
+      (location) async {
+        try {
+          final resolution = await sl<LocationPlaceResolver>().resolvePlaceName(
+            location,
+          );
+
+          return _LocationCardState.success(
+            location,
+            placeName: resolution.placeName,
+            debugDetails: resolution.debugDetails,
+          );
+        } catch (error) {
+          return _LocationCardState.success(
+            location,
+            debugDetails: 'geocoder_error=$error',
+          );
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +174,23 @@ class HomeCustomerPage extends StatelessWidget {
                   children: [
                     _MarketplaceHero(categories: categories),
                     const SizedBox(height: 24),
+                    FutureBuilder<_LocationCardState>(
+                      future: _locationFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const _LocationStatusCard.loading();
+                        }
+
+                        final state =
+                            snapshot.data ??
+                            const _LocationCardState.error(
+                              'No fue posible consultar la ubicacion actual.',
+                            );
+
+                        return _LocationStatusCard(state: state);
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     _SectionHeader(
                       title: 'Repuestos para tu vehículo',
                       subtitle:
@@ -211,13 +271,14 @@ class _MarketplaceHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: const [
               _HeroPill(
                 icon: Icons.verified_outlined,
                 label: 'Compatibilidad validada',
               ),
-              SizedBox(width: 10),
               _HeroPill(
                 icon: Icons.local_shipping_outlined,
                 label: 'Entrega rápida',
@@ -244,26 +305,64 @@ class _MarketplaceHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: const [
-                Icon(Icons.search, color: Color(0xFF9B3D24)),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Buscar por repuesto, marca o placa del vehículo',
-                    style: TextStyle(color: Color(0xFF7B6F67), fontSize: 15),
-                  ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compactSearch = constraints.maxWidth < 430;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                SizedBox(width: 12),
-                _SearchVehicleButton(),
-              ],
-            ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: compactSearch
+                    ? const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.search, color: Color(0xFF9B3D24)),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Buscar por repuesto, marca o placa del vehículo',
+                                  style: TextStyle(
+                                    color: Color(0xFF7B6F67),
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: _SearchVehicleButton(),
+                          ),
+                        ],
+                      )
+                    : const Row(
+                        children: [
+                          Icon(Icons.search, color: Color(0xFF9B3D24)),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Buscar por repuesto, marca o placa del vehículo',
+                              style: TextStyle(
+                                color: Color(0xFF7B6F67),
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          _SearchVehicleButton(),
+                        ],
+                      ),
+              );
+            },
           ),
           const SizedBox(height: 20),
           Wrap(
@@ -276,6 +375,149 @@ class _MarketplaceHero extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _LocationStatusCard extends StatelessWidget {
+  const _LocationStatusCard({required this.state}) : isLoading = false;
+
+  const _LocationStatusCard.loading() : state = null, isLoading = true;
+
+  final _LocationCardState? state;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveState =
+        state ??
+        const _LocationCardState.error(
+          'No fue posible consultar la ubicacion actual.',
+        );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE9DDD2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F4EF),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              isLoading
+                  ? Icons.location_searching_outlined
+                  : effectiveState.isSuccess
+                  ? Icons.location_on_outlined
+                  : Icons.location_off_outlined,
+              color: const Color(0xFF9B3D24),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ubicación actual',
+                  style: TextStyle(
+                    color: Color(0xFF181411),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isLoading
+                      ? 'Consultando coordenadas del dispositivo...'
+                      : effectiveState.description,
+                  style: const TextStyle(
+                    color: Color(0xFF6B5F57),
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+                if (!isLoading && effectiveState.placeName != null) ...[
+                  const SizedBox(height: 12),
+                  _LocationChip(label: effectiveState.placeName!),
+                ],
+              ],
+            ),
+          ),
+          if (isLoading)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationChip extends StatelessWidget {
+  const _LocationChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F4EF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF181411),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationCardState {
+  const _LocationCardState.success(
+    this.location, {
+    this.placeName,
+    this.debugDetails,
+  }) : message = null,
+       isSuccess = true;
+
+  const _LocationCardState.error(this.message)
+    : location = null,
+      placeName = null,
+      debugDetails = null,
+      isSuccess = false;
+
+  final CurrentLocation? location;
+  final String? placeName;
+  final String? debugDetails;
+  final String? message;
+  final bool isSuccess;
+
+  String get description {
+    if (location != null) {
+      if (placeName != null && placeName!.trim().isNotEmpty) {
+        return 'Usaremos esta ubicación para mostrar talleres y servicios cercanos a ti.';
+      }
+
+      return 'Ubicación detectada correctamente para recomendar opciones cercanas.';
+    }
+
+    return message ?? 'No fue posible consultar la ubicacion actual.';
   }
 }
 
