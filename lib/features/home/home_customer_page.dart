@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
 import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
@@ -41,7 +42,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inicio'),
+        title: const Text('Inicio', style: AppTextStyles.title),
         actions: [
           IconButton(
             onPressed: () {
@@ -59,10 +60,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
             children: [
               const Text(
                 'Talleres cercanos',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.subtitle,
               ),
               const SizedBox(height: 12),
               FutureBuilder<List<Workshop>>(

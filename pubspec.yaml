@@ -56,3 +56,7 @@ flutter:
 
   assets:
     - assets/images/virtual/
+  fonts:
+    - family: Waxcel
+      fonts:
+        - asset: assets/fonts/Waxcel.otf

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/workshop.dart';
 
 class WorkshopCard extends StatelessWidget {
@@ -80,10 +81,7 @@ class WorkshopCard extends StatelessWidget {
                           workshop.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppTextStyles.normal,
                         ),
                         const SizedBox(height: 6),
                         Expanded(
@@ -93,7 +91,7 @@ class WorkshopCard extends StatelessWidget {
                                 : 'Sin descripción disponible',
                             maxLines: 4,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13),
+                            style: AppTextStyles.small,
                           ),
                         ),
                       ],
