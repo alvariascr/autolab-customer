@@ -1,5 +1,12 @@
 import 'package:geolocator/geolocator.dart';
 
+enum LocationPermissionStatus {
+  granted,
+  denied,
+  deniedForever,
+  unableToDetermine,
+}
+
 enum LocationPermissionRequestResult {
   granted,
   denied,
@@ -9,7 +16,7 @@ enum LocationPermissionRequestResult {
 
 abstract class LocationPermissionService {
   Future<bool> isLocationServiceEnabled();
-  Future<LocationPermission> checkPermission();
+  Future<LocationPermissionStatus> checkPermission();
   Future<LocationPermissionRequestResult> requestWhileInUsePermission();
   Future<bool> openAppSettings();
   Future<bool> openLocationSettings();
@@ -24,8 +31,18 @@ class GeolocatorLocationPermissionService implements LocationPermissionService {
   }
 
   @override
-  Future<LocationPermission> checkPermission() {
-    return Geolocator.checkPermission();
+  Future<LocationPermissionStatus> checkPermission() async {
+    final permission = await Geolocator.checkPermission();
+
+    return switch (permission) {
+      LocationPermission.always ||
+      LocationPermission.whileInUse => LocationPermissionStatus.granted,
+      LocationPermission.denied => LocationPermissionStatus.denied,
+      LocationPermission.deniedForever =>
+        LocationPermissionStatus.deniedForever,
+      LocationPermission.unableToDetermine =>
+        LocationPermissionStatus.unableToDetermine,
+    };
   }
 
   @override
