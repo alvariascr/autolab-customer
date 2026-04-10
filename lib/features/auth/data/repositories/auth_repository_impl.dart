@@ -254,6 +254,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
+      await sessionLocalDataSource.clearSession();
       return const Right(unit);
     } catch (e, st) {
       final failure = globalErrorHandler.handle(e, st);

@@ -78,4 +78,9 @@ final class CustomerErrorCatalog {
     message:
         'La configuracion de permisos de ubicacion esta incompleta en la aplicacion.',
   );
+
+  static const locationPermissionRestricted = ErrorItem(
+    code: 'CUS_LOC_005',
+    message: 'La ubicacion esta restringida por el sistema operativo.',
+  );
 }

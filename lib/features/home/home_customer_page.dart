@@ -5,6 +5,7 @@ import '../../core/di/app_injection.dart';
 import '../../core/location/current_location.dart';
 import '../../core/location/current_location_data_source.dart';
 import '../../core/location/location_permission_gate.dart';
+import '../../core/location/location_permission_service.dart';
 import '../../core/location/location_place_resolver.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
@@ -16,16 +17,57 @@ class HomeCustomerPage extends StatefulWidget {
   State<HomeCustomerPage> createState() => _HomeCustomerPageState();
 }
 
-class _HomeCustomerPageState extends State<HomeCustomerPage> {
-  late final Future<_LocationCardState> _locationFuture;
+class _HomeCustomerPageState extends State<HomeCustomerPage>
+    with WidgetsBindingObserver {
+  late Future<_LocationCardState> _locationFuture;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _locationFuture = _loadCurrentLocation();
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshLocation();
+    }
+  }
+
+  void _refreshLocation() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _locationFuture = _loadCurrentLocation();
+    });
+  }
+
   Future<_LocationCardState> _loadCurrentLocation() async {
+    final permissionService = sl<LocationPermissionService>();
+    final permissionStatus = await permissionService.getPermissionStatus();
+
+    switch (permissionStatus) {
+      case LocationPermissionStatus.granted:
+        break;
+      case LocationPermissionStatus.denied:
+        return const _LocationCardState.permissionRequired();
+      case LocationPermissionStatus.deniedForever:
+        return const _LocationCardState.deniedForever();
+      case LocationPermissionStatus.restricted:
+        return const _LocationCardState.restricted();
+      case LocationPermissionStatus.serviceDisabled:
+        return const _LocationCardState.serviceDisabled();
+    }
+
     final result = await sl<CurrentLocationDataSource>().getCurrentLocation();
 
     return await result.fold(
@@ -39,94 +81,114 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
           return _LocationCardState.success(
             location,
             placeName: resolution.placeName,
-            debugDetails: resolution.debugDetails,
           );
-        } catch (error) {
-          return _LocationCardState.success(
-            location,
-            debugDetails: 'geocoder_error=$error',
-          );
+        } catch (_) {
+          return _LocationCardState.success(location);
         }
       },
     );
   }
 
+  Future<void> _handleLocationAction(_LocationCardState state) async {
+    final permissionService = sl<LocationPermissionService>();
+
+    switch (state.type) {
+      case _LocationCardStateType.permissionRequired:
+        final shouldRequest = await _showLocationPermissionPrePrompt();
+        if (shouldRequest != true || !mounted) {
+          return;
+        }
+
+        final result = await permissionService.requestWhileInUsePermission();
+        if (!mounted) {
+          return;
+        }
+
+        switch (result) {
+          case LocationPermissionRequestResult.granted:
+            _refreshLocation();
+            return;
+          case LocationPermissionRequestResult.denied:
+            _showMessage(
+              'Puedes continuar sin compartir tu ubicación y activarla cuando la necesites.',
+            );
+            _refreshLocation();
+            return;
+          case LocationPermissionRequestResult.deniedForever:
+            _showMessage(
+              'La ubicación quedó bloqueada. Puedes activarla desde la configuración de la app.',
+            );
+            _refreshLocation();
+            return;
+          case LocationPermissionRequestResult.restricted:
+            _showMessage(
+              'La ubicación está restringida por el sistema operativo en este dispositivo.',
+            );
+            _refreshLocation();
+            return;
+          case LocationPermissionRequestResult.serviceDisabled:
+            _showMessage(
+              'Activa la ubicación del dispositivo para mostrar talleres cercanos.',
+            );
+            _refreshLocation();
+            return;
+        }
+      case _LocationCardStateType.deniedForever:
+        await permissionService.openAppSettings();
+        return;
+      case _LocationCardStateType.serviceDisabled:
+        await permissionService.openLocationSettings();
+        return;
+      case _LocationCardStateType.restricted:
+        _showMessage(
+          'La ubicación está restringida por el sistema operativo en este dispositivo.',
+        );
+        return;
+      case _LocationCardStateType.success:
+      case _LocationCardStateType.error:
+        _refreshLocation();
+        return;
+    }
+  }
+
+  Future<bool?> _showLocationPermissionPrePrompt() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Usa tu ubicación'),
+          content: const Text(
+            'Activa tu ubicación para mostrar talleres, servicios y opciones cercanas a ti.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Ahora no'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Continuar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final categories = const [
-      _CategoryChipData(
-        label: 'Frenos',
-        icon: Icons.album_outlined,
-        accent: Color(0xFFB42318),
-      ),
-      _CategoryChipData(
-        label: 'Filtros',
-        icon: Icons.tune_outlined,
-        accent: Color(0xFF175CD3),
-      ),
-      _CategoryChipData(
-        label: 'Aceites',
-        icon: Icons.opacity_outlined,
-        accent: Color(0xFF0F8A5F),
-      ),
-      _CategoryChipData(
-        label: 'Baterías',
-        icon: Icons.battery_charging_full_outlined,
-        accent: Color(0xFF93370D),
-      ),
-      _CategoryChipData(
-        label: 'Suspensión',
-        icon: Icons.precision_manufacturing_outlined,
-        accent: Color(0xFF7A5AF8),
-      ),
-    ];
-
-    final recommendedParts = const [
-      _PartCardData(
-        title: 'Kit de frenos delanteros Bosch',
-        price: '₡74,900',
-        eta: 'Entrega hoy',
-        badge: 'Top ventas',
-        compatibility: 'Toyota Hilux 2017-2022',
-        accent: Color(0xFFB42318),
-      ),
-      _PartCardData(
-        title: 'Filtro de aceite OEM',
-        price: '₡8,500',
-        eta: 'Retiro en 25 min',
-        badge: 'Compatible',
-        compatibility: 'Hyundai Accent 2018',
-        accent: Color(0xFF175CD3),
-      ),
-      _PartCardData(
-        title: 'Batería 650A premium',
-        price: '₡61,000',
-        eta: 'Instalación disponible',
-        badge: 'Garantía 18 meses',
-        compatibility: 'Nissan Frontier 2020',
-        accent: Color(0xFF0F8A5F),
-      ),
-    ];
-
-    final fastDeals = const [
-      _PartCompactData(
-        title: 'Cambio de aceite Castrol',
-        subtitle: 'Incluye filtro y revisión visual',
-        price: '₡28,900',
-      ),
-      _PartCompactData(
-        title: 'Pastillas traseras Akebono',
-        subtitle: 'Listas para despacho inmediato',
-        price: '₡32,400',
-      ),
-      _PartCompactData(
-        title: 'Paquete de afinamiento',
-        subtitle: 'Bujías, filtros y mano de obra',
-        price: '₡54,700',
-      ),
-    ];
-
     return LocationPermissionGate(
+      autoRequest: false,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F4EF),
         appBar: AppBar(
@@ -147,7 +209,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
               ),
               SizedBox(height: 2),
               Text(
-                'Compra repuestos compatibles y agenda instalación.',
+                'Encuentra talleres y servicios cercanos.',
                 style: TextStyle(color: Color(0xFF6B5F57), fontSize: 12),
               ),
             ],
@@ -165,20 +227,18 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1180),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _MarketplaceHero(categories: categories),
-                    const SizedBox(height: 24),
                     FutureBuilder<_LocationCardState>(
                       future: _locationFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState != ConnectionState.done) {
-                          return const _LocationStatusCard.loading();
+                          return const _TopLocationBar.loading();
                         }
 
                         final state =
@@ -187,51 +247,15 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
                               'No fue posible consultar la ubicacion actual.',
                             );
 
-                        return _LocationStatusCard(state: state);
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _SectionHeader(
-                      title: 'Repuestos para tu vehículo',
-                      subtitle:
-                          'Sugerencias pensadas para el carro que tienes registrado.',
-                    ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: recommendedParts
-                          .map((part) => _PartCard(data: part))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 28),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 980;
-
-                        if (!isWide) {
-                          return Column(
-                            children: [
-                              _QuickDealsSection(items: fastDeals),
-                              const SizedBox(height: 20),
-                              const _CartSummaryCard(),
-                            ],
-                          );
-                        }
-
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: _QuickDealsSection(items: fastDeals),
-                            ),
-                            const SizedBox(width: 20),
-                            const Expanded(flex: 2, child: _CartSummaryCard()),
-                          ],
+                        return _TopLocationBar(
+                          state: state,
+                          onPrimaryAction: () => _handleLocationAction(state),
+                          onRefresh: _refreshLocation,
                         );
                       },
                     ),
+                    const SizedBox(height: 24),
+                    const _HomePlaceholder(),
                   ],
                 ),
               ),
@@ -243,148 +267,25 @@ class _HomeCustomerPageState extends State<HomeCustomerPage> {
   }
 }
 
-class _MarketplaceHero extends StatelessWidget {
-  const _MarketplaceHero({required this.categories});
+class _TopLocationBar extends StatelessWidget {
+  const _TopLocationBar({
+    required this.state,
+    required this.onPrimaryAction,
+    required this.onRefresh,
+  }) : isLoading = false;
 
-  final List<_CategoryChipData> categories;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF17110D), Color(0xFF8E2F1C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22181411),
-            blurRadius: 28,
-            offset: Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: const [
-              _HeroPill(
-                icon: Icons.verified_outlined,
-                label: 'Compatibilidad validada',
-              ),
-              _HeroPill(
-                icon: Icons.local_shipping_outlined,
-                label: 'Entrega rápida',
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'Pide repuestos como si fuera delivery, pero con criterio automotriz.',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              height: 1.08,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Busca por vehículo, compara opciones y agrega instalación en taller sin salir de la misma experiencia.',
-            style: TextStyle(
-              color: Color(0xFFF7EAE4),
-              fontSize: 15,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 22),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compactSearch = constraints.maxWidth < 430;
-
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: compactSearch
-                    ? const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.search, color: Color(0xFF9B3D24)),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Buscar por repuesto, marca o placa del vehículo',
-                                  style: TextStyle(
-                                    color: Color(0xFF7B6F67),
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: _SearchVehicleButton(),
-                          ),
-                        ],
-                      )
-                    : const Row(
-                        children: [
-                          Icon(Icons.search, color: Color(0xFF9B3D24)),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Buscar por repuesto, marca o placa del vehículo',
-                              style: TextStyle(
-                                color: Color(0xFF7B6F67),
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          _SearchVehicleButton(),
-                        ],
-                      ),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: categories
-                .map((item) => _CategoryChip(data: item))
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationStatusCard extends StatelessWidget {
-  const _LocationStatusCard({required this.state}) : isLoading = false;
-
-  const _LocationStatusCard.loading() : state = null, isLoading = true;
+  const _TopLocationBar.loading()
+    : state = null,
+      onPrimaryAction = _noop,
+      onRefresh = _noop,
+      isLoading = true;
 
   final _LocationCardState? state;
+  final VoidCallback onPrimaryAction;
+  final VoidCallback onRefresh;
   final bool isLoading;
+
+  static void _noop() {}
 
   @override
   Widget build(BuildContext context) {
@@ -395,68 +296,111 @@ class _LocationStatusCard extends StatelessWidget {
         );
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE9DDD2)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: const Color(0xFFF8F4EF),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               isLoading
                   ? Icons.location_searching_outlined
-                  : effectiveState.isSuccess
-                  ? Icons.location_on_outlined
-                  : Icons.location_off_outlined,
+                  : effectiveState.leadingIcon,
+              size: 18,
               color: const Color(0xFF9B3D24),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Ubicación actual',
-                  style: TextStyle(
+                Text(
+                  effectiveState.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
                     color: Color(0xFF181411),
                     fontWeight: FontWeight.w800,
-                    fontSize: 18,
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 1),
                 Text(
                   isLoading
-                      ? 'Consultando coordenadas del dispositivo...'
-                      : effectiveState.description,
+                      ? 'Consultando ubicacion del dispositivo...'
+                      : effectiveState.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF6B5F57),
-                    fontSize: 14,
-                    height: 1.4,
+                    fontSize: 12,
+                    height: 1.3,
                   ),
                 ),
-                if (!isLoading && effectiveState.placeName != null) ...[
-                  const SizedBox(height: 12),
-                  _LocationChip(label: effectiveState.placeName!),
-                ],
               ],
             ),
           ),
+          const SizedBox(width: 8),
           if (isLoading)
             const SizedBox(
-              width: 20,
-              height: 20,
+              width: 16,
+              height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (effectiveState.showRefreshAction)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: InkWell(
+                      onTap: onRefresh,
+                      borderRadius: BorderRadius.circular(99),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1EAFE),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: const Icon(
+                          Icons.refresh,
+                          size: 16,
+                          color: Color(0xFF5B3CC4),
+                        ),
+                      ),
+                    ),
+                  ),
+                FilledButton(
+                  onPressed: onPrimaryAction,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF181411),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 34),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 0,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  child: Text(effectiveState.primaryActionLabel),
+                ),
+              ],
             ),
         ],
       ),
@@ -464,589 +408,163 @@ class _LocationStatusCard extends StatelessWidget {
   }
 }
 
-class _LocationChip extends StatelessWidget {
-  const _LocationChip({required this.label});
-
-  final String label;
+class _HomePlaceholder extends StatelessWidget {
+  const _HomePlaceholder();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F4EF),
-        borderRadius: BorderRadius.circular(999),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE9DDD2)),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Color(0xFF181411),
-          fontWeight: FontWeight.w700,
-        ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Explora talleres cerca de ti',
+            style: TextStyle(
+              color: Color(0xFF181411),
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.',
+            style: TextStyle(
+              color: Color(0xFF6B5F57),
+              fontSize: 14,
+              height: 1.45,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _LocationCardState {
-  const _LocationCardState.success(
-    this.location, {
-    this.placeName,
-    this.debugDetails,
-  }) : message = null,
-       isSuccess = true;
+  const _LocationCardState.success(this.location, {this.placeName})
+    : message = null,
+      type = _LocationCardStateType.success;
 
   const _LocationCardState.error(this.message)
     : location = null,
       placeName = null,
-      debugDetails = null,
-      isSuccess = false;
+      type = _LocationCardStateType.error;
+
+  const _LocationCardState.permissionRequired()
+    : location = null,
+      placeName = null,
+      message = null,
+      type = _LocationCardStateType.permissionRequired;
+
+  const _LocationCardState.deniedForever()
+    : location = null,
+      placeName = null,
+      message = null,
+      type = _LocationCardStateType.deniedForever;
+
+  const _LocationCardState.serviceDisabled()
+    : location = null,
+      placeName = null,
+      message = null,
+      type = _LocationCardStateType.serviceDisabled;
+
+  const _LocationCardState.restricted()
+    : location = null,
+      placeName = null,
+      message = null,
+      type = _LocationCardStateType.restricted;
 
   final CurrentLocation? location;
   final String? placeName;
-  final String? debugDetails;
   final String? message;
-  final bool isSuccess;
+  final _LocationCardStateType type;
 
-  String get description {
-    if (location != null) {
-      if (placeName != null && placeName!.trim().isNotEmpty) {
-        return 'Usaremos esta ubicación para mostrar talleres y servicios cercanos a ti.';
-      }
+  String get title {
+    return switch (type) {
+      _LocationCardStateType.success =>
+        placeName != null && placeName!.trim().isNotEmpty
+            ? 'Entregando en ${_compactPlaceName(placeName!)}'
+            : 'Ubicación detectada',
+      _LocationCardStateType.permissionRequired => 'Usa tu ubicación',
+      _LocationCardStateType.deniedForever => 'Ubicación bloqueada',
+      _LocationCardStateType.serviceDisabled => 'Activa tu ubicación',
+      _LocationCardStateType.restricted => 'Ubicación restringida',
+      _LocationCardStateType.error => 'No pudimos ubicarte',
+    };
+  }
 
-      return 'Ubicación detectada correctamente para recomendar opciones cercanas.';
+  String get subtitle {
+    return switch (type) {
+      _LocationCardStateType.success =>
+        'Mostraremos talleres y servicios cercanos.',
+      _LocationCardStateType.permissionRequired =>
+        'Actívala para ver opciones cerca de ti.',
+      _LocationCardStateType.deniedForever =>
+        'Habilítala desde configuración.',
+      _LocationCardStateType.serviceDisabled =>
+        'Enciende el GPS para continuar.',
+      _LocationCardStateType.restricted =>
+        'La ubicación está restringida en este dispositivo.',
+      _LocationCardStateType.error =>
+        message ?? 'Intenta de nuevo en unos segundos.',
+    };
+  }
+
+  String get primaryActionLabel {
+    return switch (type) {
+      _LocationCardStateType.success => 'Usar ubicación',
+      _LocationCardStateType.permissionRequired => 'Activar',
+      _LocationCardStateType.deniedForever => 'Configuración',
+      _LocationCardStateType.serviceDisabled => 'Encender GPS',
+      _LocationCardStateType.restricted => 'Entendido',
+      _LocationCardStateType.error => 'Reintentar',
+    };
+  }
+
+  IconData get leadingIcon {
+    return switch (type) {
+      _LocationCardStateType.success => Icons.location_on_outlined,
+      _LocationCardStateType.permissionRequired =>
+        Icons.location_searching_outlined,
+      _LocationCardStateType.deniedForever => Icons.location_off_outlined,
+      _LocationCardStateType.serviceDisabled => Icons.gps_off_outlined,
+      _LocationCardStateType.restricted => Icons.info_outline,
+      _LocationCardStateType.error => Icons.error_outline,
+    };
+  }
+
+  bool get showRefreshAction {
+    return type == _LocationCardStateType.success ||
+        type == _LocationCardStateType.error;
+  }
+
+  String _compactPlaceName(String value) {
+    final parts = value
+        .split(',')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.length >= 2) {
+      return '${parts[0]}, ${parts[1]}';
     }
 
-    return message ?? 'No fue posible consultar la ubicacion actual.';
+    return value;
   }
 }
 
-class _HeroPill extends StatelessWidget {
-  const _HeroPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0x22FFFFFF),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SearchVehicleButton extends StatelessWidget {
-  const _SearchVehicleButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF181411),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Text(
-        'Mi vehículo',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.data});
-
-  final _CategoryChipData data;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFEADFD5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: data.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(data.icon, color: data.accent, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            data.label,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Color(0xFF181411),
-            fontWeight: FontWeight.w800,
-            fontSize: 24,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: const TextStyle(color: Color(0xFF6B5F57), fontSize: 14),
-        ),
-      ],
-    );
-  }
-}
-
-class _PartCard extends StatelessWidget {
-  const _PartCard({required this.data});
-
-  final _PartCardData data;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 360,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 170,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              gradient: LinearGradient(
-                colors: [
-                  data.accent.withValues(alpha: 0.96),
-                  const Color(0xFFF3E4D8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 18,
-                  left: 18,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      data.badge,
-                      style: TextStyle(
-                        color: data.accent,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const Positioned(
-                  right: 24,
-                  bottom: 18,
-                  child: Icon(
-                    Icons.settings_input_component_outlined,
-                    size: 82,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  data.title,
-                  style: const TextStyle(
-                    color: Color(0xFF181411),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    height: 1.18,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  data.compatibility,
-                  style: const TextStyle(
-                    color: Color(0xFF6B5F57),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Text(
-                      data.price,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2F4F7),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        data.eta,
-                        style: const TextStyle(
-                          color: Color(0xFF344054),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: data.accent,
-                          side: BorderSide(color: data.accent),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: const Text('Ver detalle'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () {},
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF181411),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: const Text('Agregar'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickDealsSection extends StatelessWidget {
-  const _QuickDealsSection({required this.items});
-
-  final List<_PartCompactData> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionHeader(
-            title: 'Compra rápida',
-            subtitle:
-                'Atajos para productos con alta rotación y servicios frecuentes.',
-          ),
-          const SizedBox(height: 18),
-          ...items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F4EF),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.flash_on_outlined,
-                        color: Color(0xFFB54708),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title,
-                            style: const TextStyle(
-                              color: Color(0xFF181411),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.subtitle,
-                            style: const TextStyle(
-                              color: Color(0xFF6B5F57),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      item.price,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CartSummaryCard extends StatelessWidget {
-  const _CartSummaryCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF181411),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Tu pedido',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '2 repuestos y 1 instalación sugerida.',
-            style: TextStyle(color: Color(0xFFD6CCC3), fontSize: 14),
-          ),
-          const SizedBox(height: 22),
-          const _CartLine(label: 'Subtotal', value: '₡83,400'),
-          const SizedBox(height: 10),
-          const _CartLine(label: 'Instalación estimada', value: '₡18,000'),
-          const SizedBox(height: 10),
-          const _CartLine(label: 'Envío', value: 'Gratis'),
-          const Divider(color: Color(0x33FFFFFF), height: 28),
-          const _CartLine(label: 'Total', value: '₡101,400', emphasized: true),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0x22FFFFFF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.directions_car_outlined, color: Colors.white),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Compatibilidad validada para Toyota Hilux 2020 2.8L.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () {},
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEE6B3B),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Ir al checkout',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CartLine extends StatelessWidget {
-  const _CartLine({
-    required this.label,
-    required this.value,
-    this.emphasized = false,
-  });
-
-  final String label;
-  final String value;
-  final bool emphasized;
-
-  @override
-  Widget build(BuildContext context) {
-    final textStyle = TextStyle(
-      color: emphasized ? Colors.white : const Color(0xFFD6CCC3),
-      fontSize: emphasized ? 18 : 14,
-      fontWeight: emphasized ? FontWeight.w800 : FontWeight.w500,
-    );
-
-    return Row(
-      children: [
-        Text(label, style: textStyle),
-        const Spacer(),
-        Text(value, style: textStyle),
-      ],
-    );
-  }
-}
-
-class _CategoryChipData {
-  const _CategoryChipData({
-    required this.label,
-    required this.icon,
-    required this.accent,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color accent;
-}
-
-class _PartCardData {
-  const _PartCardData({
-    required this.title,
-    required this.price,
-    required this.eta,
-    required this.badge,
-    required this.compatibility,
-    required this.accent,
-  });
-
-  final String title;
-  final String price;
-  final String eta;
-  final String badge;
-  final String compatibility;
-  final Color accent;
-}
-
-class _PartCompactData {
-  const _PartCompactData({
-    required this.title,
-    required this.subtitle,
-    required this.price,
-  });
-
-  final String title;
-  final String subtitle;
-  final String price;
+enum _LocationCardStateType {
+  success,
+  permissionRequired,
+  deniedForever,
+  serviceDisabled,
+  restricted,
+  error,
 }

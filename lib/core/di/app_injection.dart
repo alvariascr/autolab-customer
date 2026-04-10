@@ -4,7 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/di/auth_injection.dart';
 import '../location/current_location_data_source.dart';
+import '../location/geocoding_client.dart';
 import '../location/geolocator_client.dart';
+import '../location/location_place_resolver.dart';
+import '../location/location_permission_client.dart';
 import '../location/location_permission_service.dart';
 
 final GetIt sl = CoreDI.instance;
@@ -22,14 +25,21 @@ Future<void> _registerCore(AppConfig config) async {
 void _registerExternalDependencies() {
   sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   sl.registerLazySingleton<GeolocatorClient>(DefaultGeolocatorClient.new);
+  sl.registerLazySingleton<GeocodingClient>(DefaultGeocodingClient.new);
+  sl.registerLazySingleton<LocationPermissionClient>(
+    DefaultLocationPermissionClient.new,
+  );
   sl.registerLazySingleton<LocationPermissionService>(
-    GeolocatorLocationPermissionService.new,
+    () => GeolocatorLocationPermissionService(sl<LocationPermissionClient>()),
   );
   sl.registerLazySingleton<CurrentLocationDataSource>(
     () => CurrentLocationDataSourceImpl(
       sl<GeolocatorClient>(),
       sl<GlobalErrorHandler>(),
     ),
+  );
+  sl.registerLazySingleton<LocationPlaceResolver>(
+    () => GeocodingLocationPlaceResolver(sl<GeocodingClient>()),
   );
 }
 

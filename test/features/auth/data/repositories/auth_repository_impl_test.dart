@@ -356,10 +356,15 @@ void main() {
     group('logout', () {
       test('returns Right(unit) when signOut succeeds', () async {
         when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
+        when(() => mockSessionLocalDataSource.clearSession()).thenAnswer(
+          (_) async {},
+        );
 
         final result = await repository.logout();
 
         expect(result, const Right(unit));
+        verify(() => mockGoTrueClient.signOut()).called(1);
+        verify(() => mockSessionLocalDataSource.clearSession()).called(1);
       });
 
       test('returns Left(Failure) when signOut fails', () async {
@@ -384,6 +389,7 @@ void main() {
         }, (_) => fail('Expected Left(Failure)'));
 
         verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
+        verifyNever(() => mockSessionLocalDataSource.clearSession());
       });
     });
 

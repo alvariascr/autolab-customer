@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../di/app_injection.dart';
 import 'location_permission_service.dart';
 
 class LocationPermissionGate extends StatefulWidget {
-  const LocationPermissionGate({super.key, required this.child});
+  const LocationPermissionGate({
+    super.key,
+    required this.child,
+    this.autoRequest = true,
+  });
 
   final Widget child;
+  final bool autoRequest;
 
   @override
   State<LocationPermissionGate> createState() => _LocationPermissionGateState();
@@ -19,9 +23,11 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _requestLocationPermissionIfNeeded();
-    });
+    if (widget.autoRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _requestLocationPermissionIfNeeded();
+      });
+    }
   }
 
   Future<void> _requestLocationPermissionIfNeeded() async {
@@ -34,10 +40,9 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
     final locationPermissionService = sl<LocationPermissionService>();
 
     try {
-      final currentPermission = await locationPermissionService
-          .checkPermission();
-      if (currentPermission == LocationPermission.always ||
-          currentPermission == LocationPermission.whileInUse) {
+      final currentPermissionStatus = await locationPermissionService
+          .getPermissionStatus();
+      if (currentPermissionStatus == LocationPermissionStatus.granted) {
         return;
       }
 
@@ -59,6 +64,10 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
         case LocationPermissionRequestResult.serviceDisabled:
           _showMessage(
             'Activa la ubicacion del dispositivo para usar funciones basadas en tu posicion.',
+          );
+        case LocationPermissionRequestResult.restricted:
+          _showMessage(
+            'La ubicacion esta restringida por el sistema operativo en este dispositivo.',
           );
       }
     } catch (_) {
