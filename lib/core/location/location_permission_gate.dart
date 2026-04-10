@@ -65,8 +65,8 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
             'Activa la ubicacion del dispositivo para usar funciones basadas en tu posicion.',
           );
       }
-    } catch (_) {
-      // Ignore permission prompt failures so home rendering is never blocked.
+    } catch (error, stackTrace) {
+      debugPrint('Location permission request failed: $error\n$stackTrace');
     }
   }
 
