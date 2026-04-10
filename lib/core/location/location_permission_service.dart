@@ -20,7 +20,6 @@ enum LocationPermissionRequestResult {
 
 abstract class LocationPermissionService {
   Future<bool> isLocationServiceEnabled();
-  Future<LocationPermission> checkPermission();
   Future<LocationPermissionStatus> getPermissionStatus();
   Future<LocationPermissionRequestResult> requestWhileInUsePermission();
   Future<bool> openAppSettings();
@@ -35,11 +34,6 @@ class GeolocatorLocationPermissionService implements LocationPermissionService {
   @override
   Future<bool> isLocationServiceEnabled() {
     return _client.isLocationServiceEnabled();
-  }
-
-  @override
-  Future<LocationPermission> checkPermission() {
-    return _client.checkPermission();
   }
 
   @override
@@ -66,7 +60,8 @@ class GeolocatorLocationPermissionService implements LocationPermissionService {
     }
 
     return switch (_mapPermissionStatus(permission)) {
-      LocationPermissionStatus.granted => LocationPermissionRequestResult.granted,
+      LocationPermissionStatus.granted =>
+        LocationPermissionRequestResult.granted,
       LocationPermissionStatus.denied => LocationPermissionRequestResult.denied,
       LocationPermissionStatus.deniedForever =>
         LocationPermissionRequestResult.deniedForever,

@@ -60,6 +60,12 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
         case LocationPermissionRequestResult.deniedForever:
           _showMessage(
             'La ubicacion fue denegada permanentemente. Actívala desde la configuración de la app.',
+            action: SnackBarAction(
+              label: 'Configurar',
+              onPressed: () {
+                locationPermissionService.openAppSettings();
+              },
+            ),
           );
         case LocationPermissionRequestResult.serviceDisabled:
           _showMessage(
@@ -70,14 +76,18 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
             'La ubicacion esta restringida por el sistema operativo en este dispositivo.',
           );
       }
-    } catch (_) {
-      // Ignore permission prompt failures so home rendering is never blocked.
+    } catch (error, stackTrace) {
+      debugPrint('Location permission request failed: $error\n$stackTrace');
     }
   }
 
-  void _showMessage(String message) {
+  void _showMessage(String message, {SnackBarAction? action}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        action: action,
+      ),
     );
   }
 
