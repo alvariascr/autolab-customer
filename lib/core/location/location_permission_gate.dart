@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../di/app_injection.dart';
 import 'location_permission_service.dart';
@@ -36,8 +35,7 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
     try {
       final currentPermission = await locationPermissionService
           .checkPermission();
-      if (currentPermission == LocationPermission.always ||
-          currentPermission == LocationPermission.whileInUse) {
+      if (currentPermission == LocationPermissionStatus.granted) {
         return;
       }
 
