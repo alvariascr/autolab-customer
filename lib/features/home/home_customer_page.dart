@@ -1,3 +1,4 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,6 +10,8 @@ import '../../core/location/location_permission_service.dart';
 import '../../core/location/location_place_resolver.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
+import 'location/location_feedback_text.dart';
+import 'location/location_feedback_mapper.dart';
 
 class HomeCustomerPage extends StatefulWidget {
   const HomeCustomerPage({super.key});
@@ -71,7 +74,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     final result = await sl<CurrentLocationDataSource>().getCurrentLocation();
 
     return await result.fold(
-      (failure) async => _LocationCardState.error(failure.message),
+      (failure) async =>
+          _LocationCardState.error(_mapLocationFailureMessage(failure)),
       (location) async {
         try {
           final resolution = await sl<LocationPlaceResolver>().resolvePlaceName(
@@ -82,72 +86,91 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             location,
             placeName: resolution.placeName,
           );
-        } catch (_) {
+        } catch (error, stackTrace) {
+          if (CoreDI.instance.isRegistered<GlobalErrorHandler>()) {
+            CoreDI.get<GlobalErrorHandler>().handle(error, stackTrace);
+          }
+
           return _LocationCardState.success(location);
         }
       },
     );
   }
 
+  String _mapLocationFailureMessage(Failure failure) {
+    switch (failure.code) {
+      case 'CUS_LOC_001':
+        return 'Activa tu ubicación para ver talleres y servicios cercanos.';
+      case 'CUS_LOC_002':
+        return 'Enciende el GPS del dispositivo para continuar.';
+      case 'CUS_LOC_003':
+        return 'No pudimos obtener una ubicación válida. Intenta nuevamente.';
+      case 'CUS_LOC_004':
+        return 'La ubicación no está disponible en este momento. Intenta más tarde.';
+      case 'CUS_LOC_005':
+        return 'La ubicación está restringida por el sistema operativo.';
+      case 'NET_002':
+        return 'La ubicación tardó demasiado en responder. Intenta nuevamente.';
+      default:
+        return 'No pudimos obtener tu ubicación en este momento. Intenta nuevamente.';
+    }
+  }
+
   Future<void> _handleLocationAction(_LocationCardState state) async {
     final permissionService = sl<LocationPermissionService>();
 
-    switch (state.type) {
-      case _LocationCardStateType.permissionRequired:
-        final shouldRequest = await _showLocationPermissionPrePrompt();
-        if (shouldRequest != true || !mounted) {
-          return;
-        }
+    try {
+      switch (state.type) {
+        case _LocationCardStateType.permissionRequired:
+          final shouldRequest = await _showLocationPermissionPrePrompt();
+          if (shouldRequest != true || !mounted) {
+            return;
+          }
 
-        final result = await permissionService.requestWhileInUsePermission();
-        if (!mounted) {
-          return;
-        }
+          final result = await permissionService.requestWhileInUsePermission();
+          if (!mounted) {
+            return;
+          }
 
-        switch (result) {
-          case LocationPermissionRequestResult.granted:
-            _refreshLocation();
-            return;
-          case LocationPermissionRequestResult.denied:
-            _showMessage(
-              'Puedes continuar sin compartir tu ubicación y activarla cuando la necesites.',
-            );
-            _refreshLocation();
-            return;
-          case LocationPermissionRequestResult.deniedForever:
-            _showMessage(
-              'La ubicación quedó bloqueada. Puedes activarla desde la configuración de la app.',
-            );
-            _refreshLocation();
-            return;
-          case LocationPermissionRequestResult.restricted:
-            _showMessage(
-              'La ubicación está restringida por el sistema operativo en este dispositivo.',
-            );
-            _refreshLocation();
-            return;
-          case LocationPermissionRequestResult.serviceDisabled:
-            _showMessage(
-              'Activa la ubicación del dispositivo para mostrar talleres cercanos.',
-            );
-            _refreshLocation();
-            return;
-        }
-      case _LocationCardStateType.deniedForever:
-        await permissionService.openAppSettings();
+          switch (result) {
+            case LocationPermissionRequestResult.granted:
+            case LocationPermissionRequestResult.denied:
+            case LocationPermissionRequestResult.deniedForever:
+            case LocationPermissionRequestResult.restricted:
+            case LocationPermissionRequestResult.serviceDisabled:
+              _refreshLocation();
+              return;
+          }
+        case _LocationCardStateType.deniedForever:
+          await permissionService.openAppSettings();
+          return;
+        case _LocationCardStateType.serviceDisabled:
+          await permissionService.openLocationSettings();
+          return;
+        case _LocationCardStateType.restricted:
+          _refreshLocation();
+          return;
+        case _LocationCardStateType.success:
+        case _LocationCardStateType.error:
+          _refreshLocation();
+          return;
+      }
+    } catch (error, stackTrace) {
+      if (CoreDI.instance.isRegistered<GlobalErrorHandler>()) {
+        CoreDI.get<GlobalErrorHandler>().handle(error, stackTrace);
+      }
+
+      if (!mounted) {
         return;
-      case _LocationCardStateType.serviceDisabled:
-        await permissionService.openLocationSettings();
-        return;
-      case _LocationCardStateType.restricted:
-        _showMessage(
-          'La ubicación está restringida por el sistema operativo en este dispositivo.',
+      }
+
+      setState(() {
+        _locationFuture = Future.value(
+          const _LocationCardState.error(
+            'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+          ),
         );
-        return;
-      case _LocationCardStateType.success:
-      case _LocationCardStateType.error:
-        _refreshLocation();
-        return;
+      });
     }
   }
 
@@ -172,16 +195,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
           ],
         );
       },
-    );
-  }
-
-  void _showMessage(String message) {
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -294,6 +307,11 @@ class _TopLocationBar extends StatelessWidget {
         const _LocationCardState.error(
           'No fue posible consultar la ubicacion actual.',
         );
+    final feedback = effectiveState.feedback;
+    final title = isLoading ? 'Buscando tu ubicación' : feedback.title;
+    final subtitle = isLoading
+        ? 'Consultando ubicación del dispositivo...'
+        : feedback.subtitle;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -314,7 +332,7 @@ class _TopLocationBar extends StatelessWidget {
             child: Icon(
               isLoading
                   ? Icons.location_searching_outlined
-                  : effectiveState.leadingIcon,
+                  : feedback.leadingIcon,
               size: 18,
               color: const Color(0xFF9B3D24),
             ),
@@ -326,7 +344,7 @@ class _TopLocationBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  effectiveState.title,
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -337,9 +355,7 @@ class _TopLocationBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  isLoading
-                      ? 'Consultando ubicacion del dispositivo...'
-                      : effectiveState.subtitle,
+                  subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -362,7 +378,7 @@ class _TopLocationBar extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (effectiveState.showRefreshAction)
+                if (feedback.showRefreshAction)
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: InkWell(
@@ -398,7 +414,7 @@ class _TopLocationBar extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: Text(effectiveState.primaryActionLabel),
+                  child: Text(feedback.primaryActionLabel),
                 ),
               ],
             ),
@@ -486,78 +502,22 @@ class _LocationCardState {
   final String? message;
   final _LocationCardStateType type;
 
-  String get title {
+  String get _stateKey {
     return switch (type) {
-      _LocationCardStateType.success =>
-        placeName != null && placeName!.trim().isNotEmpty
-            ? 'Entregando en ${_compactPlaceName(placeName!)}'
-            : 'Ubicación detectada',
-      _LocationCardStateType.permissionRequired => 'Usa tu ubicación',
-      _LocationCardStateType.deniedForever => 'Ubicación bloqueada',
-      _LocationCardStateType.serviceDisabled => 'Activa tu ubicación',
-      _LocationCardStateType.restricted => 'Ubicación restringida',
-      _LocationCardStateType.error => 'No pudimos ubicarte',
+      _LocationCardStateType.success => 'success',
+      _LocationCardStateType.permissionRequired => 'permissionRequired',
+      _LocationCardStateType.deniedForever => 'deniedForever',
+      _LocationCardStateType.serviceDisabled => 'serviceDisabled',
+      _LocationCardStateType.restricted => 'restricted',
+      _LocationCardStateType.error => 'error',
     };
   }
 
-  String get subtitle {
-    return switch (type) {
-      _LocationCardStateType.success =>
-        'Mostraremos talleres y servicios cercanos.',
-      _LocationCardStateType.permissionRequired =>
-        'Actívala para ver opciones cerca de ti.',
-      _LocationCardStateType.deniedForever =>
-        'Habilítala desde configuración.',
-      _LocationCardStateType.serviceDisabled =>
-        'Enciende el GPS para continuar.',
-      _LocationCardStateType.restricted =>
-        'La ubicación está restringida en este dispositivo.',
-      _LocationCardStateType.error =>
-        message ?? 'Intenta de nuevo en unos segundos.',
-    };
-  }
-
-  String get primaryActionLabel {
-    return switch (type) {
-      _LocationCardStateType.success => 'Usar ubicación',
-      _LocationCardStateType.permissionRequired => 'Activar',
-      _LocationCardStateType.deniedForever => 'Configuración',
-      _LocationCardStateType.serviceDisabled => 'Encender GPS',
-      _LocationCardStateType.restricted => 'Entendido',
-      _LocationCardStateType.error => 'Reintentar',
-    };
-  }
-
-  IconData get leadingIcon {
-    return switch (type) {
-      _LocationCardStateType.success => Icons.location_on_outlined,
-      _LocationCardStateType.permissionRequired =>
-        Icons.location_searching_outlined,
-      _LocationCardStateType.deniedForever => Icons.location_off_outlined,
-      _LocationCardStateType.serviceDisabled => Icons.gps_off_outlined,
-      _LocationCardStateType.restricted => Icons.info_outline,
-      _LocationCardStateType.error => Icons.error_outline,
-    };
-  }
-
-  bool get showRefreshAction {
-    return type == _LocationCardStateType.success ||
-        type == _LocationCardStateType.error;
-  }
-
-  String _compactPlaceName(String value) {
-    final parts = value
-        .split(',')
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty)
-        .toList();
-
-    if (parts.length >= 2) {
-      return '${parts[0]}, ${parts[1]}';
-    }
-
-    return value;
-  }
+  LocationFeedbackText get feedback => mapLocationFeedback(
+    placeName: placeName,
+    fallbackMessage: message,
+    stateType: _stateKey,
+  );
 }
 
 enum _LocationCardStateType {
