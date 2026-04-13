@@ -6,6 +6,7 @@ import '../../features/auth/di/auth_injection.dart';
 import '../location/current_location_data_source.dart';
 import '../location/geocoding_client.dart';
 import '../location/geolocator_client.dart';
+import '../location/location_cubit.dart';
 import '../location/location_place_resolver.dart';
 import '../location/location_permission_client.dart';
 import '../location/location_permission_service.dart';
@@ -40,6 +41,14 @@ void _registerExternalDependencies() {
   );
   sl.registerLazySingleton<LocationPlaceResolver>(
     () => GeocodingLocationPlaceResolver(sl<GeocodingClient>()),
+  );
+  sl.registerLazySingleton<LocationCubit>(
+    () => LocationCubit(
+      sl<LocationPermissionService>(),
+      sl<CurrentLocationDataSource>(),
+      sl<LocationPlaceResolver>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+    ),
   );
 }
 

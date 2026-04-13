@@ -1,16 +1,11 @@
-import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/di/app_injection.dart';
-import '../../core/location/current_location.dart';
-import '../../core/location/current_location_data_source.dart';
+import '../../core/location/location_cubit.dart';
 import '../../core/location/location_permission_gate.dart';
-import '../../core/location/location_permission_service.dart';
-import '../../core/location/location_place_resolver.dart';
+import '../../core/location/location_state.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
-import 'location/location_feedback_text.dart';
 import 'location/location_feedback_mapper.dart';
 
 class HomeCustomerPage extends StatefulWidget {
@@ -22,13 +17,13 @@ class HomeCustomerPage extends StatefulWidget {
 
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
-  late Future<_LocationCardState> _locationFuture;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _locationFuture = _loadCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LocationCubit>().loadCurrentLocation();
+    });
   }
 
   @override
@@ -40,137 +35,29 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshLocation();
+      context.read<LocationCubit>().refresh();
     }
   }
 
-  void _refreshLocation() {
-    if (!mounted) {
-      return;
-    }
+  Future<void> _handleLocationAction(LocationState state) async {
+    final locationCubit = context.read<LocationCubit>();
 
-    setState(() {
-      _locationFuture = _loadCurrentLocation();
-    });
-  }
-
-  Future<_LocationCardState> _loadCurrentLocation() async {
-    final permissionService = sl<LocationPermissionService>();
-    final permissionStatus = await permissionService.getPermissionStatus();
-
-    switch (permissionStatus) {
-      case LocationPermissionStatus.granted:
-        break;
-      case LocationPermissionStatus.denied:
-        return const _LocationCardState.permissionRequired();
-      case LocationPermissionStatus.deniedForever:
-        return const _LocationCardState.deniedForever();
-      case LocationPermissionStatus.restricted:
-        return const _LocationCardState.restricted();
-      case LocationPermissionStatus.serviceDisabled:
-        return const _LocationCardState.serviceDisabled();
-    }
-
-    final result = await sl<CurrentLocationDataSource>().getCurrentLocation();
-
-    return await result.fold(
-      (failure) async =>
-          _LocationCardState.error(_mapLocationFailureMessage(failure)),
-      (location) async {
-        try {
-          final resolution = await sl<LocationPlaceResolver>().resolvePlaceName(
-            location,
-          );
-
-          return _LocationCardState.success(
-            location,
-            placeName: resolution.placeName,
-          );
-        } catch (error, stackTrace) {
-          if (CoreDI.instance.isRegistered<GlobalErrorHandler>()) {
-            CoreDI.get<GlobalErrorHandler>().handle(error, stackTrace);
-          }
-
-          return _LocationCardState.success(location);
+    switch (state.status) {
+      case LocationFlowStatus.permissionRequired:
+        final shouldRequest = await _showLocationPermissionPrePrompt();
+        if (shouldRequest == true && mounted) {
+          await locationCubit.requestPermission();
         }
-      },
-    );
-  }
-
-  String _mapLocationFailureMessage(Failure failure) {
-    switch (failure.code) {
-      case 'CUS_LOC_001':
-        return 'Activa tu ubicación para ver talleres y servicios cercanos.';
-      case 'CUS_LOC_002':
-        return 'Enciende el GPS del dispositivo para continuar.';
-      case 'CUS_LOC_003':
-        return 'No pudimos obtener una ubicación válida. Intenta nuevamente.';
-      case 'CUS_LOC_004':
-        return 'La ubicación no está disponible en este momento. Intenta más tarde.';
-      case 'CUS_LOC_005':
-        return 'La ubicación está restringida por el sistema operativo.';
-      case 'NET_002':
-        return 'La ubicación tardó demasiado en responder. Intenta nuevamente.';
-      default:
-        return 'No pudimos obtener tu ubicación en este momento. Intenta nuevamente.';
-    }
-  }
-
-  Future<void> _handleLocationAction(_LocationCardState state) async {
-    final permissionService = sl<LocationPermissionService>();
-
-    try {
-      switch (state.type) {
-        case _LocationCardStateType.permissionRequired:
-          final shouldRequest = await _showLocationPermissionPrePrompt();
-          if (shouldRequest != true || !mounted) {
-            return;
-          }
-
-          final result = await permissionService.requestWhileInUsePermission();
-          if (!mounted) {
-            return;
-          }
-
-          switch (result) {
-            case LocationPermissionRequestResult.granted:
-            case LocationPermissionRequestResult.denied:
-            case LocationPermissionRequestResult.deniedForever:
-            case LocationPermissionRequestResult.restricted:
-            case LocationPermissionRequestResult.serviceDisabled:
-              _refreshLocation();
-              return;
-          }
-        case _LocationCardStateType.deniedForever:
-          await permissionService.openAppSettings();
-          return;
-        case _LocationCardStateType.serviceDisabled:
-          await permissionService.openLocationSettings();
-          return;
-        case _LocationCardStateType.restricted:
-          _refreshLocation();
-          return;
-        case _LocationCardStateType.success:
-        case _LocationCardStateType.error:
-          _refreshLocation();
-          return;
-      }
-    } catch (error, stackTrace) {
-      if (CoreDI.instance.isRegistered<GlobalErrorHandler>()) {
-        CoreDI.get<GlobalErrorHandler>().handle(error, stackTrace);
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _locationFuture = Future.value(
-          const _LocationCardState.error(
-            'No fue posible completar la acción de ubicación. Intenta nuevamente.',
-          ),
-        );
-      });
+      case LocationFlowStatus.deniedForever:
+        await locationCubit.openAppSettings();
+      case LocationFlowStatus.serviceDisabled:
+        await locationCubit.openLocationSettings();
+      case LocationFlowStatus.restricted:
+      case LocationFlowStatus.success:
+      case LocationFlowStatus.error:
+      case LocationFlowStatus.initial:
+      case LocationFlowStatus.loading:
+        await locationCubit.refresh();
     }
   }
 
@@ -247,23 +134,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    FutureBuilder<_LocationCardState>(
-                      future: _locationFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const _TopLocationBar.loading();
-                        }
-
-                        final state =
-                            snapshot.data ??
-                            const _LocationCardState.error(
-                              'No fue posible consultar la ubicacion actual.',
-                            );
-
+                    BlocBuilder<LocationCubit, LocationState>(
+                      builder: (context, state) {
                         return _TopLocationBar(
                           state: state,
                           onPrimaryAction: () => _handleLocationAction(state),
-                          onRefresh: _refreshLocation,
+                          onRefresh: () {
+                            context.read<LocationCubit>().refresh();
+                          },
                         );
                       },
                     ),
@@ -285,29 +163,22 @@ class _TopLocationBar extends StatelessWidget {
     required this.state,
     required this.onPrimaryAction,
     required this.onRefresh,
-  }) : isLoading = false;
+  });
 
-  const _TopLocationBar.loading()
-    : state = null,
-      onPrimaryAction = _noop,
-      onRefresh = _noop,
-      isLoading = true;
-
-  final _LocationCardState? state;
+  final LocationState state;
   final VoidCallback onPrimaryAction;
   final VoidCallback onRefresh;
-  final bool isLoading;
-
-  static void _noop() {}
 
   @override
   Widget build(BuildContext context) {
-    final effectiveState =
-        state ??
-        const _LocationCardState.error(
-          'No fue posible consultar la ubicacion actual.',
-        );
-    final feedback = effectiveState.feedback;
+    final isLoading =
+        state.status == LocationFlowStatus.initial ||
+        state.status == LocationFlowStatus.loading;
+    final feedback = mapLocationFeedback(
+      placeName: state.placeName,
+      fallbackMessage: state.message,
+      stateType: _stateKey(state.status),
+    );
     final title = isLoading ? 'Buscando tu ubicación' : feedback.title;
     final subtitle = isLoading
         ? 'Consultando ubicación del dispositivo...'
@@ -378,7 +249,7 @@ class _TopLocationBar extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (feedback.showRefreshAction)
+                if (state.showRefreshAction)
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: InkWell(
@@ -422,6 +293,18 @@ class _TopLocationBar extends StatelessWidget {
       ),
     );
   }
+
+  String _stateKey(LocationFlowStatus status) {
+    return switch (status) {
+      LocationFlowStatus.success => 'success',
+      LocationFlowStatus.permissionRequired => 'permissionRequired',
+      LocationFlowStatus.deniedForever => 'deniedForever',
+      LocationFlowStatus.serviceDisabled => 'serviceDisabled',
+      LocationFlowStatus.restricted => 'restricted',
+      LocationFlowStatus.error => 'error',
+      LocationFlowStatus.initial || LocationFlowStatus.loading => 'loading',
+    };
+  }
 }
 
 class _HomePlaceholder extends StatelessWidget {
@@ -461,70 +344,4 @@ class _HomePlaceholder extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LocationCardState {
-  const _LocationCardState.success(this.location, {this.placeName})
-    : message = null,
-      type = _LocationCardStateType.success;
-
-  const _LocationCardState.error(this.message)
-    : location = null,
-      placeName = null,
-      type = _LocationCardStateType.error;
-
-  const _LocationCardState.permissionRequired()
-    : location = null,
-      placeName = null,
-      message = null,
-      type = _LocationCardStateType.permissionRequired;
-
-  const _LocationCardState.deniedForever()
-    : location = null,
-      placeName = null,
-      message = null,
-      type = _LocationCardStateType.deniedForever;
-
-  const _LocationCardState.serviceDisabled()
-    : location = null,
-      placeName = null,
-      message = null,
-      type = _LocationCardStateType.serviceDisabled;
-
-  const _LocationCardState.restricted()
-    : location = null,
-      placeName = null,
-      message = null,
-      type = _LocationCardStateType.restricted;
-
-  final CurrentLocation? location;
-  final String? placeName;
-  final String? message;
-  final _LocationCardStateType type;
-
-  String get _stateKey {
-    return switch (type) {
-      _LocationCardStateType.success => 'success',
-      _LocationCardStateType.permissionRequired => 'permissionRequired',
-      _LocationCardStateType.deniedForever => 'deniedForever',
-      _LocationCardStateType.serviceDisabled => 'serviceDisabled',
-      _LocationCardStateType.restricted => 'restricted',
-      _LocationCardStateType.error => 'error',
-    };
-  }
-
-  LocationFeedbackText get feedback => mapLocationFeedback(
-    placeName: placeName,
-    fallbackMessage: message,
-    stateType: _stateKey,
-  );
-}
-
-enum _LocationCardStateType {
-  success,
-  permissionRequired,
-  deniedForever,
-  serviceDisabled,
-  restricted,
-  error,
 }

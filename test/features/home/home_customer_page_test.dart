@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:autolab_core/autolab_core.dart';
-import 'package:autolab_customer/core/di/app_injection.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
+import 'package:autolab_customer/core/location/location_cubit.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/features/auth/bloc/auth_bloc.dart';
@@ -65,39 +65,35 @@ void main() {
     late MockGlobalErrorHandler errorHandler;
     late MockAppLogger logger;
     late AuthBloc authBloc;
+    late LocationCubit locationCubit;
 
-    setUp(() async {
-      await sl.reset();
+    setUpAll(() {
+      registerFallbackValue(FakeCurrentLocation());
+    });
 
+    setUp(() {
       permissionService = MockLocationPermissionService();
       currentLocationDataSource = MockCurrentLocationDataSource();
       placeResolver = MockLocationPlaceResolver();
       errorHandler = MockGlobalErrorHandler();
       logger = MockAppLogger();
       authBloc = AuthBloc(_UnusedAuthRepository());
+      locationCubit = LocationCubit(
+        permissionService,
+        currentLocationDataSource,
+        placeResolver,
+        errorHandler: errorHandler,
+      );
 
       when(() => errorHandler.logger).thenReturn(logger);
       when(() => errorHandler.handle(any(), any())).thenReturn(
         const UnknownFailure(message: 'Ocurrió un error inesperado.'),
       );
-
-      sl.registerLazySingleton<LocationPermissionService>(
-        () => permissionService,
-      );
-      sl.registerLazySingleton<CurrentLocationDataSource>(
-        () => currentLocationDataSource,
-      );
-      sl.registerLazySingleton<LocationPlaceResolver>(() => placeResolver);
-      sl.registerLazySingleton<GlobalErrorHandler>(() => errorHandler);
-    });
-
-    setUpAll(() {
-      registerFallbackValue(FakeCurrentLocation());
     });
 
     tearDown(() async {
       await authBloc.close();
-      await sl.reset();
+      await locationCubit.close();
     });
 
     testWidgets('muestra mensaje claro cuando el permiso fue rechazado', (
@@ -107,7 +103,7 @@ void main() {
         () => permissionService.getPermissionStatus(),
       ).thenAnswer((_) async => LocationPermissionStatus.denied);
 
-      await _pumpPage(tester, authBloc);
+      await _pumpPage(tester, authBloc, locationCubit);
 
       expect(find.text('Usa tu ubicación'), findsOneWidget);
       expect(find.text('Actívala para ver opciones cercanas.'), findsOneWidget);
@@ -131,7 +127,7 @@ void main() {
         ),
       );
 
-      await _pumpPage(tester, authBloc);
+      await _pumpPage(tester, authBloc, locationCubit);
 
       expect(find.text('Entregando en Escazu, San Jose'), findsOneWidget);
       expect(
@@ -147,7 +143,7 @@ void main() {
         () => permissionService.getPermissionStatus(),
       ).thenAnswer((_) async => LocationPermissionStatus.serviceDisabled);
 
-      await _pumpPage(tester, authBloc);
+      await _pumpPage(tester, authBloc, locationCubit);
 
       expect(find.text('Activa tu ubicación'), findsOneWidget);
       expect(
@@ -173,7 +169,7 @@ void main() {
           ),
         );
 
-        await _pumpPage(tester, authBloc);
+        await _pumpPage(tester, authBloc, locationCubit);
 
         expect(find.text('No pudimos ubicarte'), findsOneWidget);
         expect(
@@ -198,7 +194,7 @@ void main() {
         () => currentLocationDataSource.getCurrentLocation(),
       ).thenAnswer((_) => locationCompleter.future);
 
-      await tester.pumpWidget(_buildTestApp(authBloc));
+      await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
       await tester.pump();
 
       expect(find.text('Buscando tu ubicación'), findsOneWidget);
@@ -219,7 +215,7 @@ void main() {
           () => permissionService.openLocationSettings(),
         ).thenThrow(Exception('platform channel failed'));
 
-        await _pumpPage(tester, authBloc);
+        await _pumpPage(tester, authBloc, locationCubit);
 
         await tester.tap(find.text('Encender GPS'));
         await tester.pumpAndSettle();
@@ -237,15 +233,22 @@ void main() {
   });
 }
 
-Future<void> _pumpPage(WidgetTester tester, AuthBloc authBloc) async {
-  await tester.pumpWidget(_buildTestApp(authBloc));
+Future<void> _pumpPage(
+  WidgetTester tester,
+  AuthBloc authBloc,
+  LocationCubit locationCubit,
+) async {
+  await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
   await tester.pumpAndSettle();
 }
 
-Widget _buildTestApp(AuthBloc authBloc) {
+Widget _buildTestApp(AuthBloc authBloc, LocationCubit locationCubit) {
   return MaterialApp(
-    home: BlocProvider<AuthBloc>.value(
-      value: authBloc,
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: authBloc),
+        BlocProvider<LocationCubit>.value(value: locationCubit),
+      ],
       child: const HomeCustomerPage(),
     ),
   );
