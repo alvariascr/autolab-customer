@@ -16,7 +16,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: 'Mostraremos talleres y servicios cercanos.',
         primaryActionLabel: 'Usar ubicación',
         leadingIcon: Icons.location_on_outlined,
-        showRefreshAction: true,
       );
     case 'permissionRequired':
       return const LocationFeedbackText(
@@ -24,7 +23,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: 'Actívala para ver opciones cercanas.',
         primaryActionLabel: 'Activar',
         leadingIcon: Icons.location_searching_outlined,
-        showRefreshAction: false,
       );
     case 'deniedForever':
       return const LocationFeedbackText(
@@ -32,7 +30,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: 'Actívala desde configuración.',
         primaryActionLabel: 'Configuración',
         leadingIcon: Icons.location_off_outlined,
-        showRefreshAction: false,
       );
     case 'serviceDisabled':
       return const LocationFeedbackText(
@@ -40,7 +37,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: 'Enciende tu ubicación para continuar.',
         primaryActionLabel: 'Encender GPS',
         leadingIcon: Icons.gps_off_outlined,
-        showRefreshAction: false,
       );
     case 'restricted':
       return const LocationFeedbackText(
@@ -48,7 +44,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: 'La ubicación no está disponible en este dispositivo.',
         primaryActionLabel: 'Entendido',
         leadingIcon: Icons.info_outline,
-        showRefreshAction: false,
       );
     case 'requestingPermission':
       return const LocationFeedbackText(
@@ -56,7 +51,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: 'Esperando tu respuesta para acceder a la ubicación.',
         primaryActionLabel: 'Esperando...',
         leadingIcon: Icons.location_searching_outlined,
-        showRefreshAction: false,
       );
     default:
       return LocationFeedbackText(
@@ -64,7 +58,6 @@ LocationFeedbackText mapLocationFeedback({
         subtitle: fallbackMessage ?? 'Intenta de nuevo en unos segundos.',
         primaryActionLabel: 'Reintentar',
         leadingIcon: Icons.error_outline,
-        showRefreshAction: true,
       );
   }
 }

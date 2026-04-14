@@ -161,6 +161,24 @@ void main() {
       verify(() => errorHandler.handle(settingsError, any())).called(1);
     });
 
+    test(
+      'si abrir ajustes del GPS retorna false, emite error controlado',
+      () async {
+        when(
+          () => permissionService.openLocationSettings(),
+        ).thenAnswer((_) async => false);
+
+        await cubit.openLocationSettings();
+
+        expect(cubit.state.status, LocationFlowStatus.error);
+        expect(
+          cubit.state.message,
+          'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+        );
+        verify(() => errorHandler.handle(any(), any())).called(1);
+      },
+    );
+
     test('emite requestingPermission mientras solicita permiso', () async {
       final completer = Completer<LocationPermissionRequestResult>();
 

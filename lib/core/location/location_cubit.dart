@@ -139,7 +139,10 @@ class LocationCubit extends Cubit<LocationState> {
 
   Future<void> openAppSettings() async {
     try {
-      await _permissionService.openAppSettings();
+      final opened = await _permissionService.openAppSettings();
+      if (!opened) {
+        throw StateError('openAppSettings returned false');
+      }
     } catch (error, stackTrace) {
       _emitActionError(error, stackTrace);
     }
@@ -147,7 +150,10 @@ class LocationCubit extends Cubit<LocationState> {
 
   Future<void> openLocationSettings() async {
     try {
-      await _permissionService.openLocationSettings();
+      final opened = await _permissionService.openLocationSettings();
+      if (!opened) {
+        throw StateError('openLocationSettings returned false');
+      }
     } catch (error, stackTrace) {
       _emitActionError(error, stackTrace);
     }

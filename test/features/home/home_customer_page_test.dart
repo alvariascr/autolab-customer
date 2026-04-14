@@ -260,6 +260,32 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets(
+      'si abrir ajustes retorna false, la app responde con un mensaje controlado',
+      (tester) async {
+        when(
+          () => permissionService.getPermissionStatus(),
+        ).thenAnswer((_) async => LocationPermissionStatus.serviceDisabled);
+        when(
+          () => permissionService.openLocationSettings(),
+        ).thenAnswer((_) async => false);
+
+        await _pumpPage(tester, authBloc, locationCubit);
+
+        await tester.tap(find.text('Encender GPS'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('No pudimos ubicarte'), findsOneWidget);
+        expect(
+          find.text(
+            'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+          ),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }
 

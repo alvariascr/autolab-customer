@@ -62,8 +62,20 @@ class _LocationPermissionGateState extends State<LocationPermissionGate> {
             'La ubicacion fue denegada permanentemente. Actívala desde la configuración de la app.',
             action: SnackBarAction(
               label: 'Configurar',
-              onPressed: () {
-                locationPermissionService.openAppSettings();
+              onPressed: () async {
+                try {
+                  final opened = await locationPermissionService
+                      .openAppSettings();
+                  if (!opened && mounted) {
+                    _showMessage(
+                      'No fue posible abrir la configuración de la app.',
+                    );
+                  }
+                } catch (error, stackTrace) {
+                  debugPrint(
+                    'Opening app settings failed: $error\n$stackTrace',
+                  );
+                }
               },
             ),
           );
