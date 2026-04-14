@@ -7,6 +7,7 @@ import '../../core/location/location_state.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
 import 'location/location_feedback_mapper.dart';
+import 'location/location_feedback_text.dart';
 
 class HomeCustomerPage extends StatefulWidget {
   const HomeCustomerPage({super.key});
@@ -48,16 +49,24 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         if (shouldRequest == true && mounted) {
           await locationCubit.requestPermission();
         }
+        return;
+      case LocationFlowStatus.requestingPermission:
+        return;
       case LocationFlowStatus.deniedForever:
         await locationCubit.openAppSettings();
+        return;
       case LocationFlowStatus.serviceDisabled:
         await locationCubit.openLocationSettings();
+        return;
       case LocationFlowStatus.restricted:
+        await locationCubit.refresh();
+        return;
       case LocationFlowStatus.success:
       case LocationFlowStatus.error:
       case LocationFlowStatus.initial:
       case LocationFlowStatus.loading:
         await locationCubit.refresh();
+        return;
     }
   }
 
@@ -173,16 +182,15 @@ class _TopLocationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLoading =
         state.status == LocationFlowStatus.initial ||
-        state.status == LocationFlowStatus.loading;
+        state.status == LocationFlowStatus.loading ||
+        state.status == LocationFlowStatus.requestingPermission;
     final feedback = mapLocationFeedback(
       placeName: state.placeName,
       fallbackMessage: state.message,
       stateType: _stateKey(state.status),
     );
-    final title = isLoading ? 'Buscando tu ubicación' : feedback.title;
-    final subtitle = isLoading
-        ? 'Consultando ubicación del dispositivo...'
-        : feedback.subtitle;
+    final title = _titleFor(state.status, feedback, isLoading);
+    final subtitle = _subtitleFor(state.status, feedback, isLoading);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -302,7 +310,43 @@ class _TopLocationBar extends StatelessWidget {
       LocationFlowStatus.serviceDisabled => 'serviceDisabled',
       LocationFlowStatus.restricted => 'restricted',
       LocationFlowStatus.error => 'error',
+      LocationFlowStatus.requestingPermission => 'requestingPermission',
       LocationFlowStatus.initial || LocationFlowStatus.loading => 'loading',
+    };
+  }
+
+  String _titleFor(
+    LocationFlowStatus status,
+    LocationFeedbackText feedback,
+    bool isLoading,
+  ) {
+    if (!isLoading) {
+      return feedback.title;
+    }
+
+    return switch (status) {
+      LocationFlowStatus.requestingPermission => 'Solicitando permiso',
+      LocationFlowStatus.initial ||
+      LocationFlowStatus.loading => 'Buscando tu ubicación',
+      _ => feedback.title,
+    };
+  }
+
+  String _subtitleFor(
+    LocationFlowStatus status,
+    LocationFeedbackText feedback,
+    bool isLoading,
+  ) {
+    if (!isLoading) {
+      return feedback.subtitle;
+    }
+
+    return switch (status) {
+      LocationFlowStatus.requestingPermission =>
+        'Esperando tu respuesta para acceder a la ubicación.',
+      LocationFlowStatus.initial ||
+      LocationFlowStatus.loading => 'Consultando ubicación del dispositivo...',
+      _ => feedback.subtitle,
     };
   }
 }

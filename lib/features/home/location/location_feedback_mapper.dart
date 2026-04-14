@@ -50,6 +50,14 @@ LocationFeedbackText mapLocationFeedback({
         leadingIcon: Icons.info_outline,
         showRefreshAction: false,
       );
+    case 'requestingPermission':
+      return const LocationFeedbackText(
+        title: 'Solicitando permiso',
+        subtitle: 'Esperando tu respuesta para acceder a la ubicación.',
+        primaryActionLabel: 'Esperando...',
+        leadingIcon: Icons.location_searching_outlined,
+        showRefreshAction: false,
+      );
     default:
       return LocationFeedbackText(
         title: 'No pudimos ubicarte',

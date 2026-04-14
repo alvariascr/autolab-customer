@@ -115,6 +115,13 @@ class LocationCubit extends Cubit<LocationState> {
 
   Future<void> requestPermission() async {
     try {
+      emit(
+        state.copyWith(
+          status: LocationFlowStatus.requestingPermission,
+          clearMessage: true,
+        ),
+      );
+
       final result = await _permissionService.requestWhileInUsePermission();
 
       switch (result) {

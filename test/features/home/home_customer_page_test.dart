@@ -205,6 +205,36 @@ void main() {
       expect(find.text('No pudimos ubicarte'), findsNothing);
     });
 
+    testWidgets('muestra retroalimentación visible mientras solicita permiso', (
+      tester,
+    ) async {
+      final permissionCompleter = Completer<LocationPermissionRequestResult>();
+
+      when(
+        () => permissionService.getPermissionStatus(),
+      ).thenAnswer((_) async => LocationPermissionStatus.denied);
+      when(
+        () => permissionService.requestWhileInUsePermission(),
+      ).thenAnswer((_) => permissionCompleter.future);
+
+      await _pumpPage(tester, authBloc, locationCubit);
+
+      await tester.tap(find.text('Activar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pump();
+
+      expect(find.text('Solicitando permiso'), findsOneWidget);
+      expect(
+        find.text('Esperando tu respuesta para acceder a la ubicación.'),
+        findsOneWidget,
+      );
+
+      permissionCompleter.complete(LocationPermissionRequestResult.denied);
+      await tester.pumpAndSettle();
+    });
+
     testWidgets(
       'si abrir ajustes falla, la app responde con un mensaje controlado',
       (tester) async {

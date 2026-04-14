@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
@@ -157,6 +159,22 @@ void main() {
         'No fue posible completar la acción de ubicación. Intenta nuevamente.',
       );
       verify(() => errorHandler.handle(settingsError, any())).called(1);
+    });
+
+    test('emite requestingPermission mientras solicita permiso', () async {
+      final completer = Completer<LocationPermissionRequestResult>();
+
+      when(
+        () => permissionService.requestWhileInUsePermission(),
+      ).thenAnswer((_) => completer.future);
+
+      final requestFuture = cubit.requestPermission();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.status, LocationFlowStatus.requestingPermission);
+
+      completer.complete(LocationPermissionRequestResult.denied);
+      await requestFuture;
     });
   });
 }

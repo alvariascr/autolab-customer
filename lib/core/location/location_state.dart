@@ -4,6 +4,7 @@ import 'current_location.dart';
 
 enum LocationFlowStatus {
   initial,
+  requestingPermission,
   loading,
   success,
   permissionRequired,
