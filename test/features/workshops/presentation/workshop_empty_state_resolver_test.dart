@@ -19,17 +19,6 @@ void main() {
       );
     });
 
-    test('indica cuando se esta usando Tilaran como referencia', () {
-      const state = LocationState(
-        status: LocationFlowStatus.permissionRequired,
-      );
-
-      expect(
-        resolver.resolve(state, isUsingFallbackLocation: true),
-        'No encontramos talleres cerca de Tilarán por el momento.',
-      );
-    });
-
     test('indica cuando se necesita activar la ubicacion', () {
       const state = LocationState(
         status: LocationFlowStatus.permissionRequired,

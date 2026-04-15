@@ -3,14 +3,7 @@ import '../../../core/location/location_state.dart';
 class WorkshopEmptyStateResolver {
   const WorkshopEmptyStateResolver();
 
-  String resolve(
-    LocationState locationState, {
-    bool isUsingFallbackLocation = false,
-  }) {
-    if (isUsingFallbackLocation) {
-      return 'No encontramos talleres cerca de Tilarán por el momento.';
-    }
-
+  String resolve(LocationState locationState) {
     return switch (locationState.status) {
       LocationFlowStatus.initial ||
       LocationFlowStatus.loading ||
