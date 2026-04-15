@@ -90,5 +90,28 @@ void main() {
       expect(find.byKey(const ValueKey('workshop-marker-1')), findsOneWidget);
       expect(find.byKey(const ValueKey('workshop-marker-2')), findsOneWidget);
     });
+
+    testWidgets('muestra controles de zoom sobre el mapa', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 320,
+              child: NearbyWorkshopsMap(
+                workshops: [],
+                currentLocation: CurrentLocation(
+                  latitude: 9.9281,
+                  longitude: -84.0907,
+                ),
+                emptyMessage: 'No encontramos talleres cercanos.',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const ValueKey('map-zoom-in-button')), findsOneWidget);
+      expect(find.byKey(const ValueKey('map-zoom-out-button')), findsOneWidget);
+    });
   });
 }

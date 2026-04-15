@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/location/current_location.dart';
 import '../../domain/entities/workshop.dart';
 
-class NearbyWorkshopsMap extends StatelessWidget {
+class NearbyWorkshopsMap extends StatefulWidget {
   const NearbyWorkshopsMap({
     super.key,
     required this.workshops,
@@ -18,13 +18,51 @@ class NearbyWorkshopsMap extends StatelessWidget {
   final String emptyMessage;
 
   @override
+  State<NearbyWorkshopsMap> createState() => _NearbyWorkshopsMapState();
+}
+
+class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
+  static const _initialZoom = 11.8;
+  static const _minimumZoom = 5.0;
+  static const _maximumZoom = 17.5;
+  static const _zoomStep = 1.0;
+
+  late final MapController _mapController;
+  double _currentZoom = _initialZoom;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+  }
+
+  void _zoomIn() => _updateZoom(_currentZoom + _zoomStep);
+
+  void _zoomOut() => _updateZoom(_currentZoom - _zoomStep);
+
+  void _updateZoom(double nextZoom) {
+    final location = widget.currentLocation;
+    if (location == null) {
+      return;
+    }
+
+    final safeZoom = nextZoom.clamp(_minimumZoom, _maximumZoom);
+    final center = LatLng(location.latitude, location.longitude);
+
+    setState(() {
+      _currentZoom = safeZoom;
+    });
+    _mapController.move(center, safeZoom);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (currentLocation == null) {
+    if (widget.currentLocation == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            emptyMessage,
+            widget.emptyMessage,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Color(0xFF6B5F57)),
           ),
@@ -33,8 +71,8 @@ class NearbyWorkshopsMap extends StatelessWidget {
     }
 
     final center = LatLng(
-      currentLocation!.latitude,
-      currentLocation!.longitude,
+      widget.currentLocation!.latitude,
+      widget.currentLocation!.longitude,
     );
     final markers = <Marker>[
       Marker(
@@ -43,7 +81,7 @@ class NearbyWorkshopsMap extends StatelessWidget {
         height: 42,
         child: const _CurrentLocationMarker(),
       ),
-      ...workshops.map(
+      ...widget.workshops.map(
         (workshop) => Marker(
           point: LatLng(workshop.latitude, workshop.longitude),
           width: 52,
@@ -58,9 +96,10 @@ class NearbyWorkshopsMap extends StatelessWidget {
       child: Stack(
         children: [
           FlutterMap(
+            mapController: _mapController,
             options: MapOptions(
               initialCenter: center,
-              initialZoom: 11.8,
+              initialZoom: _initialZoom,
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
               ),
@@ -81,7 +120,12 @@ class NearbyWorkshopsMap extends StatelessWidget {
               ),
             ],
           ),
-          if (workshops.isEmpty)
+          Positioned(
+            right: 12,
+            bottom: 28,
+            child: _ZoomControls(onZoomIn: _zoomIn, onZoomOut: _zoomOut),
+          ),
+          if (widget.workshops.isEmpty)
             Positioned(
               top: 12,
               left: 12,
@@ -104,7 +148,7 @@ class NearbyWorkshopsMap extends StatelessWidget {
                     vertical: 12,
                   ),
                   child: Text(
-                    emptyMessage,
+                    widget.emptyMessage,
                     key: const ValueKey('nearby-workshops-empty-message'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
@@ -163,6 +207,48 @@ class _CurrentLocationMarker extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 3),
       ),
       child: const Icon(Icons.my_location, size: 18, color: Colors.white),
+    );
+  }
+}
+
+class _ZoomControls extends StatelessWidget {
+  const _ZoomControls({required this.onZoomIn, required this.onZoomOut});
+
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            key: const ValueKey('map-zoom-in-button'),
+            tooltip: 'Acercar',
+            onPressed: onZoomIn,
+            icon: const Icon(Icons.add),
+          ),
+          Container(width: 32, height: 1, color: const Color(0xFFE9DDD2)),
+          IconButton(
+            key: const ValueKey('map-zoom-out-button'),
+            tooltip: 'Alejar',
+            onPressed: onZoomOut,
+            icon: const Icon(Icons.remove),
+          ),
+        ],
+      ),
     );
   }
 }
