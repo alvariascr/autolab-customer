@@ -9,6 +9,7 @@ class WorkshopModel extends Workshop {
     required super.coverUrl,
     required super.latitude,
     required super.longitude,
+    required super.deliveryRadiusKm,
   });
 
   factory WorkshopModel.fromMap(Map<String, dynamic> map) {
@@ -20,6 +21,7 @@ class WorkshopModel extends Workshop {
       coverUrl: map['cover_url'] ?? '',
       latitude: (map['location_lat'] ?? 0).toDouble(),
       longitude: (map['location_lng'] ?? 0).toDouble(),
+      deliveryRadiusKm: (map['delivery_radius_km'] ?? 0).toDouble(),
     );
   }
 }

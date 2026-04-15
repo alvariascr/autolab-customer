@@ -52,6 +52,7 @@ void main() {
           coverUrl: '',
           latitude: 9.9330,
           longitude: -84.0800,
+          deliveryRadiusKm: 8,
         ),
         Workshop(
           id: '2',
@@ -61,6 +62,7 @@ void main() {
           coverUrl: '',
           latitude: 10.0024,
           longitude: -84.1165,
+          deliveryRadiusKm: 12,
         ),
       ];
 

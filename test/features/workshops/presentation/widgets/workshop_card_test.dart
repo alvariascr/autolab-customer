@@ -14,6 +14,7 @@ void main() {
         coverUrl: '',
         latitude: 9.9330,
         longitude: -84.0800,
+        deliveryRadiusKm: 8,
       );
 
       await tester.pumpWidget(
@@ -42,6 +43,7 @@ void main() {
         coverUrl: '',
         latitude: 10.0024,
         longitude: -84.1165,
+        deliveryRadiusKm: 12,
       );
 
       await tester.pumpWidget(

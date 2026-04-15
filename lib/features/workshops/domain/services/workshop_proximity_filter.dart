@@ -4,9 +4,7 @@ import '../../../../core/location/current_location.dart';
 import '../entities/workshop.dart';
 
 class WorkshopProximityFilter {
-  const WorkshopProximityFilter({this.maxDistanceInKm = 25});
-
-  final double maxDistanceInKm;
+  const WorkshopProximityFilter();
 
   List<Workshop> filterNearby({
     required List<Workshop> workshops,
@@ -17,7 +15,7 @@ class WorkshopProximityFilter {
     }
 
     final nearby = workshops.where((workshop) {
-      if (!workshop.hasValidCoordinates) {
+      if (!workshop.hasValidCoordinates || !workshop.hasValidDeliveryRadius) {
         return false;
       }
 
@@ -27,7 +25,7 @@ class WorkshopProximityFilter {
             endLatitude: workshop.latitude,
             endLongitude: workshop.longitude,
           ) <=
-          maxDistanceInKm;
+          workshop.deliveryRadiusKm;
     }).toList();
 
     nearby.sort((first, second) {

@@ -6,6 +6,7 @@ class Workshop {
   final String coverUrl;
   final double latitude;
   final double longitude;
+  final double deliveryRadiusKm;
 
   const Workshop({
     required this.id,
@@ -15,6 +16,7 @@ class Workshop {
     required this.coverUrl,
     required this.latitude,
     required this.longitude,
+    required this.deliveryRadiusKm,
   });
 
   bool get hasValidCoordinates {
@@ -25,5 +27,9 @@ class Workshop {
         longitude >= -180 &&
         longitude <= 180 &&
         !(latitude == 0 && longitude == 0);
+  }
+
+  bool get hasValidDeliveryRadius {
+    return deliveryRadiusKm.isFinite && deliveryRadiusKm > 0;
   }
 }
