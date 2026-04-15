@@ -57,4 +57,30 @@ final class CustomerErrorCatalog {
     code: 'CUS_VAL_011',
     message: 'Debes aceptar términos y condiciones',
   );
+
+  static const locationPermissionRequired = ErrorItem(
+    code: 'CUS_LOC_001',
+    message: 'Debes conceder permisos de ubicacion para continuar.',
+  );
+
+  static const locationServiceDisabled = ErrorItem(
+    code: 'CUS_LOC_002',
+    message: 'Activa la ubicacion del dispositivo para continuar.',
+  );
+
+  static const invalidCurrentLocation = ErrorItem(
+    code: 'CUS_LOC_003',
+    message: 'No fue posible obtener una ubicacion valida del dispositivo.',
+  );
+
+  static const locationConfigurationIncomplete = ErrorItem(
+    code: 'CUS_LOC_004',
+    message:
+        'La configuracion de permisos de ubicacion esta incompleta en la aplicacion.',
+  );
+
+  static const locationPermissionRestricted = ErrorItem(
+    code: 'CUS_LOC_005',
+    message: 'La ubicacion esta restringida por el sistema operativo.',
+  );
 }

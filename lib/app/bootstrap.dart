@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/di/app_injection.dart' as di;
+import '../core/location/location_cubit.dart';
 import '../core/router/app_router.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_event.dart';
@@ -27,9 +28,12 @@ Future<void> bootstrap() async {
       await di.init(config: config);
 
       final authBloc = di.sl<AuthBloc>()..add(const RestoreSession());
+      final locationCubit = di.sl<LocationCubit>();
       final router = AppRouter(authBloc).router;
 
-      runApp(MyApp(authBloc: authBloc, router: router));
+      runApp(
+        MyApp(authBloc: authBloc, locationCubit: locationCubit, router: router),
+      );
 
       if (!completer.isCompleted) {
         completer.complete();

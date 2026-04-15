@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Autolab usa tu ubicacion mientras utilizas la app para ayudarte con funciones basadas en tu posicion actual.</string>
 </dict>
 </plist>
