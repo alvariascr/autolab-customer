@@ -12,6 +12,7 @@ import '../workshops/data/repositories/workshop_repository_impl.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import '../workshops/presentation/widgets/nearby_workshops_map.dart';
 import '../workshops/presentation/widgets/workshops_carousel.dart';
 import 'location/location_feedback_mapper.dart';
 import 'location/location_feedback_text.dart';
@@ -181,11 +182,22 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                     const SizedBox(height: 24),
                     BlocBuilder<LocationCubit, LocationState>(
                       builder: (context, state) {
-                        return _WorkshopsSection(
-                          workshopsFuture: _workshopsFuture,
-                          locationState: state,
-                          proximityFilter: _workshopProximityFilter,
-                          emptyStateResolver: _workshopEmptyStateResolver,
+                        return Column(
+                          children: [
+                            _WorkshopsSection(
+                              workshopsFuture: _workshopsFuture,
+                              locationState: state,
+                              proximityFilter: _workshopProximityFilter,
+                              emptyStateResolver: _workshopEmptyStateResolver,
+                            ),
+                            const SizedBox(height: 24),
+                            _NearbyWorkshopsMapSection(
+                              workshopsFuture: _workshopsFuture,
+                              locationState: state,
+                              proximityFilter: _workshopProximityFilter,
+                              emptyStateResolver: _workshopEmptyStateResolver,
+                            ),
+                          ],
                         );
                       },
                     ),
@@ -459,6 +471,93 @@ class _WorkshopsSection extends StatelessWidget {
                 child: WorkshopsCarousel(
                   workshops: nearbyWorkshops,
                   emptyMessage: emptyStateResolver.resolve(locationState),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NearbyWorkshopsMapSection extends StatelessWidget {
+  const _NearbyWorkshopsMapSection({
+    required this.workshopsFuture,
+    required this.locationState,
+    required this.proximityFilter,
+    required this.emptyStateResolver,
+  });
+
+  final Future<List<Workshop>> workshopsFuture;
+  final LocationState locationState;
+  final WorkshopProximityFilter proximityFilter;
+  final WorkshopEmptyStateResolver emptyStateResolver;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE9DDD2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mapa de talleres cercanos',
+            style: TextStyle(
+              color: Color(0xFF181411),
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ubica en el mapa las opciones disponibles cerca de ti.',
+            style: TextStyle(
+              color: Color(0xFF6B5F57),
+              fontSize: 14,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 20),
+          FutureBuilder<List<Workshop>>(
+            future: workshopsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No fue posible cargar el mapa de talleres en este momento.',
+                    style: TextStyle(color: Color(0xFF6B5F57)),
+                  ),
+                );
+              }
+
+              final workshops = snapshot.data ?? const <Workshop>[];
+              final nearbyWorkshops = proximityFilter.filterNearby(
+                workshops: workshops,
+                currentLocation: locationState.location,
+              );
+              final emptyMessage = emptyStateResolver.resolve(locationState);
+
+              return SizedBox(
+                height: 320,
+                child: NearbyWorkshopsMap(
+                  workshops: nearbyWorkshops,
+                  currentLocation: locationState.location,
+                  emptyMessage: emptyMessage,
                 ),
               );
             },
