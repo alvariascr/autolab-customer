@@ -10,6 +10,7 @@ import '../auth/bloc/auth_event.dart';
 import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../workshops/data/repositories/workshop_repository_impl.dart';
 import '../workshops/domain/entities/workshop.dart';
+import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/presentation/widgets/workshops_carousel.dart';
 import 'location/location_feedback_mapper.dart';
 import 'location/location_feedback_text.dart';
@@ -23,6 +24,8 @@ class HomeCustomerPage extends StatefulWidget {
 
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
+  static const _workshopProximityFilter = WorkshopProximityFilter();
+
   late Future<List<Workshop>> _workshopsFuture;
 
   @override
@@ -174,7 +177,15 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                       },
                     ),
                     const SizedBox(height: 24),
-                    _WorkshopsSection(workshopsFuture: _workshopsFuture),
+                    BlocBuilder<LocationCubit, LocationState>(
+                      builder: (context, state) {
+                        return _WorkshopsSection(
+                          workshopsFuture: _workshopsFuture,
+                          locationState: state,
+                          proximityFilter: _workshopProximityFilter,
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -371,9 +382,15 @@ class _TopLocationBar extends StatelessWidget {
 }
 
 class _WorkshopsSection extends StatelessWidget {
-  const _WorkshopsSection({required this.workshopsFuture});
+  const _WorkshopsSection({
+    required this.workshopsFuture,
+    required this.locationState,
+    required this.proximityFilter,
+  });
 
   final Future<List<Workshop>> workshopsFuture;
+  final LocationState locationState;
+  final WorkshopProximityFilter proximityFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -427,10 +444,14 @@ class _WorkshopsSection extends StatelessWidget {
               }
 
               final workshops = snapshot.data ?? const <Workshop>[];
+              final nearbyWorkshops = proximityFilter.filterNearby(
+                workshops: workshops,
+                currentLocation: locationState.location,
+              );
 
               return SizedBox(
                 height: 320,
-                child: WorkshopsCarousel(workshops: workshops),
+                child: WorkshopsCarousel(workshops: nearbyWorkshops),
               );
             },
           ),
