@@ -2,11 +2,12 @@ import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
 import 'package:autolab_customer/features/workshops/presentation/widgets/nearby_workshops_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NearbyWorkshopsMap', () {
-    testWidgets('muestra mensaje vacio cuando no hay talleres cercanos', (
+    testWidgets('mantiene el mapa visible cuando no hay talleres cercanos', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -28,6 +29,15 @@ void main() {
       );
 
       expect(find.text('No encontramos talleres cercanos.'), findsOneWidget);
+      expect(find.byType(FlutterMap), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('current-location-marker')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('nearby-workshops-empty-message')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('renderiza marcadores del usuario y de cada taller', (

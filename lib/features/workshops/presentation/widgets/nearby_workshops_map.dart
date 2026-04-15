@@ -19,7 +19,7 @@ class NearbyWorkshopsMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (currentLocation == null || workshops.isEmpty) {
+    if (currentLocation == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -55,25 +55,67 @@ class NearbyWorkshopsMap extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
-      child: FlutterMap(
-        options: MapOptions(
-          initialCenter: center,
-          initialZoom: 11.8,
-          interactionOptions: const InteractionOptions(
-            flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
-          ),
-        ),
+      child: Stack(
         children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.autolab.customer',
-          ),
-          MarkerLayer(markers: markers),
-          RichAttributionWidget(
-            attributions: [
-              TextSourceAttribution('OpenStreetMap contributors', onTap: null),
+          FlutterMap(
+            options: MapOptions(
+              initialCenter: center,
+              initialZoom: 11.8,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
+              ),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.autolab.customer',
+              ),
+              MarkerLayer(markers: markers),
+              RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution(
+                    'OpenStreetMap contributors',
+                    onTap: null,
+                  ),
+                ],
+              ),
             ],
           ),
+          if (workshops.isEmpty)
+            Positioned(
+              top: 12,
+              left: 12,
+              right: 12,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  child: Text(
+                    emptyMessage,
+                    key: const ValueKey('nearby-workshops-empty-message'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF6B5F57),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
