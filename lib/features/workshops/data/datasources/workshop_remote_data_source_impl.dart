@@ -10,18 +10,19 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
 
   @override
   Future<List<WorkshopModel>> getWorkshops() async {
-    final response = await client.from('workshops').select('''
-      id,
-      name,
-      description,
-      location_lat,
-      location_lng,
-      cover_url,
-      avatar_url
-    ''');
-
-    print('WORKSHOPS RESPONSE: $response');
-    print('WORKSHOPS LENGTH: ${(response as List).length}');
+    final response = await client
+        .from('workshops')
+        .select('''
+          id,
+          name,
+          description,
+          status,
+          location_lat,
+          location_lng,
+          cover_url,
+          avatar_url
+        ''')
+        .inFilter('status', const ['active', 'complete']);
 
     return response.map((item) => WorkshopModel.fromMap(item)).toList();
   }
