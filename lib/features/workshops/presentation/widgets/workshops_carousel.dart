@@ -7,10 +7,7 @@ import 'workshop_card.dart';
 class WorkshopsCarousel extends StatelessWidget {
   final List<Workshop> workshops;
 
-  const WorkshopsCarousel({
-    super.key,
-    required this.workshops,
-  });
+  const WorkshopsCarousel({super.key, required this.workshops});
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +25,15 @@ class WorkshopsCarousel extends StatelessWidget {
         height: 320,
         enlargeCenterPage: true,
         viewportFraction: 0.78,
-        enableInfiniteScroll: true,
-        autoPlay: true,
+        enableInfiniteScroll: workshops.length > 1,
+        autoPlay: workshops.length > 1,
         autoPlayInterval: const Duration(seconds: 3),
         autoPlayAnimationDuration: const Duration(milliseconds: 800),
       ),
       items: workshops.map((workshop) {
         return InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () {
-            print('Tocaste: ${workshop.name}');
-          },
+          onTap: () {},
           child: WorkshopCard(workshop: workshop),
         );
       }).toList(),
