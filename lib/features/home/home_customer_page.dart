@@ -11,6 +11,7 @@ import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../workshops/data/repositories/workshop_repository_impl.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
+import '../workshops/presentation/workshop_empty_state_resolver.dart';
 import '../workshops/presentation/widgets/workshops_carousel.dart';
 import 'location/location_feedback_mapper.dart';
 import 'location/location_feedback_text.dart';
@@ -25,6 +26,7 @@ class HomeCustomerPage extends StatefulWidget {
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
   static const _workshopProximityFilter = WorkshopProximityFilter();
+  static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
 
   late Future<List<Workshop>> _workshopsFuture;
 
@@ -183,6 +185,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                           workshopsFuture: _workshopsFuture,
                           locationState: state,
                           proximityFilter: _workshopProximityFilter,
+                          emptyStateResolver: _workshopEmptyStateResolver,
                         );
                       },
                     ),
@@ -386,11 +389,13 @@ class _WorkshopsSection extends StatelessWidget {
     required this.workshopsFuture,
     required this.locationState,
     required this.proximityFilter,
+    required this.emptyStateResolver,
   });
 
   final Future<List<Workshop>> workshopsFuture;
   final LocationState locationState;
   final WorkshopProximityFilter proximityFilter;
+  final WorkshopEmptyStateResolver emptyStateResolver;
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +456,10 @@ class _WorkshopsSection extends StatelessWidget {
 
               return SizedBox(
                 height: 320,
-                child: WorkshopsCarousel(workshops: nearbyWorkshops),
+                child: WorkshopsCarousel(
+                  workshops: nearbyWorkshops,
+                  emptyMessage: emptyStateResolver.resolve(locationState),
+                ),
               );
             },
           ),

@@ -6,16 +6,21 @@ import 'workshop_card.dart';
 
 class WorkshopsCarousel extends StatelessWidget {
   final List<Workshop> workshops;
+  final String emptyMessage;
 
-  const WorkshopsCarousel({super.key, required this.workshops});
+  const WorkshopsCarousel({
+    super.key,
+    required this.workshops,
+    this.emptyMessage = 'No hay talleres disponibles',
+  });
 
   @override
   Widget build(BuildContext context) {
     if (workshops.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Text('No hay talleres disponibles'),
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Text(emptyMessage, textAlign: TextAlign.center),
         ),
       );
     }
