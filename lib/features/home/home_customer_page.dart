@@ -11,6 +11,7 @@ import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../workshops/data/repositories/workshop_repository_impl.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
+import '../workshops/domain/services/workshop_search_location_resolver.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
 import '../workshops/presentation/widgets/nearby_workshops_map.dart';
 import '../workshops/presentation/widgets/workshops_carousel.dart';
@@ -27,6 +28,8 @@ class HomeCustomerPage extends StatefulWidget {
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
   static const _workshopProximityFilter = WorkshopProximityFilter();
+  static const _workshopSearchLocationResolver =
+      WorkshopSearchLocationResolver();
   static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
 
   late Future<List<Workshop>> _workshopsFuture;
@@ -461,16 +464,26 @@ class _WorkshopsSection extends StatelessWidget {
               }
 
               final workshops = snapshot.data ?? const <Workshop>[];
+              final searchLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .resolve(locationState.location);
+              final isUsingFallbackLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .isUsingFallback(locationState.location);
               final nearbyWorkshops = proximityFilter.filterNearby(
                 workshops: workshops,
-                currentLocation: locationState.location,
+                currentLocation: searchLocation,
               );
 
               return SizedBox(
                 height: 320,
                 child: WorkshopsCarousel(
                   workshops: nearbyWorkshops,
-                  emptyMessage: emptyStateResolver.resolve(locationState),
+                  currentLocation: searchLocation,
+                  emptyMessage: emptyStateResolver.resolve(
+                    locationState,
+                    isUsingFallbackLocation: isUsingFallbackLocation,
+                  ),
                 ),
               );
             },
@@ -546,17 +559,26 @@ class _NearbyWorkshopsMapSection extends StatelessWidget {
               }
 
               final workshops = snapshot.data ?? const <Workshop>[];
+              final searchLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .resolve(locationState.location);
+              final isUsingFallbackLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .isUsingFallback(locationState.location);
               final nearbyWorkshops = proximityFilter.filterNearby(
                 workshops: workshops,
-                currentLocation: locationState.location,
+                currentLocation: searchLocation,
               );
-              final emptyMessage = emptyStateResolver.resolve(locationState);
+              final emptyMessage = emptyStateResolver.resolve(
+                locationState,
+                isUsingFallbackLocation: isUsingFallbackLocation,
+              );
 
               return SizedBox(
                 height: 320,
                 child: NearbyWorkshopsMap(
                   workshops: nearbyWorkshops,
-                  currentLocation: locationState.location,
+                  currentLocation: searchLocation,
                   emptyMessage: emptyMessage,
                 ),
               );

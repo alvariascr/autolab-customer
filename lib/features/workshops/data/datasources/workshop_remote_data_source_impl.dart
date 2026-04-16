@@ -16,6 +16,7 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
           id,
           name,
           description,
+          location_address,
           status,
           location_lat,
           location_lng,

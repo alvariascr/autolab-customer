@@ -2,6 +2,7 @@ class Workshop {
   final String id;
   final String name;
   final String description;
+  final String locationAddress;
   final String avatarUrl;
   final String coverUrl;
   final double latitude;
@@ -12,6 +13,7 @@ class Workshop {
     required this.id,
     required this.name,
     required this.description,
+    required this.locationAddress,
     required this.avatarUrl,
     required this.coverUrl,
     required this.latitude,

@@ -1,3 +1,4 @@
+import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
 import 'package:autolab_customer/features/workshops/presentation/widgets/workshop_card.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ void main() {
         id: '1',
         name: 'Autolab Escazu',
         description: 'Cambio de aceite y frenos.',
+        locationAddress: 'Escazu Centro',
         avatarUrl: '',
         coverUrl: '',
         latitude: 9.9330,
@@ -22,7 +24,13 @@ void main() {
           home: Scaffold(
             body: SizedBox(
               height: 320,
-              child: WorkshopCard(workshop: workshop),
+              child: WorkshopCard(
+                workshop: workshop,
+                referenceLocation: CurrentLocation(
+                  latitude: 9.9281,
+                  longitude: -84.0907,
+                ),
+              ),
             ),
           ),
         ),
@@ -30,6 +38,9 @@ void main() {
 
       expect(find.text('Autolab Escazu'), findsOneWidget);
       expect(find.text('Cambio de aceite y frenos.'), findsOneWidget);
+      expect(find.text('Escazu Centro'), findsOneWidget);
+      expect(find.textContaining('Cobertura'), findsOneWidget);
+      expect(find.textContaining('A '), findsOneWidget);
       expect(find.byIcon(Icons.store), findsOneWidget);
       expect(find.byIcon(Icons.image), findsOneWidget);
     });
@@ -39,6 +50,7 @@ void main() {
         id: '1',
         name: 'Autolab Heredia',
         description: '',
+        locationAddress: '',
         avatarUrl: '',
         coverUrl: '',
         latitude: 10.0024,

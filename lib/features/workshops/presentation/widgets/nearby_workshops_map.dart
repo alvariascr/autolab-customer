@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../domain/entities/workshop.dart';
+import '../../domain/services/workshop_distance_calculator.dart';
 
 class NearbyWorkshopsMap extends StatefulWidget {
   const NearbyWorkshopsMap({
@@ -36,6 +37,21 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     _mapController = MapController();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+  }
+
+  @override
+  void didUpdateWidget(covariant NearbyWorkshopsMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workshops != widget.workshops ||
+        oldWidget.currentLocation != widget.currentLocation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+    }
+  }
+
   void _zoomIn() => _updateZoom(_currentZoom + _zoomStep);
 
   void _zoomOut() => _updateZoom(_currentZoom - _zoomStep);
@@ -53,6 +69,28 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       _currentZoom = safeZoom;
     });
     _mapController.move(center, safeZoom);
+  }
+
+  void _fitToMarkers() {
+    final location = widget.currentLocation;
+    if (!mounted || location == null || widget.workshops.isEmpty) {
+      return;
+    }
+
+    final points = <LatLng>[
+      LatLng(location.latitude, location.longitude),
+      ...widget.workshops.map(
+        (workshop) => LatLng(workshop.latitude, workshop.longitude),
+      ),
+    ];
+    final bounds = LatLngBounds.fromPoints(points);
+
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.fromLTRB(42, 42, 42, 88),
+      ),
+    );
   }
 
   @override
@@ -86,7 +124,10 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
           point: LatLng(workshop.latitude, workshop.longitude),
           width: 52,
           height: 52,
-          child: _WorkshopMarker(workshop: workshop),
+          child: _WorkshopMarker(
+            workshop: workshop,
+            onTap: () => _showWorkshopDetails(workshop),
+          ),
         ),
       ),
     ];
@@ -164,31 +205,133 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       ),
     );
   }
+
+  void _showWorkshopDetails(Workshop workshop) {
+    final location = widget.currentLocation;
+    if (location == null) {
+      return;
+    }
+
+    _mapController.move(
+      LatLng(workshop.latitude, workshop.longitude),
+      _currentZoom < 14 ? 14 : _currentZoom,
+    );
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final distance = WorkshopDistanceCalculator.distanceInKm(
+          currentLocation: location,
+          workshop: workshop,
+        );
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  workshop.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF181411),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MapInfoChip(
+                      icon: Icons.near_me_outlined,
+                      label:
+                          'A ${WorkshopDistanceCalculator.formatKm(distance)}',
+                    ),
+                    _MapInfoChip(
+                      icon: Icons.local_shipping_outlined,
+                      label:
+                          'Cobertura ${WorkshopDistanceCalculator.formatKm(workshop.deliveryRadiusKm)}',
+                    ),
+                  ],
+                ),
+                if (workshop.locationAddress.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: Color(0xFF6B5F57),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          workshop.locationAddress,
+                          style: const TextStyle(
+                            color: Color(0xFF6B5F57),
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Text(
+                  workshop.description.isNotEmpty
+                      ? workshop.description
+                      : 'Sin descripción disponible.',
+                  style: const TextStyle(
+                    color: Color(0xFF5F554E),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _WorkshopMarker extends StatelessWidget {
-  const _WorkshopMarker({required this.workshop});
+  const _WorkshopMarker({required this.workshop, required this.onTap});
 
   final Workshop workshop;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: workshop.name,
-      child: Container(
-        key: ValueKey('workshop-marker-${workshop.id}'),
-        decoration: BoxDecoration(
-          color: const Color(0xFF9B3D24),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
+      message: workshop.locationAddress.isNotEmpty
+          ? '${workshop.name}\n${workshop.locationAddress}'
+          : workshop.name,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          key: ValueKey('workshop-marker-${workshop.id}'),
+          decoration: BoxDecoration(
+            color: const Color(0xFF9B3D24),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.location_on, color: Colors.white),
         ),
-        child: const Icon(Icons.location_on, color: Colors.white),
       ),
     );
   }
@@ -246,6 +389,38 @@ class _ZoomControls extends StatelessWidget {
             tooltip: 'Alejar',
             onPressed: onZoomOut,
             icon: const Icon(Icons.remove),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapInfoChip extends StatelessWidget {
+  const _MapInfoChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F4EF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF9B3D24)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF5F554E),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
