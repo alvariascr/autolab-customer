@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/location/location_permission_gate.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 
@@ -29,119 +28,117 @@ class HomeScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return LocationPermissionGate(
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6F2EE),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF181411),
-                ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F2EE),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF181411),
               ),
-              Text(
-                subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF7B6F67),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: FilledButton.icon(
-                onPressed: () {
-                  context.read<AuthBloc>().add(const LogoutRequested());
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF181411),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.logout, size: 18),
-                label: const Text('Cerrar sesión'),
+            ),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF7B6F67),
               ),
             ),
           ],
         ),
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 980;
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: FilledButton.icon(
+              onPressed: () {
+                context.read<AuthBloc>().add(const LogoutRequested());
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF181411),
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.logout, size: 18),
+              label: const Text('Cerrar sesión'),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 980;
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1180),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _HeroCard(label: heroLabel, value: heroValue),
-                        const SizedBox(height: 24),
-                        isWide
-                            ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: _InfoSection(
-                                      title: 'Resumen',
-                                      items: highlights,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: _InfoSection(
-                                      title: 'Accesos rápidos',
-                                      items: quickActions,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Column(
-                                children: [
-                                  _InfoSection(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1180),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _HeroCard(label: heroLabel, value: heroValue),
+                      const SizedBox(height: 24),
+                      isWide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: _InfoSection(
                                     title: 'Resumen',
                                     items: highlights,
                                   ),
-                                  const SizedBox(height: 20),
-                                  _InfoSection(
+                                ),
+                                const SizedBox(width: 20),
+                                Expanded(
+                                  child: _InfoSection(
                                     title: 'Accesos rápidos',
                                     items: quickActions,
                                   ),
-                                ],
-                              ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Estado actual',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF181411),
-                          ),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                _InfoSection(
+                                  title: 'Resumen',
+                                  items: highlights,
+                                ),
+                                const SizedBox(height: 20),
+                                _InfoSection(
+                                  title: 'Accesos rápidos',
+                                  items: quickActions,
+                                ),
+                              ],
+                            ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Estado actual',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF181411),
                         ),
-                        const SizedBox(height: 14),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: statusCards
-                              .map((item) => _StatusCard(item: item))
-                              .toList(),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: statusCards
+                            .map((item) => _StatusCard(item: item))
+                            .toList(),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

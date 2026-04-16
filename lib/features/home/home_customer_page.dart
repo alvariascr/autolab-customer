@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/location/location_cubit.dart';
-import '../../core/location/location_permission_gate.dart';
 import '../../core/location/location_state.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
@@ -18,12 +17,14 @@ class HomeCustomerPage extends StatefulWidget {
 
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
+  bool _didTriggerInitialLocationLoad = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LocationCubit>().loadCurrentLocation();
+      _triggerInitialLocationLoad();
     });
   }
 
@@ -36,19 +37,37 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      if (!_didTriggerInitialLocationLoad) {
+        _triggerInitialLocationLoad();
+        return;
+      }
       context.read<LocationCubit>().refresh();
     }
   }
 
+  void _triggerInitialLocationLoad() {
+    if (_didTriggerInitialLocationLoad || !mounted) {
+      return;
+    }
+
+    _didTriggerInitialLocationLoad = true;
+
+    Future<void>.delayed(const Duration(milliseconds: 350), () {
+      if (!mounted) {
+        return;
+      }
+
+      context.read<LocationCubit>().initialize();
+    });
+  }
+
   Future<void> _handleLocationAction(LocationState state) async {
     final locationCubit = context.read<LocationCubit>();
+    final actionStatus = state.effectiveStatus;
 
-    switch (state.status) {
+    switch (actionStatus) {
       case LocationFlowStatus.permissionRequired:
-        final shouldRequest = await _showLocationPermissionPrePrompt();
-        if (shouldRequest == true && mounted) {
-          await locationCubit.requestPermission();
-        }
+        await locationCubit.requestPermission();
         return;
       case LocationFlowStatus.requestingPermission:
         return;
@@ -70,94 +89,146 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     }
   }
 
-  Future<bool?> _showLocationPermissionPrePrompt() {
-    return showDialog<bool>(
+  Future<void> _showLocationOptions(LocationState state) async {
+    final actionStatus = state.effectiveStatus;
+
+    await showModalBottomSheet<void>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Usa tu ubicación'),
-          content: const Text(
-            'Activa tu ubicación para mostrar talleres, servicios y opciones cercanas a ti.',
+      backgroundColor: Colors.white,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selecciona dónde entregar',
+                    style: TextStyle(
+                      color: Color(0xFF181411),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Puedes usar tu ubicación actual o elegir una dirección guardada más adelante.',
+                    style: TextStyle(
+                      color: Color(0xFF6B5F57),
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _LocationOptionTile(
+                    icon: Icons.my_location_outlined,
+                    title: _useCurrentLocationLabelFor(actionStatus),
+                    subtitle: _useCurrentLocationSubtitleFor(actionStatus),
+                    onTap: () async {
+                      Navigator.of(sheetContext).pop();
+                      await _handleLocationAction(state);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const _LocationOptionTile(
+                    icon: Icons.search_rounded,
+                    title: 'Escribir dirección',
+                    subtitle: 'Lo conectamos en el siguiente paso del home.',
+                  ),
+                  const SizedBox(height: 10),
+                  const _LocationOptionTile(
+                    icon: Icons.home_outlined,
+                    title: 'Casa',
+                    subtitle:
+                        'Próximamente podrás guardar tus direcciones favoritas.',
+                  ),
+                  const SizedBox(height: 10),
+                  const _LocationOptionTile(
+                    icon: Icons.work_outline_rounded,
+                    title: 'Trabajo',
+                    subtitle:
+                        'Próximamente podrás guardar tus direcciones favoritas.',
+                  ),
+                ],
+              ),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Ahora no'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Continuar'),
-            ),
-          ],
         );
       },
     );
   }
 
+  String _useCurrentLocationLabelFor(LocationFlowStatus status) {
+    return switch (status) {
+      LocationFlowStatus.success => 'Actualizar ubicación actual',
+      LocationFlowStatus.deniedForever => 'Abrir configuración',
+      LocationFlowStatus.serviceDisabled => 'Encender GPS',
+      LocationFlowStatus.requestingPermission => 'Esperando permiso',
+      _ => 'Usar ubicación actual',
+    };
+  }
+
+  String _useCurrentLocationSubtitleFor(LocationFlowStatus status) {
+    return switch (status) {
+      LocationFlowStatus.success =>
+        'Volver a consultar tu ubicación para actualizar los resultados.',
+      LocationFlowStatus.deniedForever =>
+        'Habilita el permiso de ubicación desde la configuración del teléfono.',
+      LocationFlowStatus.serviceDisabled =>
+        'Activa la ubicación del dispositivo para ver talleres cercanos.',
+      LocationFlowStatus.requestingPermission =>
+        'Estamos esperando tu respuesta para acceder a la ubicación.',
+      _ => 'Usa el GPS del teléfono para ver talleres y servicios cerca de ti.',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LocationPermissionGate(
-      autoRequest: false,
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F4EF),
+      appBar: AppBar(
         backgroundColor: const Color(0xFFF8F4EF),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF8F4EF),
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          titleSpacing: 20,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Autolab Repuestos',
-                style: TextStyle(
-                  color: Color(0xFF181411),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'Encuentra talleres y servicios cercanos.',
-                style: TextStyle(color: Color(0xFF6B5F57), fontSize: 12),
-              ),
-            ],
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        toolbarHeight: 46,
+        leadingWidth: 52,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: IconButton(
+            tooltip: 'Cerrar sesión',
+            onPressed: () {
+              context.read<AuthBloc>().add(const LogoutRequested());
+            },
+            icon: const Icon(Icons.logout, color: Color(0xFF181411), size: 20),
           ),
-          actions: [
-            IconButton(
-              tooltip: 'Cerrar sesión',
-              onPressed: () {
-                context.read<AuthBloc>().add(const LogoutRequested());
-              },
-              icon: const Icon(Icons.logout, color: Color(0xFF181411)),
-            ),
-            const SizedBox(width: 8),
-          ],
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BlocBuilder<LocationCubit, LocationState>(
-                      builder: (context, state) {
-                        return _TopLocationBar(
-                          state: state,
-                          onPrimaryAction: () => _handleLocationAction(state),
-                          onRefresh: () {
-                            context.read<LocationCubit>().refresh();
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    const _HomePlaceholder(),
-                  ],
-                ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BlocBuilder<LocationCubit, LocationState>(
+                    builder: (context, state) {
+                      return _DeliveryLocationCard(
+                        state: state,
+                        onTap: () => _showLocationOptions(state),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const _HomePlaceholder(),
+                ],
               ),
             ),
           ),
@@ -167,168 +238,157 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 }
 
-class _TopLocationBar extends StatelessWidget {
-  const _TopLocationBar({
-    required this.state,
-    required this.onPrimaryAction,
-    required this.onRefresh,
-  });
+class _DeliveryLocationCard extends StatelessWidget {
+  const _DeliveryLocationCard({required this.state, required this.onTap});
 
   final LocationState state;
-  final VoidCallback onPrimaryAction;
-  final VoidCallback onRefresh;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isLoading =
-        state.status == LocationFlowStatus.initial ||
-        state.status == LocationFlowStatus.loading ||
+    final isLoading = state.status == LocationFlowStatus.loading;
+    final isRequestingPermission =
         state.status == LocationFlowStatus.requestingPermission;
-    final feedback = mapLocationFeedback(
-      placeName: state.placeName,
-      fallbackMessage: state.message,
-      stateType: _stateKey(state.status),
-    );
-    final title = _titleFor(state.status, feedback, isLoading);
-    final subtitle = _subtitleFor(state.status, feedback, isLoading);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: Row(
+    final isBusy = isLoading || isRequestingPermission;
+    final showLoadingCopy = isLoading && state.lastSettledStatus == null;
+    final feedback = mapLocationFeedback(state);
+    final status = state.effectiveStatus;
+    final title = _headlineFor(status, feedback, showLoadingCopy);
+    final subtitle = _subtitleFor(status, feedback, showLoadingCopy);
+    final label = _labelFor(status);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
+      child: Stack(
+        alignment: Alignment.topCenter,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F4EF),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              isLoading
-                  ? Icons.location_searching_outlined
-                  : feedback.leadingIcon,
-              size: 18,
-              color: const Color(0xFF9B3D24),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF181411),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 60),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isBusy ? null : onTap,
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
                   ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF6B5F57),
-                    fontSize: 12,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (isLoading)
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          else
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (state.showRefreshAction)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: InkWell(
-                      onTap: onRefresh,
-                      borderRadius: BorderRadius.circular(99),
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1EAFE),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: const Icon(
-                          Icons.refresh,
-                          size: 16,
-                          color: Color(0xFF5B3CC4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF3FA572),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 1),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF181411),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                height: 1.1,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 1),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF181411),
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF6B5F57),
+                            fontSize: 10,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                FilledButton(
-                  onPressed: onPrimaryAction,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF181411),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 34),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 0,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  child: Text(feedback.primaryActionLabel),
                 ),
-              ],
+              ),
             ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: isBusy
+                ? const Padding(
+                    padding: EdgeInsets.only(top: 8, right: 2),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
   }
 
-  String _stateKey(LocationFlowStatus status) {
+  String _labelFor(LocationFlowStatus status) {
     return switch (status) {
-      LocationFlowStatus.success => 'success',
-      LocationFlowStatus.permissionRequired => 'permissionRequired',
-      LocationFlowStatus.deniedForever => 'deniedForever',
-      LocationFlowStatus.serviceDisabled => 'serviceDisabled',
-      LocationFlowStatus.restricted => 'restricted',
-      LocationFlowStatus.error => 'error',
-      LocationFlowStatus.requestingPermission => 'requestingPermission',
-      LocationFlowStatus.initial || LocationFlowStatus.loading => 'loading',
+      LocationFlowStatus.success => 'Entregar ahora',
+      LocationFlowStatus.requestingPermission => 'Confirmando acceso',
+      LocationFlowStatus.loading ||
+      LocationFlowStatus.initial => 'Buscando cerca de ti',
+      LocationFlowStatus.permissionRequired => 'Entregar ahora',
+      LocationFlowStatus.deniedForever => 'Permiso de ubicación',
+      LocationFlowStatus.serviceDisabled => 'Ubicación desactivada',
+      LocationFlowStatus.restricted => 'Ubicación restringida',
+      LocationFlowStatus.error => 'No pudimos confirmar tu zona',
     };
   }
 
-  String _titleFor(
+  String _headlineFor(
     LocationFlowStatus status,
     LocationFeedbackText feedback,
     bool isLoading,
   ) {
-    if (!isLoading) {
-      return feedback.title;
+    if (isLoading) {
+      return 'Buscando tu ubicación actual';
     }
 
     return switch (status) {
-      LocationFlowStatus.requestingPermission => 'Solicitando permiso',
+      LocationFlowStatus.success => feedback.title.replaceFirst(
+        'Entregando en ',
+        '',
+      ),
+      LocationFlowStatus.permissionRequired => 'Elegir dirección',
+      LocationFlowStatus.deniedForever => 'Abrir configuración',
+      LocationFlowStatus.serviceDisabled => 'Encender GPS',
+      LocationFlowStatus.restricted => 'Ubicación no disponible',
+      LocationFlowStatus.requestingPermission =>
+        'Confirma el acceso a tu ubicación',
+      LocationFlowStatus.error => 'No pudimos confirmar tu dirección',
       LocationFlowStatus.initial ||
-      LocationFlowStatus.loading => 'Buscando tu ubicación',
-      _ => feedback.title,
+      LocationFlowStatus.loading => 'Buscando tu ubicación actual',
     };
   }
 
@@ -337,17 +397,88 @@ class _TopLocationBar extends StatelessWidget {
     LocationFeedbackText feedback,
     bool isLoading,
   ) {
-    if (!isLoading) {
-      return feedback.subtitle;
+    if (isLoading) {
+      return 'Estamos consultando la ubicación del dispositivo para mostrarte talleres cercanos.';
     }
 
     return switch (status) {
+      LocationFlowStatus.success => '',
+      LocationFlowStatus.permissionRequired =>
+        'Usa tu ubicación actual para descubrir talleres y servicios cercanos.',
+      LocationFlowStatus.deniedForever =>
+        'Necesitamos que habilites el permiso desde la configuración del teléfono.',
+      LocationFlowStatus.serviceDisabled =>
+        'Activa la ubicación del dispositivo para ver resultados cercanos.',
+      LocationFlowStatus.restricted => feedback.subtitle,
       LocationFlowStatus.requestingPermission =>
-        'Esperando tu respuesta para acceder a la ubicación.',
-      LocationFlowStatus.initial ||
-      LocationFlowStatus.loading => 'Consultando ubicación del dispositivo...',
-      _ => feedback.subtitle,
+        'Estamos esperando tu respuesta para poder ubicar tu zona de entrega.',
+      LocationFlowStatus.error => feedback.subtitle,
+      LocationFlowStatus.initial || LocationFlowStatus.loading =>
+        'Estamos consultando la ubicación del dispositivo para mostrarte talleres cercanos.',
     };
+  }
+}
+
+class _LocationOptionTile extends StatelessWidget {
+  const _LocationOptionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+
+    return Material(
+      color: const Color(0xFFF8F4EF),
+      borderRadius: BorderRadius.circular(20),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: enabled ? const Color(0xFF181411) : const Color(0xFF9B8E84),
+            size: 19,
+          ),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: enabled ? const Color(0xFF181411) : const Color(0xFF7D6F66),
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
+            fontSize: 12,
+            height: 1.35,
+          ),
+        ),
+        trailing: Icon(
+          enabled ? Icons.arrow_forward_ios_rounded : Icons.schedule_rounded,
+          size: enabled ? 14 : 16,
+          color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
+        ),
+      ),
+    );
   }
 }
 

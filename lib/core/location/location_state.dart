@@ -20,6 +20,8 @@ class LocationState extends Equatable {
     this.location,
     this.placeName,
     this.message,
+    this.lastSettledStatus,
+    this.permissionDeniedCount = 0,
   });
 
   const LocationState.initial() : this(status: LocationFlowStatus.initial);
@@ -28,10 +30,20 @@ class LocationState extends Equatable {
   final CurrentLocation? location;
   final String? placeName;
   final String? message;
+  final LocationFlowStatus? lastSettledStatus;
+  final int permissionDeniedCount;
+
+  LocationFlowStatus get effectiveStatus {
+    if (status == LocationFlowStatus.loading && lastSettledStatus != null) {
+      return lastSettledStatus!;
+    }
+
+    return status;
+  }
 
   bool get showRefreshAction {
-    return status == LocationFlowStatus.success ||
-        status == LocationFlowStatus.error;
+    return effectiveStatus == LocationFlowStatus.success ||
+        effectiveStatus == LocationFlowStatus.error;
   }
 
   LocationState copyWith({
@@ -39,6 +51,8 @@ class LocationState extends Equatable {
     CurrentLocation? location,
     String? placeName,
     String? message,
+    LocationFlowStatus? lastSettledStatus,
+    int? permissionDeniedCount,
     bool clearLocation = false,
     bool clearPlaceName = false,
     bool clearMessage = false,
@@ -48,9 +62,19 @@ class LocationState extends Equatable {
       location: clearLocation ? null : (location ?? this.location),
       placeName: clearPlaceName ? null : (placeName ?? this.placeName),
       message: clearMessage ? null : (message ?? this.message),
+      lastSettledStatus: lastSettledStatus ?? this.lastSettledStatus,
+      permissionDeniedCount:
+          permissionDeniedCount ?? this.permissionDeniedCount,
     );
   }
 
   @override
-  List<Object?> get props => [status, location, placeName, message];
+  List<Object?> get props => [
+    status,
+    location,
+    placeName,
+    message,
+    lastSettledStatus,
+    permissionDeniedCount,
+  ];
 }

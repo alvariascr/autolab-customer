@@ -60,27 +60,32 @@ final class CustomerErrorCatalog {
 
   static const locationPermissionRequired = ErrorItem(
     code: 'CUS_LOC_001',
-    message: 'Debes conceder permisos de ubicacion para continuar.',
+    message: 'Activa tu ubicación para ver talleres y servicios cercanos.',
   );
 
   static const locationServiceDisabled = ErrorItem(
     code: 'CUS_LOC_002',
-    message: 'Activa la ubicacion del dispositivo para continuar.',
+    message: 'Enciende el GPS del dispositivo para continuar.',
   );
 
   static const invalidCurrentLocation = ErrorItem(
     code: 'CUS_LOC_003',
-    message: 'No fue posible obtener una ubicacion valida del dispositivo.',
+    message: 'No pudimos obtener una ubicación válida. Intenta nuevamente.',
   );
 
   static const locationConfigurationIncomplete = ErrorItem(
     code: 'CUS_LOC_004',
     message:
-        'La configuracion de permisos de ubicacion esta incompleta en la aplicacion.',
+        'La ubicación no está disponible en este momento. Intenta más tarde.',
   );
 
   static const locationPermissionRestricted = ErrorItem(
     code: 'CUS_LOC_005',
-    message: 'La ubicacion esta restringida por el sistema operativo.',
+    message: 'La ubicación está restringida por el sistema operativo.',
+  );
+
+  static const locationRequestTimeout = ErrorItem(
+    code: 'NET_002',
+    message: 'La ubicación tardó demasiado en responder. Intenta nuevamente.',
   );
 }

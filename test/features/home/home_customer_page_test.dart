@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
+import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/location_cubit.dart';
+import 'package:autolab_customer/core/location/location_flow_recovery_service.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/features/auth/bloc/auth_bloc.dart';
@@ -23,6 +25,9 @@ class MockCurrentLocationDataSource extends Mock
     implements CurrentLocationDataSource {}
 
 class MockLocationPlaceResolver extends Mock implements LocationPlaceResolver {}
+
+class MockLocationFlowRecoveryService extends Mock
+    implements LocationFlowRecoveryService {}
 
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
@@ -62,6 +67,7 @@ void main() {
     late MockLocationPermissionService permissionService;
     late MockCurrentLocationDataSource currentLocationDataSource;
     late MockLocationPlaceResolver placeResolver;
+    late MockLocationFlowRecoveryService flowRecoveryService;
     late MockGlobalErrorHandler errorHandler;
     late MockAppLogger logger;
     late AuthBloc authBloc;
@@ -71,23 +77,35 @@ void main() {
       registerFallbackValue(FakeCurrentLocation());
     });
 
-    setUp(() {
+    setUp(() async {
       permissionService = MockLocationPermissionService();
       currentLocationDataSource = MockCurrentLocationDataSource();
       placeResolver = MockLocationPlaceResolver();
+      flowRecoveryService = MockLocationFlowRecoveryService();
       errorHandler = MockGlobalErrorHandler();
       logger = MockAppLogger();
       authBloc = AuthBloc(_UnusedAuthRepository());
-      locationCubit = LocationCubit(
-        permissionService,
-        currentLocationDataSource,
-        placeResolver,
-        errorHandler: errorHandler,
-      );
 
       when(() => errorHandler.logger).thenReturn(logger);
       when(() => errorHandler.handle(any(), any())).thenReturn(
         const UnknownFailure(message: 'Ocurrió un error inesperado.'),
+      );
+      when(
+        () => flowRecoveryService.consumePendingSettingsSync(),
+      ).thenAnswer((_) async => false);
+      when(
+        () => flowRecoveryService.markPendingSettingsSync(),
+      ).thenAnswer((_) async {});
+      when(
+        () => permissionService.requestWhileInUsePermission(),
+      ).thenAnswer((_) async => LocationPermissionRequestResult.denied);
+
+      locationCubit = LocationCubit(
+        permissionService,
+        currentLocationDataSource,
+        placeResolver,
+        flowRecoveryService: flowRecoveryService,
+        errorHandler: errorHandler,
       );
     });
 
@@ -105,9 +123,15 @@ void main() {
 
       await _pumpPage(tester, authBloc, locationCubit);
 
-      expect(find.text('Usa tu ubicación'), findsOneWidget);
-      expect(find.text('Actívala para ver opciones cercanas.'), findsOneWidget);
-      expect(find.text('Activar'), findsOneWidget);
+      expect(find.text('Entregar ahora'), findsOneWidget);
+      expect(find.text('Elegir dirección'), findsOneWidget);
+      expect(
+        find.text(
+          'Usa tu ubicación actual para descubrir talleres y servicios cercanos.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Usar ubicación actual'), findsNothing);
     });
 
     testWidgets('muestra el nombre del lugar cuando el resolver lo entrega', (
@@ -129,11 +153,9 @@ void main() {
 
       await _pumpPage(tester, authBloc, locationCubit);
 
-      expect(find.text('Entregando en Escazu, San Jose'), findsOneWidget);
-      expect(
-        find.text('Mostraremos talleres y servicios cercanos.'),
-        findsOneWidget,
-      );
+      expect(find.text('Entregar ahora'), findsOneWidget);
+      expect(find.text('Escazu, San Jose'), findsOneWidget);
+      expect(find.text('Usar ubicación actual'), findsNothing);
     });
 
     testWidgets('muestra mensaje claro cuando el servicio está desactivado', (
@@ -145,9 +167,12 @@ void main() {
 
       await _pumpPage(tester, authBloc, locationCubit);
 
-      expect(find.text('Activa tu ubicación'), findsOneWidget);
+      expect(find.text('Ubicación desactivada'), findsOneWidget);
+      expect(find.text('Encender GPS'), findsOneWidget);
       expect(
-        find.text('Enciende tu ubicación para continuar.'),
+        find.text(
+          'Activa la ubicación del dispositivo para ver resultados cercanos.',
+        ),
         findsOneWidget,
       );
       expect(find.text('Encender GPS'), findsOneWidget);
@@ -160,10 +185,9 @@ void main() {
           () => permissionService.getPermissionStatus(),
         ).thenAnswer((_) async => LocationPermissionStatus.granted);
         when(() => currentLocationDataSource.getCurrentLocation()).thenAnswer(
-          (_) async => const Left(
+          (_) async => Left(
             TimeoutFailure(
-              message:
-                  'La solicitud tardó demasiado tiempo. Intenta nuevamente.',
+              message: CustomerErrorCatalog.locationRequestTimeout.message,
               code: 'NET_002',
             ),
           ),
@@ -171,14 +195,15 @@ void main() {
 
         await _pumpPage(tester, authBloc, locationCubit);
 
-        expect(find.text('No pudimos ubicarte'), findsOneWidget);
+        expect(find.text('No pudimos confirmar tu zona'), findsOneWidget);
+        expect(find.text('No pudimos confirmar tu dirección'), findsOneWidget);
         expect(
           find.text(
             'La ubicación tardó demasiado en responder. Intenta nuevamente.',
           ),
           findsOneWidget,
         );
-        expect(find.text('Reintentar'), findsOneWidget);
+        expect(find.text('Usar ubicación actual'), findsNothing);
       },
     );
 
@@ -195,14 +220,18 @@ void main() {
       ).thenAnswer((_) => locationCompleter.future);
 
       await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pump();
 
-      expect(find.text('Buscando tu ubicación'), findsOneWidget);
+      expect(find.text('Buscando cerca de ti'), findsOneWidget);
+      expect(find.text('Buscando tu ubicación actual'), findsOneWidget);
       expect(
-        find.text('Consultando ubicación del dispositivo...'),
+        find.text(
+          'Estamos consultando la ubicación del dispositivo para mostrarte talleres cercanos.',
+        ),
         findsOneWidget,
       );
-      expect(find.text('No pudimos ubicarte'), findsNothing);
+      expect(find.text('No pudimos confirmar tu dirección'), findsNothing);
     });
 
     testWidgets('muestra retroalimentación visible mientras solicita permiso', (
@@ -217,17 +246,20 @@ void main() {
         () => permissionService.requestWhileInUsePermission(),
       ).thenAnswer((_) => permissionCompleter.future);
 
-      await _pumpPage(tester, authBloc, locationCubit);
-
-      await tester.tap(find.text('Activar'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Continuar'));
+      await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pump();
 
-      expect(find.text('Solicitando permiso'), findsOneWidget);
+      expect(find.text('Confirmando acceso'), findsOneWidget);
+      expect(find.text('Confirma el acceso a tu ubicación'), findsOneWidget);
       expect(
         find.text('Esperando tu respuesta para acceder a la ubicación.'),
+        findsNothing,
+      );
+      expect(
+        find.text(
+          'Estamos esperando tu respuesta para poder ubicar tu zona de entrega.',
+        ),
         findsOneWidget,
       );
 
@@ -249,8 +281,11 @@ void main() {
 
         await tester.tap(find.text('Encender GPS'));
         await tester.pumpAndSettle();
+        await tester.tap(find.text('Encender GPS').last);
+        await tester.pumpAndSettle();
 
-        expect(find.text('No pudimos ubicarte'), findsOneWidget);
+        expect(find.text('No pudimos confirmar tu zona'), findsOneWidget);
+        expect(find.text('No pudimos confirmar tu dirección'), findsOneWidget);
         expect(
           find.text(
             'No fue posible completar la acción de ubicación. Intenta nuevamente.',
@@ -275,8 +310,11 @@ void main() {
 
         await tester.tap(find.text('Encender GPS'));
         await tester.pumpAndSettle();
+        await tester.tap(find.text('Encender GPS').last);
+        await tester.pumpAndSettle();
 
-        expect(find.text('No pudimos ubicarte'), findsOneWidget);
+        expect(find.text('No pudimos confirmar tu zona'), findsOneWidget);
+        expect(find.text('No pudimos confirmar tu dirección'), findsOneWidget);
         expect(
           find.text(
             'No fue posible completar la acción de ubicación. Intenta nuevamente.',
@@ -286,6 +324,47 @@ void main() {
         expect(tester.takeException(), isNull);
       },
     );
+
+    testWidgets(
+      'después de rechazar repetidamente muestra configuración en lugar de activar',
+      (tester) async {
+        when(
+          () => permissionService.getPermissionStatus(),
+        ).thenAnswer((_) async => LocationPermissionStatus.denied);
+        when(
+          () => permissionService.requestWhileInUsePermission(),
+        ).thenAnswer((_) async => LocationPermissionRequestResult.denied);
+
+        await _pumpPage(tester, authBloc, locationCubit);
+
+        await tester.tap(find.text('Elegir dirección'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Usar ubicación actual'));
+        await tester.pumpAndSettle();
+        expect(find.text('Permiso de ubicación'), findsOneWidget);
+        expect(find.text('Abrir configuración'), findsOneWidget);
+        expect(find.text('Usar ubicación actual'), findsNothing);
+      },
+    );
+
+    testWidgets('abre opciones de ubicación al tocar el header', (
+      tester,
+    ) async {
+      when(
+        () => permissionService.getPermissionStatus(),
+      ).thenAnswer((_) async => LocationPermissionStatus.denied);
+
+      await _pumpPage(tester, authBloc, locationCubit);
+
+      await tester.tap(find.text('Elegir dirección'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Selecciona dónde entregar'), findsOneWidget);
+      expect(find.text('Usar ubicación actual'), findsOneWidget);
+      expect(find.text('Escribir dirección'), findsOneWidget);
+      expect(find.text('Casa'), findsOneWidget);
+      expect(find.text('Trabajo'), findsOneWidget);
+    });
   });
 }
 
@@ -295,6 +374,7 @@ Future<void> _pumpPage(
   LocationCubit locationCubit,
 ) async {
   await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
+  await tester.pump(const Duration(milliseconds: 400));
   await tester.pumpAndSettle();
 }
 

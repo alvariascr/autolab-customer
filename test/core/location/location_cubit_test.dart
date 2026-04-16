@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
+import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/location_cubit.dart';
+import 'package:autolab_customer/core/location/location_flow_recovery_service.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/location/location_state.dart';
@@ -19,6 +21,9 @@ class MockCurrentLocationDataSource extends Mock
 
 class MockLocationPlaceResolver extends Mock implements LocationPlaceResolver {}
 
+class MockLocationFlowRecoveryService extends Mock
+    implements LocationFlowRecoveryService {}
+
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
@@ -28,6 +33,7 @@ void main() {
     late MockLocationPermissionService permissionService;
     late MockCurrentLocationDataSource currentLocationDataSource;
     late MockLocationPlaceResolver placeResolver;
+    late MockLocationFlowRecoveryService flowRecoveryService;
     late MockGlobalErrorHandler errorHandler;
     late LocationCubit cubit;
 
@@ -39,16 +45,24 @@ void main() {
       permissionService = MockLocationPermissionService();
       currentLocationDataSource = MockCurrentLocationDataSource();
       placeResolver = MockLocationPlaceResolver();
+      flowRecoveryService = MockLocationFlowRecoveryService();
       errorHandler = MockGlobalErrorHandler();
 
       when(() => errorHandler.handle(any(), any())).thenReturn(
         const UnknownFailure(message: 'Ocurrió un error inesperado.'),
       );
+      when(
+        () => flowRecoveryService.consumePendingSettingsSync(),
+      ).thenAnswer((_) async => false);
+      when(
+        () => flowRecoveryService.markPendingSettingsSync(),
+      ).thenAnswer((_) async {});
 
       cubit = LocationCubit(
         permissionService,
         currentLocationDataSource,
         placeResolver,
+        flowRecoveryService: flowRecoveryService,
         errorHandler: errorHandler,
       );
     });
@@ -105,9 +119,9 @@ void main() {
         () => permissionService.getPermissionStatus(),
       ).thenAnswer((_) async => LocationPermissionStatus.granted);
       when(() => currentLocationDataSource.getCurrentLocation()).thenAnswer(
-        (_) async => const Left(
+        (_) async => Left(
           TimeoutFailure(
-            message: 'La solicitud tardó demasiado tiempo. Intenta nuevamente.',
+            message: CustomerErrorCatalog.locationRequestTimeout.message,
             code: 'NET_002',
           ),
         ),
@@ -194,5 +208,22 @@ void main() {
       completer.complete(LocationPermissionRequestResult.denied);
       await requestFuture;
     });
+
+    test(
+      'después de rechazos repetidos escala a deniedForever para enviar a configuración',
+      () async {
+        when(
+          () => permissionService.requestWhileInUsePermission(),
+        ).thenAnswer((_) async => LocationPermissionRequestResult.denied);
+
+        await cubit.requestPermission();
+        expect(cubit.state.status, LocationFlowStatus.permissionRequired);
+        expect(cubit.state.permissionDeniedCount, 1);
+
+        await cubit.requestPermission();
+        expect(cubit.state.status, LocationFlowStatus.deniedForever);
+        expect(cubit.state.permissionDeniedCount, 2);
+      },
+    );
   });
 }
