@@ -13,11 +13,11 @@ class FakeCrashReporter implements CrashReporter {
 
   @override
   Future<void> recordError(
-      Object error,
-      StackTrace? stackTrace, {
-        String? reason,
-        bool fatal = false,
-      }) async {
+    Object error,
+    StackTrace? stackTrace, {
+    String? reason,
+    bool fatal = false,
+  }) async {
     capturedError = error;
     capturedStackTrace = stackTrace;
     capturedReason = reason;

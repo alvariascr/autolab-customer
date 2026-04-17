@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/auth/bloc/auth_bloc.dart';
 import '../core/location/location_cubit.dart';
+import '../features/auth/bloc/auth_bloc.dart';
 
 class MyApp extends StatelessWidget {
   final AuthBloc authBloc;

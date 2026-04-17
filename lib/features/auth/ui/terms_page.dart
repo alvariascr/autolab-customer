@@ -10,8 +10,7 @@ class TermsPage extends StatelessWidget {
       body: const Padding(
         padding: EdgeInsets.all(16),
         child: SingleChildScrollView(
-          child: Text(
-            '''
+          child: Text('''
 TÉRMINOS Y CONDICIONES DE USO
 
 Bienvenido a Autolab. Al acceder y utilizar esta aplicación, aceptas los siguientes términos y condiciones. Si no estás de acuerdo con alguno de ellos, te recomendamos no utilizar la app.
@@ -42,9 +41,7 @@ Nos reservamos el derecho de modificar estos términos en cualquier momento. Se 
 Al utilizar la aplicación, el usuario acepta estos términos y condiciones en su totalidad.
 
 Última actualización: 2026
-  ''',
-            style: TextStyle(fontSize: 14),
-          ),
+  ''', style: TextStyle(fontSize: 14)),
         ),
       ),
     );

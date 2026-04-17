@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
-import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/location_cubit.dart';
 import 'package:autolab_customer/core/location/location_flow_recovery_service.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';

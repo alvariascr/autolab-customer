@@ -9,10 +9,5 @@ class AuthRateLimitFailure extends Failure {
     String? code,
     Object? cause,
     StackTrace? stackTrace,
-  }) : super(
-    message,
-    code: code,
-    cause: cause,
-    stackTrace: stackTrace,
-  );
+  }) : super(message, code: code, cause: cause, stackTrace: stackTrace);
 }

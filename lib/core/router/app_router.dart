@@ -16,10 +16,8 @@ class AppRouter {
   late final GoRouter router = GoRouter(
     initialLocation: '/login',
     refreshListenable: GoRouterRefreshStream(authBloc.stream),
-    redirect: (context, state) => redirectFor(
-      authState: authBloc.state,
-      location: state.matchedLocation,
-    ),
+    redirect: (context, state) =>
+        redirectFor(authState: authBloc.state, location: state.matchedLocation),
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/home', builder: (context, state) => const HomePage()),

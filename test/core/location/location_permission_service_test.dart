@@ -18,7 +18,9 @@ void main() {
     });
 
     test('retorna granted cuando ya existe autorizacion valida', () async {
-      when(() => client.isLocationServiceEnabled()).thenAnswer((_) async => true);
+      when(
+        () => client.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => true);
       when(
         () => client.checkPermission(),
       ).thenAnswer((_) async => LocationPermission.whileInUse);
@@ -32,7 +34,9 @@ void main() {
     });
 
     test('solicita permiso cuando el estado actual es denied', () async {
-      when(() => client.isLocationServiceEnabled()).thenAnswer((_) async => true);
+      when(
+        () => client.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => true);
       when(
         () => client.checkPermission(),
       ).thenAnswer((_) async => LocationPermission.denied);
@@ -47,7 +51,9 @@ void main() {
     });
 
     test('identifica denied correctamente', () async {
-      when(() => client.isLocationServiceEnabled()).thenAnswer((_) async => true);
+      when(
+        () => client.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => true);
       when(
         () => client.checkPermission(),
       ).thenAnswer((_) async => LocationPermission.denied);
@@ -63,7 +69,9 @@ void main() {
     });
 
     test('identifica deniedForever correctamente', () async {
-      when(() => client.isLocationServiceEnabled()).thenAnswer((_) async => true);
+      when(
+        () => client.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => true);
       when(
         () => client.checkPermission(),
       ).thenAnswer((_) async => LocationPermission.deniedForever);
@@ -77,7 +85,9 @@ void main() {
     });
 
     test('identifica restricted mediante unableToDetermine', () async {
-      when(() => client.isLocationServiceEnabled()).thenAnswer((_) async => true);
+      when(
+        () => client.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => true);
       when(
         () => client.checkPermission(),
       ).thenAnswer((_) async => LocationPermission.unableToDetermine);
@@ -89,18 +99,21 @@ void main() {
       expect(result, LocationPermissionRequestResult.restricted);
     });
 
-    test('no intenta solicitar permiso si el servicio esta deshabilitado', () async {
-      when(
-        () => client.isLocationServiceEnabled(),
-      ).thenAnswer((_) async => false);
+    test(
+      'no intenta solicitar permiso si el servicio esta deshabilitado',
+      () async {
+        when(
+          () => client.isLocationServiceEnabled(),
+        ).thenAnswer((_) async => false);
 
-      final status = await service.getPermissionStatus();
-      final result = await service.requestWhileInUsePermission();
+        final status = await service.getPermissionStatus();
+        final result = await service.requestWhileInUsePermission();
 
-      expect(status, LocationPermissionStatus.serviceDisabled);
-      expect(result, LocationPermissionRequestResult.serviceDisabled);
-      verifyNever(() => client.checkPermission());
-      verifyNever(() => client.requestPermission());
-    });
+        expect(status, LocationPermissionStatus.serviceDisabled);
+        expect(result, LocationPermissionRequestResult.serviceDisabled);
+        verifyNever(() => client.checkPermission());
+        verifyNever(() => client.requestPermission());
+      },
+    );
   });
 }

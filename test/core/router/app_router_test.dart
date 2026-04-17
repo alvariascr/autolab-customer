@@ -57,14 +57,17 @@ void main() {
       expect(redirect, isNull);
     });
 
-    test('redirige a /login cuando no está autenticado y visita ruta privada', () {
-      final redirect = appRouter.redirectFor(
-        authState: const AuthInitial(),
-        location: '/home',
-      );
+    test(
+      'redirige a /login cuando no está autenticado y visita ruta privada',
+      () {
+        final redirect = appRouter.redirectFor(
+          authState: const AuthInitial(),
+          location: '/home',
+        );
 
-      expect(redirect, '/login');
-    });
+        expect(redirect, '/login');
+      },
+    );
 
     test('no redirige mientras auth está cargando', () {
       final redirect = appRouter.redirectFor(

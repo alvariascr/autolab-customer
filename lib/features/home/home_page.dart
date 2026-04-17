@@ -11,7 +11,8 @@ class HomePage extends StatelessWidget {
       title: 'Panel administrativo',
       subtitle: 'Vista inicial para coordinación interna de Autolab.',
       heroLabel: 'Operación del día',
-      heroValue: 'Supervisa ingresos, agenda y seguimiento del taller desde un solo lugar.',
+      heroValue:
+          'Supervisa ingresos, agenda y seguimiento del taller desde un solo lugar.',
       highlights: buildHomeInfoItems([
         (
           title: 'Agenda operativa',
