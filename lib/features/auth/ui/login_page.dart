@@ -19,7 +19,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
   final GlobalKey<RegisterCardState> registerCardKey =
-  GlobalKey<RegisterCardState>();
+      GlobalKey<RegisterCardState>();
 
   final _formKeyLogin = GlobalKey<FormState>();
   final TextEditingController _emailLoginCtrl = TextEditingController();
@@ -67,39 +67,22 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  bool _isCredentialError(String message) {
-    final msg = message.toLowerCase();
+  bool _shouldShowInlineLoginError(AuthError state) {
+    if (_isShowingRegister) {
+      return false;
+    }
 
-    return msg.contains('correo o contraseña incorrect') ||
-        msg.contains('cuenta no confirmada') ||
-        msg.contains('email not confirmed') ||
-        msg.contains('invalid login credentials') ||
-        msg.contains('credenciales inválidas') ||
-        msg.contains('credenciales invalidas');
-  }
-
-  bool _isSystemError(String message) {
-    final msg = message.toLowerCase();
-
-    return msg.contains('network') ||
-        msg.contains('socket') ||
-        msg.contains('timeout') ||
-        msg.contains('internet') ||
-        msg.contains('conexión') ||
-        msg.contains('conexion') ||
-        msg.contains('servidor') ||
-        msg.contains('server') ||
-        msg.contains('inesperado') ||
-        msg.contains('unexpected') ||
-        msg.contains('rate limit') ||
-        msg.contains('429');
+    return _showLoginError;
   }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
@@ -160,13 +143,12 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            final bool isLoginCredentialError =
-                !_isShowingRegister && _isCredentialError(state.message);
+            final bool shouldRenderInlineError = _shouldShowInlineLoginError(
+              state,
+            );
 
             final bool shouldShowSnackBar =
-                _isShowingRegister ||
-                    _isSystemError(state.message) ||
-                    !isLoginCredentialError;
+                _isShowingRegister || !shouldRenderInlineError;
 
             if (shouldShowSnackBar) {
               _showErrorSnackBar(state.message);
@@ -193,20 +175,14 @@ class _LoginPageState extends State<LoginPage> {
 
             cardKey.currentState?.toggleCard();
           }
-
-          if (state is AuthSuccess) {
-            // Aquí va la redirección a la siguiente pantalla
-            // Navigator.pushReplacementNamed(context, HomeScreen.routeName);
-          }
         },
         builder: (context, state) {
           final bool isLoading = state is AuthLoading;
 
           final String? errorMessage =
-          state is AuthError &&
-              _showLoginError &&
-              !_isShowingRegister &&
-              _isCredentialError(state.message)
+              state is AuthError &&
+                  _showLoginError &&
+                  _shouldShowInlineLoginError(state)
               ? state.message
               : null;
 
@@ -245,26 +221,27 @@ class _LoginPageState extends State<LoginPage> {
                     logoSize: logoSize,
                     isLoading: isLoading,
                     onBackToLogin: _goToLoginFromRegister,
-                    onRegisterRequested: ({
-                      required String name,
-                      required String email,
-                      required String phone,
-                      required String password,
-                    }) {
-                      setState(() {
-                        _showLoginError = false;
-                        _isShowingRegister = true;
-                      });
+                    onRegisterRequested:
+                        ({
+                          required String name,
+                          required String email,
+                          required String phone,
+                          required String password,
+                        }) {
+                          setState(() {
+                            _showLoginError = false;
+                            _isShowingRegister = true;
+                          });
 
-                      context.read<AuthBloc>().add(
-                        RegisterRequested(
-                          name: name,
-                          email: email,
-                          phone: phone,
-                          password: password,
-                        ),
-                      );
-                    },
+                          context.read<AuthBloc>().add(
+                            RegisterRequested(
+                              name: name,
+                              email: email,
+                              phone: phone,
+                              password: password,
+                            ),
+                          );
+                        },
                   ),
                 ),
               );
@@ -276,12 +253,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLogin(
-      double cardWidth,
-      double cardHeight,
-      double logoSize,
-      bool isLoading,
-      String? errorMessage,
-      ) {
+    double cardWidth,
+    double cardHeight,
+    double logoSize,
+    bool isLoading,
+    String? errorMessage,
+  ) {
     return Material(
       elevation: 15,
       borderRadius: BorderRadius.circular(20),
@@ -303,7 +280,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       child: Form(
                         key: _formKeyLogin,
                         child: Column(
@@ -317,41 +294,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 20),
                             if (errorMessage != null) ...[
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  border: Border.all(
-                                    color: Colors.red.shade200,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: Colors.red.shade700,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        errorMessage,
-                                        style: TextStyle(
-                                          color: Colors.red.shade700,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              _buildInlineError(errorMessage),
                               const SizedBox(height: 15),
                             ],
                             TextFormField(
@@ -403,21 +346,21 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 child: isLoading
                                     ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
                                     : const Text(
-                                  'Iniciar Sesión',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                        'Iniciar Sesión',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -503,7 +446,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     minimumSize: Size.zero,
                                     tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: const Text(
                                     'Registrarse',
@@ -534,6 +477,55 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInlineError(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F0),
+        border: Border.all(color: const Color(0xFFFFC9C5)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14D92D20),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFE2DF),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error_outline,
+              color: Color(0xFFD92D20),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Color(0xFFB42318),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

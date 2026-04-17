@@ -16,42 +16,10 @@ class AppRouter {
   late final GoRouter router = GoRouter(
     initialLocation: '/login',
     refreshListenable: GoRouterRefreshStream(authBloc.stream),
-    redirect: (context, state) {
-      final authState = authBloc.state;
-      final String location = state.matchedLocation;
-      final bool isLoggingIn = location == '/login';
-
-      // Si el estado está cargando, no redirigir todavía.
-      // Esto evita el salto visual temporal hacia /login
-      // mientras se restaura la sesión.
-      if (authState is AuthLoading) return null;
-
-      // Si no está autenticado, solo puede quedarse en /login.
-      if (authState is! AuthSuccess) {
-        return isLoggingIn ? null : '/login';
-      }
-
-      final String role = authState.role;
-
-      // Si ya está autenticado y está en login,
-      // redirigir al home correspondiente según rol.
-      if (isLoggingIn) {
-        return role == UserRoles.admin ? '/home' : '/home-customer';
-      }
-
-      // Protección de rutas por rol:
-      // customer no puede entrar al home de admin.
-      if (role == UserRoles.customer && location == '/home') {
-        return '/home-customer';
-      }
-
-      // admin no puede entrar al home de customer.
-      if (role == UserRoles.admin && location == '/home-customer') {
-        return '/home';
-      }
-
-      return null;
-    },
+    redirect: (context, state) => redirectFor(
+      authState: authBloc.state,
+      location: state.matchedLocation,
+    ),
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(path: '/home', builder: (context, state) => const HomePage()),
@@ -61,4 +29,42 @@ class AppRouter {
       ),
     ],
   );
+
+  String? redirectFor({
+    required AuthState authState,
+    required String location,
+  }) {
+    final bool isLoggingIn = location == '/login';
+
+    // Si el estado está cargando, no redirigir todavía.
+    // Esto evita el salto visual temporal hacia /login
+    // mientras se restaura la sesión.
+    if (authState is AuthLoading) return null;
+
+    // Si no está autenticado, solo puede quedarse en /login.
+    if (authState is! AuthSuccess) {
+      return isLoggingIn ? null : '/login';
+    }
+
+    final String role = authState.role;
+
+    // Si ya está autenticado y está en login,
+    // redirigir al home correspondiente según rol.
+    if (isLoggingIn) {
+      return role == UserRoles.admin ? '/home' : '/home-customer';
+    }
+
+    // Protección de rutas por rol:
+    // customer no puede entrar al home de admin.
+    if (role == UserRoles.customer && location == '/home') {
+      return '/home-customer';
+    }
+
+    // admin no puede entrar al home de customer.
+    if (role == UserRoles.admin && location == '/home-customer') {
+      return '/home';
+    }
+
+    return null;
+  }
 }

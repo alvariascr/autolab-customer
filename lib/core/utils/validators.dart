@@ -1,22 +1,24 @@
+import '../errors/customer_error_catalog.dart';
+
 class Validators {
   static String? name(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'El nombre es obligatorio';
+      return CustomerErrorCatalog.nameRequired.message;
     }
     if (value.trim().length < 3) {
-      return 'Mínimo 3 caracteres';
+      return CustomerErrorCatalog.nameTooShort.message;
     }
     return null;
   }
 
   static String? email(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'El correo es obligatorio';
+      return CustomerErrorCatalog.emailRequired.message;
     }
 
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     if (!emailRegex.hasMatch(value.trim())) {
-      return 'Correo inválido';
+      return CustomerErrorCatalog.invalidEmail.message;
     }
 
     return null;
@@ -24,30 +26,30 @@ class Validators {
 
   static String? phone(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'El teléfono es obligatorio';
+      return CustomerErrorCatalog.phoneRequired.message;
     }
     if (value.trim().length < 8) {
-      return 'Teléfono inválido';
+      return CustomerErrorCatalog.invalidPhone.message;
     }
     return null;
   }
 
   static String? password(String? value) {
     if (value == null || value.isEmpty) {
-      return 'La contraseña es obligatoria';
+      return CustomerErrorCatalog.passwordRequired.message;
     }
     if (value.length < 6) {
-      return 'Mínimo 6 caracteres';
+      return CustomerErrorCatalog.passwordTooShort.message;
     }
     return null;
   }
 
   static String? confirmPassword(String? value, String originalPassword) {
     if (value == null || value.isEmpty) {
-      return 'Confirme la contraseña';
+      return CustomerErrorCatalog.confirmPasswordRequired.message;
     }
     if (value != originalPassword) {
-      return 'Las contraseñas no coinciden';
+      return CustomerErrorCatalog.passwordsDoNotMatch.message;
     }
     return null;
   }

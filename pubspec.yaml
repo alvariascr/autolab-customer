@@ -14,8 +14,6 @@ dependencies:
   crypto: ^3.0.3
   shared_preferences: ^2.2.3
   carousel_slider: ^5.1.2
-  flutter_map: ^8.2.2
-  latlong2: ^0.9.1
   flutter:
     sdk: flutter
   mocktail: ^1.0.4
@@ -31,7 +29,7 @@ dependencies:
 
   # Foundation package
   autolab_core:
-    path: ../autolab-core
+    path: ../autolab_core
 
   # Navigation
   go_router: ^14.2.7
@@ -46,6 +44,10 @@ dependencies:
   equatable: ^2.0.5
 
   cupertino_icons: ^1.0.8
+  flutter_map: ^8.3.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
@@ -58,3 +60,7 @@ flutter:
 
   assets:
     - assets/images/virtual/
+  fonts:
+    - family: Waxcel
+      fonts:
+        - asset: assets/fonts/Waxcel.otf
