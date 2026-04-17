@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
+import '../profile/presentation/page/profile_page.dart';
 import '../workshops/domain/entities/workshop.dart';
 
 // Cuando tengas las pantallas, descomenta estos imports:
@@ -10,42 +11,37 @@ import '../workshops/domain/entities/workshop.dart';
 
 class NavigationHandler {
   static void handle(
-      BuildContext context,
-      int index, {
-        List<Workshop>? workshops,
-      }) {
+    BuildContext context,
+    int index, {
+    List<Workshop>? workshops,
+  }) {
     switch (index) {
       case 0:
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (_) => const HomeCustomerPage(),
-          ),
-              (route) => false,
+          MaterialPageRoute(builder: (_) => const HomeCustomerPage()),
+          (route) => false,
         );
         return;
 
       case 1:
-      // Mapa
+        // Mapa
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MapPage(
-              workshops: workshops ?? [],
-            ),
+            builder: (_) => MapPage(workshops: workshops ?? []),
           ),
         );
 
         return;
 
       case 2:
-      // Buscar
-      // Esto se maneja en HomeCustomerPage
+        // Buscar
+        // Esto se maneja en HomeCustomerPage
         return;
 
       case 3:
-      // Carrito
-
+        // Carrito
 
         // Cuando tengas CartPage, usa esto:
         /*
@@ -59,20 +55,13 @@ class NavigationHandler {
         return;
 
       case 4:
-      // Perfil
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ir al perfil')),
-        );
-
-        // Cuando tengas ProfilePage, usa esto:
-        /*
+        // Perfil
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const ProfilePage(),
+            builder: (_) => ProfilePage(workshops: workshops ?? const []),
           ),
         );
-        */
         return;
 
       default:

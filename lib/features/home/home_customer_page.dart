@@ -4,8 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
-import '../auth/bloc/auth_bloc.dart';
-import '../auth/bloc/auth_event.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
 import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
@@ -13,9 +11,8 @@ import '../workshops/data/repositories/workshop_repository_impl.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/domain/services/workshop_search_location_resolver.dart';
-import '../workshops/presentation/workshop_empty_state_resolver.dart';
-import '../workshops/presentation/widgets/nearby_workshops_map.dart';
 import '../workshops/presentation/widgets/workshops_carousel.dart';
+import '../workshops/presentation/workshop_empty_state_resolver.dart';
 import 'location/location_feedback_mapper.dart';
 import 'location/location_feedback_text.dart';
 
@@ -248,17 +245,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         toolbarHeight: 46,
-        leadingWidth: 52,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: IconButton(
-            tooltip: 'Cerrar sesion',
-            onPressed: () {
-              context.read<AuthBloc>().add(const LogoutRequested());
-            },
-            icon: const Icon(Icons.logout, color: Color(0xFF181411), size: 20),
-          ),
-        ),
       ),
       body: FutureBuilder<List<Workshop>>(
         future: _workshopsFuture,
@@ -287,32 +273,15 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                           const SizedBox(height: 20),
                           BlocBuilder<LocationCubit, LocationState>(
                             builder: (context, state) {
-                              return Column(
-                                children: [
-                                  _WorkshopsSection(
-                                    workshops: workshops,
-                                    locationState: state,
-                                    proximityFilter: _workshopProximityFilter,
-                                    emptyStateResolver:
-                                        _workshopEmptyStateResolver,
-                                    isLoading:
-                                        snapshot.connectionState ==
-                                        ConnectionState.waiting,
-                                    hasError: snapshot.hasError,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  _NearbyWorkshopsMapSection(
-                                    workshops: workshops,
-                                    locationState: state,
-                                    proximityFilter: _workshopProximityFilter,
-                                    emptyStateResolver:
-                                        _workshopEmptyStateResolver,
-                                    isLoading:
-                                        snapshot.connectionState ==
-                                        ConnectionState.waiting,
-                                    hasError: snapshot.hasError,
-                                  ),
-                                ],
+                              return _WorkshopsSection(
+                                workshops: workshops,
+                                locationState: state,
+                                proximityFilter: _workshopProximityFilter,
+                                emptyStateResolver: _workshopEmptyStateResolver,
+                                isLoading:
+                                    snapshot.connectionState ==
+                                    ConnectionState.waiting,
+                                hasError: snapshot.hasError,
                               );
                             },
                           ),
@@ -570,80 +539,67 @@ class _WorkshopsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Talleres cercanos',
-            style: TextStyle(
-              color: Color(0xFF181411),
-              fontWeight: FontWeight.w800,
-              fontSize: 22,
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (hasError) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Text(
+          'No fue posible cargar los talleres en este momento.',
+          style: TextStyle(color: Color(0xFF6B5F57)),
+        ),
+      );
+    }
+
+    final searchLocation = _HomeCustomerPageState
+        ._workshopSearchLocationResolver
+        .resolve(locationState.location);
+    final isUsingFallbackLocation = _HomeCustomerPageState
+        ._workshopSearchLocationResolver
+        .isUsingFallback(locationState.location);
+    final nearbyWorkshops = proximityFilter.filterNearby(
+      workshops: workshops,
+      currentLocation: searchLocation,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Talleres cercanos',
+          style: TextStyle(
+            color: Color(0xFF181411),
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Explora opciones cercanas sin salir del home.',
+          style: TextStyle(
+            color: Color(0xFF6B5F57),
+            fontSize: 14,
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 320,
+          child: WorkshopsCarousel(
+            workshops: nearbyWorkshops,
+            currentLocation: searchLocation,
+            emptyMessage: emptyStateResolver.resolve(
+              locationState,
+              isUsingFallbackLocation: isUsingFallbackLocation,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Explora opciones cercanas sin salir del home.',
-            style: TextStyle(
-              color: Color(0xFF6B5F57),
-              fontSize: 14,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Builder(
-            builder: (context) {
-              if (isLoading) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              if (hasError) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text(
-                    'No fue posible cargar los talleres en este momento.',
-                    style: TextStyle(color: Color(0xFF6B5F57)),
-                  ),
-                );
-              }
-
-              final searchLocation = _HomeCustomerPageState
-                  ._workshopSearchLocationResolver
-                  .resolve(locationState.location);
-              final isUsingFallbackLocation = _HomeCustomerPageState
-                  ._workshopSearchLocationResolver
-                  .isUsingFallback(locationState.location);
-              final nearbyWorkshops = proximityFilter.filterNearby(
-                workshops: workshops,
-                currentLocation: searchLocation,
-              );
-
-              return SizedBox(
-                height: 320,
-                child: WorkshopsCarousel(
-                  workshops: nearbyWorkshops,
-                  currentLocation: searchLocation,
-                  emptyMessage: emptyStateResolver.resolve(
-                    locationState,
-                    isUsingFallbackLocation: isUsingFallbackLocation,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -706,104 +662,6 @@ class _LocationOptionTile extends StatelessWidget {
           size: enabled ? 14 : 16,
           color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
         ),
-      ),
-    );
-  }
-}
-
-class _NearbyWorkshopsMapSection extends StatelessWidget {
-  const _NearbyWorkshopsMapSection({
-    required this.workshops,
-    required this.locationState,
-    required this.proximityFilter,
-    required this.emptyStateResolver,
-    required this.isLoading,
-    required this.hasError,
-  });
-
-  final List<Workshop> workshops;
-  final LocationState locationState;
-  final WorkshopProximityFilter proximityFilter;
-  final WorkshopEmptyStateResolver emptyStateResolver;
-  final bool isLoading;
-  final bool hasError;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Mapa de talleres cercanos',
-            style: TextStyle(
-              color: Color(0xFF181411),
-              fontWeight: FontWeight.w800,
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Ubica en el mapa las opciones disponibles cerca de ti.',
-            style: TextStyle(
-              color: Color(0xFF6B5F57),
-              fontSize: 14,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Builder(
-            builder: (context) {
-              if (isLoading) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              if (hasError) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text(
-                    'No fue posible cargar el mapa de talleres en este momento.',
-                    style: TextStyle(color: Color(0xFF6B5F57)),
-                  ),
-                );
-              }
-
-              final searchLocation = _HomeCustomerPageState
-                  ._workshopSearchLocationResolver
-                  .resolve(locationState.location);
-              final isUsingFallbackLocation = _HomeCustomerPageState
-                  ._workshopSearchLocationResolver
-                  .isUsingFallback(locationState.location);
-              final nearbyWorkshops = proximityFilter.filterNearby(
-                workshops: workshops,
-                currentLocation: searchLocation,
-              );
-              final emptyMessage = emptyStateResolver.resolve(
-                locationState,
-                isUsingFallbackLocation: isUsingFallbackLocation,
-              );
-
-              return SizedBox(
-                height: 320,
-                child: NearbyWorkshopsMap(
-                  workshops: nearbyWorkshops,
-                  currentLocation: searchLocation,
-                  emptyMessage: emptyMessage,
-                ),
-              );
-            },
-          ),
-        ],
       ),
     );
   }
