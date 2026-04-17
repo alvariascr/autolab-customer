@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/di/auth_injection.dart';
 import '../location/current_location_data_source.dart';
 import '../location/geocoding_client.dart';
+import '../location/location_flow_recovery_service.dart';
 import '../location/geolocator_client.dart';
 import '../location/location_cubit.dart';
 import '../location/location_place_resolver.dart';
@@ -27,6 +28,9 @@ void _registerExternalDependencies() {
   sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   sl.registerLazySingleton<GeolocatorClient>(DefaultGeolocatorClient.new);
   sl.registerLazySingleton<GeocodingClient>(DefaultGeocodingClient.new);
+  sl.registerLazySingleton<LocationFlowRecoveryService>(
+    SharedPrefsLocationFlowRecoveryService.new,
+  );
   sl.registerLazySingleton<LocationPermissionClient>(
     DefaultLocationPermissionClient.new,
   );
@@ -47,6 +51,7 @@ void _registerExternalDependencies() {
       sl<LocationPermissionService>(),
       sl<CurrentLocationDataSource>(),
       sl<LocationPlaceResolver>(),
+      flowRecoveryService: sl<LocationFlowRecoveryService>(),
       errorHandler: sl<GlobalErrorHandler>(),
     ),
   );

@@ -16,6 +16,7 @@ Future<void> bootstrap() async {
 
   runZonedGuarded(
     () async {
+      debugPrint('[bootstrap] starting Flutter bootstrap');
       WidgetsFlutterBinding.ensureInitialized();
 
       final config = AutolabCoreBootstrap.loadConfig();
@@ -31,6 +32,7 @@ Future<void> bootstrap() async {
       final locationCubit = di.sl<LocationCubit>();
       final router = AppRouter(authBloc).router;
 
+      debugPrint('[bootstrap] dependencies ready, running app');
       runApp(
         MyApp(authBloc: authBloc, locationCubit: locationCubit, router: router),
       );

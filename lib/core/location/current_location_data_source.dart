@@ -63,7 +63,7 @@ class CurrentLocationDataSourceImpl implements CurrentLocationDataSource {
     } on TimeoutException catch (error, stackTrace) {
       return Left(
         TimeoutFailure.fromErrorItem(
-          ErrorCatalog.requestTimeout,
+          CustomerErrorCatalog.locationRequestTimeout,
           cause: error,
           stackTrace: stackTrace,
         ),
