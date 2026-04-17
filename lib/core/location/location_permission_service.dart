@@ -1,39 +1,88 @@
 import 'package:geolocator/geolocator.dart';
 
+import 'location_permission_client.dart';
+
 enum LocationPermissionStatus {
   granted,
   denied,
   deniedForever,
-  unableToDetermine,
+  restricted,
+  serviceDisabled,
 }
 
 enum LocationPermissionRequestResult {
   granted,
   denied,
   deniedForever,
+  restricted,
   serviceDisabled,
 }
 
 abstract class LocationPermissionService {
   Future<bool> isLocationServiceEnabled();
-  Future<LocationPermissionStatus> checkPermission();
+  Future<LocationPermissionStatus> getPermissionStatus();
   Future<LocationPermissionRequestResult> requestWhileInUsePermission();
   Future<bool> openAppSettings();
   Future<bool> openLocationSettings();
 }
 
 class GeolocatorLocationPermissionService implements LocationPermissionService {
-  const GeolocatorLocationPermissionService();
+  const GeolocatorLocationPermissionService(this._client);
+
+  final LocationPermissionClient _client;
 
   @override
   Future<bool> isLocationServiceEnabled() {
-    return Geolocator.isLocationServiceEnabled();
+    return _client.isLocationServiceEnabled();
   }
 
   @override
-  Future<LocationPermissionStatus> checkPermission() async {
-    final permission = await Geolocator.checkPermission();
+  Future<LocationPermissionStatus> getPermissionStatus() async {
+    final serviceEnabled = await _client.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return LocationPermissionStatus.serviceDisabled;
+    }
 
+    final permission = await _client.checkPermission();
+    return _mapPermissionStatus(permission);
+  }
+
+  @override
+  Future<LocationPermissionRequestResult> requestWhileInUsePermission() async {
+    final serviceEnabled = await _client.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return LocationPermissionRequestResult.serviceDisabled;
+    }
+
+    var permission = await _client.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await _client.requestPermission();
+    }
+
+    return switch (_mapPermissionStatus(permission)) {
+      LocationPermissionStatus.granted =>
+        LocationPermissionRequestResult.granted,
+      LocationPermissionStatus.denied => LocationPermissionRequestResult.denied,
+      LocationPermissionStatus.deniedForever =>
+        LocationPermissionRequestResult.deniedForever,
+      LocationPermissionStatus.restricted =>
+        LocationPermissionRequestResult.restricted,
+      LocationPermissionStatus.serviceDisabled =>
+        LocationPermissionRequestResult.serviceDisabled,
+    };
+  }
+
+  @override
+  Future<bool> openAppSettings() {
+    return _client.openAppSettings();
+  }
+
+  @override
+  Future<bool> openLocationSettings() {
+    return _client.openLocationSettings();
+  }
+
+  LocationPermissionStatus _mapPermissionStatus(LocationPermission permission) {
     return switch (permission) {
       LocationPermission.always ||
       LocationPermission.whileInUse => LocationPermissionStatus.granted,
@@ -41,40 +90,7 @@ class GeolocatorLocationPermissionService implements LocationPermissionService {
       LocationPermission.deniedForever =>
         LocationPermissionStatus.deniedForever,
       LocationPermission.unableToDetermine =>
-        LocationPermissionStatus.unableToDetermine,
+        LocationPermissionStatus.restricted,
     };
-  }
-
-  @override
-  Future<LocationPermissionRequestResult> requestWhileInUsePermission() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return LocationPermissionRequestResult.serviceDisabled;
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    return switch (permission) {
-      LocationPermission.always ||
-      LocationPermission.whileInUse => LocationPermissionRequestResult.granted,
-      LocationPermission.denied => LocationPermissionRequestResult.denied,
-      LocationPermission.deniedForever =>
-        LocationPermissionRequestResult.deniedForever,
-      LocationPermission.unableToDetermine =>
-        LocationPermissionRequestResult.denied,
-    };
-  }
-
-  @override
-  Future<bool> openAppSettings() {
-    return Geolocator.openAppSettings();
-  }
-
-  @override
-  Future<bool> openLocationSettings() {
-    return Geolocator.openLocationSettings();
   }
 }
