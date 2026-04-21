@@ -220,8 +220,7 @@ void main() {
       ).thenAnswer((_) => locationCompleter.future);
 
       await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump();
+      await _pumpUntilVisible(tester, find.text('Buscando cerca de ti'));
 
       expect(find.text('Buscando cerca de ti'), findsOneWidget);
       expect(find.text('Buscando tu ubicación actual'), findsOneWidget);
@@ -247,8 +246,7 @@ void main() {
       ).thenAnswer((_) => permissionCompleter.future);
 
       await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump();
+      await _pumpUntilVisible(tester, find.text('Confirmando acceso'));
 
       expect(find.text('Confirmando acceso'), findsOneWidget);
       expect(find.text('Confirma el acceso a tu ubicación'), findsOneWidget);
@@ -374,8 +372,27 @@ Future<void> _pumpPage(
   LocationCubit locationCubit,
 ) async {
   await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
-  await tester.pump(const Duration(milliseconds: 400));
   await tester.pumpAndSettle();
+}
+
+Future<void> _pumpUntilVisible(
+  WidgetTester tester,
+  Finder finder, {
+  Duration step = const Duration(milliseconds: 50),
+  Duration timeout = const Duration(seconds: 2),
+}) async {
+  var elapsed = Duration.zero;
+
+  while (finder.evaluate().isEmpty) {
+    if (elapsed >= timeout) {
+      throw TestFailure(
+        'No se encontró el widget esperado dentro de ${timeout.inMilliseconds}ms.',
+      );
+    }
+
+    await tester.pump(step);
+    elapsed += step;
+  }
 }
 
 Widget _buildTestApp(AuthBloc authBloc, LocationCubit locationCubit) {
