@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
+import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
+import '../workshops/data/repositories/workshop_repository_impl.dart';
+import '../workshops/domain/entities/workshop.dart';
+import '../workshops/domain/services/workshop_proximity_filter.dart';
+import '../workshops/domain/services/workshop_search_location_resolver.dart';
+import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import '../workshops/presentation/widgets/nearby_workshops_map.dart';
+import '../workshops/presentation/widgets/workshops_carousel.dart';
 import 'location/location_feedback_mapper.dart';
 import 'location/location_feedback_text.dart';
 
@@ -17,6 +26,12 @@ class HomeCustomerPage extends StatefulWidget {
 
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
+  static const _workshopProximityFilter = WorkshopProximityFilter();
+  static const _workshopSearchLocationResolver =
+      WorkshopSearchLocationResolver();
+  static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
+
+  late Future<List<Workshop>> _workshopsFuture;
   bool _didTriggerInitialLocationLoad = false;
 
   @override
@@ -26,6 +41,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _triggerInitialLocationLoad();
     });
+    _workshopsFuture = _loadWorkshops();
   }
 
   @override
@@ -42,6 +58,17 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         return;
       }
       context.read<LocationCubit>().refresh();
+    }
+  }
+
+  Future<List<Workshop>> _loadWorkshops() async {
+    try {
+      final client = Supabase.instance.client;
+      final dataSource = WorkshopRemoteDataSourceImpl(client);
+      final repository = WorkshopRepositoryImpl(remoteDataSource: dataSource);
+      return await repository.getWorkshops();
+    } catch (_) {
+      return const <Workshop>[];
     }
   }
 
@@ -226,8 +253,28 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
-                  const _HomePlaceholder(),
+                  const SizedBox(height: 20),
+                  BlocBuilder<LocationCubit, LocationState>(
+                    builder: (context, state) {
+                      return Column(
+                        children: [
+                          _WorkshopsSection(
+                            workshopsFuture: _workshopsFuture,
+                            locationState: state,
+                            proximityFilter: _workshopProximityFilter,
+                            emptyStateResolver: _workshopEmptyStateResolver,
+                          ),
+                          const SizedBox(height: 24),
+                          _NearbyWorkshopsMapSection(
+                            workshopsFuture: _workshopsFuture,
+                            locationState: state,
+                            proximityFilter: _workshopProximityFilter,
+                            emptyStateResolver: _workshopEmptyStateResolver,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -419,6 +466,101 @@ class _DeliveryLocationCard extends StatelessWidget {
   }
 }
 
+class _WorkshopsSection extends StatelessWidget {
+  const _WorkshopsSection({
+    required this.workshopsFuture,
+    required this.locationState,
+    required this.proximityFilter,
+    required this.emptyStateResolver,
+  });
+
+  final Future<List<Workshop>> workshopsFuture;
+  final LocationState locationState;
+  final WorkshopProximityFilter proximityFilter;
+  final WorkshopEmptyStateResolver emptyStateResolver;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE9DDD2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Talleres cercanos',
+            style: TextStyle(
+              color: Color(0xFF181411),
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Explora opciones cercanas sin salir del home.',
+            style: TextStyle(
+              color: Color(0xFF6B5F57),
+              fontSize: 14,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 20),
+          FutureBuilder<List<Workshop>>(
+            future: workshopsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No fue posible cargar los talleres en este momento.',
+                    style: TextStyle(color: Color(0xFF6B5F57)),
+                  ),
+                );
+              }
+
+              final workshops = snapshot.data ?? const <Workshop>[];
+              final searchLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .resolve(locationState.location);
+              final isUsingFallbackLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .isUsingFallback(locationState.location);
+              final nearbyWorkshops = proximityFilter.filterNearby(
+                workshops: workshops,
+                currentLocation: searchLocation,
+              );
+
+              return SizedBox(
+                height: 320,
+                child: WorkshopsCarousel(
+                  workshops: nearbyWorkshops,
+                  currentLocation: searchLocation,
+                  emptyMessage: emptyStateResolver.resolve(
+                    locationState,
+                    isUsingFallbackLocation: isUsingFallbackLocation,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LocationOptionTile extends StatelessWidget {
   const _LocationOptionTile({
     required this.icon,
@@ -482,8 +624,18 @@ class _LocationOptionTile extends StatelessWidget {
   }
 }
 
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
+class _NearbyWorkshopsMapSection extends StatelessWidget {
+  const _NearbyWorkshopsMapSection({
+    required this.workshopsFuture,
+    required this.locationState,
+    required this.proximityFilter,
+    required this.emptyStateResolver,
+  });
+
+  final Future<List<Workshop>> workshopsFuture;
+  final LocationState locationState;
+  final WorkshopProximityFilter proximityFilter;
+  final WorkshopEmptyStateResolver emptyStateResolver;
 
   @override
   Widget build(BuildContext context) {
@@ -495,25 +647,72 @@ class _HomePlaceholder extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE9DDD2)),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Explora talleres cerca de ti',
+          const Text(
+            'Mapa de talleres cercanos',
             style: TextStyle(
               color: Color(0xFF181411),
               fontWeight: FontWeight.w800,
               fontSize: 22,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
-            'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.',
+          const SizedBox(height: 8),
+          const Text(
+            'Ubica en el mapa las opciones disponibles cerca de ti.',
             style: TextStyle(
               color: Color(0xFF6B5F57),
               fontSize: 14,
               height: 1.45,
             ),
+          ),
+          const SizedBox(height: 20),
+          FutureBuilder<List<Workshop>>(
+            future: workshopsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No fue posible cargar el mapa de talleres en este momento.',
+                    style: TextStyle(color: Color(0xFF6B5F57)),
+                  ),
+                );
+              }
+
+              final workshops = snapshot.data ?? const <Workshop>[];
+              final searchLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .resolve(locationState.location);
+              final isUsingFallbackLocation = _HomeCustomerPageState
+                  ._workshopSearchLocationResolver
+                  .isUsingFallback(locationState.location);
+              final nearbyWorkshops = proximityFilter.filterNearby(
+                workshops: workshops,
+                currentLocation: searchLocation,
+              );
+              final emptyMessage = emptyStateResolver.resolve(
+                locationState,
+                isUsingFallbackLocation: isUsingFallbackLocation,
+              );
+
+              return SizedBox(
+                height: 320,
+                child: NearbyWorkshopsMap(
+                  workshops: nearbyWorkshops,
+                  currentLocation: searchLocation,
+                  emptyMessage: emptyMessage,
+                ),
+              );
+            },
           ),
         ],
       ),
