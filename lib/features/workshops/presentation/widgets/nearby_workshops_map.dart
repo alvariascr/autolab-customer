@@ -309,6 +309,13 @@ class _WorkshopMarker extends StatelessWidget {
   final Workshop workshop;
   final VoidCallback onTap;
 
+  String get _markerKeyValue {
+    final normalizedId = workshop.id.trim().isNotEmpty
+        ? workshop.id.trim()
+        : 'no-id';
+    return 'workshop-marker-$normalizedId-${workshop.latitude}-${workshop.longitude}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Tooltip(
@@ -318,7 +325,7 @@ class _WorkshopMarker extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          key: ValueKey('workshop-marker-${workshop.id}'),
+          key: ValueKey(_markerKeyValue),
           decoration: BoxDecoration(
             color: const Color(0xFF9B3D24),
             borderRadius: BorderRadius.circular(16),
