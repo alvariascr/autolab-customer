@@ -13,31 +13,23 @@ class WorkshopProximityFilter {
       return const <Workshop>[];
     }
 
-    final nearby = workshops.where((workshop) {
-      if (!workshop.hasValidCoordinates || !workshop.hasValidDeliveryRadius) {
-        return false;
-      }
+    final nearbyWithDistance = workshops
+        .where((w) => w.hasValidCoordinates && w.hasValidDeliveryRadius)
+        .map((w) => (
+    workshop: w,
+    distance: WorkshopDistanceCalculator.distanceInKm(
+      currentLocation: currentLocation,
+      workshop: w,
+    ),
+    ))
+        .where((item) => item.distance <= item.workshop.deliveryRadiusKm)
+        .toList();
 
-      return WorkshopDistanceCalculator.distanceInKm(
-            currentLocation: currentLocation,
-            workshop: workshop,
-          ) <=
-          workshop.deliveryRadiusKm;
-    }).toList();
+    nearbyWithDistance.sort((a, b) => a.distance.compareTo(b.distance));
 
-    nearby.sort((first, second) {
-      final firstDistance = WorkshopDistanceCalculator.distanceInKm(
-        currentLocation: currentLocation,
-        workshop: first,
-      );
-      final secondDistance = WorkshopDistanceCalculator.distanceInKm(
-        currentLocation: currentLocation,
-        workshop: second,
-      );
-
-      return firstDistance.compareTo(secondDistance);
-    });
-
-    return nearby;
+    return List<Workshop>.from(
+      nearbyWithDistance.map((item) => item.workshop),
+      growable: false,
+    );
   }
 }

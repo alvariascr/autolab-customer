@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'current_location.dart';
 import 'current_location_data_source.dart';
@@ -24,6 +27,7 @@ class LocationCubit extends Cubit<LocationState> {
   final LocationPlaceResolver _placeResolver;
   final LocationFlowRecoveryService _flowRecoveryService;
   final GlobalErrorHandler? _errorHandler;
+  StreamSubscription<Position>? _positionSubscription;
 
   Future<void> initialize() async {
     final pendingSettingsSync = await _flowRecoveryService
@@ -211,6 +215,12 @@ class LocationCubit extends Cubit<LocationState> {
 
   Future<void> refresh() async {
     await loadCurrentLocation();
+  }
+
+  @override
+  Future<void> close() async {
+    await _positionSubscription?.cancel();
+    return super.close();
   }
 
   void _emitStableState({
