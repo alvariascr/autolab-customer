@@ -14,30 +14,22 @@ class WorkshopProximityFilter {
     }
 
     final nearbyWithDistance = workshops
-        .where(
-          (workshop) =>
-              workshop.hasValidCoordinates && workshop.hasValidDeliveryRadius,
-        )
-        .map(
-          (workshop) => (
-            workshop: workshop,
-            distance: WorkshopDistanceCalculator.distanceInKm(
-              currentLocation: currentLocation,
-              workshop: workshop,
-            ),
-          ),
-        )
-        .where(
-          (item) => item.distance <= item.workshop.deliveryRadiusKm,
-        )
+        .where((w) => w.hasValidCoordinates && w.hasValidDeliveryRadius)
+        .map((w) => (
+    workshop: w,
+    distance: WorkshopDistanceCalculator.distanceInKm(
+      currentLocation: currentLocation,
+      workshop: w,
+    ),
+    ))
+        .where((item) => item.distance <= item.workshop.deliveryRadiusKm)
         .toList();
 
-    nearbyWithDistance.sort((first, second) {
-      return first.distance.compareTo(second.distance);
-    });
+    nearbyWithDistance.sort((a, b) => a.distance.compareTo(b.distance));
 
-    return nearbyWithDistance
-        .map((item) => item.workshop)
-        .toList(growable: false);
+    return List<Workshop>.from(
+      nearbyWithDistance.map((item) => item.workshop),
+      growable: false,
+    );
   }
 }
