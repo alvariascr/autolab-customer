@@ -1,0 +1,262 @@
+import 'dart:async';
+
+import 'package:autolab_core/autolab_core.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'current_location.dart';
+import 'current_location_data_source.dart';
+import 'location_flow_recovery_service.dart';
+import 'location_permission_service.dart';
+import 'location_place_resolver.dart';
+import 'location_state.dart';
+
+class LocationCubit extends Cubit<LocationState> {
+  LocationCubit(
+    this._permissionService,
+    this._currentLocationDataSource,
+    this._placeResolver, {
+    required LocationFlowRecoveryService flowRecoveryService,
+    GlobalErrorHandler? errorHandler,
+  }) : _flowRecoveryService = flowRecoveryService,
+       _errorHandler = errorHandler,
+       super(const LocationState.initial());
+
+  final LocationPermissionService _permissionService;
+  final CurrentLocationDataSource _currentLocationDataSource;
+  final LocationPlaceResolver _placeResolver;
+  final LocationFlowRecoveryService _flowRecoveryService;
+  final GlobalErrorHandler? _errorHandler;
+  StreamSubscription<Position>? _positionSubscription;
+
+  Future<void> initialize() async {
+    final pendingSettingsSync = await _flowRecoveryService
+        .consumePendingSettingsSync();
+    await loadCurrentLocation(requestPermissionIfNeeded: !pendingSettingsSync);
+  }
+
+  Future<void> loadCurrentLocation({
+    bool requestPermissionIfNeeded = false,
+  }) async {
+    emit(state.copyWith(status: LocationFlowStatus.loading));
+
+    final permissionStatus = await _permissionService.getPermissionStatus();
+
+    switch (permissionStatus) {
+      case LocationPermissionStatus.granted:
+        break;
+      case LocationPermissionStatus.denied:
+        if (requestPermissionIfNeeded) {
+          await requestPermission();
+          return;
+        }
+        if (state.permissionDeniedCount >= 2) {
+          _emitStableState(
+            status: LocationFlowStatus.deniedForever,
+            clearLocation: true,
+            clearPlaceName: true,
+            clearMessage: true,
+          );
+          return;
+        }
+        _emitStableState(
+          status: LocationFlowStatus.permissionRequired,
+          clearLocation: true,
+          clearPlaceName: true,
+          clearMessage: true,
+        );
+        return;
+      case LocationPermissionStatus.deniedForever:
+        _emitStableState(
+          status: LocationFlowStatus.deniedForever,
+          clearLocation: true,
+          clearPlaceName: true,
+          clearMessage: true,
+        );
+        return;
+      case LocationPermissionStatus.restricted:
+        _emitStableState(
+          status: LocationFlowStatus.restricted,
+          message: 'La ubicación está restringida por el sistema operativo.',
+          clearLocation: true,
+          clearPlaceName: true,
+        );
+        return;
+      case LocationPermissionStatus.serviceDisabled:
+        _emitStableState(
+          status: LocationFlowStatus.serviceDisabled,
+          clearLocation: true,
+          clearPlaceName: true,
+          clearMessage: true,
+        );
+        return;
+    }
+
+    final result = await _currentLocationDataSource.getCurrentLocation();
+
+    await result.fold(
+      (failure) async {
+        _emitStableState(
+          status: LocationFlowStatus.error,
+          message: failure.message,
+          clearLocation: true,
+          clearPlaceName: true,
+        );
+      },
+      (location) async {
+        try {
+          final resolution = await _placeResolver.resolvePlaceName(location);
+
+          _emitStableState(
+            status: LocationFlowStatus.success,
+            location: location,
+            placeName: resolution.placeName,
+            clearMessage: true,
+          );
+        } catch (error, stackTrace) {
+          _errorHandler?.handle(error, stackTrace);
+
+          _emitStableState(
+            status: LocationFlowStatus.success,
+            location: location,
+            clearPlaceName: true,
+            clearMessage: true,
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> requestPermission() async {
+    try {
+      emit(state.copyWith(status: LocationFlowStatus.requestingPermission));
+
+      final result = await _permissionService.requestWhileInUsePermission();
+
+      switch (result) {
+        case LocationPermissionRequestResult.granted:
+          emit(state.copyWith(permissionDeniedCount: 0));
+          await loadCurrentLocation();
+          return;
+        case LocationPermissionRequestResult.denied:
+          final nextDeniedCount = state.permissionDeniedCount + 1;
+          if (nextDeniedCount >= 2) {
+            _emitStableState(
+              status: LocationFlowStatus.deniedForever,
+              permissionDeniedCount: nextDeniedCount,
+              clearLocation: true,
+              clearPlaceName: true,
+              clearMessage: true,
+            );
+            return;
+          }
+          _emitStableState(
+            status: LocationFlowStatus.permissionRequired,
+            permissionDeniedCount: nextDeniedCount,
+            clearLocation: true,
+            clearPlaceName: true,
+            clearMessage: true,
+          );
+          return;
+        case LocationPermissionRequestResult.deniedForever:
+          _emitStableState(
+            status: LocationFlowStatus.deniedForever,
+            permissionDeniedCount: state.permissionDeniedCount + 1,
+            clearLocation: true,
+            clearPlaceName: true,
+            clearMessage: true,
+          );
+          return;
+        case LocationPermissionRequestResult.restricted:
+          _emitStableState(
+            status: LocationFlowStatus.restricted,
+            message: 'La ubicación está restringida por el sistema operativo.',
+            clearLocation: true,
+            clearPlaceName: true,
+          );
+          return;
+        case LocationPermissionRequestResult.serviceDisabled:
+          _emitStableState(
+            status: LocationFlowStatus.serviceDisabled,
+            clearLocation: true,
+            clearPlaceName: true,
+            clearMessage: true,
+          );
+          return;
+      }
+    } catch (error, stackTrace) {
+      _emitActionError(error, stackTrace);
+    }
+  }
+
+  Future<void> openAppSettings() async {
+    try {
+      await _flowRecoveryService.markPendingSettingsSync();
+      final opened = await _permissionService.openAppSettings();
+      if (!opened) {
+        throw StateError('openAppSettings returned false');
+      }
+    } catch (error, stackTrace) {
+      _emitActionError(error, stackTrace);
+    }
+  }
+
+  Future<void> openLocationSettings() async {
+    try {
+      await _flowRecoveryService.markPendingSettingsSync();
+      final opened = await _permissionService.openLocationSettings();
+      if (!opened) {
+        throw StateError('openLocationSettings returned false');
+      }
+    } catch (error, stackTrace) {
+      _emitActionError(error, stackTrace);
+    }
+  }
+
+  Future<void> refresh() async {
+    await loadCurrentLocation();
+  }
+
+  @override
+  Future<void> close() async {
+    await _positionSubscription?.cancel();
+    return super.close();
+  }
+
+  void _emitStableState({
+    required LocationFlowStatus status,
+    CurrentLocation? location,
+    String? placeName,
+    String? message,
+    int? permissionDeniedCount,
+    bool clearLocation = false,
+    bool clearPlaceName = false,
+    bool clearMessage = false,
+  }) {
+    emit(
+      state.copyWith(
+        status: status,
+        location: location,
+        placeName: placeName,
+        message: message,
+        lastSettledStatus: status,
+        permissionDeniedCount: permissionDeniedCount,
+        clearLocation: clearLocation,
+        clearPlaceName: clearPlaceName,
+        clearMessage: clearMessage,
+      ),
+    );
+  }
+
+  void _emitActionError(Object error, StackTrace stackTrace) {
+    _errorHandler?.handle(error, stackTrace);
+
+    _emitStableState(
+      status: LocationFlowStatus.error,
+      message:
+          'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+      clearLocation: true,
+      clearPlaceName: true,
+    );
+  }
+}

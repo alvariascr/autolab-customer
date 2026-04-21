@@ -69,7 +69,7 @@ void main() {
       when(() => mockAppLogger.e(any())).thenReturn(null);
 
       when(
-            () => mockAppLogger.w(
+        () => mockAppLogger.w(
           any(),
           error: any(named: 'error'),
           stackTrace: any(named: 'stackTrace'),
@@ -77,56 +77,50 @@ void main() {
       ).thenReturn(null);
 
       when(
-            () => mockAppLogger.e(
+        () => mockAppLogger.e(
           any(),
           error: any(named: 'error'),
           stackTrace: any(named: 'stackTrace'),
         ),
       ).thenReturn(null);
 
-      when(
-            () => mockGlobalErrorHandler.handle(any(), any()),
-      ).thenReturn(
-        const UnknownFailure(
-          message: 'Ocurrió un error inesperado.',
-        ),
+      when(() => mockGlobalErrorHandler.handle(any(), any())).thenReturn(
+        const UnknownFailure(message: 'Ocurrió un error inesperado.'),
       );
 
       when(
-            () => mockSessionLocalDataSource.saveAccessToken(any()),
+        () => mockSessionLocalDataSource.saveAccessToken(any()),
       ).thenAnswer((_) async {});
       when(
-            () => mockSessionLocalDataSource.saveRefreshToken(any()),
+        () => mockSessionLocalDataSource.saveRefreshToken(any()),
       ).thenAnswer((_) async {});
       when(
-            () => mockSessionLocalDataSource.saveUserSession(any()),
+        () => mockSessionLocalDataSource.saveUserSession(any()),
       ).thenAnswer((_) async {});
       when(
-            () => mockSessionLocalDataSource.clearSession(),
+        () => mockSessionLocalDataSource.clearSession(),
       ).thenAnswer((_) async {});
       when(
-            () => mockSessionLocalDataSource.getUserSession(),
+        () => mockSessionLocalDataSource.getUserSession(),
       ).thenAnswer((_) async => null);
       when(
-            () => mockSessionLocalDataSource.getRefreshToken(),
+        () => mockSessionLocalDataSource.getRefreshToken(),
       ).thenAnswer((_) async => null);
 
       when(
-            () => mockUserRoleDataSource.getUserRole(any()),
+        () => mockUserRoleDataSource.getUserRole(any()),
       ).thenAnswer((_) async => UserRoles.customer);
 
       when(
-            () => mockLoginAttemptService.getState(any()),
+        () => mockLoginAttemptService.getState(any()),
       ).thenAnswer((_) async => LoginAttemptState.initial());
 
       when(
-            () => mockLoginAttemptService.registerSuccess(any()),
+        () => mockLoginAttemptService.registerSuccess(any()),
       ).thenAnswer((_) async {});
 
-      when(
-            () => mockLoginAttemptService.registerFailure(any()),
-      ).thenAnswer(
-            (_) async => const LoginAttemptState(
+      when(() => mockLoginAttemptService.registerFailure(any())).thenAnswer(
+        (_) async => const LoginAttemptState(
           failedAttempts: 1,
           lockLevel: 0,
           blockedUntil: null,
@@ -148,7 +142,7 @@ void main() {
     group('login', () {
       test(
         'retorna Right(AppUser) cuando signInWithPassword es exitoso',
-            () async {
+        () async {
           final user = User(
             id: 'user-123',
             appMetadata: const {},
@@ -161,7 +155,7 @@ void main() {
           final authResponse = AuthResponse(session: mockSession, user: user);
 
           when(
-                () => mockGoTrueClient.signInWithPassword(
+            () => mockGoTrueClient.signInWithPassword(
               email: any(named: 'email'),
               password: any(named: 'password'),
             ),
@@ -179,33 +173,41 @@ void main() {
           });
 
           verify(
-                () => mockGoTrueClient.signInWithPassword(
+            () => mockGoTrueClient.signInWithPassword(
               email: 'test@test.com',
               password: '123456',
             ),
           ).called(1);
 
-          verify(() => mockLoginAttemptService.getState('test@test.com'))
-              .called(1);
-          verify(() => mockUserRoleDataSource.getUserRole('user-123')).called(1);
-
           verify(
-                () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+            () => mockLoginAttemptService.getState('test@test.com'),
+          ).called(1);
+          verify(
+            () => mockUserRoleDataSource.getUserRole('user-123'),
           ).called(1);
 
           verify(
-                () => mockSessionLocalDataSource.saveRefreshToken(
+            () =>
+                mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+          ).called(1);
+
+          verify(
+            () => mockSessionLocalDataSource.saveRefreshToken(
               'refresh-token-123',
             ),
           ).called(1);
 
           verify(
-                () => mockLoginAttemptService.registerSuccess('test@test.com'),
+            () => mockLoginAttemptService.registerSuccess('test@test.com'),
           ).called(1);
 
-          final captured = verify(
-                () => mockSessionLocalDataSource.saveUserSession(captureAny()),
-          ).captured.single as String;
+          final captured =
+              verify(
+                    () => mockSessionLocalDataSource.saveUserSession(
+                      captureAny(),
+                    ),
+                  ).captured.single
+                  as String;
 
           expect(captured, contains('"role":"customer"'));
         },
@@ -215,7 +217,7 @@ void main() {
         final authResponse = AuthResponse(session: null, user: null);
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -234,45 +236,42 @@ void main() {
         verify(() => mockAppLogger.w(any())).called(1);
       });
 
-      test(
-        'retorna Left cuando credenciales son inválidas',
-            () async {
-          const authException = AuthException('Invalid login credentials');
+      test('retorna Left cuando credenciales son inválidas', () async {
+        const authException = AuthException('Invalid login credentials');
 
-          when(
-                () => mockGoTrueClient.signInWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            ),
-          ).thenThrow(authException);
+        when(
+          () => mockGoTrueClient.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(authException);
 
-          when(
-                () => mockLoginAttemptService.registerFailure('test@test.com'),
-          ).thenAnswer(
-                (_) async => const LoginAttemptState(
-              failedAttempts: 1,
-              lockLevel: 0,
-              blockedUntil: null,
-            ),
-          );
+        when(
+          () => mockLoginAttemptService.registerFailure('test@test.com'),
+        ).thenAnswer(
+          (_) async => const LoginAttemptState(
+            failedAttempts: 1,
+            lockLevel: 0,
+            blockedUntil: null,
+          ),
+        );
 
-          final result = await repository.login('test@test.com', 'bad-password');
+        final result = await repository.login('test@test.com', 'bad-password');
 
-          expect(result.isLeft(), true);
+        expect(result.isLeft(), true);
 
-          result.fold((failure) {
-            expect(failure, isA<Failure>());
-            expect(failure.message, ErrorCatalog.invalidCredentials.message);
-            expect(failure.code, ErrorCatalog.invalidCredentials.code);
-          }, (_) => fail('Se esperaba Left(Failure)'));
-        },
-      );
+        result.fold((failure) {
+          expect(failure, isA<Failure>());
+          expect(failure.message, ErrorCatalog.invalidCredentials.message);
+          expect(failure.code, ErrorCatalog.invalidCredentials.code);
+        }, (_) => fail('Se esperaba Left(Failure)'));
+      });
 
       test('retorna Left cuando el correo no ha sido confirmado', () async {
         const authException = AuthException('Email not confirmed');
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
@@ -281,14 +280,17 @@ void main() {
         final result = await repository.login('test@test.com', '123456');
 
         expect(result.isLeft(), true);
-        result.fold(
-              (failure) {
-            expect(failure.message, ErrorCatalog.unconfirmedEmail.message);
-            expect(failure.code, ErrorCatalog.unconfirmedEmail.code);
-          },
-              (_) => fail('Debería ser Left'),
-        );
-        verify(() => mockAppLogger.w(any(), error: authException, stackTrace: any(named: 'stackTrace'))).called(1);
+        result.fold((failure) {
+          expect(failure.message, ErrorCatalog.unconfirmedEmail.message);
+          expect(failure.code, ErrorCatalog.unconfirmedEmail.code);
+        }, (_) => fail('Debería ser Left'));
+        verify(
+          () => mockAppLogger.w(
+            any(),
+            error: authException,
+            stackTrace: any(named: 'stackTrace'),
+          ),
+        ).called(1);
       });
 
       test('uses GlobalErrorHandler for unexpected errors', () async {
@@ -300,14 +302,14 @@ void main() {
         );
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
         ).thenThrow(exception);
 
         when(
-              () => mockGlobalErrorHandler.handle(exception, any()),
+          () => mockGlobalErrorHandler.handle(exception, any()),
         ).thenReturn(mappedFailure);
 
         final result = await repository.login('test@test.com', '123456');
@@ -318,33 +320,38 @@ void main() {
           expect(failure, mappedFailure);
         }, (_) => fail('Expected Left(Failure)'));
 
-        verify(() => mockLoginAttemptService.getState('test@test.com')).called(1);
+        verify(
+          () => mockLoginAttemptService.getState('test@test.com'),
+        ).called(1);
         verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
       });
 
       test(
         'returns Left(AuthRateLimitFailure) when invalid credentials trigger block',
-            () async {
+        () async {
           const authException = AuthException('Invalid login credentials');
 
           when(
-                () => mockGoTrueClient.signInWithPassword(
+            () => mockGoTrueClient.signInWithPassword(
               email: any(named: 'email'),
               password: any(named: 'password'),
             ),
           ).thenThrow(authException);
 
           when(
-                () => mockLoginAttemptService.registerFailure('test@test.com'),
+            () => mockLoginAttemptService.registerFailure('test@test.com'),
           ).thenAnswer(
-                (_) async => LoginAttemptState(
+            (_) async => LoginAttemptState(
               failedAttempts: 5,
               lockLevel: 1,
               blockedUntil: DateTime.now().add(const Duration(minutes: 5)),
             ),
           );
 
-          final result = await repository.login('test@test.com', 'bad-password');
+          final result = await repository.login(
+            'test@test.com',
+            'bad-password',
+          );
 
           expect(result.isLeft(), true);
 
@@ -359,10 +366,14 @@ void main() {
     group('logout', () {
       test('returns Right(unit) when signOut succeeds', () async {
         when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
+        when(
+          () => mockSessionLocalDataSource.clearSession(),
+        ).thenAnswer((_) async {});
 
         final result = await repository.logout();
 
         expect(result, const Right(unit));
+        verify(() => mockGoTrueClient.signOut()).called(1);
         verify(() => mockSessionLocalDataSource.clearSession()).called(1);
       });
 
@@ -376,7 +387,7 @@ void main() {
 
         when(() => mockGoTrueClient.signOut()).thenThrow(exception);
         when(
-              () => mockGlobalErrorHandler.handle(exception, any()),
+          () => mockGlobalErrorHandler.handle(exception, any()),
         ).thenReturn(mappedFailure);
 
         final result = await repository.logout();
@@ -388,6 +399,7 @@ void main() {
         }, (_) => fail('Expected Left(Failure)'));
 
         verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
+        verifyNever(() => mockSessionLocalDataSource.clearSession());
       });
     });
 
@@ -405,14 +417,14 @@ void main() {
         final authResponse = AuthResponse(session: null, user: user);
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
         ).thenThrow(const AuthException('Invalid login credentials'));
 
         when(
-              () => mockGoTrueClient.signUp(
+          () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
             data: any(named: 'data'),
@@ -435,14 +447,14 @@ void main() {
         });
 
         verify(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: 'new@test.com',
             password: '123456',
           ),
         ).called(1);
 
         verify(
-              () => mockGoTrueClient.signUp(
+          () => mockGoTrueClient.signUp(
             email: 'new@test.com',
             password: '123456',
             data: {
@@ -454,89 +466,86 @@ void main() {
         ).called(1);
       });
 
-      test('returns Left when account already exists (pre-check login success)', () async {
-        final user = User(
-          id: 'user-456',
-          appMetadata: const {},
-          userMetadata: const {},
-          aud: 'authenticated',
-          createdAt: DateTime.now().toIso8601String(),
-          email: 'existing@test.com',
-        );
-        final authResponse = AuthResponse(session: mockSession, user: user);
+      test(
+        'returns Left when account already exists (pre-check login success)',
+        () async {
+          final user = User(
+            id: 'user-456',
+            appMetadata: const {},
+            userMetadata: const {},
+            aud: 'authenticated',
+            createdAt: DateTime.now().toIso8601String(),
+            email: 'existing@test.com',
+          );
+          final authResponse = AuthResponse(session: mockSession, user: user);
 
-        when(
-              () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenAnswer((_) async => authResponse);
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenAnswer((_) async => authResponse);
 
-        when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
+          when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
 
-        final result = await repository.register(
-          'Luis',
-          'existing@test.com',
-          '88888888',
-          '123456',
-        );
+          final result = await repository.register(
+            'Luis',
+            'existing@test.com',
+            '88888888',
+            '123456',
+          );
 
-        expect(result.isLeft(), true);
-        result.fold(
-              (failure) {
+          expect(result.isLeft(), true);
+          result.fold((failure) {
             expect(failure.message, ErrorCatalog.accountAlreadyExists.message);
             expect(failure.code, ErrorCatalog.accountAlreadyExists.code);
-          },
-              (_) => fail('Debería ser Left'),
-        );
-        verify(() => mockGoTrueClient.signOut()).called(1);
-      });
+          }, (_) => fail('Debería ser Left'));
+          verify(() => mockGoTrueClient.signOut()).called(1);
+        },
+      );
 
-      test('returns Left when account exists but not confirmed (pre-check login error)', () async {
-        const authException = AuthException('Email not confirmed');
+      test(
+        'returns Left when account exists but not confirmed (pre-check login error)',
+        () async {
+          const authException = AuthException('Email not confirmed');
 
-        when(
-              () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenThrow(authException);
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
 
-        final result = await repository.register(
-          'Luis',
-          'existing@test.com',
-          '88888888',
-          '123456',
-        );
+          final result = await repository.register(
+            'Luis',
+            'existing@test.com',
+            '88888888',
+            '123456',
+          );
 
-        expect(result.isLeft(), true);
-        result.fold(
-              (failure) {
+          expect(result.isLeft(), true);
+          result.fold((failure) {
             expect(
               failure.message,
               ErrorCatalog.emailNotConfirmedRegister.message,
             );
-            expect(
-              failure.code,
-              ErrorCatalog.emailNotConfirmedRegister.code,
-            );
-          },
-              (_) => fail('Debería ser Left'),
-        );
-      });
+            expect(failure.code, ErrorCatalog.emailNotConfirmedRegister.code);
+          }, (_) => fail('Debería ser Left'));
+        },
+      );
 
       test('returns Left(AuthFailure) when signUp user is null', () async {
         final authResponse = AuthResponse(session: null, user: null);
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
         ).thenThrow(const AuthException('Invalid login credentials'));
 
         when(
-              () => mockGoTrueClient.signUp(
+          () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
             data: any(named: 'data'),
@@ -561,46 +570,43 @@ void main() {
         verify(() => mockAppLogger.w(any())).called(1);
       });
 
-      test('returns Left when email already registered (signUp exception)', () async {
-        const authException = AuthException('User already registered');
+      test(
+        'returns Left when email already registered (signUp exception)',
+        () async {
+          const authException = AuthException('User already registered');
 
-        when(
-              () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenThrow(const AuthException('Invalid login credentials'));
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(const AuthException('Invalid login credentials'));
 
-        when(
-              () => mockGoTrueClient.signUp(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-            data: any(named: 'data'),
-          ),
-        ).thenThrow(authException);
+          when(
+            () => mockGoTrueClient.signUp(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+              data: any(named: 'data'),
+            ),
+          ).thenThrow(authException);
 
-        final result = await repository.register(
-          'Luis',
-          'new@test.com',
-          '88888888',
-          '123456',
-        );
+          final result = await repository.register(
+            'Luis',
+            'new@test.com',
+            '88888888',
+            '123456',
+          );
 
-        expect(result.isLeft(), true);
-        result.fold(
-              (failure) {
+          expect(result.isLeft(), true);
+          result.fold((failure) {
             expect(
               failure.message,
               ErrorCatalog.emailAlreadyRegistered.message,
             );
-            expect(
-              failure.code,
-              ErrorCatalog.emailAlreadyRegistered.code,
-            );
-          },
-              (_) => fail('Debería ser Left'),
-        );
-      });
+            expect(failure.code, ErrorCatalog.emailAlreadyRegistered.code);
+          }, (_) => fail('Debería ser Left'));
+        },
+      );
 
       test('uses GlobalErrorHandler for unexpected errors', () async {
         final exception = Exception('signup error');
@@ -611,14 +617,14 @@ void main() {
         );
 
         when(
-              () => mockGoTrueClient.signInWithPassword(
+          () => mockGoTrueClient.signInWithPassword(
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
         ).thenThrow(const AuthException('Invalid login credentials'));
 
         when(
-              () => mockGoTrueClient.signUp(
+          () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
             data: any(named: 'data'),
@@ -626,7 +632,7 @@ void main() {
         ).thenThrow(exception);
 
         when(
-              () => mockGlobalErrorHandler.handle(exception, any()),
+          () => mockGlobalErrorHandler.handle(exception, any()),
         ).thenReturn(mappedFailure);
 
         final result = await repository.register(
@@ -649,7 +655,7 @@ void main() {
     group('getCurrentUser', () {
       test(
         'returns Supabase user and syncs local session when role lookup succeeds',
-            () async {
+        () async {
           final user = User(
             id: 'user-123',
             appMetadata: const {},
@@ -661,7 +667,7 @@ void main() {
 
           when(() => mockGoTrueClient.currentUser).thenReturn(user);
           when(
-                () => mockUserRoleDataSource.getUserRole('user-123'),
+            () => mockUserRoleDataSource.getUserRole('user-123'),
           ).thenAnswer((_) async => UserRoles.customer);
 
           final result = await repository.getCurrentUser();
@@ -672,7 +678,7 @@ void main() {
           expect(result.role, UserRoles.customer);
 
           verify(
-                () => mockSessionLocalDataSource.saveUserSession(captureAny()),
+            () => mockSessionLocalDataSource.saveUserSession(captureAny()),
           ).called(1);
           verify(() => mockAppLogger.i(any())).called(1);
         },
@@ -680,7 +686,7 @@ void main() {
 
       test(
         'returns local session when role lookup fails but local session exists',
-            () async {
+        () async {
           final user = User(
             id: 'user-123',
             appMetadata: const {},
@@ -692,13 +698,11 @@ void main() {
 
           when(() => mockGoTrueClient.currentUser).thenReturn(user);
           when(
-                () => mockUserRoleDataSource.getUserRole('user-123'),
+            () => mockUserRoleDataSource.getUserRole('user-123'),
           ).thenThrow(Exception('network error'));
 
-          when(
-                () => mockSessionLocalDataSource.getUserSession(),
-          ).thenAnswer(
-                (_) async => jsonEncode({
+          when(() => mockSessionLocalDataSource.getUserSession()).thenAnswer(
+            (_) async => jsonEncode({
               'id': 'user-123',
               'email': 'test@test.com',
               'role': UserRoles.customer,
@@ -718,7 +722,7 @@ void main() {
 
       test(
         'restores session from refresh token when currentUser is null',
-            () async {
+        () async {
           final user = User(
             id: 'user-123',
             appMetadata: const {},
@@ -730,13 +734,15 @@ void main() {
 
           when(() => mockGoTrueClient.currentUser).thenReturn(null);
           when(
-                () => mockSessionLocalDataSource.getRefreshToken(),
+            () => mockSessionLocalDataSource.getRefreshToken(),
           ).thenAnswer((_) async => 'refresh-token-123');
           when(
-                () => mockGoTrueClient.setSession('refresh-token-123'),
-          ).thenAnswer((_) async => AuthResponse(session: mockSession, user: user));
+            () => mockGoTrueClient.setSession('refresh-token-123'),
+          ).thenAnswer(
+            (_) async => AuthResponse(session: mockSession, user: user),
+          );
           when(
-                () => mockUserRoleDataSource.getUserRole('user-123'),
+            () => mockUserRoleDataSource.getUserRole('user-123'),
           ).thenAnswer((_) async => UserRoles.customer);
 
           final result = await repository.getCurrentUser();
@@ -746,66 +752,60 @@ void main() {
           expect(result.email, 'test@test.com');
           expect(result.role, UserRoles.customer);
 
-          verify(() => mockGoTrueClient.setSession('refresh-token-123')).called(1);
           verify(
-                () => mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+            () => mockGoTrueClient.setSession('refresh-token-123'),
           ).called(1);
           verify(
-                () => mockSessionLocalDataSource.saveRefreshToken(
+            () =>
+                mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+          ).called(1);
+          verify(
+            () => mockSessionLocalDataSource.saveRefreshToken(
               'refresh-token-123',
             ),
           ).called(1);
         },
       );
 
-      test(
-        'returns null when no Supabase user and no local session',
-            () async {
-          when(() => mockGoTrueClient.currentUser).thenReturn(null);
-          when(
-                () => mockSessionLocalDataSource.getUserSession(),
-          ).thenAnswer((_) async => null);
+      test('returns null when no Supabase user and no local session', () async {
+        when(() => mockGoTrueClient.currentUser).thenReturn(null);
+        when(
+          () => mockSessionLocalDataSource.getUserSession(),
+        ).thenAnswer((_) async => null);
 
-          final result = await repository.getCurrentUser();
+        final result = await repository.getCurrentUser();
 
-          expect(result, isNull);
-        },
-      );
+        expect(result, isNull);
+      });
 
-      test(
-        'returns null when local session is invalid',
-            () async {
-          when(() => mockGoTrueClient.currentUser).thenReturn(null);
-          when(
-                () => mockSessionLocalDataSource.getUserSession(),
-          ).thenAnswer((_) async => '{"id":"user-1","role":"invalid-role"}');
+      test('returns null when local session is invalid', () async {
+        when(() => mockGoTrueClient.currentUser).thenReturn(null);
+        when(
+          () => mockSessionLocalDataSource.getUserSession(),
+        ).thenAnswer((_) async => '{"id":"user-1","role":"invalid-role"}');
 
-          final result = await repository.getCurrentUser();
+        final result = await repository.getCurrentUser();
 
-          expect(result, isNull);
-        },
-      );
+        expect(result, isNull);
+      });
 
-      test(
-        'returns null when local session JSON is malformed',
-            () async {
-          when(() => mockGoTrueClient.currentUser).thenReturn(null);
-          when(
-                () => mockSessionLocalDataSource.getUserSession(),
-          ).thenAnswer((_) async => 'not-json');
+      test('returns null when local session JSON is malformed', () async {
+        when(() => mockGoTrueClient.currentUser).thenReturn(null);
+        when(
+          () => mockSessionLocalDataSource.getUserSession(),
+        ).thenAnswer((_) async => 'not-json');
 
-          final result = await repository.getCurrentUser();
+        final result = await repository.getCurrentUser();
 
-          expect(result, isNull);
-          verify(
-                () => mockAppLogger.w(
-              any(),
-              error: any(named: 'error'),
-              stackTrace: any(named: 'stackTrace'),
-            ),
-          ).called(1);
-        },
-      );
+        expect(result, isNull);
+        verify(
+          () => mockAppLogger.w(
+            any(),
+            error: any(named: 'error'),
+            stackTrace: any(named: 'stackTrace'),
+          ),
+        ).called(1);
+      });
     });
   });
 }
