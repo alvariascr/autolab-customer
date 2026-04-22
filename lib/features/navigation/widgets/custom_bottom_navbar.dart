@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
 
+final class _NavbarColors {
+  const _NavbarColors._();
+
+  static const background = Color(0xFF121212);
+  static const selected = Color(0xFFD32F2F);
+  static const selectedForeground = Colors.white;
+  static const unselectedIcon = Colors.white70;
+  static const unselectedLabel = Colors.white60;
+}
+
 class CustomBottomNavbar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -16,7 +26,7 @@ class CustomBottomNavbar extends StatelessWidget {
       margin: const EdgeInsets.all(12),
       padding: const EdgeInsets.symmetric(vertical: 15),
       decoration: BoxDecoration(
-        color: const Color(0xFF121212),
+        color: _NavbarColors.background,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -73,21 +83,16 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bronco = Color(0xFFD32F2F);
-
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        transform: Matrix4.translationValues(
-          0,
-          isSelected ? -10 : 0,
-          0,
-        ),
+        transform: Matrix4.translationValues(0, isSelected ? -10 : 0, 0),
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? bronco : Colors.transparent,
+          color: isSelected ? _NavbarColors.selected : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -95,14 +100,18 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.white70,
+              color: isSelected
+                  ? _NavbarColors.selectedForeground
+                  : _NavbarColors.unselectedIcon,
               size: 24,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white60,
+                color: isSelected
+                    ? _NavbarColors.selectedForeground
+                    : _NavbarColors.unselectedLabel,
                 fontSize: 11,
               ),
             ),
