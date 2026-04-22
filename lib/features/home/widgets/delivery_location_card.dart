@@ -29,21 +29,17 @@ class DeliveryLocationCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isBusy ? null : onTap,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isBusy ? null : onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            child: Row(
+              children: [
+                const SizedBox(width: 20, height: 20),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -60,7 +56,7 @@ class DeliveryLocationCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 1),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Flexible(
                             child: Text(
@@ -101,24 +97,24 @@ class DeliveryLocationCard extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: isBusy
+                      ? const Padding(
+                          padding: EdgeInsets.only(top: 1),
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
             ),
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: isBusy
-                ? const Padding(
-                    padding: EdgeInsets.only(top: 8, right: 2),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
+        ),
       ),
     );
   }
