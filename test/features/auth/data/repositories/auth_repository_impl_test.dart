@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_core/autolab_core.dart' hide SessionLocalDataSource;
 import 'package:autolab_customer/features/auth/data/datasources/session_local_data_source.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/models/login_attempt_state.dart';
@@ -104,6 +104,9 @@ void main() {
       ).thenAnswer((_) async {});
       when(
         () => mockSessionLocalDataSource.getUserSession(),
+      ).thenAnswer((_) async => null);
+      when(
+        () => mockSessionLocalDataSource.getRefreshToken(),
       ).thenAnswer((_) async => null);
 
       when(
@@ -728,6 +731,53 @@ void main() {
         },
       );
 
+      test(
+        'restores session from refresh token when currentUser is null',
+        () async {
+          final user = User(
+            id: 'user-123',
+            appMetadata: const {},
+            userMetadata: const {},
+            aud: 'authenticated',
+            createdAt: DateTime.now().toIso8601String(),
+            email: 'test@test.com',
+          );
+
+          when(() => mockGoTrueClient.currentUser).thenReturn(null);
+          when(
+            () => mockSessionLocalDataSource.getRefreshToken(),
+          ).thenAnswer((_) async => 'refresh-token-123');
+          when(
+            () => mockGoTrueClient.setSession('refresh-token-123'),
+          ).thenAnswer(
+            (_) async => AuthResponse(session: mockSession, user: user),
+          );
+          when(
+            () => mockUserRoleDataSource.getUserRole('user-123'),
+          ).thenAnswer((_) async => UserRoles.customer);
+
+          final result = await repository.getCurrentUser();
+
+          expect(result, isNotNull);
+          expect(result!.id, 'user-123');
+          expect(result.email, 'test@test.com');
+          expect(result.role, UserRoles.customer);
+
+          verify(
+            () => mockGoTrueClient.setSession('refresh-token-123'),
+          ).called(1);
+          verify(
+            () =>
+                mockSessionLocalDataSource.saveAccessToken('access-token-123'),
+          ).called(1);
+          verify(
+            () => mockSessionLocalDataSource.saveRefreshToken(
+              'refresh-token-123',
+            ),
+          ).called(1);
+        },
+      );
+
       test('returns null when no Supabase user and no local session', () async {
         when(() => mockGoTrueClient.currentUser).thenReturn(null);
         when(
@@ -738,7 +788,6 @@ void main() {
 
         expect(result, isNull);
       });
-
       test('returns null when local session is invalid', () async {
         when(() => mockGoTrueClient.currentUser).thenReturn(null);
         when(

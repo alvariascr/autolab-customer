@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/di/app_injection.dart';
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
-import '../auth/bloc/auth_bloc.dart';
-import '../auth/bloc/auth_event.dart';
-import 'location/location_feedback_mapper.dart';
-import 'location/location_feedback_text.dart';
+import '../navigation/navigation_handler.dart';
+import '../navigation/widgets/custom_bottom_navbar.dart';
+import '../workshops/domain/entities/workshop.dart';
+import '../workshops/domain/repositories/workshop_repository.dart';
+import '../workshops/domain/services/workshop_proximity_filter.dart';
+import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import 'widgets/home_customer_content.dart';
+import 'widgets/location_option_tile.dart';
 
 class HomeCustomerPage extends StatefulWidget {
   const HomeCustomerPage({super.key});
@@ -17,6 +22,14 @@ class HomeCustomerPage extends StatefulWidget {
 
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
+  static const _workshopProximityFilter = WorkshopProximityFilter();
+  static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
+
+  late Future<List<Workshop>> _workshopsFuture;
+  final TextEditingController _searchController = TextEditingController();
+
+  int _currentIndex = 0;
+  bool _showSearchBar = false;
   bool _didTriggerInitialLocationLoad = false;
 
   @override
@@ -26,11 +39,13 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _triggerInitialLocationLoad();
     });
+    _workshopsFuture = _loadWorkshops();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -42,6 +57,18 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         return;
       }
       context.read<LocationCubit>().refresh();
+    }
+  }
+
+  Future<List<Workshop>> _loadWorkshops() async {
+    try {
+      if (!sl.isRegistered<WorkshopRepository>()) {
+        return const <Workshop>[];
+      }
+
+      return await sl<WorkshopRepository>().getWorkshops();
+    } catch (_) {
+      return const <Workshop>[];
     }
   }
 
@@ -109,7 +136,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Selecciona dónde entregar',
+                    'Selecciona donde entregar',
                     style: TextStyle(
                       color: Color(0xFF181411),
                       fontWeight: FontWeight.w800,
@@ -118,7 +145,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Puedes usar tu ubicación actual o elegir una dirección guardada más adelante.',
+                    'Puedes usar tu ubicacion actual o elegir una direccion guardada mas adelante.',
                     style: TextStyle(
                       color: Color(0xFF6B5F57),
                       fontSize: 13,
@@ -126,7 +153,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                     ),
                   ),
                   const SizedBox(height: 18),
-                  _LocationOptionTile(
+                  LocationOptionTile(
                     icon: Icons.my_location_outlined,
                     title: _useCurrentLocationLabelFor(actionStatus),
                     subtitle: _useCurrentLocationSubtitleFor(actionStatus),
@@ -136,24 +163,24 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                     },
                   ),
                   const SizedBox(height: 10),
-                  const _LocationOptionTile(
+                  const LocationOptionTile(
                     icon: Icons.search_rounded,
-                    title: 'Escribir dirección',
+                    title: 'Escribir direccion',
                     subtitle: 'Lo conectamos en el siguiente paso del home.',
                   ),
                   const SizedBox(height: 10),
-                  const _LocationOptionTile(
+                  const LocationOptionTile(
                     icon: Icons.home_outlined,
                     title: 'Casa',
                     subtitle:
-                        'Próximamente podrás guardar tus direcciones favoritas.',
+                        'Proximamente podras guardar tus direcciones favoritas.',
                   ),
                   const SizedBox(height: 10),
-                  const _LocationOptionTile(
+                  const LocationOptionTile(
                     icon: Icons.work_outline_rounded,
                     title: 'Trabajo',
                     subtitle:
-                        'Próximamente podrás guardar tus direcciones favoritas.',
+                        'Proximamente podras guardar tus direcciones favoritas.',
                   ),
                 ],
               ),
@@ -166,26 +193,43 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   String _useCurrentLocationLabelFor(LocationFlowStatus status) {
     return switch (status) {
-      LocationFlowStatus.success => 'Actualizar ubicación actual',
-      LocationFlowStatus.deniedForever => 'Abrir configuración',
+      LocationFlowStatus.success => 'Actualizar ubicacion actual',
+      LocationFlowStatus.deniedForever => 'Abrir configuracion',
       LocationFlowStatus.serviceDisabled => 'Encender GPS',
       LocationFlowStatus.requestingPermission => 'Esperando permiso',
-      _ => 'Usar ubicación actual',
+      _ => 'Usar ubicacion actual',
     };
   }
 
   String _useCurrentLocationSubtitleFor(LocationFlowStatus status) {
     return switch (status) {
       LocationFlowStatus.success =>
-        'Volver a consultar tu ubicación para actualizar los resultados.',
+        'Volver a consultar tu ubicacion para actualizar los resultados.',
       LocationFlowStatus.deniedForever =>
-        'Habilita el permiso de ubicación desde la configuración del teléfono.',
+        'Habilita el permiso de ubicacion desde la configuracion del telefono.',
       LocationFlowStatus.serviceDisabled =>
-        'Activa la ubicación del dispositivo para ver talleres cercanos.',
+        'Activa la ubicacion del dispositivo para ver talleres cercanos.',
       LocationFlowStatus.requestingPermission =>
-        'Estamos esperando tu respuesta para acceder a la ubicación.',
-      _ => 'Usa el GPS del teléfono para ver talleres y servicios cerca de ti.',
+        'Estamos esperando tu respuesta para acceder a la ubicacion.',
+      _ => 'Usa el GPS del telefono para ver talleres y servicios cerca de ti.',
     };
+  }
+
+  void _handleBottomNavigation(int index) {
+    if (index == 2) {
+      setState(() {
+        _currentIndex = 2;
+        _showSearchBar = !_showSearchBar;
+      });
+      return;
+    }
+
+    setState(() {
+      _currentIndex = index;
+      _showSearchBar = false;
+    });
+
+    NavigationHandler.handle(context, index);
   }
 
   @override
@@ -197,325 +241,26 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         toolbarHeight: 46,
-        leadingWidth: 52,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: IconButton(
-            tooltip: 'Cerrar sesión',
-            onPressed: () {
-              context.read<AuthBloc>().add(const LogoutRequested());
-            },
-            icon: const Icon(Icons.logout, color: Color(0xFF181411), size: 20),
-          ),
-        ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  BlocBuilder<LocationCubit, LocationState>(
-                    builder: (context, state) {
-                      return _DeliveryLocationCard(
-                        state: state,
-                        onTap: () => _showLocationOptions(state),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  const _HomePlaceholder(),
-                ],
-              ),
-            ),
-          ),
-        ),
+      body: FutureBuilder<List<Workshop>>(
+        future: _workshopsFuture,
+        builder: (context, snapshot) {
+          return HomeCustomerContent(
+            workshops: snapshot.data ?? const <Workshop>[],
+            isWorkshopsLoading:
+                snapshot.connectionState == ConnectionState.waiting,
+            hasWorkshopsError: snapshot.hasError,
+            showSearchBar: _showSearchBar,
+            searchController: _searchController,
+            proximityFilter: _workshopProximityFilter,
+            emptyStateResolver: _workshopEmptyStateResolver,
+            onLocationTap: _showLocationOptions,
+          );
+        },
       ),
-    );
-  }
-}
-
-class _DeliveryLocationCard extends StatelessWidget {
-  const _DeliveryLocationCard({required this.state, required this.onTap});
-
-  final LocationState state;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = state.status == LocationFlowStatus.loading;
-    final isRequestingPermission =
-        state.status == LocationFlowStatus.requestingPermission;
-    final isBusy = isLoading || isRequestingPermission;
-    final showLoadingCopy = isLoading && state.lastSettledStatus == null;
-    final feedback = mapLocationFeedback(state);
-    final status = state.effectiveStatus;
-    final title = _headlineFor(status, feedback, showLoadingCopy);
-    final subtitle = _subtitleFor(status, feedback, showLoadingCopy);
-    final label = _labelFor(status);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isBusy ? null : onTap,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF3FA572),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              title,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF181411),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                                height: 1.1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 1),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF181411),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      if (subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF6B5F57),
-                            fontSize: 10,
-                            height: 1.25,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: isBusy
-                ? const Padding(
-                    padding: EdgeInsets.only(top: 8, right: 2),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _labelFor(LocationFlowStatus status) {
-    return switch (status) {
-      LocationFlowStatus.success => 'Entregar ahora',
-      LocationFlowStatus.requestingPermission => 'Confirmando acceso',
-      LocationFlowStatus.loading ||
-      LocationFlowStatus.initial => 'Buscando cerca de ti',
-      LocationFlowStatus.permissionRequired => 'Entregar ahora',
-      LocationFlowStatus.deniedForever => 'Permiso de ubicación',
-      LocationFlowStatus.serviceDisabled => 'Ubicación desactivada',
-      LocationFlowStatus.restricted => 'Ubicación restringida',
-      LocationFlowStatus.error => 'No pudimos confirmar tu zona',
-    };
-  }
-
-  String _headlineFor(
-    LocationFlowStatus status,
-    LocationFeedbackText feedback,
-    bool isLoading,
-  ) {
-    if (isLoading) {
-      return 'Buscando tu ubicación actual';
-    }
-
-    return switch (status) {
-      LocationFlowStatus.success => feedback.title.replaceFirst(
-        'Entregando en ',
-        '',
-      ),
-      LocationFlowStatus.permissionRequired => 'Elegir dirección',
-      LocationFlowStatus.deniedForever => 'Abrir configuración',
-      LocationFlowStatus.serviceDisabled => 'Encender GPS',
-      LocationFlowStatus.restricted => 'Ubicación no disponible',
-      LocationFlowStatus.requestingPermission =>
-        'Confirma el acceso a tu ubicación',
-      LocationFlowStatus.error => 'No pudimos confirmar tu dirección',
-      LocationFlowStatus.initial ||
-      LocationFlowStatus.loading => 'Buscando tu ubicación actual',
-    };
-  }
-
-  String _subtitleFor(
-    LocationFlowStatus status,
-    LocationFeedbackText feedback,
-    bool isLoading,
-  ) {
-    if (isLoading) {
-      return 'Estamos consultando la ubicación del dispositivo para mostrarte talleres cercanos.';
-    }
-
-    return switch (status) {
-      LocationFlowStatus.success => '',
-      LocationFlowStatus.permissionRequired =>
-        'Usa tu ubicación actual para descubrir talleres y servicios cercanos.',
-      LocationFlowStatus.deniedForever =>
-        'Necesitamos que habilites el permiso desde la configuración del teléfono.',
-      LocationFlowStatus.serviceDisabled =>
-        'Activa la ubicación del dispositivo para ver resultados cercanos.',
-      LocationFlowStatus.restricted => feedback.subtitle,
-      LocationFlowStatus.requestingPermission =>
-        'Estamos esperando tu respuesta para poder ubicar tu zona de entrega.',
-      LocationFlowStatus.error => feedback.subtitle,
-      LocationFlowStatus.initial || LocationFlowStatus.loading =>
-        'Estamos consultando la ubicación del dispositivo para mostrarte talleres cercanos.',
-    };
-  }
-}
-
-class _LocationOptionTile extends StatelessWidget {
-  const _LocationOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-
-    return Material(
-      color: const Color(0xFFF8F4EF),
-      borderRadius: BorderRadius.circular(20),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: enabled ? const Color(0xFF181411) : const Color(0xFF9B8E84),
-            size: 19,
-          ),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: enabled ? const Color(0xFF181411) : const Color(0xFF7D6F66),
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
-            fontSize: 12,
-            height: 1.35,
-          ),
-        ),
-        trailing: Icon(
-          enabled ? Icons.arrow_forward_ios_rounded : Icons.schedule_rounded,
-          size: enabled ? 14 : 16,
-          color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Explora talleres cerca de ti',
-            style: TextStyle(
-              color: Color(0xFF181411),
-              fontWeight: FontWeight.w800,
-              fontSize: 22,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.',
-            style: TextStyle(
-              color: Color(0xFF6B5F57),
-              fontSize: 14,
-              height: 1.45,
-            ),
-          ),
-        ],
+      bottomNavigationBar: CustomBottomNavbar(
+        currentIndex: _currentIndex,
+        onTap: _handleBottomNavigation,
       ),
     );
   }

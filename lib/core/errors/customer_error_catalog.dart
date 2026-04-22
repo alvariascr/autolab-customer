@@ -88,4 +88,14 @@ final class CustomerErrorCatalog {
     code: 'NET_002',
     message: 'La ubicación tardó demasiado en responder. Intenta nuevamente.',
   );
+
+  static const workshopLoadFailed = ErrorItem(
+    code: 'CUS_WRK_001',
+    message: 'No fue posible cargar los talleres en este momento.',
+  );
+
+  static const workshopNetworkError = ErrorItem(
+    code: 'CUS_WRK_002',
+    message: 'Revisa tu conexión para consultar los talleres cercanos.',
+  );
 }

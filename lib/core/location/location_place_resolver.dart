@@ -38,13 +38,25 @@ class GeocodingLocationPlaceResolver implements LocationPlaceResolver {
   }
 
   String? _buildDisplayName(Placemark placemark) {
+    final areaParts = [
+      placemark.subLocality,
+      placemark.locality,
+      placemark.subAdministrativeArea,
+      placemark.administrativeArea,
+    ].where(_hasMeaningfulValue).cast<String>().toList();
+
+    final normalizedAreaParts = _uniqueParts(areaParts);
+    if (normalizedAreaParts.isNotEmpty) {
+      return normalizedAreaParts.join(', ');
+    }
+
     final primaryParts = [
-      placemark.name,
       placemark.subLocality,
       placemark.locality,
       placemark.subAdministrativeArea,
       placemark.administrativeArea,
       placemark.country,
+      if (_hasMeaningfulValue(placemark.name)) placemark.name,
     ].where(_hasValue).cast<String>().toList();
 
     final normalizedPrimaryParts = _uniqueParts(primaryParts);
@@ -56,7 +68,7 @@ class GeocodingLocationPlaceResolver implements LocationPlaceResolver {
       placemark.thoroughfare,
       placemark.subThoroughfare,
       placemark.street,
-      placemark.name,
+      if (_hasMeaningfulValue(placemark.name)) placemark.name,
       placemark.country,
     ].where(_hasValue).cast<String>().toList();
 
@@ -70,6 +82,20 @@ class GeocodingLocationPlaceResolver implements LocationPlaceResolver {
 
   bool _hasValue(String? value) {
     return value != null && value.trim().isNotEmpty;
+  }
+
+  bool _hasMeaningfulValue(String? value) {
+    if (!_hasValue(value)) {
+      return false;
+    }
+
+    final normalized = value!.trim();
+    final plusCodePattern = RegExp(
+      r'^[23456789CFGHJMPQRVWX]{4,}\+[23456789CFGHJMPQRVWX]{2,}$',
+      caseSensitive: false,
+    );
+
+    return !plusCodePattern.hasMatch(normalized);
   }
 
   List<String> _uniqueParts(List<String> parts) {
