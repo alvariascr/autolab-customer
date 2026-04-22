@@ -5,12 +5,9 @@ import '../../../auth/bloc/auth_bloc.dart';
 import '../../../auth/bloc/auth_event.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import '../../../workshops/domain/entities/workshop.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, this.workshops = const []});
-
-  final List<Workshop> workshops;
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -24,7 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _currentIndex = index;
     });
 
-    NavigationHandler.handle(context, index, workshops: widget.workshops);
+    NavigationHandler.handle(context, index);
   }
 
   @override

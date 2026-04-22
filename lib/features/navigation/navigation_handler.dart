@@ -28,9 +28,7 @@ class NavigationHandler {
         // Mapa
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => MapPage(workshops: workshops ?? []),
-          ),
+          MaterialPageRoute(builder: (_) => const MapPage()),
         );
 
         return;
@@ -58,9 +56,7 @@ class NavigationHandler {
         // Perfil
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ProfilePage(workshops: workshops ?? const []),
-          ),
+          MaterialPageRoute(builder: (_) => const ProfilePage()),
         );
         return;
 
