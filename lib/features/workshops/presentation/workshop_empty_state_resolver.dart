@@ -7,10 +7,6 @@ class WorkshopEmptyStateResolver {
     LocationState locationState, {
     bool isUsingFallbackLocation = false,
   }) {
-    if (isUsingFallbackLocation) {
-      return 'No encontramos talleres cerca de Tilarán por el momento.';
-    }
-
     return switch (locationState.status) {
       LocationFlowStatus.initial ||
       LocationFlowStatus.loading ||
