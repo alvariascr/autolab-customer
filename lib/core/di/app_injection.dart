@@ -3,6 +3,11 @@ import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/di/auth_injection.dart';
+import '../../features/map/presentation/cubit/map_cubit.dart';
+import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
+import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
+import '../../features/workshops/data/repositories/workshop_repository_impl.dart';
+import '../../features/workshops/domain/repositories/workshop_repository.dart';
 import '../location/current_location_data_source.dart';
 import '../location/geocoding_client.dart';
 import '../location/location_flow_recovery_service.dart';
@@ -59,4 +64,18 @@ void _registerExternalDependencies() {
 
 void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
+  sl.registerLazySingleton<WorkshopRemoteDataSource>(
+    () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<WorkshopRepository>(
+    () => WorkshopRepositoryImpl(
+      remoteDataSource: sl<WorkshopRemoteDataSource>(),
+    ),
+  );
+  sl.registerFactory<MapCubit>(
+    () => MapCubit(
+      sl<WorkshopRepository>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+    ),
+  );
 }
