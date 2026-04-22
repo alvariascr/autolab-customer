@@ -1,28 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/di/app_injection.dart';
 import '../../../../core/location/location_cubit.dart';
 import '../../../../core/location/location_state.dart';
+import '../cubit/map_cubit.dart';
+import '../cubit/map_state.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import '../../../workshops/domain/entities/workshop.dart';
-import '../../../workshops/domain/services/workshop_proximity_filter.dart';
-import '../../../workshops/domain/services/workshop_search_location_resolver.dart';
 import '../../../workshops/presentation/widgets/nearby_workshops_map.dart';
 import '../../../workshops/presentation/workshop_empty_state_resolver.dart';
 
-class MapPage extends StatefulWidget {
-  const MapPage({super.key, required this.workshops});
-
-  final List<Workshop> workshops;
+class MapPage extends StatelessWidget {
+  const MapPage({super.key});
 
   @override
-  State<MapPage> createState() => _MapPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          sl<MapCubit>()
+            ..loadWorkshops(context.read<LocationCubit>().state.location),
+      child: const _MapPageView(),
+    );
+  }
 }
 
-class _MapPageState extends State<MapPage> {
-  static const _proximityFilter = WorkshopProximityFilter();
-  static const _searchLocationResolver = WorkshopSearchLocationResolver();
+class _MapPageView extends StatefulWidget {
+  const _MapPageView();
+
+  @override
+  State<_MapPageView> createState() => _MapPageViewState();
+}
+
+class _MapPageViewState extends State<_MapPageView> {
   static const _emptyStateResolver = WorkshopEmptyStateResolver();
 
   int _currentIndex = 1;
@@ -32,7 +42,7 @@ class _MapPageState extends State<MapPage> {
       _currentIndex = index;
     });
 
-    NavigationHandler.handle(context, index, workshops: widget.workshops);
+    NavigationHandler.handle(context, index);
   }
 
   @override
@@ -56,66 +66,76 @@ class _MapPageState extends State<MapPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-          child: BlocBuilder<LocationCubit, LocationState>(
-            builder: (context, state) {
-              final searchLocation = _searchLocationResolver.resolve(
-                state.location,
-              );
-              final isUsingFallbackLocation = _searchLocationResolver
-                  .isUsingFallback(state.location);
-              final nearbyWorkshops = _proximityFilter.filterNearby(
-                workshops: widget.workshops,
-                currentLocation: searchLocation,
-              );
-              final emptyMessage = _emptyStateResolver.resolve(
-                state,
-                isUsingFallbackLocation: isUsingFallbackLocation,
-              );
-
-              return Stack(
-                children: [
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x16000000),
-                            blurRadius: 30,
-                            offset: Offset(0, 14),
-                          ),
-                        ],
-                      ),
-                      child: NearbyWorkshopsMap(
-                        workshops: nearbyWorkshops,
-                        currentLocation: searchLocation,
-                        emptyMessage: emptyMessage,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 14,
-                    left: 14,
-                    child: _MapTopPill(
-                      label: nearbyWorkshops.isEmpty
-                          ? 'Sin talleres'
-                          : nearbyWorkshops.length == 1
-                          ? '1 taller cercano'
-                          : '${nearbyWorkshops.length} talleres cercanos',
-                      dark: true,
-                    ),
-                  ),
-                  const Positioned(
-                    top: 14,
-                    right: 14,
-                    child: _MapTopPill(
-                      label: 'Explorar mapa',
-                      icon: Icons.map_outlined,
-                    ),
-                  ),
-                ],
-              );
+          child: BlocListener<LocationCubit, LocationState>(
+            listenWhen: (previous, current) =>
+                previous.location != current.location ||
+                previous.effectiveStatus != current.effectiveStatus,
+            listener: (context, state) {
+              context.read<MapCubit>().loadWorkshops(state.location);
             },
+            child: BlocBuilder<LocationCubit, LocationState>(
+              builder: (context, locationState) {
+                return BlocBuilder<MapCubit, MapState>(
+                  builder: (context, mapState) {
+                    final emptyMessage = switch (mapState) {
+                      MapLoaded(:final isUsingFallbackLocation) =>
+                        _emptyStateResolver.resolve(
+                          locationState,
+                          isUsingFallbackLocation: isUsingFallbackLocation,
+                        ),
+                      _ => _emptyStateResolver.resolve(
+                        locationState,
+                        isUsingFallbackLocation: false,
+                      ),
+                    };
+
+                    final workshopsCount = switch (mapState) {
+                      MapLoaded(:final workshops) => workshops.length,
+                      _ => 0,
+                    };
+
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(32),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x16000000),
+                                  blurRadius: 30,
+                                  offset: Offset(0, 14),
+                                ),
+                              ],
+                            ),
+                            child: _MapBody(
+                              state: mapState,
+                              emptyMessage: emptyMessage,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 14,
+                          left: 14,
+                          child: _MapTopPill(
+                            label: _labelFor(workshopsCount, mapState),
+                            dark: true,
+                          ),
+                        ),
+                        const Positioned(
+                          top: 14,
+                          right: 14,
+                          child: _MapTopPill(
+                            label: 'Explorar mapa',
+                            icon: Icons.map_outlined,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -124,6 +144,46 @@ class _MapPageState extends State<MapPage> {
         onTap: _handleBottomNavigation,
       ),
     );
+  }
+
+  String _labelFor(int workshopsCount, MapState mapState) {
+    return switch (mapState) {
+      MapLoading() || MapInitial() => 'Cargando talleres',
+      MapError() => 'Sin talleres',
+      MapLoaded() when workshopsCount == 0 => 'Sin talleres',
+      MapLoaded() when workshopsCount == 1 => '1 taller cercano',
+      MapLoaded() => '$workshopsCount talleres cercanos',
+    };
+  }
+}
+
+class _MapBody extends StatelessWidget {
+  const _MapBody({required this.state, required this.emptyMessage});
+
+  final MapState state;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (state) {
+      MapInitial() ||
+      MapLoading() => const Center(child: CircularProgressIndicator()),
+      MapError(:final message) => Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF6B5F57)),
+          ),
+        ),
+      ),
+      MapLoaded(:final workshops, :final currentLocation) => NearbyWorkshopsMap(
+        workshops: workshops,
+        currentLocation: currentLocation,
+        emptyMessage: emptyMessage,
+      ),
+    };
   }
 }
 
