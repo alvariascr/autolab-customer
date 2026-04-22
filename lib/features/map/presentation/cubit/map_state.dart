@@ -1,19 +1,47 @@
+import 'package:equatable/equatable.dart';
+
+import '../../../../core/location/current_location.dart';
 import '../../../workshops/domain/entities/workshop.dart';
 
-abstract class MapState {}
+sealed class MapState extends Equatable {
+  const MapState();
 
-class MapInitial extends MapState {}
-
-class MapLoading extends MapState {}
-
-class MapLoaded extends MapState {
-  final List<Workshop> workshops;
-
-  MapLoaded(this.workshops);
+  @override
+  List<Object?> get props => const [];
 }
 
-class MapError extends MapState {
+final class MapInitial extends MapState {
+  const MapInitial();
+}
+
+final class MapLoading extends MapState {
+  const MapLoading();
+}
+
+final class MapLoaded extends MapState {
+  const MapLoaded(
+    this.workshops, {
+    this.currentLocation,
+    this.isUsingFallbackLocation = false,
+  });
+
+  final List<Workshop> workshops;
+  final CurrentLocation? currentLocation;
+  final bool isUsingFallbackLocation;
+
+  @override
+  List<Object?> get props => [
+    workshops,
+    currentLocation,
+    isUsingFallbackLocation,
+  ];
+}
+
+final class MapError extends MapState {
+  const MapError(this.message);
+
   final String message;
 
-  MapError(this.message);
+  @override
+  List<Object?> get props => [message];
 }
