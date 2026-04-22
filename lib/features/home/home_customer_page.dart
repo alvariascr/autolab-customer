@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/di/app_injection.dart';
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
-import '../workshops/data/datasources/workshop_remote_data_source_impl.dart';
-import '../workshops/data/repositories/workshop_repository_impl.dart';
 import '../workshops/domain/entities/workshop.dart';
+import '../workshops/domain/repositories/workshop_repository.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
-import '../workshops/domain/services/workshop_search_location_resolver.dart';
-import '../workshops/presentation/widgets/workshops_carousel.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
-import 'location/location_feedback_mapper.dart';
-import 'location/location_feedback_text.dart';
+import 'widgets/home_customer_content.dart';
+import 'widgets/location_option_tile.dart';
 
 class HomeCustomerPage extends StatefulWidget {
   const HomeCustomerPage({super.key});
@@ -26,8 +23,6 @@ class HomeCustomerPage extends StatefulWidget {
 class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
   static const _workshopProximityFilter = WorkshopProximityFilter();
-  static const _workshopSearchLocationResolver =
-      WorkshopSearchLocationResolver();
   static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
 
   late Future<List<Workshop>> _workshopsFuture;
@@ -67,10 +62,11 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   Future<List<Workshop>> _loadWorkshops() async {
     try {
-      final client = Supabase.instance.client;
-      final dataSource = WorkshopRemoteDataSourceImpl(client);
-      final repository = WorkshopRepositoryImpl(remoteDataSource: dataSource);
-      return await repository.getWorkshops();
+      if (!sl.isRegistered<WorkshopRepository>()) {
+        return const <Workshop>[];
+      }
+
+      return await sl<WorkshopRepository>().getWorkshops();
     } catch (_) {
       return const <Workshop>[];
     }
@@ -157,7 +153,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                     ),
                   ),
                   const SizedBox(height: 18),
-                  _LocationOptionTile(
+                  LocationOptionTile(
                     icon: Icons.my_location_outlined,
                     title: _useCurrentLocationLabelFor(actionStatus),
                     subtitle: _useCurrentLocationSubtitleFor(actionStatus),
@@ -167,20 +163,20 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                     },
                   ),
                   const SizedBox(height: 10),
-                  const _LocationOptionTile(
+                  const LocationOptionTile(
                     icon: Icons.search_rounded,
                     title: 'Escribir direccion',
                     subtitle: 'Lo conectamos en el siguiente paso del home.',
                   ),
                   const SizedBox(height: 10),
-                  const _LocationOptionTile(
+                  const LocationOptionTile(
                     icon: Icons.home_outlined,
                     title: 'Casa',
                     subtitle:
                         'Proximamente podras guardar tus direcciones favoritas.',
                   ),
                   const SizedBox(height: 10),
-                  const _LocationOptionTile(
+                  const LocationOptionTile(
                     icon: Icons.work_outline_rounded,
                     title: 'Trabajo',
                     subtitle:
@@ -219,7 +215,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     };
   }
 
-  void _handleBottomNavigation(int index, List<Workshop> workshops) {
+  void _handleBottomNavigation(int index) {
     if (index == 2) {
       setState(() {
         _currentIndex = 2;
@@ -233,7 +229,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       _showSearchBar = false;
     });
 
-    NavigationHandler.handle(context, index, workshops: workshops);
+    NavigationHandler.handle(context, index);
   }
 
   @override
@@ -249,419 +245,22 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       body: FutureBuilder<List<Workshop>>(
         future: _workshopsFuture,
         builder: (context, snapshot) {
-          final workshops = snapshot.data ?? const <Workshop>[];
-
-          return Stack(
-            children: [
-              SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1180),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          BlocBuilder<LocationCubit, LocationState>(
-                            builder: (context, state) {
-                              return _DeliveryLocationCard(
-                                state: state,
-                                onTap: () => _showLocationOptions(state),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          BlocBuilder<LocationCubit, LocationState>(
-                            builder: (context, state) {
-                              return _WorkshopsSection(
-                                workshops: workshops,
-                                locationState: state,
-                                proximityFilter: _workshopProximityFilter,
-                                emptyStateResolver: _workshopEmptyStateResolver,
-                                isLoading:
-                                    snapshot.connectionState ==
-                                    ConnectionState.waiting,
-                                hasError: snapshot.hasError,
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                top: _showSearchBar ? 16 : -100,
-                left: 16,
-                right: 16,
-                child: Material(
-                  elevation: 10,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: _showSearchBar,
-                      decoration: const InputDecoration(
-                        icon: Icon(Icons.search),
-                        hintText: 'Buscar talleres...',
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          return HomeCustomerContent(
+            workshops: snapshot.data ?? const <Workshop>[],
+            isWorkshopsLoading:
+                snapshot.connectionState == ConnectionState.waiting,
+            hasWorkshopsError: snapshot.hasError,
+            showSearchBar: _showSearchBar,
+            searchController: _searchController,
+            proximityFilter: _workshopProximityFilter,
+            emptyStateResolver: _workshopEmptyStateResolver,
+            onLocationTap: _showLocationOptions,
           );
         },
       ),
-      bottomNavigationBar: FutureBuilder<List<Workshop>>(
-        future: _workshopsFuture,
-        builder: (context, snapshot) {
-          final workshops = snapshot.data ?? const <Workshop>[];
-
-          return CustomBottomNavbar(
-            currentIndex: _currentIndex,
-            onTap: (index) => _handleBottomNavigation(index, workshops),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _DeliveryLocationCard extends StatelessWidget {
-  const _DeliveryLocationCard({required this.state, required this.onTap});
-
-  final LocationState state;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = state.status == LocationFlowStatus.loading;
-    final isRequestingPermission =
-        state.status == LocationFlowStatus.requestingPermission;
-    final isBusy = isLoading || isRequestingPermission;
-    final showLoadingCopy = isLoading && state.lastSettledStatus == null;
-    final feedback = mapLocationFeedback(state);
-    final status = state.effectiveStatus;
-    final title = _headlineFor(status, feedback, showLoadingCopy);
-    final subtitle = _subtitleFor(status, feedback, showLoadingCopy);
-    final label = _labelFor(status);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: isBusy ? null : onTap,
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF3FA572),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              title,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF181411),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                                height: 1.1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 1),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF181411),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      if (subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF6B5F57),
-                            fontSize: 10,
-                            height: 1.25,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: isBusy
-                ? const Padding(
-                    padding: EdgeInsets.only(top: 8, right: 2),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _labelFor(LocationFlowStatus status) {
-    return switch (status) {
-      LocationFlowStatus.success => 'Entregar ahora',
-      LocationFlowStatus.requestingPermission => 'Confirmando acceso',
-      LocationFlowStatus.loading ||
-      LocationFlowStatus.initial => 'Buscando cerca de ti',
-      LocationFlowStatus.permissionRequired => 'Entregar ahora',
-      LocationFlowStatus.deniedForever => 'Permiso de ubicacion',
-      LocationFlowStatus.serviceDisabled => 'Ubicacion desactivada',
-      LocationFlowStatus.restricted => 'Ubicacion restringida',
-      LocationFlowStatus.error => 'No pudimos confirmar tu zona',
-    };
-  }
-
-  String _headlineFor(
-    LocationFlowStatus status,
-    LocationFeedbackText feedback,
-    bool isLoading,
-  ) {
-    if (isLoading) {
-      return 'Buscando tu ubicacion actual';
-    }
-
-    return switch (status) {
-      LocationFlowStatus.success => feedback.title.replaceFirst(
-        'Entregando en ',
-        '',
-      ),
-      LocationFlowStatus.permissionRequired => 'Elegir direccion',
-      LocationFlowStatus.deniedForever => 'Abrir configuracion',
-      LocationFlowStatus.serviceDisabled => 'Encender GPS',
-      LocationFlowStatus.restricted => 'Ubicacion no disponible',
-      LocationFlowStatus.requestingPermission =>
-        'Confirma el acceso a tu ubicacion',
-      LocationFlowStatus.error => 'No pudimos confirmar tu direccion',
-      LocationFlowStatus.initial ||
-      LocationFlowStatus.loading => 'Buscando tu ubicacion actual',
-    };
-  }
-
-  String _subtitleFor(
-    LocationFlowStatus status,
-    LocationFeedbackText feedback,
-    bool isLoading,
-  ) {
-    if (isLoading) {
-      return 'Estamos consultando la ubicacion del dispositivo para mostrarte talleres cercanos.';
-    }
-
-    return switch (status) {
-      LocationFlowStatus.success => '',
-      LocationFlowStatus.permissionRequired =>
-        'Usa tu ubicacion actual para descubrir talleres y servicios cercanos.',
-      LocationFlowStatus.deniedForever =>
-        'Necesitamos que habilites el permiso desde la configuracion del telefono.',
-      LocationFlowStatus.serviceDisabled =>
-        'Activa la ubicacion del dispositivo para ver resultados cercanos.',
-      LocationFlowStatus.restricted => feedback.subtitle,
-      LocationFlowStatus.requestingPermission =>
-        'Estamos esperando tu respuesta para poder ubicar tu zona de entrega.',
-      LocationFlowStatus.error => feedback.subtitle,
-      LocationFlowStatus.initial || LocationFlowStatus.loading =>
-        'Estamos consultando la ubicacion del dispositivo para mostrarte talleres cercanos.',
-    };
-  }
-}
-
-class _WorkshopsSection extends StatelessWidget {
-  const _WorkshopsSection({
-    required this.workshops,
-    required this.locationState,
-    required this.proximityFilter,
-    required this.emptyStateResolver,
-    required this.isLoading,
-    required this.hasError,
-  });
-
-  final List<Workshop> workshops;
-  final LocationState locationState;
-  final WorkshopProximityFilter proximityFilter;
-  final WorkshopEmptyStateResolver emptyStateResolver;
-  final bool isLoading;
-  final bool hasError;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (hasError) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Text(
-          'No fue posible cargar los talleres en este momento.',
-          style: TextStyle(color: Color(0xFF6B5F57)),
-        ),
-      );
-    }
-
-    final searchLocation = _HomeCustomerPageState
-        ._workshopSearchLocationResolver
-        .resolve(locationState.location);
-    final isUsingFallbackLocation = _HomeCustomerPageState
-        ._workshopSearchLocationResolver
-        .isUsingFallback(locationState.location);
-    final nearbyWorkshops = proximityFilter.filterNearby(
-      workshops: workshops,
-      currentLocation: searchLocation,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Talleres cercanos',
-          style: TextStyle(
-            color: Color(0xFF181411),
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Explora opciones cercanas sin salir del home.',
-          style: TextStyle(
-            color: Color(0xFF6B5F57),
-            fontSize: 14,
-            height: 1.45,
-          ),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          height: 320,
-          child: WorkshopsCarousel(
-            workshops: nearbyWorkshops,
-            currentLocation: searchLocation,
-            emptyMessage: emptyStateResolver.resolve(
-              locationState,
-              isUsingFallbackLocation: isUsingFallbackLocation,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LocationOptionTile extends StatelessWidget {
-  const _LocationOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-
-    return Material(
-      color: const Color(0xFFF8F4EF),
-      borderRadius: BorderRadius.circular(20),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: enabled ? const Color(0xFF181411) : const Color(0xFF9B8E84),
-            size: 19,
-          ),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: enabled ? const Color(0xFF181411) : const Color(0xFF7D6F66),
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
-            fontSize: 12,
-            height: 1.35,
-          ),
-        ),
-        trailing: Icon(
-          enabled ? Icons.arrow_forward_ios_rounded : Icons.schedule_rounded,
-          size: enabled ? 14 : 16,
-          color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
-        ),
+      bottomNavigationBar: CustomBottomNavbar(
+        currentIndex: _currentIndex,
+        onTap: _handleBottomNavigation,
       ),
     );
   }
