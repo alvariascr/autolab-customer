@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
     return !_isShowingRegister && _showLoginError;
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -60,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  void _login(BuildContext context) {
     final ok = _formKeyLogin.currentState?.validate() ?? false;
     if (!ok) return;
 
@@ -77,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _goToRegister() {
+  void _goToRegister(BuildContext context) {
     context.read<LoginFormCubit>().reset();
 
     setState(() {
@@ -88,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
     cardKey.currentState?.toggleCard();
   }
 
-  void _goToLoginFromRegister() {
+  void _goToLoginFromRegister(BuildContext context) {
     context.read<RegisterFormCubit>().reset();
     registerCardKey.currentState?.cleanRegistry();
 
@@ -131,7 +131,7 @@ class _LoginPageState extends State<LoginPage> {
                       _isShowingRegister || !_shouldShowInlineLoginError;
 
                   if (shouldShowSnackBar) {
-                    _showErrorSnackBar(resolvedMessage);
+                    _showErrorSnackBar(context, resolvedMessage);
                   }
                 }
 
@@ -148,6 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                 if (state.status == RegisterFormStatus.error &&
                     state.message != null) {
                   _showErrorSnackBar(
+                    context,
                     AuthUiErrorResolver.resolve(
                       l10n: l10n,
                       code: state.code,
@@ -226,6 +227,7 @@ class _LoginPageState extends State<LoginPage> {
                       key: cardKey,
                       flipOnTouch: false,
                       front: _buildLogin(
+                        context,
                         cardWidth,
                         cardHeight,
                         logoSize,
@@ -239,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                         cardHeight: cardHeight,
                         logoSize: logoSize,
                         isLoading: isRegisterLoading,
-                        onBackToLogin: _goToLoginFromRegister,
+                        onBackToLogin: () => _goToLoginFromRegister(context),
                         onRegisterRequested:
                             ({
                               required String name,
@@ -272,6 +274,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLogin(
+    BuildContext context,
     double cardWidth,
     double cardHeight,
     double logoSize,
@@ -344,7 +347,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: 220,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: isLoading ? null : _login,
+                        onPressed: isLoading ? null : () => _login(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           elevation: 5,
@@ -443,7 +446,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(color: Colors.grey[700]),
                         ),
                         TextButton(
-                          onPressed: _goToRegister,
+                          onPressed: () => _goToRegister(context),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             minimumSize: Size.zero,

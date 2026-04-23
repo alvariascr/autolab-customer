@@ -394,6 +394,24 @@ abstract class AppLocalizations {
   /// **'No se pudo recuperar la sesión guardada en este dispositivo.'**
   String get authErrorLocalSessionRecoveryFailed;
 
+  /// No description provided for @authErrorNetworkUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa tu conexión a internet e intenta nuevamente.'**
+  String get authErrorNetworkUnavailable;
+
+  /// No description provided for @authErrorRequestTimeout.
+  ///
+  /// In es, this message translates to:
+  /// **'La solicitud tardó demasiado. Verifica tu conexión e inténtalo nuevamente.'**
+  String get authErrorRequestTimeout;
+
+  /// No description provided for @authErrorServer.
+  ///
+  /// In es, this message translates to:
+  /// **'El servicio no está disponible en este momento. Intenta nuevamente más tarde.'**
+  String get authErrorServer;
+
   /// No description provided for @authErrorFallback.
   ///
   /// In es, this message translates to:

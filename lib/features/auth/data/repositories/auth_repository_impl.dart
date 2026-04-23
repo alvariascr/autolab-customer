@@ -223,6 +223,11 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     }
 
+    final networkFailure = _mapNetworkAuthException(error, stackTrace);
+    if (networkFailure != null) {
+      return Left(networkFailure);
+    }
+
     return Left(globalErrorHandler.handle(error, stackTrace));
   }
 
@@ -290,7 +295,58 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     }
 
+    final networkFailure = _mapNetworkAuthException(error, stackTrace);
+    if (networkFailure != null) {
+      return Left(networkFailure);
+    }
+
     return Left(globalErrorHandler.handle(error, stackTrace));
+  }
+
+  Failure? _mapNetworkAuthException(
+    AuthException error,
+    StackTrace stackTrace,
+  ) {
+    final message = error.message.toLowerCase();
+    final runtimeTypeName = error.runtimeType.toString().toLowerCase();
+
+    if (_isTimeoutLikeAuthFailure(message, runtimeTypeName)) {
+      return NetworkFailure.fromErrorItem(
+        ErrorCatalog.requestTimeout,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    if (_isNetworkLikeAuthFailure(message, runtimeTypeName)) {
+      return NetworkFailure.fromErrorItem(
+        ErrorCatalog.networkUnavailable,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return null;
+  }
+
+  bool _isTimeoutLikeAuthFailure(String message, String runtimeTypeName) {
+    return message.contains('timeout') ||
+        message.contains('timed out') ||
+        runtimeTypeName.contains('timeout');
+  }
+
+  bool _isNetworkLikeAuthFailure(String message, String runtimeTypeName) {
+    return runtimeTypeName.contains('retryablefetch') ||
+        message.contains('failed host lookup') ||
+        message.contains('network request failed') ||
+        message.contains('network error') ||
+        message.contains('connection error') ||
+        message.contains('clientexception') ||
+        message.contains('socketexception') ||
+        message.contains('connection closed') ||
+        message.contains('connection refused') ||
+        message.contains('unable to resolve host') ||
+        message.contains('temporarily unavailable');
   }
 
   String _normalizeEmail(String email) {

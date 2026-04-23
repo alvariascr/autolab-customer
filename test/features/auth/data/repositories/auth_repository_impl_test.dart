@@ -313,6 +313,56 @@ void main() {
         ).called(1);
       });
 
+      test(
+        'retorna Left(NetworkFailure) cuando Supabase devuelve un error de red',
+        () async {
+          const authException = AuthException('Failed host lookup');
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
+
+          final result = await repository.login('test@test.com', '123456');
+
+          expect(result.isLeft(), true);
+          result.fold((failure) {
+            expect(failure, isA<NetworkFailure>());
+            expect(failure.code, ErrorCatalog.networkUnavailable.code);
+            expect(failure.uiKey, ErrorCatalog.networkUnavailable.uiKey);
+          }, (_) => fail('Debería ser Left'));
+
+          verifyNever(() => mockGlobalErrorHandler.handle(authException, any()));
+        },
+      );
+
+      test(
+        'retorna Left(TimeoutFailure-like) cuando Supabase devuelve timeout en auth',
+        () async {
+          const authException = AuthException('Request timed out');
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
+
+          final result = await repository.login('test@test.com', '123456');
+
+          expect(result.isLeft(), true);
+          result.fold((failure) {
+            expect(failure, isA<NetworkFailure>());
+            expect(failure.code, ErrorCatalog.requestTimeout.code);
+            expect(failure.uiKey, ErrorCatalog.requestTimeout.uiKey);
+          }, (_) => fail('Debería ser Left'));
+
+          verifyNever(() => mockGlobalErrorHandler.handle(authException, any()));
+        },
+      );
+
       test('uses GlobalErrorHandler for unexpected errors', () async {
         final exception = Exception('random error');
         final mappedFailure = UnknownFailure(

@@ -1,3 +1,5 @@
+import 'package:autolab_core/autolab_core.dart';
+
 import '../../../l10n/app_localizations.dart';
 import '../domain/errors/auth_error_catalog.dart';
 
@@ -57,6 +59,12 @@ final class AuthUiErrorResolver {
         final value
             when value == AuthErrorCatalog.localSessionRecoveryFailed.uiKey =>
           l10n.authErrorLocalSessionRecoveryFailed,
+        final value when value == ErrorCatalog.networkUnavailable.uiKey =>
+          l10n.authErrorNetworkUnavailable,
+        final value when value == ErrorCatalog.requestTimeout.uiKey =>
+          l10n.authErrorRequestTimeout,
+        final value when value == ErrorCatalog.serverError.uiKey =>
+          l10n.authErrorServer,
         _ => fallbackMessage ?? l10n.authErrorFallback,
       };
     }
@@ -79,6 +87,12 @@ final class AuthUiErrorResolver {
         l10n.authErrorAccountAlreadyExists,
       final value when value == AuthErrorCatalog.authRateLimit.code =>
         l10n.authErrorRateLimit(_formatRemaining(l10n, remaining)),
+      final value when value == ErrorCatalog.networkUnavailable.code =>
+        l10n.authErrorNetworkUnavailable,
+      final value when value == ErrorCatalog.requestTimeout.code =>
+        l10n.authErrorRequestTimeout,
+      final value when value == ErrorCatalog.serverError.code =>
+        l10n.authErrorServer,
       _ => fallbackMessage ?? l10n.authErrorFallback,
     };
   }

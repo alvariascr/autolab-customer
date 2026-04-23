@@ -177,6 +177,18 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo recuperar la sesión guardada en este dispositivo.';
 
   @override
+  String get authErrorNetworkUnavailable =>
+      'Revisa tu conexión a internet e intenta nuevamente.';
+
+  @override
+  String get authErrorRequestTimeout =>
+      'La solicitud tardó demasiado. Verifica tu conexión e inténtalo nuevamente.';
+
+  @override
+  String get authErrorServer =>
+      'El servicio no está disponible en este momento. Intenta nuevamente más tarde.';
+
+  @override
   String get authErrorFallback =>
       'No fue posible completar la operación. Intenta nuevamente.';
 

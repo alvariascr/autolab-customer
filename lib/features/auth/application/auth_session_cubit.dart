@@ -110,4 +110,18 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
       },
     );
   }
+
+  void clearFeedback() {
+    if (state.message == null && state.code == null && state.uiKey == null) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        clearMessage: true,
+        clearCode: true,
+        clearUiKey: true,
+      ),
+    );
+  }
 }
