@@ -5,6 +5,8 @@ import 'package:autolab_customer/features/auth/data/datasources/session_local_da
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/models/login_attempt_state.dart';
 import 'package:autolab_customer/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
 import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
 import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
@@ -51,6 +53,8 @@ void main() {
     late MockUserRoleDataSource mockUserRoleDataSource;
     late MockLoginAttemptService mockLoginAttemptService;
     late MockSession mockSession;
+    late AuthSessionStorageService sessionStorageService;
+    late AuthSessionRecoveryService sessionRecoveryService;
     late AuthRepositoryImpl repository;
 
     setUp(() {
@@ -132,12 +136,23 @@ void main() {
       when(() => mockSession.accessToken).thenReturn('access-token-123');
       when(() => mockSession.refreshToken).thenReturn('refresh-token-123');
 
+      sessionStorageService = AuthSessionStorageService(
+        mockSessionLocalDataSource,
+      );
+      sessionRecoveryService = AuthSessionRecoveryService(
+        client: mockSupabaseClient,
+        sessionStorageService: sessionStorageService,
+        userRoleDataSource: mockUserRoleDataSource,
+        errorHandler: mockGlobalErrorHandler,
+      );
+
       repository = AuthRepositoryImpl(
         mockSupabaseClient,
         mockGlobalErrorHandler,
-        mockSessionLocalDataSource,
         mockUserRoleDataSource,
         mockLoginAttemptService,
+        sessionStorageService,
+        sessionRecoveryService,
       );
     });
 
