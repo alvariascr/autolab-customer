@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/services/workshop_distance_calculator.dart';
 
@@ -19,7 +20,7 @@ class WorkshopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final distanceLabel = _distanceLabel;
+    final distanceLabel = _distanceLabel(context);
     final coverHeight = compact ? 130.0 : 112.0;
 
     return Container(
@@ -84,7 +85,7 @@ class WorkshopCard extends StatelessWidget {
     );
   }
 
-  String? get _distanceLabel {
+  String? _distanceLabel(BuildContext context) {
     final location = referenceLocation;
     if (location == null || !location.hasValidCoordinates) {
       return null;
@@ -95,7 +96,9 @@ class WorkshopCard extends StatelessWidget {
       workshop: workshop,
     );
 
-    return 'A ${WorkshopDistanceCalculator.formatKm(distance)}';
+    return AppLocalizations.of(context)!.workshopCardDistancePrefix(
+      WorkshopDistanceCalculator.formatKm(distance),
+    );
   }
 }
 
@@ -112,6 +115,8 @@ class _WorkshopCardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -147,8 +152,11 @@ class _WorkshopCardBody extends StatelessWidget {
                     ),
                   _InfoChip(
                     icon: Icons.local_shipping_outlined,
-                    label:
-                        'Cobertura ${WorkshopDistanceCalculator.formatKm(workshop.deliveryRadiusKm)}',
+                    label: l10n.workshopCardCoveragePrefix(
+                      WorkshopDistanceCalculator.formatKm(
+                        workshop.deliveryRadiusKm,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -186,7 +194,7 @@ class _WorkshopCardBody extends StatelessWidget {
                 Text(
                   workshop.description.isNotEmpty
                       ? workshop.description
-                      : 'Sin descripción disponible',
+                      : l10n.workshopCardDescriptionFallback,
                   style: AppTextStyles.small,
                 )
               else
@@ -194,7 +202,7 @@ class _WorkshopCardBody extends StatelessWidget {
                   child: Text(
                     workshop.description.isNotEmpty
                         ? workshop.description
-                        : 'Sin descripción disponible',
+                        : l10n.workshopCardDescriptionFallback,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.small,

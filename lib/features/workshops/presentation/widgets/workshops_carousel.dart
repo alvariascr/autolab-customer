@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../domain/entities/workshop.dart';
@@ -13,7 +13,7 @@ class WorkshopsCarousel extends StatelessWidget {
   const WorkshopsCarousel({
     super.key,
     required this.workshops,
-    this.emptyMessage = 'No hay talleres disponibles',
+    required this.emptyMessage,
     this.currentLocation,
   });
 

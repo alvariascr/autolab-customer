@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../auth/bloc/auth_bloc.dart';
-import '../../../auth/bloc/auth_event.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 
@@ -26,15 +26,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4EF),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F4EF),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: const Text(
-          'Perfil',
-          style: TextStyle(
+        title: Text(
+          l10n.profileTitle,
+          style: const TextStyle(
             color: Color(0xFF181411),
             fontWeight: FontWeight.w700,
           ),
@@ -60,10 +62,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 28,
                       backgroundColor: Color(0xFF181411),
                       child: Icon(
@@ -74,17 +76,17 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Tu cuenta',
-                      style: TextStyle(
+                      l10n.profileAccountTitle,
+                      style: const TextStyle(
                         color: Color(0xFF181411),
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      'Administra tu sesión y revisa la información principal de tu perfil desde este apartado.',
-                      style: TextStyle(
+                      l10n.profileAccountSubtitle,
+                      style: const TextStyle(
                         color: Color(0xFF6B5F57),
                         fontSize: 14,
                         height: 1.45,
@@ -105,18 +107,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Sesión',
-                      style: TextStyle(
+                    Text(
+                      l10n.profileSessionTitle,
+                      style: const TextStyle(
                         color: Color(0xFF181411),
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Cierra tu sesión cuando quieras desde aquí.',
-                      style: TextStyle(
+                    Text(
+                      l10n.profileSessionSubtitle,
+                      style: const TextStyle(
                         color: Color(0xFF6B5F57),
                         fontSize: 13,
                         height: 1.45,
@@ -135,10 +137,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                         onPressed: () {
-                          context.read<AuthBloc>().add(const LogoutRequested());
+                          context.read<AuthSessionCubit>().logout();
                         },
                         icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Cerrar sesión'),
+                        label: Text(l10n.profileLogout),
                       ),
                     ),
                   ],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../auth/bloc/auth_bloc.dart';
-import '../../auth/bloc/auth_event.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../auth/application/auth_session_cubit.dart';
 
 class HomeScaffold extends StatelessWidget {
   const HomeScaffold({
@@ -11,6 +11,9 @@ class HomeScaffold extends StatelessWidget {
     required this.subtitle,
     required this.heroLabel,
     required this.heroValue,
+    required this.summaryTitle,
+    required this.quickActionsTitle,
+    required this.currentStatusTitle,
     required this.highlights,
     required this.quickActions,
     required this.statusCards,
@@ -20,12 +23,16 @@ class HomeScaffold extends StatelessWidget {
   final String subtitle;
   final String heroLabel;
   final String heroValue;
+  final String summaryTitle;
+  final String quickActionsTitle;
+  final String currentStatusTitle;
   final List<HomeInfoItem> highlights;
   final List<HomeInfoItem> quickActions;
   final List<HomeStatusItem> statusCards;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -57,14 +64,14 @@ class HomeScaffold extends StatelessWidget {
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
               onPressed: () {
-                context.read<AuthBloc>().add(const LogoutRequested());
+                context.read<AuthSessionCubit>().logout();
               },
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF181411),
                 foregroundColor: Colors.white,
               ),
               icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Cerrar sesión'),
+              label: Text(l10n.adminHomeLogout),
             ),
           ),
         ],
@@ -91,14 +98,14 @@ class HomeScaffold extends StatelessWidget {
                                 Expanded(
                                   flex: 2,
                                   child: _InfoSection(
-                                    title: 'Resumen',
+                                    title: summaryTitle,
                                     items: highlights,
                                   ),
                                 ),
                                 const SizedBox(width: 20),
                                 Expanded(
                                   child: _InfoSection(
-                                    title: 'Accesos rápidos',
+                                    title: quickActionsTitle,
                                     items: quickActions,
                                   ),
                                 ),
@@ -107,19 +114,19 @@ class HomeScaffold extends StatelessWidget {
                           : Column(
                               children: [
                                 _InfoSection(
-                                  title: 'Resumen',
+                                  title: summaryTitle,
                                   items: highlights,
                                 ),
                                 const SizedBox(height: 20),
                                 _InfoSection(
-                                  title: 'Accesos rápidos',
+                                  title: quickActionsTitle,
                                   items: quickActions,
                                 ),
                               ],
                             ),
                       const SizedBox(height: 24),
                       Text(
-                        'Estado actual',
+                        currentStatusTitle,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF181411),

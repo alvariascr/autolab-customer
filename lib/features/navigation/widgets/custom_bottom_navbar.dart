@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 final class _NavbarColors {
   const _NavbarColors._();
 
@@ -22,6 +24,8 @@ class CustomBottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       margin: const EdgeInsets.all(12),
       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -34,31 +38,31 @@ class CustomBottomNavbar extends StatelessWidget {
         children: [
           _NavItem(
             icon: Icons.home_rounded,
-            label: "Inicio",
+            label: l10n.navigationHome,
             isSelected: currentIndex == 0,
             onTap: () => onTap(0),
           ),
           _NavItem(
             icon: Icons.map_outlined,
-            label: "Mapa",
+            label: l10n.navigationMap,
             isSelected: currentIndex == 1,
             onTap: () => onTap(1),
           ),
           _NavItem(
             icon: Icons.search_rounded,
-            label: "Buscar",
+            label: l10n.navigationSearch,
             isSelected: currentIndex == 2,
             onTap: () => onTap(2),
           ),
           _NavItem(
             icon: Icons.shopping_cart_outlined,
-            label: "Carrito",
+            label: l10n.navigationCart,
             isSelected: currentIndex == 3,
             onTap: () => onTap(3),
           ),
           _NavItem(
             icon: Icons.person_outline_rounded,
-            label: "Perfil",
+            label: l10n.navigationProfile,
             isSelected: currentIndex == 4,
             onTap: () => onTap(4),
           ),

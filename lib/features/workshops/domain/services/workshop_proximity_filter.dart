@@ -15,13 +15,15 @@ class WorkshopProximityFilter {
 
     final nearbyWithDistance = workshops
         .where((w) => w.hasValidCoordinates && w.hasValidDeliveryRadius)
-        .map((w) => (
-    workshop: w,
-    distance: WorkshopDistanceCalculator.distanceInKm(
-      currentLocation: currentLocation,
-      workshop: w,
-    ),
-    ))
+        .map(
+          (w) => (
+            workshop: w,
+            distance: WorkshopDistanceCalculator.distanceInKm(
+              currentLocation: currentLocation,
+              workshop: w,
+            ),
+          ),
+        )
         .where((item) => item.distance <= item.workshop.deliveryRadiusKm)
         .toList();
 

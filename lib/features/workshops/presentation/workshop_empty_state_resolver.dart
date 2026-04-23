@@ -1,27 +1,28 @@
 import '../../../core/location/location_state.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../home/location/location_ui_presenter.dart';
 
 class WorkshopEmptyStateResolver {
   const WorkshopEmptyStateResolver();
 
   String resolve(
     LocationState locationState, {
+    required AppLocalizations l10n,
     bool isUsingFallbackLocation = false,
   }) {
     return switch (locationState.status) {
       LocationFlowStatus.initial ||
       LocationFlowStatus.loading ||
       LocationFlowStatus.requestingPermission =>
-        'Buscando talleres cercanos...',
+        l10n.workshopEmptySearchingNearby,
       LocationFlowStatus.permissionRequired ||
       LocationFlowStatus.deniedForever ||
       LocationFlowStatus.serviceDisabled ||
-      LocationFlowStatus.restricted =>
-        'Activa tu ubicación para ver talleres cercanos.',
+      LocationFlowStatus.restricted => l10n.workshopEmptyEnableLocation,
       LocationFlowStatus.error =>
-        locationState.message ??
-            'No pudimos obtener tu ubicación para buscar talleres cercanos.',
-      LocationFlowStatus.success =>
-        'No encontramos talleres cercanos a tu ubicación actual.',
+        LocationUiPresenter.resolveErrorMessage(locationState, l10n) ??
+            l10n.workshopEmptyLocationErrorFallback,
+      LocationFlowStatus.success => l10n.workshopEmptyNoNearby,
     };
   }
 }

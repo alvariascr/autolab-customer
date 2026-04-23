@@ -49,33 +49,33 @@ class MapCubit extends Cubit<MapState> {
       );
     } on TimeoutException catch (error, stackTrace) {
       _emitFailure(
-        CustomerErrorCatalog.workshopNetworkError.message,
+        CustomerErrorCatalog.workshopNetworkError.code,
         error,
         stackTrace,
       );
     } on SocketException catch (error, stackTrace) {
       _emitFailure(
-        CustomerErrorCatalog.workshopNetworkError.message,
+        CustomerErrorCatalog.workshopNetworkError.code,
         error,
         stackTrace,
       );
     } on PostgrestException catch (error, stackTrace) {
       _emitFailure(
-        CustomerErrorCatalog.workshopLoadFailed.message,
+        CustomerErrorCatalog.workshopLoadFailed.code,
         error,
         stackTrace,
       );
     } catch (error, stackTrace) {
       _emitFailure(
-        CustomerErrorCatalog.workshopLoadFailed.message,
+        CustomerErrorCatalog.workshopLoadFailed.code,
         error,
         stackTrace,
       );
     }
   }
 
-  void _emitFailure(String message, Object error, StackTrace stackTrace) {
+  void _emitFailure(String code, Object error, StackTrace stackTrace) {
     _errorHandler?.handle(error, stackTrace);
-    emit(MapError(message));
+    emit(MapError(code));
   }
 }

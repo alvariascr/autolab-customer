@@ -38,10 +38,10 @@ final class MapLoaded extends MapState {
 }
 
 final class MapError extends MapState {
-  const MapError(this.message);
+  const MapError(this.code);
 
-  final String message;
+  final String code;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [code];
 }
