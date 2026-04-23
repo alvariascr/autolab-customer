@@ -27,11 +27,7 @@ Future<void> init({required AppConfig config}) async {
 }
 
 Future<void> _registerCore(AppConfig config) async {
-  await CoreDI.init(
-    config: config,
-    resetBeforeInit: true,
-    registerFlutterErrorHandlers: true,
-  );
+  await CoreDI.init(config: config, resetBeforeInit: true);
 }
 
 Future<void> _registerExternalDependencies() async {

@@ -3,7 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../bloc/auth_bloc.dart';
+import '../application/auth_session_cubit.dart';
 import '../data/datasources/session_local_data_source.dart';
 import '../data/datasources/session_local_data_source_impl.dart';
 import '../data/datasources/user_role_data_source.dart';
@@ -35,5 +35,7 @@ void registerAuthDependencies(GetIt sl) {
     ),
   );
 
-  sl.registerFactory<AuthBloc>(() => AuthBloc(sl<AuthRepository>()));
+  sl.registerLazySingleton<AuthSessionCubit>(
+    () => AuthSessionCubit(sl<AuthRepository>()),
+  );
 }

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:autolab_core/autolab_core.dart' hide SessionLocalDataSource;
+import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/features/auth/data/datasources/session_local_data_source.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/models/login_attempt_state.dart';
