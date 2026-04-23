@@ -2,6 +2,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../domain/entities/app_user.dart';
+import '../domain/errors/auth_error_catalog.dart';
 import '../repository/auth_repository.dart';
 import 'auth_session_state.dart';
 
@@ -11,7 +12,14 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
   final AuthRepository _repository;
 
   Future<void> restoreSession() async {
-    emit(state.copyWith(status: AuthSessionStatus.loading, clearMessage: true));
+    emit(
+      state.copyWith(
+        status: AuthSessionStatus.loading,
+        clearMessage: true,
+        clearCode: true,
+        clearUiKey: true,
+      ),
+    );
 
     try {
       final user = await _repository.getCurrentUser();
@@ -21,18 +29,28 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
             status: AuthSessionStatus.unauthenticated,
             clearUser: true,
             clearMessage: true,
+            clearCode: true,
+            clearUiKey: true,
           ),
         );
         return;
       }
 
       setAuthenticated(user);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      final failure = UnknownFailure.fromErrorItem(
+        AuthErrorCatalog.sessionRestoreFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+
       emit(
         state.copyWith(
           status: AuthSessionStatus.unauthenticated,
           clearUser: true,
-          clearMessage: true,
+          message: failure.message,
+          code: failure.code,
+          uiKey: failure.uiKey,
         ),
       );
     }
@@ -44,6 +62,8 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
         status: AuthSessionStatus.authenticated,
         userId: user.id,
         role: user.role,
+        code: null,
+        uiKey: null,
       ),
     );
   }
@@ -51,14 +71,27 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
   Future<void> logout() async {
     final previousState = state;
 
-    emit(state.copyWith(status: AuthSessionStatus.loading, clearMessage: true));
+    emit(
+      state.copyWith(
+        status: AuthSessionStatus.loading,
+        clearMessage: true,
+        clearCode: true,
+        clearUiKey: true,
+      ),
+    );
 
     final result = await _repository.logout();
 
     result.fold(
       (Failure failure) {
         if (previousState.isAuthenticated) {
-          emit(previousState.copyWith(message: failure.message));
+          emit(
+            previousState.copyWith(
+              message: failure.message,
+              code: failure.code,
+              uiKey: failure.uiKey,
+            ),
+          );
           return;
         }
 
@@ -67,6 +100,8 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
             status: AuthSessionStatus.unauthenticated,
             clearUser: true,
             message: failure.message,
+            code: failure.code,
+            uiKey: failure.uiKey,
           ),
         );
       },
