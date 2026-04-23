@@ -4,6 +4,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../errors/customer_error_catalog.dart';
 import 'current_location.dart';
 import 'current_location_data_source.dart';
 import 'location_flow_recovery_service.dart';
@@ -56,6 +57,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearLocation: true,
             clearPlaceName: true,
             clearMessage: true,
+            clearFailureCode: true,
           );
           return;
         }
@@ -64,6 +66,7 @@ class LocationCubit extends Cubit<LocationState> {
           clearLocation: true,
           clearPlaceName: true,
           clearMessage: true,
+          clearFailureCode: true,
         );
         return;
       case LocationPermissionStatus.deniedForever:
@@ -72,12 +75,14 @@ class LocationCubit extends Cubit<LocationState> {
           clearLocation: true,
           clearPlaceName: true,
           clearMessage: true,
+          clearFailureCode: true,
         );
         return;
       case LocationPermissionStatus.restricted:
         _emitStableState(
           status: LocationFlowStatus.restricted,
-          message: 'La ubicación está restringida por el sistema operativo.',
+          message: CustomerErrorCatalog.locationPermissionRestricted.message,
+          failureCode: CustomerErrorCatalog.locationPermissionRestricted.code,
           clearLocation: true,
           clearPlaceName: true,
         );
@@ -88,6 +93,7 @@ class LocationCubit extends Cubit<LocationState> {
           clearLocation: true,
           clearPlaceName: true,
           clearMessage: true,
+          clearFailureCode: true,
         );
         return;
     }
@@ -99,6 +105,7 @@ class LocationCubit extends Cubit<LocationState> {
         _emitStableState(
           status: LocationFlowStatus.error,
           message: failure.message,
+          failureCode: failure.code,
           clearLocation: true,
           clearPlaceName: true,
         );
@@ -112,6 +119,7 @@ class LocationCubit extends Cubit<LocationState> {
             location: location,
             placeName: resolution.placeName,
             clearMessage: true,
+            clearFailureCode: true,
           );
         } catch (error, stackTrace) {
           _errorHandler?.handle(error, stackTrace);
@@ -121,6 +129,7 @@ class LocationCubit extends Cubit<LocationState> {
             location: location,
             clearPlaceName: true,
             clearMessage: true,
+            clearFailureCode: true,
           );
         }
       },
@@ -147,6 +156,7 @@ class LocationCubit extends Cubit<LocationState> {
               clearLocation: true,
               clearPlaceName: true,
               clearMessage: true,
+              clearFailureCode: true,
             );
             return;
           }
@@ -156,6 +166,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearLocation: true,
             clearPlaceName: true,
             clearMessage: true,
+            clearFailureCode: true,
           );
           return;
         case LocationPermissionRequestResult.deniedForever:
@@ -165,12 +176,14 @@ class LocationCubit extends Cubit<LocationState> {
             clearLocation: true,
             clearPlaceName: true,
             clearMessage: true,
+            clearFailureCode: true,
           );
           return;
         case LocationPermissionRequestResult.restricted:
           _emitStableState(
             status: LocationFlowStatus.restricted,
-            message: 'La ubicación está restringida por el sistema operativo.',
+            message: CustomerErrorCatalog.locationPermissionRestricted.message,
+            failureCode: CustomerErrorCatalog.locationPermissionRestricted.code,
             clearLocation: true,
             clearPlaceName: true,
           );
@@ -181,6 +194,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearLocation: true,
             clearPlaceName: true,
             clearMessage: true,
+            clearFailureCode: true,
           );
           return;
       }
@@ -228,10 +242,12 @@ class LocationCubit extends Cubit<LocationState> {
     CurrentLocation? location,
     String? placeName,
     String? message,
+    String? failureCode,
     int? permissionDeniedCount,
     bool clearLocation = false,
     bool clearPlaceName = false,
     bool clearMessage = false,
+    bool clearFailureCode = false,
   }) {
     emit(
       state.copyWith(
@@ -239,11 +255,13 @@ class LocationCubit extends Cubit<LocationState> {
         location: location,
         placeName: placeName,
         message: message,
+        failureCode: failureCode,
         lastSettledStatus: status,
         permissionDeniedCount: permissionDeniedCount,
         clearLocation: clearLocation,
         clearPlaceName: clearPlaceName,
         clearMessage: clearMessage,
+        clearFailureCode: clearFailureCode,
       ),
     );
   }
@@ -253,8 +271,8 @@ class LocationCubit extends Cubit<LocationState> {
 
     _emitStableState(
       status: LocationFlowStatus.error,
-      message:
-          'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+      message: CustomerErrorCatalog.locationActionFailed.message,
+      failureCode: CustomerErrorCatalog.locationActionFailed.code,
       clearLocation: true,
       clearPlaceName: true,
     );

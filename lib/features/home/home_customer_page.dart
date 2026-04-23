@@ -4,12 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/di/app_injection.dart';
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
+import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import 'location/location_ui_presenter.dart';
 import 'widgets/home_customer_content.dart';
 import 'widgets/location_option_tile.dart';
 
@@ -117,7 +119,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 
   Future<void> _showLocationOptions(LocationState state) async {
-    final actionStatus = state.effectiveStatus;
+    final l10n = AppLocalizations.of(context)!;
+    final sheetCopy = LocationUiPresenter.sheet(state, l10n);
 
     await showModalBottomSheet<void>(
       context: context,
@@ -135,18 +138,18 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Selecciona donde entregar',
-                    style: TextStyle(
+                  Text(
+                    sheetCopy.title,
+                    style: const TextStyle(
                       color: Color(0xFF181411),
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Puedes usar tu ubicacion actual o elegir una direccion guardada mas adelante.',
-                    style: TextStyle(
+                  Text(
+                    sheetCopy.subtitle,
+                    style: const TextStyle(
                       color: Color(0xFF6B5F57),
                       fontSize: 13,
                       height: 1.4,
@@ -155,32 +158,30 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                   const SizedBox(height: 18),
                   LocationOptionTile(
                     icon: Icons.my_location_outlined,
-                    title: _useCurrentLocationLabelFor(actionStatus),
-                    subtitle: _useCurrentLocationSubtitleFor(actionStatus),
+                    title: sheetCopy.currentLocationTitle,
+                    subtitle: sheetCopy.currentLocationSubtitle,
                     onTap: () async {
                       Navigator.of(sheetContext).pop();
                       await _handleLocationAction(state);
                     },
                   ),
                   const SizedBox(height: 10),
-                  const LocationOptionTile(
+                  LocationOptionTile(
                     icon: Icons.search_rounded,
-                    title: 'Escribir direccion',
-                    subtitle: 'Lo conectamos en el siguiente paso del home.',
+                    title: sheetCopy.writeAddressTitle,
+                    subtitle: sheetCopy.writeAddressSubtitle,
                   ),
                   const SizedBox(height: 10),
-                  const LocationOptionTile(
+                  LocationOptionTile(
                     icon: Icons.home_outlined,
-                    title: 'Casa',
-                    subtitle:
-                        'Proximamente podras guardar tus direcciones favoritas.',
+                    title: sheetCopy.homeTitle,
+                    subtitle: sheetCopy.savedAddressSubtitle,
                   ),
                   const SizedBox(height: 10),
-                  const LocationOptionTile(
+                  LocationOptionTile(
                     icon: Icons.work_outline_rounded,
-                    title: 'Trabajo',
-                    subtitle:
-                        'Proximamente podras guardar tus direcciones favoritas.',
+                    title: sheetCopy.workTitle,
+                    subtitle: sheetCopy.savedAddressSubtitle,
                   ),
                 ],
               ),
@@ -189,30 +190,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         );
       },
     );
-  }
-
-  String _useCurrentLocationLabelFor(LocationFlowStatus status) {
-    return switch (status) {
-      LocationFlowStatus.success => 'Actualizar ubicacion actual',
-      LocationFlowStatus.deniedForever => 'Abrir configuracion',
-      LocationFlowStatus.serviceDisabled => 'Encender GPS',
-      LocationFlowStatus.requestingPermission => 'Esperando permiso',
-      _ => 'Usar ubicacion actual',
-    };
-  }
-
-  String _useCurrentLocationSubtitleFor(LocationFlowStatus status) {
-    return switch (status) {
-      LocationFlowStatus.success =>
-        'Volver a consultar tu ubicacion para actualizar los resultados.',
-      LocationFlowStatus.deniedForever =>
-        'Habilita el permiso de ubicacion desde la configuracion del telefono.',
-      LocationFlowStatus.serviceDisabled =>
-        'Activa la ubicacion del dispositivo para ver talleres cercanos.',
-      LocationFlowStatus.requestingPermission =>
-        'Estamos esperando tu respuesta para acceder a la ubicacion.',
-      _ => 'Usa el GPS del telefono para ver talleres y servicios cerca de ti.',
-    };
   }
 
   void _handleBottomNavigation(int index) {
@@ -236,12 +213,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4EF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F4EF),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        toolbarHeight: 46,
-      ),
       body: FutureBuilder<List<Workshop>>(
         future: _workshopsFuture,
         builder: (context, snapshot) {

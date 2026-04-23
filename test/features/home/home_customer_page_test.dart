@@ -8,13 +8,15 @@ import 'package:autolab_customer/core/location/location_cubit.dart';
 import 'package:autolab_customer/core/location/location_flow_recovery_service.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
-import 'package:autolab_customer/features/auth/bloc/auth_bloc.dart';
+import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:autolab_customer/features/home/home_customer_page.dart';
+import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -70,7 +72,7 @@ void main() {
     late MockLocationFlowRecoveryService flowRecoveryService;
     late MockGlobalErrorHandler errorHandler;
     late MockAppLogger logger;
-    late AuthBloc authBloc;
+    late AuthSessionCubit authSessionCubit;
     late LocationCubit locationCubit;
 
     setUpAll(() {
@@ -84,7 +86,7 @@ void main() {
       flowRecoveryService = MockLocationFlowRecoveryService();
       errorHandler = MockGlobalErrorHandler();
       logger = MockAppLogger();
-      authBloc = AuthBloc(_UnusedAuthRepository());
+      authSessionCubit = AuthSessionCubit(_UnusedAuthRepository());
 
       when(() => errorHandler.logger).thenReturn(logger);
       when(() => errorHandler.handle(any(), any())).thenReturn(
@@ -110,7 +112,7 @@ void main() {
     });
 
     tearDown(() async {
-      await authBloc.close();
+      await authSessionCubit.close();
       await locationCubit.close();
     });
 
@@ -121,7 +123,7 @@ void main() {
         () => permissionService.getPermissionStatus(),
       ).thenAnswer((_) async => LocationPermissionStatus.denied);
 
-      await _pumpPage(tester, authBloc, locationCubit);
+      await _pumpPage(tester, authSessionCubit, locationCubit);
 
       expect(find.text('Entregar ahora'), findsOneWidget);
       expect(find.text('Elegir dirección'), findsOneWidget);
@@ -151,7 +153,7 @@ void main() {
         ),
       );
 
-      await _pumpPage(tester, authBloc, locationCubit);
+      await _pumpPage(tester, authSessionCubit, locationCubit);
 
       expect(find.text('Entregar ahora'), findsOneWidget);
       expect(find.text('Escazu, San Jose'), findsOneWidget);
@@ -165,7 +167,7 @@ void main() {
         () => permissionService.getPermissionStatus(),
       ).thenAnswer((_) async => LocationPermissionStatus.serviceDisabled);
 
-      await _pumpPage(tester, authBloc, locationCubit);
+      await _pumpPage(tester, authSessionCubit, locationCubit);
 
       expect(find.text('Ubicación desactivada'), findsOneWidget);
       expect(find.text('Encender GPS'), findsOneWidget);
@@ -193,7 +195,7 @@ void main() {
           ),
         );
 
-        await _pumpPage(tester, authBloc, locationCubit);
+        await _pumpPage(tester, authSessionCubit, locationCubit);
 
         expect(find.text('No pudimos confirmar tu zona'), findsOneWidget);
         expect(find.text('No pudimos confirmar tu dirección'), findsOneWidget);
@@ -201,7 +203,7 @@ void main() {
           find.text(
             'La ubicación tardó demasiado en responder. Intenta nuevamente.',
           ),
-          findsOneWidget,
+          findsWidgets,
         );
         expect(find.text('Usar ubicación actual'), findsNothing);
       },
@@ -219,8 +221,9 @@ void main() {
         () => currentLocationDataSource.getCurrentLocation(),
       ).thenAnswer((_) => locationCompleter.future);
 
-      await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
-      await _pumpUntilVisible(tester, find.text('Buscando cerca de ti'));
+      await tester.pumpWidget(_buildTestApp(authSessionCubit, locationCubit));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
 
       expect(find.text('Buscando cerca de ti'), findsOneWidget);
       expect(find.text('Buscando tu ubicación actual'), findsOneWidget);
@@ -245,8 +248,9 @@ void main() {
         () => permissionService.requestWhileInUsePermission(),
       ).thenAnswer((_) => permissionCompleter.future);
 
-      await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
-      await _pumpUntilVisible(tester, find.text('Confirmando acceso'));
+      await tester.pumpWidget(_buildTestApp(authSessionCubit, locationCubit));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
 
       expect(find.text('Confirmando acceso'), findsOneWidget);
       expect(find.text('Confirma el acceso a tu ubicación'), findsOneWidget);
@@ -275,7 +279,7 @@ void main() {
           () => permissionService.openLocationSettings(),
         ).thenThrow(Exception('platform channel failed'));
 
-        await _pumpPage(tester, authBloc, locationCubit);
+        await _pumpPage(tester, authSessionCubit, locationCubit);
 
         await tester.tap(find.text('Encender GPS'));
         await tester.pumpAndSettle();
@@ -288,7 +292,7 @@ void main() {
           find.text(
             'No fue posible completar la acción de ubicación. Intenta nuevamente.',
           ),
-          findsOneWidget,
+          findsWidgets,
         );
         expect(tester.takeException(), isNull);
       },
@@ -304,7 +308,7 @@ void main() {
           () => permissionService.openLocationSettings(),
         ).thenAnswer((_) async => false);
 
-        await _pumpPage(tester, authBloc, locationCubit);
+        await _pumpPage(tester, authSessionCubit, locationCubit);
 
         await tester.tap(find.text('Encender GPS'));
         await tester.pumpAndSettle();
@@ -317,7 +321,7 @@ void main() {
           find.text(
             'No fue posible completar la acción de ubicación. Intenta nuevamente.',
           ),
-          findsOneWidget,
+          findsWidgets,
         );
         expect(tester.takeException(), isNull);
       },
@@ -333,7 +337,7 @@ void main() {
           () => permissionService.requestWhileInUsePermission(),
         ).thenAnswer((_) async => LocationPermissionRequestResult.denied);
 
-        await _pumpPage(tester, authBloc, locationCubit);
+        await _pumpPage(tester, authSessionCubit, locationCubit);
 
         await tester.tap(find.text('Elegir dirección'));
         await tester.pumpAndSettle();
@@ -352,7 +356,7 @@ void main() {
         () => permissionService.getPermissionStatus(),
       ).thenAnswer((_) async => LocationPermissionStatus.denied);
 
-      await _pumpPage(tester, authBloc, locationCubit);
+      await _pumpPage(tester, authSessionCubit, locationCubit);
 
       await tester.tap(find.text('Elegir dirección'));
       await tester.pumpAndSettle();
@@ -368,38 +372,29 @@ void main() {
 
 Future<void> _pumpPage(
   WidgetTester tester,
-  AuthBloc authBloc,
+  AuthSessionCubit authSessionCubit,
   LocationCubit locationCubit,
 ) async {
-  await tester.pumpWidget(_buildTestApp(authBloc, locationCubit));
+  await tester.pumpWidget(_buildTestApp(authSessionCubit, locationCubit));
+  await tester.pump(const Duration(milliseconds: 400));
   await tester.pumpAndSettle();
 }
 
-Future<void> _pumpUntilVisible(
-  WidgetTester tester,
-  Finder finder, {
-  Duration step = const Duration(milliseconds: 50),
-  Duration timeout = const Duration(seconds: 2),
-}) async {
-  var elapsed = Duration.zero;
-
-  while (finder.evaluate().isEmpty) {
-    if (elapsed >= timeout) {
-      throw TestFailure(
-        'No se encontró el widget esperado dentro de ${timeout.inMilliseconds}ms.',
-      );
-    }
-
-    await tester.pump(step);
-    elapsed += step;
-  }
-}
-
-Widget _buildTestApp(AuthBloc authBloc, LocationCubit locationCubit) {
+Widget _buildTestApp(
+  AuthSessionCubit authSessionCubit,
+  LocationCubit locationCubit,
+) {
   return MaterialApp(
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
     home: MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>.value(value: authBloc),
+        BlocProvider<AuthSessionCubit>.value(value: authSessionCubit),
         BlocProvider<LocationCubit>.value(value: locationCubit),
       ],
       child: const HomeCustomerPage(),

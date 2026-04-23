@@ -84,6 +84,12 @@ final class CustomerErrorCatalog {
     message: 'La ubicación está restringida por el sistema operativo.',
   );
 
+  static const locationActionFailed = ErrorItem(
+    code: 'CUS_LOC_006',
+    message:
+        'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+  );
+
   static const locationRequestTimeout = ErrorItem(
     code: 'NET_002',
     message: 'La ubicación tardó demasiado en responder. Intenta nuevamente.',

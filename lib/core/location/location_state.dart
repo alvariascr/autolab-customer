@@ -20,6 +20,7 @@ class LocationState extends Equatable {
     this.location,
     this.placeName,
     this.message,
+    this.failureCode,
     this.lastSettledStatus,
     this.permissionDeniedCount = 0,
   });
@@ -30,6 +31,7 @@ class LocationState extends Equatable {
   final CurrentLocation? location;
   final String? placeName;
   final String? message;
+  final String? failureCode;
   final LocationFlowStatus? lastSettledStatus;
   final int permissionDeniedCount;
 
@@ -51,17 +53,20 @@ class LocationState extends Equatable {
     CurrentLocation? location,
     String? placeName,
     String? message,
+    String? failureCode,
     LocationFlowStatus? lastSettledStatus,
     int? permissionDeniedCount,
     bool clearLocation = false,
     bool clearPlaceName = false,
     bool clearMessage = false,
+    bool clearFailureCode = false,
   }) {
     return LocationState(
       status: status ?? this.status,
       location: clearLocation ? null : (location ?? this.location),
       placeName: clearPlaceName ? null : (placeName ?? this.placeName),
       message: clearMessage ? null : (message ?? this.message),
+      failureCode: clearFailureCode ? null : (failureCode ?? this.failureCode),
       lastSettledStatus: lastSettledStatus ?? this.lastSettledStatus,
       permissionDeniedCount:
           permissionDeniedCount ?? this.permissionDeniedCount,
@@ -74,6 +79,7 @@ class LocationState extends Equatable {
     location,
     placeName,
     message,
+    failureCode,
     lastSettledStatus,
     permissionDeniedCount,
   ];
