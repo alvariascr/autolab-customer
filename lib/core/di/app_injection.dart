@@ -74,12 +74,8 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<WorkshopRepository>(
     () => WorkshopRepositoryImpl(
       remoteDataSource: sl<WorkshopRemoteDataSource>(),
-    ),
-  );
-  sl.registerFactory<MapCubit>(
-    () => MapCubit(
-      sl<WorkshopRepository>(),
       errorHandler: sl<GlobalErrorHandler>(),
     ),
   );
+  sl.registerFactory<MapCubit>(() => MapCubit(sl<WorkshopRepository>()));
 }

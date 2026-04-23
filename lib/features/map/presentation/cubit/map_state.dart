@@ -38,10 +38,12 @@ final class MapLoaded extends MapState {
 }
 
 final class MapError extends MapState {
-  const MapError(this.code);
+  const MapError({required this.code, this.uiKey, this.message});
 
   final String code;
+  final String? uiKey;
+  final String? message;
 
   @override
-  List<Object?> get props => [code];
+  List<Object?> get props => [code, uiKey, message];
 }

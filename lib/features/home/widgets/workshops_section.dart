@@ -1,3 +1,4 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/location/location_state.dart';
@@ -16,7 +17,7 @@ class WorkshopsSection extends StatelessWidget {
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.isLoading,
-    required this.hasError,
+    required this.workshopFailure,
   });
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
@@ -26,7 +27,7 @@ class WorkshopsSection extends StatelessWidget {
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final bool isLoading;
-  final bool hasError;
+  final Failure? workshopFailure;
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +40,11 @@ class WorkshopsSection extends StatelessWidget {
       );
     }
 
-    if (hasError) {
+    if (workshopFailure != null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: Text(
-          l10n.workshopsSectionLoadError,
+          emptyStateResolver.resolveLoadError(workshopFailure!, l10n),
           style: const TextStyle(color: Color(0xFF6B5F57)),
         ),
       );

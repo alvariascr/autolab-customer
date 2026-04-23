@@ -1,3 +1,4 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,22 +16,22 @@ class HomeCustomerContent extends StatelessWidget {
     super.key,
     required this.workshops,
     required this.isWorkshopsLoading,
-    required this.hasWorkshopsError,
     required this.showSearchBar,
     required this.searchController,
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.onLocationTap,
+    this.workshopFailure,
   });
 
   final List<Workshop> workshops;
   final bool isWorkshopsLoading;
-  final bool hasWorkshopsError;
   final bool showSearchBar;
   final TextEditingController searchController;
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
+  final Failure? workshopFailure;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +63,7 @@ class HomeCustomerContent extends StatelessWidget {
                           proximityFilter: proximityFilter,
                           emptyStateResolver: emptyStateResolver,
                           isLoading: isWorkshopsLoading,
-                          hasError: hasWorkshopsError,
+                          workshopFailure: workshopFailure,
                         );
                       },
                     ),

@@ -1,8 +1,8 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/app_injection.dart';
-import '../../../../core/errors/customer_error_catalog.dart';
 import '../../../../core/location/location_cubit.dart';
 import '../../../../core/location/location_state.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -170,6 +170,8 @@ class _MapPageViewState extends State<_MapPageView> {
 class _MapBody extends StatelessWidget {
   const _MapBody({required this.state, required this.emptyMessage});
 
+  static const _emptyStateResolver = WorkshopEmptyStateResolver();
+
   final MapState state;
   final String emptyMessage;
 
@@ -178,11 +180,16 @@ class _MapBody extends StatelessWidget {
     return switch (state) {
       MapInitial() ||
       MapLoading() => const Center(child: CircularProgressIndicator()),
-      MapError(:final code) => Center(
+      MapError(:final code, :final uiKey, :final message) => Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            _messageFor(code, AppLocalizations.of(context)!),
+            _messageFor(
+              code: code,
+              uiKey: uiKey,
+              message: message,
+              l10n: AppLocalizations.of(context)!,
+            ),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Color(0xFF6B5F57)),
           ),
@@ -196,15 +203,15 @@ class _MapBody extends StatelessWidget {
     };
   }
 
-  String _messageFor(String code, AppLocalizations l10n) {
-    return switch (code) {
-      final value
-          when value == CustomerErrorCatalog.workshopNetworkError.code =>
-        l10n.mapWorkshopsNetworkError,
-      final value when value == CustomerErrorCatalog.workshopLoadFailed.code =>
-        l10n.mapWorkshopsLoadError,
-      _ => l10n.mapWorkshopsLoadError,
-    };
+  String _messageFor({
+    required String code,
+    required String? uiKey,
+    required String? message,
+    required AppLocalizations l10n,
+  }) {
+    final failure = Failure(message ?? code, code: code, uiKey: uiKey);
+
+    return _emptyStateResolver.resolveLoadError(failure, l10n);
   }
 }
 

@@ -1,3 +1,5 @@
+import 'package:autolab_core/autolab_core.dart';
+import 'package:dartz/dartz.dart' show Either, Right;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,7 +29,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   static const _workshopProximityFilter = WorkshopProximityFilter();
   static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
 
-  late Future<List<Workshop>> _workshopsFuture;
+  late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
   final TextEditingController _searchController = TextEditingController();
 
   int _currentIndex = 0;
@@ -62,16 +64,12 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     }
   }
 
-  Future<List<Workshop>> _loadWorkshops() async {
-    try {
-      if (!sl.isRegistered<WorkshopRepository>()) {
-        return const <Workshop>[];
-      }
-
-      return await sl<WorkshopRepository>().getWorkshops();
-    } catch (_) {
-      return const <Workshop>[];
+  Future<Either<Failure, List<Workshop>>> _loadWorkshops() async {
+    if (!sl.isRegistered<WorkshopRepository>()) {
+      return const Right(<Workshop>[]);
     }
+
+    return sl<WorkshopRepository>().getWorkshops();
   }
 
   void _triggerInitialLocationLoad() {
@@ -213,19 +211,31 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4EF),
-      body: FutureBuilder<List<Workshop>>(
+      body: FutureBuilder<Either<Failure, List<Workshop>>>(
         future: _workshopsFuture,
         builder: (context, snapshot) {
+          final workshopsResult = snapshot.data;
+          final workshops =
+              workshopsResult?.fold(
+                (_) => const <Workshop>[],
+                (items) => items,
+              ) ??
+              const <Workshop>[];
+          final workshopFailure = workshopsResult?.fold(
+            (failure) => failure,
+            (_) => null,
+          );
+
           return HomeCustomerContent(
-            workshops: snapshot.data ?? const <Workshop>[],
+            workshops: workshops,
             isWorkshopsLoading:
                 snapshot.connectionState == ConnectionState.waiting,
-            hasWorkshopsError: snapshot.hasError,
             showSearchBar: _showSearchBar,
             searchController: _searchController,
             proximityFilter: _workshopProximityFilter,
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
+            workshopFailure: workshopFailure,
           );
         },
       ),
