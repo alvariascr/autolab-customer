@@ -363,11 +363,9 @@ class HomeStatusItem {
   final Color tone;
 }
 
-List<HomeInfoItem> buildHomeInfoItems(List<({
-  String title,
-  String description,
-  IconData icon,
-})> items) {
+List<HomeInfoItem> buildHomeInfoItems(
+  List<({String title, String description, IconData icon})> items,
+) {
   return items
       .map(
         (item) => HomeInfoItem(
@@ -379,12 +377,9 @@ List<HomeInfoItem> buildHomeInfoItems(List<({
       .toList();
 }
 
-List<HomeStatusItem> buildHomeStatusItems(List<({
-  String label,
-  String value,
-  String caption,
-  Color tone,
-})> items) {
+List<HomeStatusItem> buildHomeStatusItems(
+  List<({String label, String value, String caption, Color tone})> items,
+) {
   return items
       .map(
         (item) => HomeStatusItem(

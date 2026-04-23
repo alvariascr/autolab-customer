@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Usamos tu ubicación para mostrarte los talleres más cercanos a tu posición actual y calcular el tiempo de entrega.</string>
 </dict>
 </plist>

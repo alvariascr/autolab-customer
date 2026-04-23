@@ -57,4 +57,45 @@ final class CustomerErrorCatalog {
     code: 'CUS_VAL_011',
     message: 'Debes aceptar términos y condiciones',
   );
+
+  static const locationPermissionRequired = ErrorItem(
+    code: 'CUS_LOC_001',
+    message: 'Activa tu ubicación para ver talleres y servicios cercanos.',
+  );
+
+  static const locationServiceDisabled = ErrorItem(
+    code: 'CUS_LOC_002',
+    message: 'Enciende el GPS del dispositivo para continuar.',
+  );
+
+  static const invalidCurrentLocation = ErrorItem(
+    code: 'CUS_LOC_003',
+    message: 'No pudimos obtener una ubicación válida. Intenta nuevamente.',
+  );
+
+  static const locationConfigurationIncomplete = ErrorItem(
+    code: 'CUS_LOC_004',
+    message:
+        'La ubicación no está disponible en este momento. Intenta más tarde.',
+  );
+
+  static const locationPermissionRestricted = ErrorItem(
+    code: 'CUS_LOC_005',
+    message: 'La ubicación está restringida por el sistema operativo.',
+  );
+
+  static const locationRequestTimeout = ErrorItem(
+    code: 'NET_002',
+    message: 'La ubicación tardó demasiado en responder. Intenta nuevamente.',
+  );
+
+  static const workshopLoadFailed = ErrorItem(
+    code: 'CUS_WRK_001',
+    message: 'No fue posible cargar los talleres en este momento.',
+  );
+
+  static const workshopNetworkError = ErrorItem(
+    code: 'CUS_WRK_002',
+    message: 'Revisa tu conexión para consultar los talleres cercanos.',
+  );
 }
