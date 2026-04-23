@@ -106,12 +106,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authErrorInvalidCredentials => 'Correo o contraseña incorrectos.';
 
   @override
+  String get authErrorSessionExpired =>
+      'La sesión ha expirado. Inicia sesión nuevamente.';
+
+  @override
+  String get authErrorUnauthorized =>
+      'Tu cuenta no tiene permisos para realizar esta acción.';
+
+  @override
+  String get authErrorInvalidAuthResponse =>
+      'No fue posible validar la respuesta de autenticación.';
+
+  @override
+  String get authErrorUserProfileNotFound =>
+      'No encontramos el perfil asociado a esta cuenta.';
+
+  @override
+  String get authErrorUndefinedUserRole =>
+      'No fue posible determinar el rol del usuario.';
+
+  @override
   String get authErrorUnconfirmedEmail =>
       'Debes confirmar tu correo antes de iniciar sesión.';
 
   @override
   String get authErrorEmailAlreadyRegistered =>
       'Este correo ya se encuentra registrado.';
+
+  @override
+  String get authErrorInvalidRegisterResponse =>
+      'No fue posible completar el registro en este momento.';
 
   @override
   String get authErrorEmailNotConfirmedRegister =>
@@ -122,12 +146,35 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta cuenta ya existe. Inicia sesión.';
 
   @override
+  String get authErrorInvalidEmail => 'El correo ingresado no es válido.';
+
+  @override
+  String get authErrorWeakPassword =>
+      'La contraseña no cumple los requisitos mínimos.';
+
+  @override
   String authErrorRateLimit(Object remaining) {
     return 'Has excedido el número de intentos permitidos. Intenta nuevamente en $remaining.';
   }
 
   @override
   String get authErrorRateLimitFallbackRemaining => 'unos segundos';
+
+  @override
+  String get authErrorRegisterRateLimit =>
+      'Se alcanzó el límite de intentos de registro. Intenta nuevamente en unos minutos.';
+
+  @override
+  String get authErrorRegisterUnexpected =>
+      'No fue posible completar el registro. Intenta nuevamente.';
+
+  @override
+  String get authErrorSessionRestoreFailed =>
+      'No fue posible restaurar la sesión del usuario.';
+
+  @override
+  String get authErrorLocalSessionRecoveryFailed =>
+      'No se pudo recuperar la sesión guardada en este dispositivo.';
 
   @override
   String get authErrorFallback =>
@@ -375,6 +422,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'La ubicación está restringida en este dispositivo.';
 
   @override
+  String get locationErrorPermissionRequired =>
+      'Activa tu ubicación para ver talleres y servicios cercanos.';
+
+  @override
+  String get locationErrorServiceDisabled =>
+      'Enciende el GPS del dispositivo para continuar.';
+
+  @override
   String get locationErrorActionFailed =>
       'No fue posible completar la acción de ubicación. Intenta nuevamente.';
 
@@ -462,6 +517,14 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get workshopsSectionLoadError =>
       'No fue posible cargar los talleres en este momento.';
+
+  @override
+  String get workshopErrorLoadFailed =>
+      'No fue posible cargar los talleres en este momento.';
+
+  @override
+  String get workshopErrorNetwork =>
+      'Revisa tu conexión para consultar los talleres cercanos.';
 
   @override
   String workshopCardDistancePrefix(Object distance) {

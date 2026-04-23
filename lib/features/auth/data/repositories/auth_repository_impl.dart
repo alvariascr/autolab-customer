@@ -315,7 +315,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       globalErrorHandler.logger.e(
-        '[${AuthErrorCatalog.sessionRestoreFailed.code}] ${AuthErrorCatalog.sessionRestoreFailed.message}',
+        '[${AuthErrorCatalog.sessionRestoreFailed.code}] ${_describeErrorItem(AuthErrorCatalog.sessionRestoreFailed)}',
         error: e,
         stackTrace: st,
       );
@@ -343,14 +343,14 @@ class AuthRepositoryImpl implements AuthRepository {
       return _restoreUserFromSupabase(user);
     } on AuthException catch (e, st) {
       globalErrorHandler.logger.w(
-        '[${AuthErrorCatalog.sessionRestoreFailed.code}] ${AuthErrorCatalog.sessionRestoreFailed.message}',
+        '[${AuthErrorCatalog.sessionRestoreFailed.code}] ${_describeErrorItem(AuthErrorCatalog.sessionRestoreFailed)}',
         error: e,
         stackTrace: st,
       );
       return null;
     } catch (e, st) {
       globalErrorHandler.logger.w(
-        '[${AuthErrorCatalog.sessionRestoreFailed.code}] ${AuthErrorCatalog.sessionRestoreFailed.message}',
+        '[${AuthErrorCatalog.sessionRestoreFailed.code}] ${_describeErrorItem(AuthErrorCatalog.sessionRestoreFailed)}',
         error: e,
         stackTrace: st,
       );
@@ -364,7 +364,7 @@ class AuthRepositoryImpl implements AuthRepository {
       sessionJson = await sessionLocalDataSource.getUserSession();
     } catch (e, st) {
       globalErrorHandler.logger.w(
-        '[${AuthErrorCatalog.localSessionRecoveryFailed.code}] ${AuthErrorCatalog.localSessionRecoveryFailed.message}',
+        '[${AuthErrorCatalog.localSessionRecoveryFailed.code}] ${_describeErrorItem(AuthErrorCatalog.localSessionRecoveryFailed)}',
         error: e,
         stackTrace: st,
       );
@@ -388,7 +388,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } catch (error, stackTrace) {
       globalErrorHandler.logger.w(
-        '[${AuthErrorCatalog.localSessionRecoveryFailed.code}] ${AuthErrorCatalog.localSessionRecoveryFailed.message}',
+        '[${AuthErrorCatalog.localSessionRecoveryFailed.code}] ${_describeErrorItem(AuthErrorCatalog.localSessionRecoveryFailed)}',
         error: error,
         stackTrace: stackTrace,
       );
@@ -399,16 +399,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   String _normalizeEmail(String email) {
     return email.trim().toLowerCase();
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-
-    if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    }
-    return '${seconds}s';
   }
 
   Future<void> _persistSessionTokens(Session session) async {
@@ -458,10 +448,14 @@ class AuthRepositoryImpl implements AuthRepository {
     return AuthRateLimitFailure(
       remaining: remaining,
       code: AuthErrorCatalog.authRateLimit.code,
-      message:
-          '${AuthErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
+      uiKey: AuthErrorCatalog.authRateLimit.uiKey,
+      message: AuthErrorCatalog.authRateLimit.code,
       cause: cause,
       stackTrace: stackTrace,
     );
+  }
+
+  String _describeErrorItem(ErrorItem errorItem) {
+    return errorItem.message ?? errorItem.uiKey ?? errorItem.code;
   }
 }

@@ -5,92 +5,91 @@ final class AuthErrorCatalog {
 
   static const invalidCredentials = ErrorItem(
     code: 'AUTH_001',
-    message: 'Correo o contraseña incorrectos.',
+    uiKey: 'authErrorInvalidCredentials',
   );
 
   static const sessionExpired = ErrorItem(
     code: 'AUTH_002',
-    message: 'La sesión ha expirado. Inicia sesión nuevamente.',
+    uiKey: 'authErrorSessionExpired',
   );
 
   static const unauthorized = ErrorItem(
     code: 'AUTH_003',
-    message: 'Rol no autorizado.',
+    uiKey: 'authErrorUnauthorized',
   );
 
   static const invalidAuthResponse = ErrorItem(
     code: 'AUTH_004',
-    message: 'Respuesta inválida: usuario o sesión no disponible.',
+    uiKey: 'authErrorInvalidAuthResponse',
   );
 
   static const userProfileNotFound = ErrorItem(
     code: 'AUTH_005',
-    message: 'Perfil de usuario no encontrado.',
+    uiKey: 'authErrorUserProfileNotFound',
   );
 
   static const undefinedUserRole = ErrorItem(
     code: 'AUTH_006',
-    message: 'Rol no definido para el usuario.',
+    uiKey: 'authErrorUndefinedUserRole',
   );
 
   static const unconfirmedEmail = ErrorItem(
     code: 'AUTH_007',
-    message: 'Debes confirmar tu correo antes de iniciar sesión.',
+    uiKey: 'authErrorUnconfirmedEmail',
   );
 
   static const emailAlreadyRegistered = ErrorItem(
     code: 'AUTH_008',
-    message: 'Este correo ya se encuentra registrado.',
+    uiKey: 'authErrorEmailAlreadyRegistered',
   );
 
   static const invalidRegisterResponse = ErrorItem(
     code: 'AUTH_009',
-    message: 'Respuesta inválida: usuario no disponible.',
+    uiKey: 'authErrorInvalidRegisterResponse',
   );
 
   static const authRateLimit = ErrorItem(
     code: 'AUTH_010',
-    message: 'Has excedido el número de intentos permitidos.',
+    uiKey: 'authErrorRateLimit',
   );
 
   static const sessionRestoreFailed = ErrorItem(
     code: 'AUTH_011',
-    message: 'No fue posible restaurar la sesión del usuario.',
+    uiKey: 'authErrorSessionRestoreFailed',
   );
 
   static const localSessionRecoveryFailed = ErrorItem(
     code: 'AUTH_012',
-    message: 'No se pudo reconstruir la sesión desde almacenamiento local.',
+    uiKey: 'authErrorLocalSessionRecoveryFailed',
   );
 
   static const invalidEmail = ErrorItem(
     code: 'REG_001',
-    message: 'El correo ingresado no es válido.',
+    uiKey: 'authErrorInvalidEmail',
   );
 
   static const weakPassword = ErrorItem(
     code: 'REG_002',
-    message: 'La contraseña no cumple los requisitos.',
+    uiKey: 'authErrorWeakPassword',
   );
 
   static const emailNotConfirmedRegister = ErrorItem(
     code: 'REG_003',
-    message: 'Esta cuenta ya existe, pero debes confirmar tu correo.',
+    uiKey: 'authErrorEmailNotConfirmedRegister',
   );
 
   static const accountAlreadyExists = ErrorItem(
     code: 'REG_004',
-    message: 'Esta cuenta ya existe. Inicia sesión.',
+    uiKey: 'authErrorAccountAlreadyExists',
   );
 
   static const registerRateLimit = ErrorItem(
     code: 'REG_005',
-    message:
-        'Se alcanzó el límite de intentos de registro. Intenta nuevamente en unos minutos.',
+    uiKey: 'authErrorRegisterRateLimit',
   );
 
   static const registerUnexpectedError = ErrorItem(
     code: 'REG_006',
-    message: 'No se pudo completar el registro. Intenta nuevamente.',
+    uiKey: 'authErrorRegisterUnexpected',
   );
 }

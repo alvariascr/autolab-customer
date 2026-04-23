@@ -5,103 +5,101 @@ final class CustomerErrorCatalog {
 
   static const nameRequired = ErrorItem(
     code: 'CUS_VAL_001',
-    message: 'El nombre es obligatorio',
+    uiKey: 'validationNameRequired',
   );
 
   static const nameTooShort = ErrorItem(
     code: 'CUS_VAL_002',
-    message: 'Mínimo 3 caracteres',
+    uiKey: 'validationNameTooShort',
   );
 
   static const emailRequired = ErrorItem(
     code: 'CUS_VAL_003',
-    message: 'El correo es obligatorio',
+    uiKey: 'validationEmailRequired',
   );
 
   static const invalidEmail = ErrorItem(
     code: 'CUS_VAL_004',
-    message: 'Correo inválido',
+    uiKey: 'validationEmailInvalid',
   );
 
   static const phoneRequired = ErrorItem(
     code: 'CUS_VAL_005',
-    message: 'El teléfono es obligatorio',
+    uiKey: 'validationPhoneRequired',
   );
 
   static const invalidPhone = ErrorItem(
     code: 'CUS_VAL_006',
-    message: 'Teléfono inválido',
+    uiKey: 'validationPhoneInvalid',
   );
 
   static const passwordRequired = ErrorItem(
     code: 'CUS_VAL_007',
-    message: 'La contraseña es obligatoria',
+    uiKey: 'validationPasswordRequired',
   );
 
   static const passwordTooShort = ErrorItem(
     code: 'CUS_VAL_008',
-    message: 'Mínimo 6 caracteres',
+    uiKey: 'validationPasswordTooShort',
   );
 
   static const confirmPasswordRequired = ErrorItem(
     code: 'CUS_VAL_009',
-    message: 'Confirme la contraseña',
+    uiKey: 'validationConfirmPasswordRequired',
   );
 
   static const passwordsDoNotMatch = ErrorItem(
     code: 'CUS_VAL_010',
-    message: 'Las contraseñas no coinciden',
+    uiKey: 'validationPasswordsDoNotMatch',
   );
 
   static const termsRequired = ErrorItem(
     code: 'CUS_VAL_011',
-    message: 'Debes aceptar términos y condiciones',
+    uiKey: 'authTermsRequired',
   );
 
   static const locationPermissionRequired = ErrorItem(
     code: 'CUS_LOC_001',
-    message: 'Activa tu ubicación para ver talleres y servicios cercanos.',
+    uiKey: 'locationErrorPermissionRequired',
   );
 
   static const locationServiceDisabled = ErrorItem(
     code: 'CUS_LOC_002',
-    message: 'Enciende el GPS del dispositivo para continuar.',
+    uiKey: 'locationErrorServiceDisabled',
   );
 
   static const invalidCurrentLocation = ErrorItem(
     code: 'CUS_LOC_003',
-    message: 'No pudimos obtener una ubicación válida. Intenta nuevamente.',
+    uiKey: 'locationErrorInvalidCurrentLocation',
   );
 
   static const locationConfigurationIncomplete = ErrorItem(
     code: 'CUS_LOC_004',
-    message:
-        'La ubicación no está disponible en este momento. Intenta más tarde.',
+    uiKey: 'locationErrorConfigurationIncomplete',
   );
 
   static const locationPermissionRestricted = ErrorItem(
     code: 'CUS_LOC_005',
-    message: 'La ubicación está restringida por el sistema operativo.',
+    uiKey: 'locationErrorPermissionRestricted',
   );
 
   static const locationActionFailed = ErrorItem(
     code: 'CUS_LOC_006',
-    message:
-        'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+    uiKey: 'locationErrorActionFailed',
   );
 
   static const locationRequestTimeout = ErrorItem(
     code: 'NET_002',
-    message: 'La ubicación tardó demasiado en responder. Intenta nuevamente.',
+    uiKey: 'locationErrorRequestTimeout',
   );
 
   static const workshopLoadFailed = ErrorItem(
     code: 'CUS_WRK_001',
-    message: 'No fue posible cargar los talleres en este momento.',
+    uiKey: 'workshopErrorLoadFailed',
   );
 
   static const workshopNetworkError = ErrorItem(
     code: 'CUS_WRK_002',
-    message: 'Revisa tu conexión para consultar los talleres cercanos.',
+    uiKey: 'workshopErrorNetwork',
   );
 }

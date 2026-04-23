@@ -286,6 +286,36 @@ abstract class AppLocalizations {
   /// **'Correo o contraseña incorrectos.'**
   String get authErrorInvalidCredentials;
 
+  /// No description provided for @authErrorSessionExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'La sesión ha expirado. Inicia sesión nuevamente.'**
+  String get authErrorSessionExpired;
+
+  /// No description provided for @authErrorUnauthorized.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu cuenta no tiene permisos para realizar esta acción.'**
+  String get authErrorUnauthorized;
+
+  /// No description provided for @authErrorInvalidAuthResponse.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible validar la respuesta de autenticación.'**
+  String get authErrorInvalidAuthResponse;
+
+  /// No description provided for @authErrorUserProfileNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos el perfil asociado a esta cuenta.'**
+  String get authErrorUserProfileNotFound;
+
+  /// No description provided for @authErrorUndefinedUserRole.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible determinar el rol del usuario.'**
+  String get authErrorUndefinedUserRole;
+
   /// No description provided for @authErrorUnconfirmedEmail.
   ///
   /// In es, this message translates to:
@@ -297,6 +327,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Este correo ya se encuentra registrado.'**
   String get authErrorEmailAlreadyRegistered;
+
+  /// No description provided for @authErrorInvalidRegisterResponse.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible completar el registro en este momento.'**
+  String get authErrorInvalidRegisterResponse;
 
   /// No description provided for @authErrorEmailNotConfirmedRegister.
   ///
@@ -310,6 +346,18 @@ abstract class AppLocalizations {
   /// **'Esta cuenta ya existe. Inicia sesión.'**
   String get authErrorAccountAlreadyExists;
 
+  /// No description provided for @authErrorInvalidEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'El correo ingresado no es válido.'**
+  String get authErrorInvalidEmail;
+
+  /// No description provided for @authErrorWeakPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña no cumple los requisitos mínimos.'**
+  String get authErrorWeakPassword;
+
   /// No description provided for @authErrorRateLimit.
   ///
   /// In es, this message translates to:
@@ -321,6 +369,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'unos segundos'**
   String get authErrorRateLimitFallbackRemaining;
+
+  /// No description provided for @authErrorRegisterRateLimit.
+  ///
+  /// In es, this message translates to:
+  /// **'Se alcanzó el límite de intentos de registro. Intenta nuevamente en unos minutos.'**
+  String get authErrorRegisterRateLimit;
+
+  /// No description provided for @authErrorRegisterUnexpected.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible completar el registro. Intenta nuevamente.'**
+  String get authErrorRegisterUnexpected;
+
+  /// No description provided for @authErrorSessionRestoreFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible restaurar la sesión del usuario.'**
+  String get authErrorSessionRestoreFailed;
+
+  /// No description provided for @authErrorLocalSessionRecoveryFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo recuperar la sesión guardada en este dispositivo.'**
+  String get authErrorLocalSessionRecoveryFailed;
 
   /// No description provided for @authErrorFallback.
   ///
@@ -766,6 +838,18 @@ abstract class AppLocalizations {
   /// **'La ubicación está restringida en este dispositivo.'**
   String get locationErrorPermissionRestricted;
 
+  /// No description provided for @locationErrorPermissionRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa tu ubicación para ver talleres y servicios cercanos.'**
+  String get locationErrorPermissionRequired;
+
+  /// No description provided for @locationErrorServiceDisabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Enciende el GPS del dispositivo para continuar.'**
+  String get locationErrorServiceDisabled;
+
   /// No description provided for @locationErrorActionFailed.
   ///
   /// In es, this message translates to:
@@ -909,6 +993,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No fue posible cargar los talleres en este momento.'**
   String get workshopsSectionLoadError;
+
+  /// No description provided for @workshopErrorLoadFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible cargar los talleres en este momento.'**
+  String get workshopErrorLoadFailed;
+
+  /// No description provided for @workshopErrorNetwork.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa tu conexión para consultar los talleres cercanos.'**
+  String get workshopErrorNetwork;
 
   /// No description provided for @workshopCardDistancePrefix.
   ///

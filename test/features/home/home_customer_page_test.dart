@@ -189,8 +189,9 @@ void main() {
         when(() => currentLocationDataSource.getCurrentLocation()).thenAnswer(
           (_) async => Left(
             TimeoutFailure(
-              message: CustomerErrorCatalog.locationRequestTimeout.message,
+              message: CustomerErrorCatalog.locationRequestTimeout.code,
               code: 'NET_002',
+              uiKey: CustomerErrorCatalog.locationRequestTimeout.uiKey,
             ),
           ),
         );

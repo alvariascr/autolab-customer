@@ -85,9 +85,40 @@ class LocationUiPresenter {
     LocationState state,
     AppLocalizations l10n,
   ) {
+    final uiKey = state.failureUiKey;
+    if (uiKey != null && uiKey.isNotEmpty) {
+      return switch (uiKey) {
+        final value
+            when value ==
+                CustomerErrorCatalog.locationPermissionRequired.uiKey =>
+          l10n.locationErrorPermissionRequired,
+        final value
+            when value == CustomerErrorCatalog.locationServiceDisabled.uiKey =>
+          l10n.locationErrorServiceDisabled,
+        final value
+            when value ==
+                CustomerErrorCatalog.locationPermissionRestricted.uiKey =>
+          l10n.locationErrorPermissionRestricted,
+        final value
+            when value == CustomerErrorCatalog.locationActionFailed.uiKey =>
+          l10n.locationErrorActionFailed,
+        final value
+            when value == CustomerErrorCatalog.locationRequestTimeout.uiKey =>
+          l10n.locationErrorRequestTimeout,
+        final value
+            when value == CustomerErrorCatalog.invalidCurrentLocation.uiKey =>
+          l10n.locationErrorInvalidCurrentLocation,
+        final value
+            when value ==
+                CustomerErrorCatalog.locationConfigurationIncomplete.uiKey =>
+          l10n.locationErrorConfigurationIncomplete,
+        _ => null,
+      };
+    }
+
     final code = state.failureCode;
     if (code == null || code.isEmpty) {
-      return state.message;
+      return state.message == state.failureCode ? null : state.message;
     }
 
     return switch (code) {
@@ -108,7 +139,7 @@ class LocationUiPresenter {
           when value ==
               CustomerErrorCatalog.locationConfigurationIncomplete.code =>
         l10n.locationErrorConfigurationIncomplete,
-      _ => state.message,
+      _ => state.message == state.failureCode ? null : state.message,
     };
   }
 

@@ -32,10 +32,18 @@
   "authRegisterSuccess": "Registro exitoso. Revisa tu correo para confirmar tu cuenta.",
   "authTermsRequired": "Debes aceptar términos y condiciones.",
   "authErrorInvalidCredentials": "Correo o contraseña incorrectos.",
+  "authErrorSessionExpired": "La sesión ha expirado. Inicia sesión nuevamente.",
+  "authErrorUnauthorized": "Tu cuenta no tiene permisos para realizar esta acción.",
+  "authErrorInvalidAuthResponse": "No fue posible validar la respuesta de autenticación.",
+  "authErrorUserProfileNotFound": "No encontramos el perfil asociado a esta cuenta.",
+  "authErrorUndefinedUserRole": "No fue posible determinar el rol del usuario.",
   "authErrorUnconfirmedEmail": "Debes confirmar tu correo antes de iniciar sesión.",
   "authErrorEmailAlreadyRegistered": "Este correo ya se encuentra registrado.",
+  "authErrorInvalidRegisterResponse": "No fue posible completar el registro en este momento.",
   "authErrorEmailNotConfirmedRegister": "Esta cuenta ya existe, pero debes confirmar tu correo.",
   "authErrorAccountAlreadyExists": "Esta cuenta ya existe. Inicia sesión.",
+  "authErrorInvalidEmail": "El correo ingresado no es válido.",
+  "authErrorWeakPassword": "La contraseña no cumple los requisitos mínimos.",
   "authErrorRateLimit": "Has excedido el número de intentos permitidos. Intenta nuevamente en {remaining}.",
   "@authErrorRateLimit": {
     "placeholders": {
@@ -43,6 +51,10 @@
     }
   },
   "authErrorRateLimitFallbackRemaining": "unos segundos",
+  "authErrorRegisterRateLimit": "Se alcanzó el límite de intentos de registro. Intenta nuevamente en unos minutos.",
+  "authErrorRegisterUnexpected": "No fue posible completar el registro. Intenta nuevamente.",
+  "authErrorSessionRestoreFailed": "No fue posible restaurar la sesión del usuario.",
+  "authErrorLocalSessionRecoveryFailed": "No se pudo recuperar la sesión guardada en este dispositivo.",
   "authErrorFallback": "No fue posible completar la operación. Intenta nuevamente.",
   "authTermsPageTitle": "Términos y condiciones",
   "authTermsPageBody": "TÉRMINOS Y CONDICIONES DE USO\n\nBienvenido a Autolab. Al acceder y utilizar esta aplicación, aceptas los siguientes términos y condiciones. Si no estás de acuerdo con alguno de ellos, te recomendamos no utilizar la app.\n\n1. USO DE LA APLICACIÓN\nAutolab es una plataforma que permite a los usuarios encontrar talleres mecánicos cercanos, consultar información y gestionar servicios relacionados con su vehículo.\n\nEl usuario se compromete a utilizar la aplicación de manera responsable, respetando las leyes vigentes y evitando cualquier uso indebido.\n\n2. REGISTRO DE USUARIO\nPara acceder a ciertas funcionalidades, es necesario registrarse proporcionando información veraz y actualizada. El usuario es responsable de mantener la confidencialidad de sus credenciales.\n\n3. PRIVACIDAD Y DATOS\nLa aplicación puede recopilar datos como nombre, correo electrónico, ubicación y número telefónico con el fin de mejorar la experiencia del usuario.\n\nEstos datos no serán compartidos con terceros sin consentimiento, salvo cuando sea requerido por ley.\n\n4. GEOLOCALIZACIÓN\nAutolab puede solicitar acceso a tu ubicación para mostrar talleres cercanos. El usuario puede aceptar o rechazar este permiso en cualquier momento desde la configuración del dispositivo.\n\n5. RESPONSABILIDAD\nAutolab actúa como intermediario entre el usuario y los talleres. No se hace responsable por la calidad del servicio brindado por terceros.\n\n6. MODIFICACIONES\nNos reservamos el derecho de modificar estos términos en cualquier momento. Se recomienda revisar esta sección periódicamente.\n\n7. ACEPTACIÓN\nAl utilizar la aplicación, el usuario acepta estos términos y condiciones en su totalidad.\n\nÚltima actualización: 2026",
@@ -117,6 +129,8 @@
   "locationHeaderSubtitleErrorFallback": "Intenta de nuevo en unos segundos.",
   "locationHeaderSubtitleRestrictedFallback": "La ubicación no está disponible en este dispositivo.",
   "locationErrorPermissionRestricted": "La ubicación está restringida en este dispositivo.",
+  "locationErrorPermissionRequired": "Activa tu ubicación para ver talleres y servicios cercanos.",
+  "locationErrorServiceDisabled": "Enciende el GPS del dispositivo para continuar.",
   "locationErrorActionFailed": "No fue posible completar la acción de ubicación. Intenta nuevamente.",
   "locationErrorRequestTimeout": "La ubicación tardó demasiado en responder. Intenta nuevamente.",
   "locationErrorInvalidCurrentLocation": "No pudimos obtener una ubicación válida. Intenta nuevamente.",
@@ -141,6 +155,8 @@
   "workshopsSectionTitle": "Talleres cercanos",
   "workshopsSectionSubtitle": "Explora opciones cercanas sin salir del home.",
   "workshopsSectionLoadError": "No fue posible cargar los talleres en este momento.",
+  "workshopErrorLoadFailed": "No fue posible cargar los talleres en este momento.",
+  "workshopErrorNetwork": "Revisa tu conexión para consultar los talleres cercanos.",
   "workshopCardDistancePrefix": "A {distance}",
   "@workshopCardDistancePrefix": {
     "placeholders": {

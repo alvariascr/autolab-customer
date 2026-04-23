@@ -10,6 +10,7 @@ class LoginFormState extends Equatable {
     this.user,
     this.message,
     this.code,
+    this.uiKey,
     this.remaining,
   });
 
@@ -19,6 +20,7 @@ class LoginFormState extends Equatable {
   final AppUser? user;
   final String? message;
   final String? code;
+  final String? uiKey;
   final Duration? remaining;
 
   LoginFormState copyWith({
@@ -26,10 +28,12 @@ class LoginFormState extends Equatable {
     AppUser? user,
     String? message,
     String? code,
+    String? uiKey,
     Duration? remaining,
     bool clearUser = false,
     bool clearMessage = false,
     bool clearCode = false,
+    bool clearUiKey = false,
     bool clearRemaining = false,
   }) {
     return LoginFormState(
@@ -37,10 +41,11 @@ class LoginFormState extends Equatable {
       user: clearUser ? null : (user ?? this.user),
       message: clearMessage ? null : (message ?? this.message),
       code: clearCode ? null : (code ?? this.code),
+      uiKey: clearUiKey ? null : (uiKey ?? this.uiKey),
       remaining: clearRemaining ? null : (remaining ?? this.remaining),
     );
   }
 
   @override
-  List<Object?> get props => [status, user, message, code, remaining];
+  List<Object?> get props => [status, user, message, code, uiKey, remaining];
 }

@@ -123,6 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                   final resolvedMessage = AuthUiErrorResolver.resolve(
                     l10n: l10n,
                     code: state.code,
+                    uiKey: state.uiKey,
                     message: state.message,
                     remaining: state.remaining,
                   );
@@ -150,6 +151,7 @@ class _LoginPageState extends State<LoginPage> {
                     AuthUiErrorResolver.resolve(
                       l10n: l10n,
                       code: state.code,
+                      uiKey: state.uiKey,
                       message: state.message,
                       remaining: state.remaining,
                     ),
@@ -196,6 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                   ? AuthUiErrorResolver.resolve(
                       l10n: l10n,
                       code: loginState.code,
+                      uiKey: loginState.uiKey,
                       message: loginState.message,
                       remaining: loginState.remaining,
                     )

@@ -231,8 +231,9 @@ void main() {
 
         result.fold((failure) {
           expect(failure, isA<AuthFailure>());
-          expect(failure.message, AuthErrorCatalog.invalidAuthResponse.message);
+          expect(failure.message, AuthErrorCatalog.invalidAuthResponse.code);
           expect(failure.code, AuthErrorCatalog.invalidAuthResponse.code);
+          expect(failure.uiKey, AuthErrorCatalog.invalidAuthResponse.uiKey);
         }, (_) => fail('Expected Left(Failure)'));
 
         verify(() => mockAppLogger.w(any())).called(1);
@@ -264,8 +265,9 @@ void main() {
 
         result.fold((failure) {
           expect(failure, isA<Failure>());
-          expect(failure.message, AuthErrorCatalog.invalidCredentials.message);
+          expect(failure.message, AuthErrorCatalog.invalidCredentials.code);
           expect(failure.code, AuthErrorCatalog.invalidCredentials.code);
+          expect(failure.uiKey, AuthErrorCatalog.invalidCredentials.uiKey);
         }, (_) => fail('Se esperaba Left(Failure)'));
       });
 
@@ -283,8 +285,9 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold((failure) {
-          expect(failure.message, AuthErrorCatalog.unconfirmedEmail.message);
+          expect(failure.message, AuthErrorCatalog.unconfirmedEmail.code);
           expect(failure.code, AuthErrorCatalog.unconfirmedEmail.code);
+          expect(failure.uiKey, AuthErrorCatalog.unconfirmedEmail.uiKey);
         }, (_) => fail('Debería ser Left'));
         verify(
           () => mockAppLogger.w(
@@ -298,8 +301,9 @@ void main() {
       test('uses GlobalErrorHandler for unexpected errors', () async {
         final exception = Exception('random error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 
@@ -382,8 +386,9 @@ void main() {
       test('returns Left(Failure) when signOut fails', () async {
         final exception = Exception('signout error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 
@@ -499,11 +504,9 @@ void main() {
 
           expect(result.isLeft(), true);
           result.fold((failure) {
-            expect(
-              failure.message,
-              AuthErrorCatalog.accountAlreadyExists.message,
-            );
+            expect(failure.message, AuthErrorCatalog.accountAlreadyExists.code);
             expect(failure.code, AuthErrorCatalog.accountAlreadyExists.code);
+            expect(failure.uiKey, AuthErrorCatalog.accountAlreadyExists.uiKey);
           }, (_) => fail('Debería ser Left'));
           verify(() => mockGoTrueClient.signOut()).called(1);
         },
@@ -532,11 +535,15 @@ void main() {
           result.fold((failure) {
             expect(
               failure.message,
-              AuthErrorCatalog.emailNotConfirmedRegister.message,
+              AuthErrorCatalog.emailNotConfirmedRegister.code,
             );
             expect(
               failure.code,
               AuthErrorCatalog.emailNotConfirmedRegister.code,
+            );
+            expect(
+              failure.uiKey,
+              AuthErrorCatalog.emailNotConfirmedRegister.uiKey,
             );
           }, (_) => fail('Debería ser Left'));
         },
@@ -573,9 +580,10 @@ void main() {
           expect(failure, isA<AuthFailure>());
           expect(
             failure.message,
-            AuthErrorCatalog.invalidRegisterResponse.message,
+            AuthErrorCatalog.invalidRegisterResponse.code,
           );
           expect(failure.code, AuthErrorCatalog.invalidRegisterResponse.code);
+          expect(failure.uiKey, AuthErrorCatalog.invalidRegisterResponse.uiKey);
         }, (_) => fail('Expected Left(Failure)'));
 
         verify(() => mockAppLogger.w(any())).called(1);
@@ -612,9 +620,13 @@ void main() {
           result.fold((failure) {
             expect(
               failure.message,
-              AuthErrorCatalog.emailAlreadyRegistered.message,
+              AuthErrorCatalog.emailAlreadyRegistered.code,
             );
             expect(failure.code, AuthErrorCatalog.emailAlreadyRegistered.code);
+            expect(
+              failure.uiKey,
+              AuthErrorCatalog.emailAlreadyRegistered.uiKey,
+            );
           }, (_) => fail('Debería ser Left'));
         },
       );
@@ -622,8 +634,9 @@ void main() {
       test('uses GlobalErrorHandler for unexpected errors', () async {
         final exception = Exception('signup error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 

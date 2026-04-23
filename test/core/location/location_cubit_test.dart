@@ -121,8 +121,9 @@ void main() {
       when(() => currentLocationDataSource.getCurrentLocation()).thenAnswer(
         (_) async => Left(
           TimeoutFailure(
-            message: CustomerErrorCatalog.locationRequestTimeout.message,
+            message: CustomerErrorCatalog.locationRequestTimeout.code,
             code: 'NET_002',
+            uiKey: CustomerErrorCatalog.locationRequestTimeout.uiKey,
           ),
         ),
       );
@@ -130,9 +131,10 @@ void main() {
       await cubit.loadCurrentLocation();
 
       expect(cubit.state.status, LocationFlowStatus.error);
+      expect(cubit.state.failureCode, 'NET_002');
       expect(
-        cubit.state.message,
-        'La ubicación tardó demasiado en responder. Intenta nuevamente.',
+        cubit.state.failureUiKey,
+        CustomerErrorCatalog.locationRequestTimeout.uiKey,
       );
     });
 
@@ -169,8 +171,8 @@ void main() {
 
       expect(cubit.state.status, LocationFlowStatus.error);
       expect(
-        cubit.state.message,
-        'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+        cubit.state.failureUiKey,
+        CustomerErrorCatalog.locationActionFailed.uiKey,
       );
       verify(() => errorHandler.handle(settingsError, any())).called(1);
     });
@@ -186,8 +188,8 @@ void main() {
 
         expect(cubit.state.status, LocationFlowStatus.error);
         expect(
-          cubit.state.message,
-          'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+          cubit.state.failureUiKey,
+          CustomerErrorCatalog.locationActionFailed.uiKey,
         );
         verify(() => errorHandler.handle(any(), any())).called(1);
       },

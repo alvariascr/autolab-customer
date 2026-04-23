@@ -142,8 +142,9 @@ void main() {
       () async {
         final exception = Exception('random location error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 

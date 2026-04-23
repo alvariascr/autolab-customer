@@ -58,6 +58,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearPlaceName: true,
             clearMessage: true,
             clearFailureCode: true,
+            clearFailureUiKey: true,
           );
           return;
         }
@@ -67,6 +68,7 @@ class LocationCubit extends Cubit<LocationState> {
           clearPlaceName: true,
           clearMessage: true,
           clearFailureCode: true,
+          clearFailureUiKey: true,
         );
         return;
       case LocationPermissionStatus.deniedForever:
@@ -76,13 +78,14 @@ class LocationCubit extends Cubit<LocationState> {
           clearPlaceName: true,
           clearMessage: true,
           clearFailureCode: true,
+          clearFailureUiKey: true,
         );
         return;
       case LocationPermissionStatus.restricted:
         _emitStableState(
           status: LocationFlowStatus.restricted,
-          message: CustomerErrorCatalog.locationPermissionRestricted.message,
           failureCode: CustomerErrorCatalog.locationPermissionRestricted.code,
+          failureUiKey: CustomerErrorCatalog.locationPermissionRestricted.uiKey,
           clearLocation: true,
           clearPlaceName: true,
         );
@@ -94,6 +97,7 @@ class LocationCubit extends Cubit<LocationState> {
           clearPlaceName: true,
           clearMessage: true,
           clearFailureCode: true,
+          clearFailureUiKey: true,
         );
         return;
     }
@@ -106,6 +110,7 @@ class LocationCubit extends Cubit<LocationState> {
           status: LocationFlowStatus.error,
           message: failure.message,
           failureCode: failure.code,
+          failureUiKey: failure.uiKey,
           clearLocation: true,
           clearPlaceName: true,
         );
@@ -120,6 +125,7 @@ class LocationCubit extends Cubit<LocationState> {
             placeName: resolution.placeName,
             clearMessage: true,
             clearFailureCode: true,
+            clearFailureUiKey: true,
           );
         } catch (error, stackTrace) {
           _errorHandler?.handle(error, stackTrace);
@@ -130,6 +136,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearPlaceName: true,
             clearMessage: true,
             clearFailureCode: true,
+            clearFailureUiKey: true,
           );
         }
       },
@@ -157,6 +164,7 @@ class LocationCubit extends Cubit<LocationState> {
               clearPlaceName: true,
               clearMessage: true,
               clearFailureCode: true,
+              clearFailureUiKey: true,
             );
             return;
           }
@@ -167,6 +175,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearPlaceName: true,
             clearMessage: true,
             clearFailureCode: true,
+            clearFailureUiKey: true,
           );
           return;
         case LocationPermissionRequestResult.deniedForever:
@@ -177,13 +186,15 @@ class LocationCubit extends Cubit<LocationState> {
             clearPlaceName: true,
             clearMessage: true,
             clearFailureCode: true,
+            clearFailureUiKey: true,
           );
           return;
         case LocationPermissionRequestResult.restricted:
           _emitStableState(
             status: LocationFlowStatus.restricted,
-            message: CustomerErrorCatalog.locationPermissionRestricted.message,
             failureCode: CustomerErrorCatalog.locationPermissionRestricted.code,
+            failureUiKey:
+                CustomerErrorCatalog.locationPermissionRestricted.uiKey,
             clearLocation: true,
             clearPlaceName: true,
           );
@@ -195,6 +206,7 @@ class LocationCubit extends Cubit<LocationState> {
             clearPlaceName: true,
             clearMessage: true,
             clearFailureCode: true,
+            clearFailureUiKey: true,
           );
           return;
       }
@@ -243,11 +255,13 @@ class LocationCubit extends Cubit<LocationState> {
     String? placeName,
     String? message,
     String? failureCode,
+    String? failureUiKey,
     int? permissionDeniedCount,
     bool clearLocation = false,
     bool clearPlaceName = false,
     bool clearMessage = false,
     bool clearFailureCode = false,
+    bool clearFailureUiKey = false,
   }) {
     emit(
       state.copyWith(
@@ -256,12 +270,14 @@ class LocationCubit extends Cubit<LocationState> {
         placeName: placeName,
         message: message,
         failureCode: failureCode,
+        failureUiKey: failureUiKey,
         lastSettledStatus: status,
         permissionDeniedCount: permissionDeniedCount,
         clearLocation: clearLocation,
         clearPlaceName: clearPlaceName,
         clearMessage: clearMessage,
         clearFailureCode: clearFailureCode,
+        clearFailureUiKey: clearFailureUiKey,
       ),
     );
   }
@@ -271,8 +287,8 @@ class LocationCubit extends Cubit<LocationState> {
 
     _emitStableState(
       status: LocationFlowStatus.error,
-      message: CustomerErrorCatalog.locationActionFailed.message,
       failureCode: CustomerErrorCatalog.locationActionFailed.code,
+      failureUiKey: CustomerErrorCatalog.locationActionFailed.uiKey,
       clearLocation: true,
       clearPlaceName: true,
     );
