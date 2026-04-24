@@ -1,4 +1,5 @@
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,7 +37,7 @@ void registerAuthDependencies(GetIt sl) {
       client: sl<SupabaseClient>(),
       sessionStorageService: sl<AuthSessionStorageService>(),
       userRoleDataSource: sl<UserRoleDataSource>(),
-      errorHandler: sl<GlobalErrorHandler>(),
+      featureLogger: sl<FeatureLogger>(),
     ),
   );
 
@@ -48,10 +49,11 @@ void registerAuthDependencies(GetIt sl) {
       sl<LoginAttemptService>(),
       sl<AuthSessionStorageService>(),
       sl<AuthSessionRecoveryService>(),
+      sl<FeatureLogger>(),
     ),
   );
 
   sl.registerLazySingleton<AuthSessionCubit>(
-    () => AuthSessionCubit(sl<AuthRepository>()),
+    () => AuthSessionCubit(sl<AuthRepository>(), sl<FeatureLogger>()),
   );
 }

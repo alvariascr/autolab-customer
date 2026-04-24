@@ -1,4 +1,5 @@
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
 import 'package:autolab_customer/features/auth/application/login_form_cubit.dart';
@@ -35,6 +36,36 @@ class FakeSuccessAuthRepository implements AuthRepository {
   Future<AppUser?> getCurrentUser() async {
     return null;
   }
+}
+
+class _NoopFeatureLogger extends Fake implements FeatureLogger {
+  @override
+  void info({
+    required String feature,
+    required String action,
+    String? code,
+    Map<String, Object?> context = const {},
+  }) {}
+
+  @override
+  void warn({
+    required String feature,
+    required String action,
+    String? code,
+    Map<String, Object?> context = const {},
+    Object? error,
+    StackTrace? stackTrace,
+  }) {}
+
+  @override
+  void error({
+    required String feature,
+    required String action,
+    String? code,
+    Map<String, Object?> context = const {},
+    Object? error,
+    StackTrace? stackTrace,
+  }) {}
 }
 
 class FakeFailureAuthRepository implements AuthRepository {
@@ -94,7 +125,10 @@ class FakeRestoreSessionAuthRepository implements AuthRepository {
 void main() {
   group('AuthSessionCubit', () {
     test('estado inicial es initial', () {
-      final cubit = AuthSessionCubit(FakeSuccessAuthRepository());
+      final cubit = AuthSessionCubit(
+        FakeSuccessAuthRepository(),
+        _NoopFeatureLogger(),
+      );
 
       expect(cubit.state, const AuthSessionState.initial());
 
@@ -104,7 +138,10 @@ void main() {
     test(
       'restore session sin usuario emite loading y luego unauthenticated',
       () async {
-        final cubit = AuthSessionCubit(FakeSuccessAuthRepository());
+        final cubit = AuthSessionCubit(
+          FakeSuccessAuthRepository(),
+          _NoopFeatureLogger(),
+        );
 
         final expectation = expectLater(
           cubit.stream,
@@ -121,7 +158,10 @@ void main() {
     );
 
     test('restore session con usuario emite authenticated', () async {
-      final cubit = AuthSessionCubit(FakeRestoreSessionAuthRepository());
+      final cubit = AuthSessionCubit(
+        FakeRestoreSessionAuthRepository(),
+        _NoopFeatureLogger(),
+      );
 
       final expectation = expectLater(
         cubit.stream,
@@ -141,7 +181,10 @@ void main() {
     });
 
     test('logout exitoso deja el estado en unauthenticated', () async {
-      final cubit = AuthSessionCubit(FakeSuccessAuthRepository());
+      final cubit = AuthSessionCubit(
+        FakeSuccessAuthRepository(),
+        _NoopFeatureLogger(),
+      );
       cubit.setAuthenticated(
         const AppUser(id: '123', email: 'test@test.com', role: 'customer'),
       );

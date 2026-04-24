@@ -9,6 +9,7 @@ import 'package:autolab_customer/core/location/location_flow_recovery_service.da
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/location/location_state.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -26,6 +27,8 @@ class MockLocationFlowRecoveryService extends Mock
 
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
+class MockFeatureLogger extends Mock implements FeatureLogger {}
+
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
 
 void main() {
@@ -35,6 +38,7 @@ void main() {
     late MockLocationPlaceResolver placeResolver;
     late MockLocationFlowRecoveryService flowRecoveryService;
     late MockGlobalErrorHandler errorHandler;
+    late MockFeatureLogger featureLogger;
     late LocationCubit cubit;
 
     setUpAll(() {
@@ -47,10 +51,39 @@ void main() {
       placeResolver = MockLocationPlaceResolver();
       flowRecoveryService = MockLocationFlowRecoveryService();
       errorHandler = MockGlobalErrorHandler();
+      featureLogger = MockFeatureLogger();
 
       when(() => errorHandler.handle(any(), any())).thenReturn(
         const UnknownFailure(message: 'Ocurrió un error inesperado.'),
       );
+      when(
+        () => featureLogger.info(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => featureLogger.warn(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => featureLogger.error(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
       when(
         () => flowRecoveryService.consumePendingSettingsSync(),
       ).thenAnswer((_) async => false);
@@ -64,6 +97,7 @@ void main() {
         placeResolver,
         flowRecoveryService: flowRecoveryService,
         errorHandler: errorHandler,
+        featureLogger: featureLogger,
       );
     });
 

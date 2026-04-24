@@ -1,4 +1,5 @@
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
@@ -20,6 +21,7 @@ class AuthRepositoryImpl implements AuthRepository {
     this.loginAttemptService,
     this.sessionStorageService,
     this.sessionRecoveryService,
+    this.featureLogger,
   );
 
   final SupabaseClient client;
@@ -28,15 +30,28 @@ class AuthRepositoryImpl implements AuthRepository {
   final LoginAttemptService loginAttemptService;
   final AuthSessionStorageService sessionStorageService;
   final AuthSessionRecoveryService sessionRecoveryService;
+  final FeatureLogger featureLogger;
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
     final cleanEmail = _normalizeEmail(email);
     final cleanPassword = password.trim();
 
+    featureLogger.info(
+      feature: 'auth',
+      action: 'login_started',
+      context: {'email': cleanEmail},
+    );
+
     try {
       final blockFailure = await _getLoginBlockFailure(cleanEmail);
       if (blockFailure != null) {
+        featureLogger.warn(
+          feature: 'auth',
+          action: 'login_blocked',
+          code: blockFailure.code,
+          context: {'email': cleanEmail, 'uiKey': blockFailure.uiKey},
+        );
         return Left(blockFailure);
       }
 
@@ -66,6 +81,12 @@ class AuthRepositoryImpl implements AuthRepository {
     final cleanEmail = _normalizeEmail(email);
     final cleanPhone = phone.trim();
     final cleanPassword = password.trim();
+
+    featureLogger.info(
+      feature: 'auth',
+      action: 'register_started',
+      context: {'email': cleanEmail, 'phoneLength': cleanPhone.length},
+    );
 
     try {
       final precheckFailure = await _precheckRegister(
@@ -111,8 +132,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await client.auth.signOut();
       await sessionStorageService.clearSession();
+      featureLogger.info(feature: 'auth', action: 'repository_logout_succeeded');
       return const Right(unit);
     } catch (error, stackTrace) {
+      featureLogger.error(
+        feature: 'auth',
+        action: 'repository_logout_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return Left(globalErrorHandler.handle(error, stackTrace));
     }
   }
@@ -166,6 +194,12 @@ class AuthRepositoryImpl implements AuthRepository {
       role: role,
     );
     await loginAttemptService.registerSuccess(cleanEmail);
+
+    featureLogger.info(
+      feature: 'auth',
+      action: 'login_succeeded',
+      context: {'email': cleanEmail, 'userId': user.id, 'role': role},
+    );
 
     return Right(_buildAppUser(id: user.id, email: user.email, role: role));
   }
@@ -225,9 +259,24 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final networkFailure = _mapNetworkAuthException(error, stackTrace);
     if (networkFailure != null) {
+      featureLogger.warn(
+        feature: 'auth',
+        action: 'login_network_failed',
+        code: networkFailure.code,
+        context: {'email': cleanEmail, 'uiKey': networkFailure.uiKey},
+        error: error,
+        stackTrace: stackTrace,
+      );
       return Left(networkFailure);
     }
 
+    featureLogger.error(
+      feature: 'auth',
+      action: 'login_unhandled_auth_exception',
+      context: {'email': cleanEmail},
+      error: error,
+      stackTrace: stackTrace,
+    );
     return Left(globalErrorHandler.handle(error, stackTrace));
   }
 
@@ -252,6 +301,11 @@ class AuthRepositoryImpl implements AuthRepository {
       final message = error.message.toLowerCase();
 
       if (message.contains('invalid login credentials')) {
+        featureLogger.info(
+          feature: 'auth',
+          action: 'register_precheck_available',
+          context: {'email': cleanEmail},
+        );
         return null;
       }
 
@@ -297,9 +351,23 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final networkFailure = _mapNetworkAuthException(error, stackTrace);
     if (networkFailure != null) {
+      featureLogger.warn(
+        feature: 'auth',
+        action: 'register_network_failed',
+        code: networkFailure.code,
+        context: {'uiKey': networkFailure.uiKey},
+        error: error,
+        stackTrace: stackTrace,
+      );
       return Left(networkFailure);
     }
 
+    featureLogger.error(
+      feature: 'auth',
+      action: 'register_unhandled_auth_exception',
+      error: error,
+      stackTrace: stackTrace,
+    );
     return Left(globalErrorHandler.handle(error, stackTrace));
   }
 
@@ -366,8 +434,11 @@ class AuthRepositoryImpl implements AuthRepository {
     Object? error,
     StackTrace? stackTrace,
   }) {
-    globalErrorHandler.logger.w(
-      '[${errorItem.code}] ${errorItem.message}',
+    featureLogger.warn(
+      feature: 'auth',
+      action: 'domain_warning',
+      code: errorItem.code,
+      context: {'uiKey': errorItem.uiKey},
       error: error,
       stackTrace: stackTrace,
     );

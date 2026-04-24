@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/data/datasources/session_local_data_source.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/models/login_attempt_state.dart';
@@ -24,6 +25,8 @@ class MockGoTrueClient extends Mock implements GoTrueClient {}
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
 class MockAppLogger extends Mock implements AppLogger {}
+
+class MockFeatureLogger extends Mock implements FeatureLogger {}
 
 class MockSessionLocalDataSource extends Mock
     implements SessionLocalDataSource {}
@@ -49,6 +52,7 @@ void main() {
     late MockGoTrueClient mockGoTrueClient;
     late MockGlobalErrorHandler mockGlobalErrorHandler;
     late MockAppLogger mockAppLogger;
+    late MockFeatureLogger mockFeatureLogger;
     late MockSessionLocalDataSource mockSessionLocalDataSource;
     late MockUserRoleDataSource mockUserRoleDataSource;
     late MockLoginAttemptService mockLoginAttemptService;
@@ -62,6 +66,7 @@ void main() {
       mockGoTrueClient = MockGoTrueClient();
       mockGlobalErrorHandler = MockGlobalErrorHandler();
       mockAppLogger = MockAppLogger();
+      mockFeatureLogger = MockFeatureLogger();
       mockSessionLocalDataSource = MockSessionLocalDataSource();
       mockUserRoleDataSource = MockUserRoleDataSource();
       mockLoginAttemptService = MockLoginAttemptService();
@@ -73,6 +78,34 @@ void main() {
       when(() => mockAppLogger.i(any())).thenReturn(null);
       when(() => mockAppLogger.w(any())).thenReturn(null);
       when(() => mockAppLogger.e(any())).thenReturn(null);
+      when(
+        () => mockFeatureLogger.info(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => mockFeatureLogger.warn(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => mockFeatureLogger.error(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
 
       when(
         () => mockAppLogger.w(
@@ -143,7 +176,7 @@ void main() {
         client: mockSupabaseClient,
         sessionStorageService: sessionStorageService,
         userRoleDataSource: mockUserRoleDataSource,
-        errorHandler: mockGlobalErrorHandler,
+        featureLogger: mockFeatureLogger,
       );
 
       repository = AuthRepositoryImpl(
@@ -153,6 +186,7 @@ void main() {
         mockLoginAttemptService,
         sessionStorageService,
         sessionRecoveryService,
+        mockFeatureLogger,
       );
     });
 
@@ -251,7 +285,16 @@ void main() {
           expect(failure.uiKey, AuthErrorCatalog.invalidAuthResponse.uiKey);
         }, (_) => fail('Expected Left(Failure)'));
 
-        verify(() => mockAppLogger.w(any())).called(1);
+        verify(
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'domain_warning',
+            code: AuthErrorCatalog.invalidAuthResponse.code,
+            context: {'uiKey': AuthErrorCatalog.invalidAuthResponse.uiKey},
+            error: any(named: 'error'),
+            stackTrace: any(named: 'stackTrace'),
+          ),
+        ).called(1);
       });
 
       test('retorna Left cuando credenciales son inválidas', () async {
@@ -305,8 +348,11 @@ void main() {
           expect(failure.uiKey, AuthErrorCatalog.unconfirmedEmail.uiKey);
         }, (_) => fail('Debería ser Left'));
         verify(
-          () => mockAppLogger.w(
-            any(),
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'domain_warning',
+            code: AuthErrorCatalog.unconfirmedEmail.code,
+            context: {'uiKey': AuthErrorCatalog.unconfirmedEmail.uiKey},
             error: authException,
             stackTrace: any(named: 'stackTrace'),
           ),
@@ -651,7 +697,16 @@ void main() {
           expect(failure.uiKey, AuthErrorCatalog.invalidRegisterResponse.uiKey);
         }, (_) => fail('Expected Left(Failure)'));
 
-        verify(() => mockAppLogger.w(any())).called(1);
+        verify(
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'domain_warning',
+            code: AuthErrorCatalog.invalidRegisterResponse.code,
+            context: {'uiKey': AuthErrorCatalog.invalidRegisterResponse.uiKey},
+            error: any(named: 'error'),
+            stackTrace: any(named: 'stackTrace'),
+          ),
+        ).called(1);
       });
 
       test(
@@ -769,7 +824,14 @@ void main() {
           verify(
             () => mockSessionLocalDataSource.saveUserSession(captureAny()),
           ).called(1);
-          verify(() => mockAppLogger.i(any())).called(1);
+          verify(
+            () => mockFeatureLogger.info(
+              feature: 'auth',
+              action: 'restore_from_supabase_user_succeeded',
+              code: any(named: 'code'),
+              context: {'userId': 'user-123', 'role': UserRoles.customer},
+            ),
+          ).called(1);
         },
       );
 
@@ -805,7 +867,14 @@ void main() {
           expect(result.email, 'test@test.com');
           expect(result.role, UserRoles.customer);
 
-          verify(() => mockAppLogger.i(any())).called(greaterThanOrEqualTo(1));
+          verify(
+            () => mockFeatureLogger.info(
+              feature: 'auth',
+              action: 'restore_from_supabase_user_local_fallback',
+              code: any(named: 'code'),
+              context: {'userId': 'user-123'},
+            ),
+          ).called(1);
         },
       );
 
@@ -887,8 +956,13 @@ void main() {
 
         expect(result, isNull);
         verify(
-          () => mockAppLogger.w(
-            any(),
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'recover_from_local_parse_failed',
+            code: AuthErrorCatalog.localSessionRecoveryFailed.code,
+            context: {
+              'uiKey': AuthErrorCatalog.localSessionRecoveryFailed.uiKey,
+            },
             error: any(named: 'error'),
             stackTrace: any(named: 'stackTrace'),
           ),

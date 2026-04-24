@@ -8,6 +8,7 @@ import 'package:autolab_customer/core/location/location_cubit.dart';
 import 'package:autolab_customer/core/location/location_flow_recovery_service.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
@@ -34,6 +35,8 @@ class MockLocationFlowRecoveryService extends Mock
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
 class MockAppLogger extends Mock implements AppLogger {}
+
+class MockFeatureLogger extends Mock implements FeatureLogger {}
 
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
 
@@ -72,6 +75,7 @@ void main() {
     late MockLocationFlowRecoveryService flowRecoveryService;
     late MockGlobalErrorHandler errorHandler;
     late MockAppLogger logger;
+    late MockFeatureLogger featureLogger;
     late AuthSessionCubit authSessionCubit;
     late LocationCubit locationCubit;
 
@@ -86,9 +90,41 @@ void main() {
       flowRecoveryService = MockLocationFlowRecoveryService();
       errorHandler = MockGlobalErrorHandler();
       logger = MockAppLogger();
-      authSessionCubit = AuthSessionCubit(_UnusedAuthRepository());
+      featureLogger = MockFeatureLogger();
+      authSessionCubit = AuthSessionCubit(
+        _UnusedAuthRepository(),
+        featureLogger,
+      );
 
       when(() => errorHandler.logger).thenReturn(logger);
+      when(
+        () => featureLogger.info(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => featureLogger.warn(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => featureLogger.error(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
       when(() => errorHandler.handle(any(), any())).thenReturn(
         const UnknownFailure(message: 'Ocurrió un error inesperado.'),
       );
@@ -108,6 +144,7 @@ void main() {
         placeResolver,
         flowRecoveryService: flowRecoveryService,
         errorHandler: errorHandler,
+        featureLogger: featureLogger,
       );
     });
 

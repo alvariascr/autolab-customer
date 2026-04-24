@@ -17,6 +17,7 @@ import '../location/location_flow_recovery_service.dart';
 import '../location/location_permission_client.dart';
 import '../location/location_permission_service.dart';
 import '../location/location_place_resolver.dart';
+import '../logging/feature_logger.dart';
 
 final GetIt sl = CoreDI.instance;
 
@@ -34,6 +35,7 @@ Future<void> _registerExternalDependencies() async {
   final prefs = await SharedPreferences.getInstance();
 
   sl.registerSingleton<SharedPreferences>(prefs);
+  sl.registerLazySingleton<FeatureLogger>(() => FeatureLogger(sl<AppLogger>()));
   sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   sl.registerLazySingleton<GeolocatorClient>(DefaultGeolocatorClient.new);
   sl.registerLazySingleton<GeocodingClient>(DefaultGeocodingClient.new);
@@ -62,6 +64,7 @@ Future<void> _registerExternalDependencies() async {
       sl<LocationPlaceResolver>(),
       flowRecoveryService: sl<LocationFlowRecoveryService>(),
       errorHandler: sl<GlobalErrorHandler>(),
+      featureLogger: sl<FeatureLogger>(),
     ),
   );
 }
@@ -75,7 +78,10 @@ void _registerFeatureDependencies() {
     () => WorkshopRepositoryImpl(
       remoteDataSource: sl<WorkshopRemoteDataSource>(),
       errorHandler: sl<GlobalErrorHandler>(),
+      featureLogger: sl<FeatureLogger>(),
     ),
   );
-  sl.registerFactory<MapCubit>(() => MapCubit(sl<WorkshopRepository>()));
+  sl.registerFactory<MapCubit>(
+    () => MapCubit(sl<WorkshopRepository>(), sl<FeatureLogger>()),
+  );
 }

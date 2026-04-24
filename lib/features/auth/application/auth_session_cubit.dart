@@ -1,17 +1,25 @@
 import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/logging/feature_logger.dart';
 import '../domain/entities/app_user.dart';
 import '../domain/errors/auth_error_catalog.dart';
 import '../repository/auth_repository.dart';
 import 'auth_session_state.dart';
 
 class AuthSessionCubit extends Cubit<AuthSessionState> {
-  AuthSessionCubit(this._repository) : super(const AuthSessionState.initial());
+  AuthSessionCubit(this._repository, this._featureLogger)
+    : super(const AuthSessionState.initial());
 
   final AuthRepository _repository;
+  final FeatureLogger _featureLogger;
 
   Future<void> restoreSession() async {
+    _featureLogger.info(
+      feature: 'auth',
+      action: 'restore_session_started',
+    );
+
     emit(
       state.copyWith(
         status: AuthSessionStatus.loading,
@@ -24,6 +32,10 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
     try {
       final user = await _repository.getCurrentUser();
       if (user == null) {
+        _featureLogger.info(
+          feature: 'auth',
+          action: 'restore_session_empty',
+        );
         emit(
           state.copyWith(
             status: AuthSessionStatus.unauthenticated,
@@ -36,11 +48,25 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
         return;
       }
 
+      _featureLogger.info(
+        feature: 'auth',
+        action: 'restore_session_succeeded',
+        context: {'role': user.role, 'userId': user.id},
+      );
       setAuthenticated(user);
     } catch (error, stackTrace) {
       final failure = UnknownFailure.fromErrorItem(
         AuthErrorCatalog.sessionRestoreFailed,
         cause: error,
+        stackTrace: stackTrace,
+      );
+
+      _featureLogger.error(
+        feature: 'auth',
+        action: 'restore_session_failed',
+        code: failure.code,
+        context: {'uiKey': failure.uiKey},
+        error: error,
         stackTrace: stackTrace,
       );
 
@@ -71,6 +97,12 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
   Future<void> logout() async {
     final previousState = state;
 
+    _featureLogger.info(
+      feature: 'auth',
+      action: 'logout_started',
+      context: {'wasAuthenticated': previousState.isAuthenticated},
+    );
+
     emit(
       state.copyWith(
         status: AuthSessionStatus.loading,
@@ -84,6 +116,15 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
 
     result.fold(
       (Failure failure) {
+        _featureLogger.warn(
+          feature: 'auth',
+          action: 'logout_failed',
+          code: failure.code,
+          context: {'uiKey': failure.uiKey},
+          error: failure.cause,
+          stackTrace: failure.stackTrace,
+        );
+
         if (previousState.isAuthenticated) {
           emit(
             previousState.copyWith(
@@ -106,6 +147,10 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
         );
       },
       (_) {
+        _featureLogger.info(
+          feature: 'auth',
+          action: 'logout_succeeded',
+        );
         emit(const AuthSessionState(status: AuthSessionStatus.unauthenticated));
       },
     );

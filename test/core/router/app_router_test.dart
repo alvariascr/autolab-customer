@@ -1,4 +1,5 @@
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/core/router/app_router.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
@@ -34,13 +35,46 @@ class _UnusedAuthRepository implements AuthRepository {
   }
 }
 
+class _NoopFeatureLogger extends Fake implements FeatureLogger {
+  @override
+  void info({
+    required String feature,
+    required String action,
+    String? code,
+    Map<String, Object?> context = const {},
+  }) {}
+
+  @override
+  void warn({
+    required String feature,
+    required String action,
+    String? code,
+    Map<String, Object?> context = const {},
+    Object? error,
+    StackTrace? stackTrace,
+  }) {}
+
+  @override
+  void error({
+    required String feature,
+    required String action,
+    String? code,
+    Map<String, Object?> context = const {},
+    Object? error,
+    StackTrace? stackTrace,
+  }) {}
+}
+
 void main() {
   group('AppRouter.redirectFor', () {
     late AuthSessionCubit authSessionCubit;
     late AppRouter appRouter;
 
     setUp(() {
-      authSessionCubit = AuthSessionCubit(_UnusedAuthRepository());
+      authSessionCubit = AuthSessionCubit(
+        _UnusedAuthRepository(),
+        _NoopFeatureLogger(),
+      );
       appRouter = AppRouter(authSessionCubit);
     });
 
