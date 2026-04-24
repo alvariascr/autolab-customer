@@ -23,8 +23,11 @@ jobs:
         with:
           repository: BlueZoneCP/autolab-core
           ref: codex/core-architecture-cleanup
-          path: ../autolab_core
+          path: autolab_core
           token: ${{ secrets.AUTOLAB_CORE_READ_TOKEN }}
+
+      - name: Link autolab_core for path dependency
+        run: ln -s "$GITHUB_WORKSPACE/autolab_core" ../autolab_core
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
