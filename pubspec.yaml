@@ -30,7 +30,7 @@ dependencies:
   # Foundation package
   autolab_core:
    git:
-    url: https://github.com/<ORG_O_USUARIO>/autolab_core.git
+    url: https://github.com/BlueZoneCP/autolab-core
     ref: codex/core-architecture-cleanup  
 
   # Navigation
