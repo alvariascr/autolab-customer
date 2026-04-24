@@ -28,10 +28,10 @@ dependencies:
   url_launcher: ^6.3.0
 
   # Foundation package
-  autolab_core:
-   git:
-    url: https://github.com/BlueZoneCP/autolab-core
-    ref: codex/core-architecture-cleanup  
+autolab_core:
+  git:
+    url: https://github.com/BlueZoneCP/autolab-core.git
+    ref: codex/core-architecture-cleanup
 
   # Navigation
   go_router: ^14.2.7
