@@ -1,3 +1,5 @@
+import 'package:autolab_core/autolab_core.dart';
+import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/logging/feature_logger.dart';
@@ -23,7 +25,9 @@ class AuthSessionRecoveryService {
   final UserRoleDataSource _userRoleDataSource;
   final FeatureLogger _featureLogger;
 
-  Future<AppUser?> restoreFromSupabaseUser(User supabaseUser) async {
+  Future<Either<Failure, AppUser?>> restoreFromSupabaseUser(
+    User supabaseUser,
+  ) async {
     try {
       final role = await _userRoleDataSource.getUserRole(supabaseUser.id);
       await _sessionStorageService.saveUserSession(
@@ -38,40 +42,51 @@ class AuthSessionRecoveryService {
         context: {'userId': supabaseUser.id, 'role': role},
       );
 
-      return _buildAppUser(
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        role: role,
+      return Right(
+        _buildAppUser(
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          role: role,
+        ),
       );
     } catch (error, stackTrace) {
       final localSession = await recoverFromLocal();
 
-      if (localSession != null && localSession.id == supabaseUser.id) {
-        _featureLogger.info(
-          feature: 'auth',
-          action: 'restore_from_supabase_user_local_fallback',
-          context: {'userId': supabaseUser.id},
-        );
-        return localSession;
+      if (localSession.isRight()) {
+        final recoveredUser = localSession.getOrElse(() => null);
+        if (recoveredUser != null && recoveredUser.id == supabaseUser.id) {
+          _featureLogger.info(
+            feature: 'auth',
+            action: 'restore_from_supabase_user_local_fallback',
+            context: {'userId': supabaseUser.id},
+          );
+          return Right(recoveredUser);
+        }
       }
+
+      final failure = AuthFailure.fromErrorItem(
+        AuthErrorCatalog.sessionRestoreFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
 
       _featureLogger.error(
         feature: 'auth',
         action: 'restore_from_supabase_user_failed',
-        code: AuthErrorCatalog.sessionRestoreFailed.code,
+        code: failure.code,
         context: {
-          'uiKey': AuthErrorCatalog.sessionRestoreFailed.uiKey,
+          'uiKey': failure.uiKey,
           'userId': supabaseUser.id,
         },
         error: error,
         stackTrace: stackTrace,
       );
 
-      return null;
+      return Left(failure);
     }
   }
 
-  Future<AppUser?> restoreFromRefreshToken() async {
+  Future<Either<Failure, AppUser?>> restoreFromRefreshToken() async {
     try {
       final refreshToken = await _sessionStorageService.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) {
@@ -79,7 +94,7 @@ class AuthSessionRecoveryService {
           feature: 'auth',
           action: 'restore_from_refresh_token_empty',
         );
-        return null;
+        return const Right(null);
       }
 
       final response = await _client.auth.setSession(refreshToken);
@@ -87,13 +102,16 @@ class AuthSessionRecoveryService {
       final user = response.user;
 
       if (session == null || user == null) {
+        final failure = AuthFailure.fromErrorItem(
+          AuthErrorCatalog.sessionRestoreFailed,
+        );
         _featureLogger.warn(
           feature: 'auth',
           action: 'restore_from_refresh_token_invalid_response',
-          code: AuthErrorCatalog.sessionRestoreFailed.code,
-          context: {'uiKey': AuthErrorCatalog.sessionRestoreFailed.uiKey},
+          code: failure.code,
+          context: {'uiKey': failure.uiKey},
         );
-        return null;
+        return Left(failure);
       }
 
       await _sessionStorageService.persistSessionTokens(session);
@@ -104,46 +122,61 @@ class AuthSessionRecoveryService {
       );
       return restoreFromSupabaseUser(user);
     } on AuthException catch (error, stackTrace) {
+      final failure = AuthFailure.fromErrorItem(
+        AuthErrorCatalog.sessionRestoreFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
       _featureLogger.warn(
         feature: 'auth',
         action: 'restore_from_refresh_token_auth_exception',
-        code: AuthErrorCatalog.sessionRestoreFailed.code,
-        context: {'uiKey': AuthErrorCatalog.sessionRestoreFailed.uiKey},
+        code: failure.code,
+        context: {'uiKey': failure.uiKey},
         error: error,
         stackTrace: stackTrace,
       );
-      return null;
+      return Left(failure);
     } catch (error, stackTrace) {
+      final failure = UnknownFailure.fromErrorItem(
+        AuthErrorCatalog.sessionRestoreFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
       _featureLogger.warn(
         feature: 'auth',
         action: 'restore_from_refresh_token_failed',
-        code: AuthErrorCatalog.sessionRestoreFailed.code,
-        context: {'uiKey': AuthErrorCatalog.sessionRestoreFailed.uiKey},
+        code: failure.code,
+        context: {'uiKey': failure.uiKey},
         error: error,
         stackTrace: stackTrace,
       );
-      return null;
+      return Left(failure);
     }
   }
 
-  Future<AppUser?> recoverFromLocal() async {
+  Future<Either<Failure, AppUser?>> recoverFromLocal() async {
     String? sessionJson;
     try {
       sessionJson = await _sessionStorageService.getUserSession();
     } catch (error, stackTrace) {
+      final failure = AuthFailure.fromErrorItem(
+        AuthErrorCatalog.localSessionRecoveryFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
       _featureLogger.warn(
         feature: 'auth',
         action: 'recover_from_local_read_failed',
-        code: AuthErrorCatalog.localSessionRecoveryFailed.code,
-        context: {'uiKey': AuthErrorCatalog.localSessionRecoveryFailed.uiKey},
+        code: failure.code,
+        context: {'uiKey': failure.uiKey},
         error: error,
         stackTrace: stackTrace,
       );
-      return null;
+      return Left(failure);
     }
 
     if (sessionJson == null || sessionJson.isEmpty) {
-      return null;
+      return const Right(null);
     }
 
     try {
@@ -156,20 +189,26 @@ class AuthSessionRecoveryService {
           action: 'recover_from_local_succeeded',
           context: {'userId': storedUser.id, 'role': storedUser.role},
         );
-        return storedUser;
+        return Right(storedUser);
       }
     } catch (error, stackTrace) {
+      final failure = AuthFailure.fromErrorItem(
+        AuthErrorCatalog.localSessionRecoveryFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
       _featureLogger.warn(
         feature: 'auth',
         action: 'recover_from_local_parse_failed',
-        code: AuthErrorCatalog.localSessionRecoveryFailed.code,
-        context: {'uiKey': AuthErrorCatalog.localSessionRecoveryFailed.uiKey},
+        code: failure.code,
+        context: {'uiKey': failure.uiKey},
         error: error,
         stackTrace: stackTrace,
       );
+      return Left(failure);
     }
 
-    return null;
+    return const Right(null);
   }
 
   AppUser _buildAppUser({

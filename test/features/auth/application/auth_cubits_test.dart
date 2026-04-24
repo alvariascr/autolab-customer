@@ -33,8 +33,8 @@ class FakeSuccessAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> getCurrentUser() async {
-    return null;
+  Future<Either<Failure, AppUser?>> getCurrentUser() async {
+    return const Right(null);
   }
 }
 
@@ -90,8 +90,8 @@ class FakeFailureAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> getCurrentUser() async {
-    return null;
+  Future<Either<Failure, AppUser?>> getCurrentUser() async {
+    return const Right(null);
   }
 }
 
@@ -117,8 +117,43 @@ class FakeRestoreSessionAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> getCurrentUser() async {
-    return const AppUser(id: '123', email: 'test@test.com', role: 'customer');
+  Future<Either<Failure, AppUser?>> getCurrentUser() async {
+    return const Right(
+      AppUser(id: '123', email: 'test@test.com', role: 'customer'),
+    );
+  }
+}
+
+class FakeRestoreSessionFailureAuthRepository implements AuthRepository {
+  @override
+  Future<Either<Failure, AppUser>> login(String email, String password) async {
+    return Right(AppUser(id: '123', email: email, role: 'customer'));
+  }
+
+  @override
+  Future<Either<Failure, AppUser>> register(
+    String name,
+    String email,
+    String phone,
+    String password,
+  ) async {
+    return Right(AppUser(id: '123', email: email, role: 'customer'));
+  }
+
+  @override
+  Future<Either<Failure, Unit>> logout() async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, AppUser?>> getCurrentUser() async {
+    return Left(
+      AuthFailure(
+        message: 'AUTH_011',
+        code: 'AUTH_011',
+        uiKey: 'authErrorSessionRestoreFailed',
+      ),
+    );
   }
 }
 
@@ -171,6 +206,30 @@ void main() {
             status: AuthSessionStatus.authenticated,
             userId: '123',
             role: 'customer',
+          ),
+        ]),
+      );
+      cubit.restoreSession();
+      await expectation;
+
+      await cubit.close();
+    });
+
+    test('restore session fallida conserva el failure en estado', () async {
+      final cubit = AuthSessionCubit(
+        FakeRestoreSessionFailureAuthRepository(),
+        _NoopFeatureLogger(),
+      );
+
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([
+          const AuthSessionState(status: AuthSessionStatus.loading),
+          const AuthSessionState(
+            status: AuthSessionStatus.unauthenticated,
+            message: 'AUTH_011',
+            code: 'AUTH_011',
+            uiKey: 'authErrorSessionRestoreFailed',
           ),
         ]),
       );

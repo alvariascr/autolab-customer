@@ -816,10 +816,13 @@ void main() {
 
           final result = await repository.getCurrentUser();
 
-          expect(result, isNotNull);
-          expect(result!.id, 'user-123');
-          expect(result.email, 'test@test.com');
-          expect(result.role, UserRoles.customer);
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Expected Right(AppUser?)'), (user) {
+            expect(user, isNotNull);
+            expect(user!.id, 'user-123');
+            expect(user.email, 'test@test.com');
+            expect(user.role, UserRoles.customer);
+          });
 
           verify(
             () => mockSessionLocalDataSource.saveUserSession(captureAny()),
@@ -862,10 +865,13 @@ void main() {
 
           final result = await repository.getCurrentUser();
 
-          expect(result, isNotNull);
-          expect(result!.id, 'user-123');
-          expect(result.email, 'test@test.com');
-          expect(result.role, UserRoles.customer);
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Expected Right(AppUser?)'), (user) {
+            expect(user, isNotNull);
+            expect(user!.id, 'user-123');
+            expect(user.email, 'test@test.com');
+            expect(user.role, UserRoles.customer);
+          });
 
           verify(
             () => mockFeatureLogger.info(
@@ -905,10 +911,13 @@ void main() {
 
           final result = await repository.getCurrentUser();
 
-          expect(result, isNotNull);
-          expect(result!.id, 'user-123');
-          expect(result.email, 'test@test.com');
-          expect(result.role, UserRoles.customer);
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Expected Right(AppUser?)'), (user) {
+            expect(user, isNotNull);
+            expect(user!.id, 'user-123');
+            expect(user.email, 'test@test.com');
+            expect(user.role, UserRoles.customer);
+          });
 
           verify(
             () => mockGoTrueClient.setSession('refresh-token-123'),
@@ -933,7 +942,7 @@ void main() {
 
         final result = await repository.getCurrentUser();
 
-        expect(result, isNull);
+        expect(result, const Right<Failure, AppUser?>(null));
       });
       test('returns null when local session is invalid', () async {
         when(() => mockGoTrueClient.currentUser).thenReturn(null);
@@ -943,10 +952,10 @@ void main() {
 
         final result = await repository.getCurrentUser();
 
-        expect(result, isNull);
+        expect(result, const Right<Failure, AppUser?>(null));
       });
 
-      test('returns null when local session JSON is malformed', () async {
+      test('returns Left when local session JSON is malformed', () async {
         when(() => mockGoTrueClient.currentUser).thenReturn(null);
         when(
           () => mockSessionLocalDataSource.getUserSession(),
@@ -954,7 +963,17 @@ void main() {
 
         final result = await repository.getCurrentUser();
 
-        expect(result, isNull);
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(
+            failure.code,
+            AuthErrorCatalog.localSessionRecoveryFailed.code,
+          );
+          expect(
+            failure.uiKey,
+            AuthErrorCatalog.localSessionRecoveryFailed.uiKey,
+          );
+        }, (_) => fail('Expected Left(Failure)'));
         verify(
           () => mockFeatureLogger.warn(
             feature: 'auth',

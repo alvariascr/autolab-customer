@@ -42,7 +42,7 @@ class FakeCurrentLocation extends Fake implements CurrentLocation {}
 
 class _UnusedAuthRepository implements AuthRepository {
   @override
-  Future<AppUser?> getCurrentUser() {
+  Future<Either<Failure, AppUser?>> getCurrentUser() {
     throw UnimplementedError();
   }
 

@@ -146,7 +146,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> getCurrentUser() async {
+  Future<Either<Failure, AppUser?>> getCurrentUser() async {
     final supabaseUser = client.auth.currentUser;
 
     if (supabaseUser != null) {
@@ -154,9 +154,15 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     final restoredUser = await sessionRecoveryService.restoreFromRefreshToken();
-    if (restoredUser != null) {
+    if (restoredUser.isLeft()) {
       return restoredUser;
     }
+
+    final recoveredUser = restoredUser.getOrElse(() => null);
+    if (recoveredUser != null) {
+      return Right(recoveredUser);
+    }
+
     return sessionRecoveryService.recoverFromLocal();
   }
 
