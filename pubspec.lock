@@ -60,11 +60,9 @@ packages:
   autolab_core:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "codex/core-architecture-cleanup"
-      resolved-ref: "5075e43ee2c27f4e007b85ab2944190f9aa73232"
-      url: "https://github.com/BlueZoneCP/autolab-core.git"
-    source: git
+      path: "../autolab_core"
+      relative: true
+    source: path
     version: "0.1.0"
   bloc:
     dependency: transitive

@@ -18,6 +18,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout autolab_core
+        uses: actions/checkout@v4
+        with:
+          repository: BlueZoneCP/autolab-core
+          ref: codex/core-architecture-cleanup
+          path: ../autolab_core
+          token: ${{ secrets.AUTOLAB_CORE_READ_TOKEN }}
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
