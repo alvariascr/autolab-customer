@@ -13,11 +13,7 @@ class FeatureLogger {
     'refreshtoken',
     'authorization',
   };
-  static const _maskedIdentifierKeys = {
-    'email',
-    'userid',
-    'user_id',
-  };
+  static const _maskedIdentifierKeys = {'email', 'userid', 'user_id'};
 
   void info({
     required String feature,
@@ -73,7 +69,9 @@ class FeatureLogger {
     if (context.isNotEmpty) {
       final formattedContext = context.entries
           .where((entry) => entry.value != null)
-          .map((entry) => '${entry.key}=${_sanitizeValue(entry.key, entry.value)}')
+          .map(
+            (entry) => '${entry.key}=${_sanitizeValue(entry.key, entry.value)}',
+          )
           .join(' ');
 
       if (formattedContext.isNotEmpty) {

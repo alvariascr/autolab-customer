@@ -25,10 +25,7 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
   @override
   Future<Either<Failure, List<Workshop>>> getWorkshops() async {
     try {
-      featureLogger.info(
-        feature: 'workshops',
-        action: 'get_workshops_started',
-      );
+      featureLogger.info(feature: 'workshops', action: 'get_workshops_started');
       final workshops = await remoteDataSource.getWorkshops();
       featureLogger.info(
         feature: 'workshops',
@@ -50,9 +47,7 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
         error: error,
         stackTrace: stackTrace,
       );
-      return Left(
-        failure,
-      );
+      return Left(failure);
     } on SocketException catch (error, stackTrace) {
       final failure = NetworkFailure.fromErrorItem(
         CustomerErrorCatalog.workshopNetworkError,
@@ -67,9 +62,7 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
         error: error,
         stackTrace: stackTrace,
       );
-      return Left(
-        failure,
-      );
+      return Left(failure);
     } on PostgrestException catch (error, stackTrace) {
       final failure = ServerFailure.fromErrorItem(
         CustomerErrorCatalog.workshopLoadFailed,
@@ -84,9 +77,7 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
         error: error,
         stackTrace: stackTrace,
       );
-      return Left(
-        failure,
-      );
+      return Left(failure);
     } catch (error, stackTrace) {
       final failure = errorHandler.handle(error, stackTrace);
       featureLogger.error(

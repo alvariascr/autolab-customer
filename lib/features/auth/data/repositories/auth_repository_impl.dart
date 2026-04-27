@@ -132,7 +132,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await client.auth.signOut();
       await sessionStorageService.clearSession();
-      featureLogger.info(feature: 'auth', action: 'repository_logout_succeeded');
+      featureLogger.info(
+        feature: 'auth',
+        action: 'repository_logout_succeeded',
+      );
       return const Right(unit);
     } catch (error, stackTrace) {
       featureLogger.error(

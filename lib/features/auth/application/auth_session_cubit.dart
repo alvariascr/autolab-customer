@@ -14,10 +14,7 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
   final FeatureLogger _featureLogger;
 
   Future<void> restoreSession() async {
-    _featureLogger.info(
-      feature: 'auth',
-      action: 'restore_session_started',
-    );
+    _featureLogger.info(feature: 'auth', action: 'restore_session_started');
 
     emit(
       state.copyWith(
@@ -53,10 +50,7 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
       },
       (user) {
         if (user == null) {
-          _featureLogger.info(
-            feature: 'auth',
-            action: 'restore_session_empty',
-          );
+          _featureLogger.info(feature: 'auth', action: 'restore_session_empty');
           emit(
             state.copyWith(
               status: AuthSessionStatus.unauthenticated,
@@ -144,10 +138,7 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
         );
       },
       (_) {
-        _featureLogger.info(
-          feature: 'auth',
-          action: 'logout_succeeded',
-        );
+        _featureLogger.info(feature: 'auth', action: 'logout_succeeded');
         emit(const AuthSessionState(status: AuthSessionStatus.unauthenticated));
       },
     );
@@ -158,12 +149,6 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
       return;
     }
 
-    emit(
-      state.copyWith(
-        clearMessage: true,
-        clearCode: true,
-        clearUiKey: true,
-      ),
-    );
+    emit(state.copyWith(clearMessage: true, clearCode: true, clearUiKey: true));
   }
 }

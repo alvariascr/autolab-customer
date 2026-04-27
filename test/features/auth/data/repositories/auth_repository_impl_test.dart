@@ -380,7 +380,9 @@ void main() {
             expect(failure.uiKey, ErrorCatalog.networkUnavailable.uiKey);
           }, (_) => fail('Debería ser Left'));
 
-          verifyNever(() => mockGlobalErrorHandler.handle(authException, any()));
+          verifyNever(
+            () => mockGlobalErrorHandler.handle(authException, any()),
+          );
         },
       );
 
@@ -405,7 +407,9 @@ void main() {
             expect(failure.uiKey, ErrorCatalog.requestTimeout.uiKey);
           }, (_) => fail('Debería ser Left'));
 
-          verifyNever(() => mockGlobalErrorHandler.handle(authException, any()));
+          verifyNever(
+            () => mockGlobalErrorHandler.handle(authException, any()),
+          );
         },
       );
 

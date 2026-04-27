@@ -74,10 +74,7 @@ class AuthSessionRecoveryService {
         feature: 'auth',
         action: 'restore_from_supabase_user_failed',
         code: failure.code,
-        context: {
-          'uiKey': failure.uiKey,
-          'userId': supabaseUser.id,
-        },
+        context: {'uiKey': failure.uiKey, 'userId': supabaseUser.id},
         error: error,
         stackTrace: stackTrace,
       );
