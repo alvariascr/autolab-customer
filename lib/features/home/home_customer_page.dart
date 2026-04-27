@@ -194,7 +194,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     if (index == 2) {
       setState(() {
         _currentIndex = 2;
-        _showSearchBar = !_showSearchBar;
+        _showSearchBar = true;
       });
       return;
     }
@@ -205,6 +205,13 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     });
 
     NavigationHandler.handle(context, index);
+  }
+
+  void _closeSearch() {
+    setState(() {
+      _currentIndex = 0;
+      _showSearchBar = false;
+    });
   }
 
   @override
@@ -235,6 +242,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             proximityFilter: _workshopProximityFilter,
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
+            onSearchClose: _closeSearch,
             workshopFailure: workshopFailure,
           );
         },

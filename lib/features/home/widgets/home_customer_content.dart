@@ -6,6 +6,7 @@ import '../../../core/location/location_cubit.dart';
 import '../../../core/location/location_state.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
+import '../../workshops/domain/services/workshop_search_location_resolver.dart';
 import '../../workshops/presentation/workshop_empty_state_resolver.dart';
 import 'delivery_location_card.dart';
 import 'search_bar_overlay.dart';
@@ -21,6 +22,7 @@ class HomeCustomerContent extends StatelessWidget {
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.onLocationTap,
+    required this.onSearchClose,
     this.workshopFailure,
   });
 
@@ -31,7 +33,10 @@ class HomeCustomerContent extends StatelessWidget {
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
+  final VoidCallback onSearchClose;
   final Failure? workshopFailure;
+
+  static const _searchLocationResolver = WorkshopSearchLocationResolver();
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +79,22 @@ class HomeCustomerContent extends StatelessWidget {
             ),
           ),
         ),
-        SearchBarOverlay(
-          showSearchBar: showSearchBar,
-          controller: searchController,
+        BlocBuilder<LocationCubit, LocationState>(
+          builder: (context, state) {
+            final searchLocation = _searchLocationResolver.resolve(
+              state.location,
+            );
+
+            return SearchBarOverlay(
+              showSearchBar: showSearchBar,
+              controller: searchController,
+              workshops: workshops,
+              currentLocation: searchLocation,
+              isLoading: isWorkshopsLoading,
+              workshopFailure: workshopFailure,
+              onClose: onSearchClose,
+            );
+          },
         ),
       ],
     );

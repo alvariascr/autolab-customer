@@ -60,6 +60,11 @@ class WorkshopsSection extends StatelessWidget {
       workshops: workshops,
       currentLocation: searchLocation,
     );
+    final emptyMessage = emptyStateResolver.resolve(
+      locationState,
+      l10n: l10n,
+      isUsingFallbackLocation: isUsingFallbackLocation,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,11 +92,7 @@ class WorkshopsSection extends StatelessWidget {
           child: WorkshopsCarousel(
             workshops: nearbyWorkshops,
             currentLocation: searchLocation,
-            emptyMessage: emptyStateResolver.resolve(
-              locationState,
-              l10n: l10n,
-              isUsingFallbackLocation: isUsingFallbackLocation,
-            ),
+            emptyMessage: emptyMessage,
           ),
         ),
       ],

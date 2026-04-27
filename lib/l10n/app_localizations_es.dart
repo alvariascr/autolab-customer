@@ -250,6 +250,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchBarHint => 'Buscar talleres...';
 
   @override
+  String get workshopSearchClearTooltip => 'Limpiar búsqueda';
+
+  @override
+  String get workshopSearchTitle => 'Talleres';
+
+  @override
+  String get workshopSearchRecentTitle => 'Búsquedas recientes';
+
+  @override
+  String get workshopSearchSuggestedTitle => 'Búsquedas sugeridas';
+
+  @override
+  String get workshopSearchStartMessage =>
+      'Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.';
+
+  @override
+  String get workshopSearchNoResults =>
+      'No encontramos talleres que coincidan con tu búsqueda.';
+
+  @override
   String get adminHomeTitle => 'Panel administrativo';
 
   @override
