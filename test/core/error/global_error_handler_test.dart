@@ -40,8 +40,9 @@ void main() {
       final failure = handler.handle(error, stackTrace);
 
       expect(failure, isA<TimeoutFailure>());
-      expect(failure.message, ErrorCatalog.requestTimeout.message);
       expect(failure.code, ErrorCatalog.requestTimeout.code);
+      expect(failure.uiKey, ErrorCatalog.requestTimeout.uiKey);
+      expect(failure.message, ErrorCatalog.requestTimeout.code);
 
       await Future<void>.delayed(Duration.zero);
 
@@ -49,7 +50,7 @@ void main() {
       expect(crashReporter.capturedStackTrace, stackTrace);
       expect(
         crashReporter.capturedReason,
-        '[${ErrorCatalog.requestTimeout.code}] ${ErrorCatalog.requestTimeout.message}',
+        '[${ErrorCatalog.requestTimeout.code}] ${ErrorCatalog.requestTimeout.uiKey}',
       );
     });
   });
