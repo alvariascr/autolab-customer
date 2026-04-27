@@ -1,12 +1,17 @@
 import 'dart:convert';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
+import 'package:autolab_customer/features/auth/data/datasources/session_local_data_source.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/models/login_attempt_state.dart';
 import 'package:autolab_customer/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
 import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
 import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
+import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:autolab_customer/features/auth/domain/failures/auth_rate_limit_failure.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +25,8 @@ class MockGoTrueClient extends Mock implements GoTrueClient {}
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
 class MockAppLogger extends Mock implements AppLogger {}
+
+class MockFeatureLogger extends Mock implements FeatureLogger {}
 
 class MockSessionLocalDataSource extends Mock
     implements SessionLocalDataSource {}
@@ -45,10 +52,13 @@ void main() {
     late MockGoTrueClient mockGoTrueClient;
     late MockGlobalErrorHandler mockGlobalErrorHandler;
     late MockAppLogger mockAppLogger;
+    late MockFeatureLogger mockFeatureLogger;
     late MockSessionLocalDataSource mockSessionLocalDataSource;
     late MockUserRoleDataSource mockUserRoleDataSource;
     late MockLoginAttemptService mockLoginAttemptService;
     late MockSession mockSession;
+    late AuthSessionStorageService sessionStorageService;
+    late AuthSessionRecoveryService sessionRecoveryService;
     late AuthRepositoryImpl repository;
 
     setUp(() {
@@ -56,6 +66,7 @@ void main() {
       mockGoTrueClient = MockGoTrueClient();
       mockGlobalErrorHandler = MockGlobalErrorHandler();
       mockAppLogger = MockAppLogger();
+      mockFeatureLogger = MockFeatureLogger();
       mockSessionLocalDataSource = MockSessionLocalDataSource();
       mockUserRoleDataSource = MockUserRoleDataSource();
       mockLoginAttemptService = MockLoginAttemptService();
@@ -67,6 +78,34 @@ void main() {
       when(() => mockAppLogger.i(any())).thenReturn(null);
       when(() => mockAppLogger.w(any())).thenReturn(null);
       when(() => mockAppLogger.e(any())).thenReturn(null);
+      when(
+        () => mockFeatureLogger.info(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => mockFeatureLogger.warn(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => mockFeatureLogger.error(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
 
       when(
         () => mockAppLogger.w(
@@ -130,12 +169,24 @@ void main() {
       when(() => mockSession.accessToken).thenReturn('access-token-123');
       when(() => mockSession.refreshToken).thenReturn('refresh-token-123');
 
+      sessionStorageService = AuthSessionStorageService(
+        mockSessionLocalDataSource,
+      );
+      sessionRecoveryService = AuthSessionRecoveryService(
+        client: mockSupabaseClient,
+        sessionStorageService: sessionStorageService,
+        userRoleDataSource: mockUserRoleDataSource,
+        featureLogger: mockFeatureLogger,
+      );
+
       repository = AuthRepositoryImpl(
         mockSupabaseClient,
         mockGlobalErrorHandler,
-        mockSessionLocalDataSource,
         mockUserRoleDataSource,
         mockLoginAttemptService,
+        sessionStorageService,
+        sessionRecoveryService,
+        mockFeatureLogger,
       );
     });
 
@@ -229,11 +280,21 @@ void main() {
 
         result.fold((failure) {
           expect(failure, isA<AuthFailure>());
-          expect(failure.message, ErrorCatalog.invalidAuthResponse.message);
-          expect(failure.code, ErrorCatalog.invalidAuthResponse.code);
+          expect(failure.message, AuthErrorCatalog.invalidAuthResponse.code);
+          expect(failure.code, AuthErrorCatalog.invalidAuthResponse.code);
+          expect(failure.uiKey, AuthErrorCatalog.invalidAuthResponse.uiKey);
         }, (_) => fail('Expected Left(Failure)'));
 
-        verify(() => mockAppLogger.w(any())).called(1);
+        verify(
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'domain_warning',
+            code: AuthErrorCatalog.invalidAuthResponse.code,
+            context: {'uiKey': AuthErrorCatalog.invalidAuthResponse.uiKey},
+            error: any(named: 'error'),
+            stackTrace: any(named: 'stackTrace'),
+          ),
+        ).called(1);
       });
 
       test('retorna Left cuando credenciales son inválidas', () async {
@@ -262,8 +323,9 @@ void main() {
 
         result.fold((failure) {
           expect(failure, isA<Failure>());
-          expect(failure.message, ErrorCatalog.invalidCredentials.message);
-          expect(failure.code, ErrorCatalog.invalidCredentials.code);
+          expect(failure.message, AuthErrorCatalog.invalidCredentials.code);
+          expect(failure.code, AuthErrorCatalog.invalidCredentials.code);
+          expect(failure.uiKey, AuthErrorCatalog.invalidCredentials.uiKey);
         }, (_) => fail('Se esperaba Left(Failure)'));
       });
 
@@ -281,23 +343,82 @@ void main() {
 
         expect(result.isLeft(), true);
         result.fold((failure) {
-          expect(failure.message, ErrorCatalog.unconfirmedEmail.message);
-          expect(failure.code, ErrorCatalog.unconfirmedEmail.code);
+          expect(failure.message, AuthErrorCatalog.unconfirmedEmail.code);
+          expect(failure.code, AuthErrorCatalog.unconfirmedEmail.code);
+          expect(failure.uiKey, AuthErrorCatalog.unconfirmedEmail.uiKey);
         }, (_) => fail('Debería ser Left'));
         verify(
-          () => mockAppLogger.w(
-            any(),
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'domain_warning',
+            code: AuthErrorCatalog.unconfirmedEmail.code,
+            context: {'uiKey': AuthErrorCatalog.unconfirmedEmail.uiKey},
             error: authException,
             stackTrace: any(named: 'stackTrace'),
           ),
         ).called(1);
       });
 
+      test(
+        'retorna Left(NetworkFailure) cuando Supabase devuelve un error de red',
+        () async {
+          const authException = AuthException('Failed host lookup');
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
+
+          final result = await repository.login('test@test.com', '123456');
+
+          expect(result.isLeft(), true);
+          result.fold((failure) {
+            expect(failure, isA<NetworkFailure>());
+            expect(failure.code, ErrorCatalog.networkUnavailable.code);
+            expect(failure.uiKey, ErrorCatalog.networkUnavailable.uiKey);
+          }, (_) => fail('Debería ser Left'));
+
+          verifyNever(
+            () => mockGlobalErrorHandler.handle(authException, any()),
+          );
+        },
+      );
+
+      test(
+        'retorna Left(TimeoutFailure-like) cuando Supabase devuelve timeout en auth',
+        () async {
+          const authException = AuthException('Request timed out');
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
+
+          final result = await repository.login('test@test.com', '123456');
+
+          expect(result.isLeft(), true);
+          result.fold((failure) {
+            expect(failure, isA<NetworkFailure>());
+            expect(failure.code, ErrorCatalog.requestTimeout.code);
+            expect(failure.uiKey, ErrorCatalog.requestTimeout.uiKey);
+          }, (_) => fail('Debería ser Left'));
+
+          verifyNever(
+            () => mockGlobalErrorHandler.handle(authException, any()),
+          );
+        },
+      );
+
       test('uses GlobalErrorHandler for unexpected errors', () async {
         final exception = Exception('random error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 
@@ -357,7 +478,7 @@ void main() {
 
           result.fold((failure) {
             expect(failure, isA<AuthRateLimitFailure>());
-            expect(failure.code, ErrorCatalog.authRateLimit.code);
+            expect(failure.code, AuthErrorCatalog.authRateLimit.code);
           }, (_) => fail('Expected Left(Failure)'));
         },
       );
@@ -380,8 +501,9 @@ void main() {
       test('returns Left(Failure) when signOut fails', () async {
         final exception = Exception('signout error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 
@@ -497,8 +619,9 @@ void main() {
 
           expect(result.isLeft(), true);
           result.fold((failure) {
-            expect(failure.message, ErrorCatalog.accountAlreadyExists.message);
-            expect(failure.code, ErrorCatalog.accountAlreadyExists.code);
+            expect(failure.message, AuthErrorCatalog.accountAlreadyExists.code);
+            expect(failure.code, AuthErrorCatalog.accountAlreadyExists.code);
+            expect(failure.uiKey, AuthErrorCatalog.accountAlreadyExists.uiKey);
           }, (_) => fail('Debería ser Left'));
           verify(() => mockGoTrueClient.signOut()).called(1);
         },
@@ -527,9 +650,16 @@ void main() {
           result.fold((failure) {
             expect(
               failure.message,
-              ErrorCatalog.emailNotConfirmedRegister.message,
+              AuthErrorCatalog.emailNotConfirmedRegister.code,
             );
-            expect(failure.code, ErrorCatalog.emailNotConfirmedRegister.code);
+            expect(
+              failure.code,
+              AuthErrorCatalog.emailNotConfirmedRegister.code,
+            );
+            expect(
+              failure.uiKey,
+              AuthErrorCatalog.emailNotConfirmedRegister.uiKey,
+            );
           }, (_) => fail('Debería ser Left'));
         },
       );
@@ -563,11 +693,24 @@ void main() {
 
         result.fold((failure) {
           expect(failure, isA<AuthFailure>());
-          expect(failure.message, ErrorCatalog.invalidRegisterResponse.message);
-          expect(failure.code, ErrorCatalog.invalidRegisterResponse.code);
+          expect(
+            failure.message,
+            AuthErrorCatalog.invalidRegisterResponse.code,
+          );
+          expect(failure.code, AuthErrorCatalog.invalidRegisterResponse.code);
+          expect(failure.uiKey, AuthErrorCatalog.invalidRegisterResponse.uiKey);
         }, (_) => fail('Expected Left(Failure)'));
 
-        verify(() => mockAppLogger.w(any())).called(1);
+        verify(
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'domain_warning',
+            code: AuthErrorCatalog.invalidRegisterResponse.code,
+            context: {'uiKey': AuthErrorCatalog.invalidRegisterResponse.uiKey},
+            error: any(named: 'error'),
+            stackTrace: any(named: 'stackTrace'),
+          ),
+        ).called(1);
       });
 
       test(
@@ -601,9 +744,13 @@ void main() {
           result.fold((failure) {
             expect(
               failure.message,
-              ErrorCatalog.emailAlreadyRegistered.message,
+              AuthErrorCatalog.emailAlreadyRegistered.code,
             );
-            expect(failure.code, ErrorCatalog.emailAlreadyRegistered.code);
+            expect(failure.code, AuthErrorCatalog.emailAlreadyRegistered.code);
+            expect(
+              failure.uiKey,
+              AuthErrorCatalog.emailAlreadyRegistered.uiKey,
+            );
           }, (_) => fail('Debería ser Left'));
         },
       );
@@ -611,8 +758,9 @@ void main() {
       test('uses GlobalErrorHandler for unexpected errors', () async {
         final exception = Exception('signup error');
         final mappedFailure = UnknownFailure(
-          message: ErrorCatalog.unknownError.message,
+          message: ErrorCatalog.unknownError.code,
           code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
         );
 
@@ -672,15 +820,25 @@ void main() {
 
           final result = await repository.getCurrentUser();
 
-          expect(result, isNotNull);
-          expect(result!.id, 'user-123');
-          expect(result.email, 'test@test.com');
-          expect(result.role, UserRoles.customer);
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Expected Right(AppUser?)'), (user) {
+            expect(user, isNotNull);
+            expect(user!.id, 'user-123');
+            expect(user.email, 'test@test.com');
+            expect(user.role, UserRoles.customer);
+          });
 
           verify(
             () => mockSessionLocalDataSource.saveUserSession(captureAny()),
           ).called(1);
-          verify(() => mockAppLogger.i(any())).called(1);
+          verify(
+            () => mockFeatureLogger.info(
+              feature: 'auth',
+              action: 'restore_from_supabase_user_succeeded',
+              code: any(named: 'code'),
+              context: {'userId': 'user-123', 'role': UserRoles.customer},
+            ),
+          ).called(1);
         },
       );
 
@@ -711,12 +869,22 @@ void main() {
 
           final result = await repository.getCurrentUser();
 
-          expect(result, isNotNull);
-          expect(result!.id, 'user-123');
-          expect(result.email, 'test@test.com');
-          expect(result.role, UserRoles.customer);
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Expected Right(AppUser?)'), (user) {
+            expect(user, isNotNull);
+            expect(user!.id, 'user-123');
+            expect(user.email, 'test@test.com');
+            expect(user.role, UserRoles.customer);
+          });
 
-          verify(() => mockAppLogger.i(any())).called(greaterThanOrEqualTo(1));
+          verify(
+            () => mockFeatureLogger.info(
+              feature: 'auth',
+              action: 'restore_from_supabase_user_local_fallback',
+              code: any(named: 'code'),
+              context: {'userId': 'user-123'},
+            ),
+          ).called(1);
         },
       );
 
@@ -747,10 +915,13 @@ void main() {
 
           final result = await repository.getCurrentUser();
 
-          expect(result, isNotNull);
-          expect(result!.id, 'user-123');
-          expect(result.email, 'test@test.com');
-          expect(result.role, UserRoles.customer);
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Expected Right(AppUser?)'), (user) {
+            expect(user, isNotNull);
+            expect(user!.id, 'user-123');
+            expect(user.email, 'test@test.com');
+            expect(user.role, UserRoles.customer);
+          });
 
           verify(
             () => mockGoTrueClient.setSession('refresh-token-123'),
@@ -775,9 +946,8 @@ void main() {
 
         final result = await repository.getCurrentUser();
 
-        expect(result, isNull);
+        expect(result, const Right<Failure, AppUser?>(null));
       });
-
       test('returns null when local session is invalid', () async {
         when(() => mockGoTrueClient.currentUser).thenReturn(null);
         when(
@@ -786,10 +956,10 @@ void main() {
 
         final result = await repository.getCurrentUser();
 
-        expect(result, isNull);
+        expect(result, const Right<Failure, AppUser?>(null));
       });
 
-      test('returns null when local session JSON is malformed', () async {
+      test('returns Left when local session JSON is malformed', () async {
         when(() => mockGoTrueClient.currentUser).thenReturn(null);
         when(
           () => mockSessionLocalDataSource.getUserSession(),
@@ -797,10 +967,25 @@ void main() {
 
         final result = await repository.getCurrentUser();
 
-        expect(result, isNull);
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(
+            failure.code,
+            AuthErrorCatalog.localSessionRecoveryFailed.code,
+          );
+          expect(
+            failure.uiKey,
+            AuthErrorCatalog.localSessionRecoveryFailed.uiKey,
+          );
+        }, (_) => fail('Expected Left(Failure)'));
         verify(
-          () => mockAppLogger.w(
-            any(),
+          () => mockFeatureLogger.warn(
+            feature: 'auth',
+            action: 'recover_from_local_parse_failed',
+            code: AuthErrorCatalog.localSessionRecoveryFailed.code,
+            context: {
+              'uiKey': AuthErrorCatalog.localSessionRecoveryFailed.uiKey,
+            },
             error: any(named: 'error'),
             stackTrace: any(named: 'stackTrace'),
           ),

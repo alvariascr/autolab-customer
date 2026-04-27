@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/bloc/auth_bloc.dart';
-import '../../features/auth/bloc/auth_state.dart';
+import '../../features/auth/application/auth_session_cubit.dart';
+import '../../features/auth/application/auth_session_state.dart';
 import '../../features/auth/domain/constants/user_roles.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/home/home_customer_page.dart';
@@ -9,15 +9,15 @@ import '../../features/home/home_page.dart';
 import 'go_router_refresh_stream.dart';
 
 class AppRouter {
-  final AuthBloc authBloc;
+  final AuthSessionCubit authSessionCubit;
 
-  AppRouter(this.authBloc);
+  AppRouter(this.authSessionCubit);
 
   late final GoRouter router = GoRouter(
     initialLocation: '/login',
-    refreshListenable: GoRouterRefreshStream(authBloc.stream),
+    refreshListenable: GoRouterRefreshStream(authSessionCubit.stream),
     redirect: (context, state) => redirectFor(
-      authState: authBloc.state,
+      authState: authSessionCubit.state,
       location: state.matchedLocation,
     ),
     routes: [
@@ -31,7 +31,7 @@ class AppRouter {
   );
 
   String? redirectFor({
-    required AuthState authState,
+    required AuthSessionState authState,
     required String location,
   }) {
     final bool isLoggingIn = location == '/login';
@@ -39,14 +39,17 @@ class AppRouter {
     // Si el estado está cargando, no redirigir todavía.
     // Esto evita el salto visual temporal hacia /login
     // mientras se restaura la sesión.
-    if (authState is AuthLoading) return null;
+    if (authState.status == AuthSessionStatus.loading ||
+        authState.status == AuthSessionStatus.initial) {
+      return null;
+    }
 
     // Si no está autenticado, solo puede quedarse en /login.
-    if (authState is! AuthSuccess) {
+    if (!authState.isAuthenticated) {
       return isLoggingIn ? null : '/login';
     }
 
-    final String role = authState.role;
+    final String role = authState.role!;
 
     // Si ya está autenticado y está en login,
     // redirigir al home correspondiente según rol.

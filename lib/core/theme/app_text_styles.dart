@@ -25,10 +25,7 @@ class AppTextStyles {
   );
 
   // TEXTO NORMAL
-  static const normal = TextStyle(
-    fontFamily: roboto,
-    fontSize: 14,
-  );
+  static const normal = TextStyle(fontFamily: roboto, fontSize: 14);
 
   // TEXTO PEQUEÑO
   static const small = TextStyle(

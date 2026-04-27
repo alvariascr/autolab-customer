@@ -1,8 +1,10 @@
 import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/errors/customer_error_catalog.dart';
 import '../../../core/utils/validators.dart';
+import '../../../l10n/app_localizations.dart';
+import 'widgets/auth_card_shell.dart';
+import 'widgets/auth_form_style.dart';
 
 class RegisterCard extends StatefulWidget {
   final double cardWidth;
@@ -44,51 +46,15 @@ class RegisterCardState extends State<RegisterCard> {
   bool _isConfrimPasswordVisible = true;
   bool _acceptsTerms = false;
 
-  InputDecoration _inputDec({
-    required String label,
-    required String hint,
-    required IconData icon,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: Colors.grey.shade700),
-      floatingLabelStyle: const TextStyle(
-        color: Colors.black,
-        fontWeight: FontWeight.w600,
-      ),
-      hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.shade400),
-      prefixIcon: Icon(icon, color: Colors.grey.shade600),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: Colors.grey.shade100,
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.black, width: 2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.red, width: 2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-    );
-  }
-
   void _register() {
     final ok = _formKeyRegister.currentState?.validate() ?? false;
     if (!ok) return;
 
     if (!_acceptsTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(CustomerErrorCatalog.termsRequired.message)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.authTermsRequired),
+        ),
       );
       return;
     }
@@ -130,226 +96,203 @@ class RegisterCardState extends State<RegisterCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 15,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: widget.cardWidth,
-        height: widget.cardHeight,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 140),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      child: Form(
-                        key: _formKeyRegister,
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Registrarse',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            TextFormField(
-                              controller: _nameCtrl,
-                              decoration: _inputDec(
-                                label: 'Nombre',
-                                hint: 'Ingrese su nombre',
-                                icon: Icons.person_outline,
-                              ),
-                              validator: Validators.name,
-                            ),
-                            const SizedBox(height: 15),
-                            TextFormField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: _inputDec(
-                                label: 'Email',
-                                hint: 'Ingrese su email',
-                                icon: Icons.email_outlined,
-                              ),
-                              validator: Validators.email,
-                            ),
-                            const SizedBox(height: 15),
-                            TextFormField(
-                              controller: _phoneCtrl,
-                              keyboardType: TextInputType.phone,
-                              decoration: _inputDec(
-                                label: 'Teléfono',
-                                hint: 'Ingrese su teléfono',
-                                icon: Icons.phone_outlined,
-                              ),
-                              validator: Validators.phone,
-                            ),
-                            const SizedBox(height: 15),
-                            TextFormField(
-                              controller: _passCtrl,
-                              obscureText: _isPasswordVisible,
-                              decoration: _inputDec(
-                                label: 'Contraseña',
-                                hint: 'Ingrese la contraseña',
-                                icon: Icons.lock_outline,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
-                                ),
-                              ),
-                              validator: Validators.password,
-                            ),
-                            const SizedBox(height: 15),
-                            TextFormField(
-                              controller: _confirmPassCtrl,
-                              obscureText: _isConfrimPasswordVisible,
-                              decoration: _inputDec(
-                                label: 'Confirmar contraseña',
-                                hint: 'Repita la contraseña',
-                                icon: Icons.lock_outline,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isConfrimPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isConfrimPasswordVisible =
-                                          !_isConfrimPasswordVisible;
-                                    });
-                                  },
-                                ),
-                              ),
-                              validator: (v) =>
-                                  Validators.confirmPassword(v, _passCtrl.text),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Checkbox(
-                                  value: _acceptsTerms,
-                                  onChanged: (v) {
-                                    setState(() {
-                                      _acceptsTerms = v ?? false;
-                                    });
-                                  },
-                                ),
-                                Expanded(
-                                  child: Wrap(
-                                    children: [
-                                      const Text('Acepto '),
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => const TermsPage(),
-                                            ),
-                                          );
-                                        },
-                                        child: const Text(
-                                          'Términos y Condiciones',
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            decoration:
-                                                TextDecoration.underline,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: widget.isLoading ? null : _register,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  elevation: 5,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: widget.isLoading
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Registrarse',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text('¿Ya tienes cuenta? '),
-                                TextButton(
-                                  onPressed: widget.onBackToLogin,
-                                  child: const Text(
-                                    'Iniciar sesión',
-                                    style: TextStyle(color: Colors.lightBlue),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                        ),
+    final l10n = AppLocalizations.of(context)!;
+
+    return AuthCardShell(
+      cardWidth: widget.cardWidth,
+      cardHeight: widget.cardHeight,
+      logoSize: widget.logoSize,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Form(
+                key: _formKeyRegister,
+                child: Column(
+                  children: [
+                    Text(
+                      l10n.authRegisterTitle,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _nameCtrl,
+                      decoration: buildAuthInputDecoration(
+                        label: l10n.authRegisterNameLabel,
+                        hint: l10n.authRegisterNameHint,
+                        icon: Icons.person_outline,
+                      ),
+                      validator: (value) => Validators.name(value, l10n),
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: buildAuthInputDecoration(
+                        label: l10n.authRegisterEmailLabel,
+                        hint: l10n.authRegisterEmailHint,
+                        icon: Icons.email_outlined,
+                      ),
+                      validator: (value) => Validators.email(value, l10n),
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration: buildAuthInputDecoration(
+                        label: l10n.authRegisterPhoneLabel,
+                        hint: l10n.authRegisterPhoneHint,
+                        icon: Icons.phone_outlined,
+                      ),
+                      validator: (value) => Validators.phone(value, l10n),
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _passCtrl,
+                      obscureText: _isPasswordVisible,
+                      decoration: buildAuthInputDecoration(
+                        label: l10n.authRegisterPasswordLabel,
+                        hint: l10n.authRegisterPasswordHint,
+                        icon: Icons.lock_outline,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey.shade700,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) => Validators.password(value, l10n),
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _confirmPassCtrl,
+                      obscureText: _isConfrimPasswordVisible,
+                      decoration: buildAuthInputDecoration(
+                        label: l10n.authRegisterConfirmPasswordLabel,
+                        hint: l10n.authRegisterConfirmPasswordHint,
+                        icon: Icons.lock_outline,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isConfrimPasswordVisible
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.grey.shade700,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isConfrimPasswordVisible =
+                                  !_isConfrimPasswordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (v) =>
+                          Validators.confirmPassword(v, _passCtrl.text, l10n),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: _acceptsTerms,
+                          onChanged: (v) {
+                            setState(() {
+                              _acceptsTerms = v ?? false;
+                            });
+                          },
+                        ),
+                        Expanded(
+                          child: Wrap(
+                            children: [
+                              Text(l10n.authRegisterAcceptTermsPrefix),
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const TermsPage(),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  l10n.authRegisterAcceptTermsLink,
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: widget.isLoading ? null : _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: widget.isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                l10n.authRegisterSubmit,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(l10n.authRegisterHaveAccount),
+                        TextButton(
+                          onPressed: widget.onBackToLogin,
+                          child: Text(
+                            l10n.authRegisterLoginAction,
+                            style: const TextStyle(color: Colors.lightBlue),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
               ),
             ),
-            Positioned(
-              top: 0,
-              child: Image.asset(
-                'assets/images/virtual/Mesa de trabajo 10@2x.png',
-                width: widget.logoSize,
-                height: widget.logoSize,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

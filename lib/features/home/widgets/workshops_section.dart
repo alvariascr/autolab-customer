@@ -1,6 +1,8 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/location/location_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
 import '../../workshops/domain/services/workshop_search_location_resolver.dart';
@@ -15,7 +17,7 @@ class WorkshopsSection extends StatelessWidget {
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.isLoading,
-    required this.hasError,
+    required this.workshopFailure,
   });
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
@@ -25,10 +27,12 @@ class WorkshopsSection extends StatelessWidget {
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final bool isLoading;
-  final bool hasError;
+  final Failure? workshopFailure;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
@@ -36,12 +40,12 @@ class WorkshopsSection extends StatelessWidget {
       );
     }
 
-    if (hasError) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+    if (workshopFailure != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
         child: Text(
-          'No fue posible cargar los talleres en este momento.',
-          style: TextStyle(color: Color(0xFF6B5F57)),
+          emptyStateResolver.resolveLoadError(workshopFailure!, l10n),
+          style: const TextStyle(color: Color(0xFF6B5F57)),
         ),
       );
     }
@@ -60,18 +64,18 @@ class WorkshopsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Talleres cercanos',
-          style: TextStyle(
+        Text(
+          l10n.workshopsSectionTitle,
+          style: const TextStyle(
             color: Color(0xFF181411),
             fontWeight: FontWeight.w800,
             fontSize: 22,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Explora opciones cercanas sin salir del home.',
-          style: TextStyle(
+        Text(
+          l10n.workshopsSectionSubtitle,
+          style: const TextStyle(
             color: Color(0xFF6B5F57),
             fontSize: 14,
             height: 1.45,
@@ -85,6 +89,7 @@ class WorkshopsSection extends StatelessWidget {
             currentLocation: searchLocation,
             emptyMessage: emptyStateResolver.resolve(
               locationState,
+              l10n: l10n,
               isUsingFallbackLocation: isUsingFallbackLocation,
             ),
           ),

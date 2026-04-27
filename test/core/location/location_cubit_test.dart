@@ -1,14 +1,15 @@
 import 'dart:async';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
-import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/location_cubit.dart';
 import 'package:autolab_customer/core/location/location_flow_recovery_service.dart';
 import 'package:autolab_customer/core/location/location_permission_service.dart';
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/location/location_state.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -26,6 +27,8 @@ class MockLocationFlowRecoveryService extends Mock
 
 class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 
+class MockFeatureLogger extends Mock implements FeatureLogger {}
+
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
 
 void main() {
@@ -35,6 +38,7 @@ void main() {
     late MockLocationPlaceResolver placeResolver;
     late MockLocationFlowRecoveryService flowRecoveryService;
     late MockGlobalErrorHandler errorHandler;
+    late MockFeatureLogger featureLogger;
     late LocationCubit cubit;
 
     setUpAll(() {
@@ -47,10 +51,39 @@ void main() {
       placeResolver = MockLocationPlaceResolver();
       flowRecoveryService = MockLocationFlowRecoveryService();
       errorHandler = MockGlobalErrorHandler();
+      featureLogger = MockFeatureLogger();
 
       when(() => errorHandler.handle(any(), any())).thenReturn(
         const UnknownFailure(message: 'Ocurrió un error inesperado.'),
       );
+      when(
+        () => featureLogger.info(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => featureLogger.warn(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
+      when(
+        () => featureLogger.error(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
       when(
         () => flowRecoveryService.consumePendingSettingsSync(),
       ).thenAnswer((_) async => false);
@@ -64,6 +97,7 @@ void main() {
         placeResolver,
         flowRecoveryService: flowRecoveryService,
         errorHandler: errorHandler,
+        featureLogger: featureLogger,
       );
     });
 
@@ -121,8 +155,9 @@ void main() {
       when(() => currentLocationDataSource.getCurrentLocation()).thenAnswer(
         (_) async => Left(
           TimeoutFailure(
-            message: CustomerErrorCatalog.locationRequestTimeout.message,
+            message: CustomerErrorCatalog.locationRequestTimeout.code,
             code: 'NET_002',
+            uiKey: CustomerErrorCatalog.locationRequestTimeout.uiKey,
           ),
         ),
       );
@@ -130,9 +165,10 @@ void main() {
       await cubit.loadCurrentLocation();
 
       expect(cubit.state.status, LocationFlowStatus.error);
+      expect(cubit.state.failureCode, 'NET_002');
       expect(
-        cubit.state.message,
-        'La ubicación tardó demasiado en responder. Intenta nuevamente.',
+        cubit.state.failureUiKey,
+        CustomerErrorCatalog.locationRequestTimeout.uiKey,
       );
     });
 
@@ -169,8 +205,8 @@ void main() {
 
       expect(cubit.state.status, LocationFlowStatus.error);
       expect(
-        cubit.state.message,
-        'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+        cubit.state.failureUiKey,
+        CustomerErrorCatalog.locationActionFailed.uiKey,
       );
       verify(() => errorHandler.handle(settingsError, any())).called(1);
     });
@@ -186,8 +222,8 @@ void main() {
 
         expect(cubit.state.status, LocationFlowStatus.error);
         expect(
-          cubit.state.message,
-          'No fue posible completar la acción de ubicación. Intenta nuevamente.',
+          cubit.state.failureUiKey,
+          CustomerErrorCatalog.locationActionFailed.uiKey,
         );
         verify(() => errorHandler.handle(any(), any())).called(1);
       },

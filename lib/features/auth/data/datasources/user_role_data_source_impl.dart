@@ -2,6 +2,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/constants/user_roles.dart';
+import '../../domain/errors/auth_error_catalog.dart';
 import 'user_role_data_source.dart';
 
 class UserRoleDataSourceImpl implements UserRoleDataSource {
@@ -18,17 +19,17 @@ class UserRoleDataSourceImpl implements UserRoleDataSource {
         .maybeSingle();
 
     if (response == null) {
-      throw AuthFailure.fromErrorItem(ErrorCatalog.userProfileNotFound);
+      throw AuthFailure.fromErrorItem(AuthErrorCatalog.userProfileNotFound);
     }
 
     final role = response['role'] as String?;
 
     if (role == null || role.isEmpty) {
-      throw AuthFailure.fromErrorItem(ErrorCatalog.undefinedUserRole);
+      throw AuthFailure.fromErrorItem(AuthErrorCatalog.undefinedUserRole);
     }
 
     if (!UserRoles.isValid(role)) {
-      throw AuthFailure.fromErrorItem(ErrorCatalog.unauthorized);
+      throw AuthFailure.fromErrorItem(AuthErrorCatalog.unauthorized);
     }
 
     return role;

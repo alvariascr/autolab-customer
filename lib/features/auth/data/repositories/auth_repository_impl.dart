@@ -1,9 +1,11 @@
-import 'dart:convert';
-
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
 import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
 import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
+import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,189 +14,90 @@ import '../../domain/failures/auth_rate_limit_failure.dart';
 import '../../repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
+  AuthRepositoryImpl(
+    this.client,
+    this.globalErrorHandler,
+    this.userRoleDataSource,
+    this.loginAttemptService,
+    this.sessionStorageService,
+    this.sessionRecoveryService,
+    this.featureLogger,
+  );
+
   final SupabaseClient client;
   final GlobalErrorHandler globalErrorHandler;
-  final SessionLocalDataSource sessionLocalDataSource;
   final UserRoleDataSource userRoleDataSource;
   final LoginAttemptService loginAttemptService;
-
-  AuthRepositoryImpl(
-      this.client,
-      this.globalErrorHandler,
-      this.sessionLocalDataSource,
-      this.userRoleDataSource,
-      this.loginAttemptService,
-      );
+  final AuthSessionStorageService sessionStorageService;
+  final AuthSessionRecoveryService sessionRecoveryService;
+  final FeatureLogger featureLogger;
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
-    final cleanEmail = email.trim().toLowerCase();
+    final cleanEmail = _normalizeEmail(email);
     final cleanPassword = password.trim();
 
+    featureLogger.info(
+      feature: 'auth',
+      action: 'login_started',
+      context: {'email': cleanEmail},
+    );
+
     try {
-      final attemptState = await loginAttemptService.getState(cleanEmail);
-
-      if (attemptState.isBlocked) {
-        final remaining = attemptState.remainingTime;
-
-        return Left(
-          _createAuthRateLimitFailure(remaining),
+      final blockFailure = await _getLoginBlockFailure(cleanEmail);
+      if (blockFailure != null) {
+        featureLogger.warn(
+          feature: 'auth',
+          action: 'login_blocked',
+          code: blockFailure.code,
+          context: {'email': cleanEmail, 'uiKey': blockFailure.uiKey},
         );
+        return Left(blockFailure);
       }
 
-      final res = await client.auth.signInWithPassword(
+      final response = await client.auth.signInWithPassword(
         email: cleanEmail,
         password: cleanPassword,
       );
 
-      final user = res.user;
-      final session = res.session;
-
-      if (user == null) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.invalidAuthResponse.code}] ${ErrorCatalog.invalidAuthResponse.message}',
-        );
-
-        return Left(
-          AuthFailure.fromErrorItem(ErrorCatalog.invalidAuthResponse),
-        );
-      }
-
-      final role = await userRoleDataSource.getUserRole(user.id);
-
-      if (session != null) {
-        await _persistSessionTokens(session);
-      }
-
-      await _saveUserSession(
-        id: user.id,
-        email: user.email,
-        role: role,
-      );
-      await loginAttemptService.registerSuccess(cleanEmail);
-
-      return Right(_buildAppUser(id: user.id, email: user.email, role: role));
-    } on AuthException catch (e, st) {
-      final msg = e.message.toLowerCase();
-
-      if (msg.contains('invalid login credentials')) {
-        final updatedState = await loginAttemptService.registerFailure(
-          cleanEmail,
-        );
-
-        if (updatedState.isBlocked) {
-          final remaining = updatedState.remainingTime;
-
-          return Left(
-            _createAuthRateLimitFailure(
-              remaining,
-              cause: e,
-              stackTrace: st,
-            ),
-          );
-        }
-
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.invalidCredentials.code}] ${ErrorCatalog.invalidCredentials.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        return Left(
-          AuthFailure.fromErrorItem(
-            ErrorCatalog.invalidCredentials,
-            cause: e,
-            stackTrace: st,
-          ),
-        );
-      }
-
-      if (msg.contains('email not confirmed')) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.unconfirmedEmail.code}] ${ErrorCatalog.unconfirmedEmail.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        return Left(
-          AuthFailure.fromErrorItem(
-            ErrorCatalog.unconfirmedEmail,
-            cause: e,
-            stackTrace: st,
-          ),
-        );
-      }
-
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
+      return _buildLoginSuccess(response, cleanEmail);
+    } on AuthException catch (error, stackTrace) {
+      return _handleLoginAuthException(error, stackTrace, cleanEmail);
     } on AuthFailure catch (failure) {
       return Left(failure);
-    } catch (e, st) {
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
+    } catch (error, stackTrace) {
+      return Left(globalErrorHandler.handle(error, stackTrace));
     }
   }
 
   @override
   Future<Either<Failure, AppUser>> register(
-      String name,
-      String email,
-      String phone,
-      String password,
-      ) async {
+    String name,
+    String email,
+    String phone,
+    String password,
+  ) async {
+    final cleanName = name.trim();
+    final cleanEmail = _normalizeEmail(email);
+    final cleanPhone = phone.trim();
+    final cleanPassword = password.trim();
+
+    featureLogger.info(
+      feature: 'auth',
+      action: 'register_started',
+      context: {'email': cleanEmail, 'phoneLength': cleanPhone.length},
+    );
+
     try {
-      final cleanName = name.trim();
-      final cleanEmail = email.trim().toLowerCase();
-      final cleanPhone = phone.trim();
-      final cleanPassword = password.trim();
-
-      // Verificar si la cuenta ya existe antes de registrar
-      try {
-        final loginRes = await client.auth.signInWithPassword(
-          email: cleanEmail,
-          password: cleanPassword,
-        );
-
-        if (loginRes.user != null) {
-          // Cerramos sesión por si Supabase autenticó al usuario
-          await client.auth.signOut();
-
-          globalErrorHandler.logger.w(
-            '[${ErrorCatalog.accountAlreadyExists.code}] ${ErrorCatalog.accountAlreadyExists.message}',
-          );
-
-          return Left(
-            AuthFailure.fromErrorItem(ErrorCatalog.accountAlreadyExists),
-          );
-        }
-      } on AuthException catch (e, st) {
-        final msg = e.message.toLowerCase();
-
-        if (msg.contains('email not confirmed')) {
-          globalErrorHandler.logger.w(
-            '[${ErrorCatalog.emailNotConfirmedRegister.code}] ${ErrorCatalog.emailNotConfirmedRegister.message}',
-            error: e,
-            stackTrace: st,
-          );
-
-          return Left(
-            AuthFailure.fromErrorItem(
-              ErrorCatalog.emailNotConfirmedRegister,
-              cause: e,
-              stackTrace: st,
-            ),
-          );
-        }
-
-        if (msg.contains('invalid login credentials')) {
-          // Este caso nos sirve para continuar con el registro
-        } else {
-          final failure = globalErrorHandler.handle(e, st);
-          return Left(failure);
-        }
+      final precheckFailure = await _precheckRegister(
+        cleanEmail: cleanEmail,
+        cleanPassword: cleanPassword,
+      );
+      if (precheckFailure != null) {
+        return Left(precheckFailure);
       }
 
-      final res = await client.auth.signUp(
+      final response = await client.auth.signUp(
         email: cleanEmail,
         password: cleanPassword,
         data: {
@@ -204,220 +107,327 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
 
-      final user = res.user;
+      final user = response.user;
       if (user == null) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.invalidRegisterResponse.code}] ${ErrorCatalog.invalidRegisterResponse.message}',
-        );
-
+        _logWarning(AuthErrorCatalog.invalidRegisterResponse);
         return Left(
-          AuthFailure.fromErrorItem(ErrorCatalog.invalidRegisterResponse),
+          AuthFailure.fromErrorItem(AuthErrorCatalog.invalidRegisterResponse),
         );
       }
 
       return Right(
-        _buildAppUser(
-          id: user.id,
-          email: user.email,
-          role: UserRoles.customer,
-        ),
+        _buildAppUser(id: user.id, email: user.email, role: UserRoles.customer),
       );
-    } on AuthException catch (e, st) {
-      final msg = e.message.toLowerCase();
-
-      if (msg.contains('already registered')) {
-        globalErrorHandler.logger.w(
-          '[${ErrorCatalog.emailAlreadyRegistered.code}] ${ErrorCatalog.emailAlreadyRegistered.message}',
-          error: e,
-          stackTrace: st,
-        );
-
-        return Left(
-          AuthFailure.fromErrorItem(
-            ErrorCatalog.emailAlreadyRegistered,
-            cause: e,
-            stackTrace: st,
-          ),
-        );
-      }
-
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
+    } on AuthException catch (error, stackTrace) {
+      return _handleRegisterAuthException(error, stackTrace);
     } on AuthFailure catch (failure) {
       return Left(failure);
-    } catch (e, st) {
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
+    } catch (error, stackTrace) {
+      return Left(globalErrorHandler.handle(error, stackTrace));
     }
   }
+
   @override
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
-      await sessionLocalDataSource.clearSession();
+      await sessionStorageService.clearSession();
+      featureLogger.info(
+        feature: 'auth',
+        action: 'repository_logout_succeeded',
+      );
       return const Right(unit);
-    } catch (e, st) {
-      final failure = globalErrorHandler.handle(e, st);
-      return Left(failure);
+    } catch (error, stackTrace) {
+      featureLogger.error(
+        feature: 'auth',
+        action: 'repository_logout_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(globalErrorHandler.handle(error, stackTrace));
     }
   }
 
   @override
-  Future<AppUser?> getCurrentUser() async {
+  Future<Either<Failure, AppUser?>> getCurrentUser() async {
     final supabaseUser = client.auth.currentUser;
 
     if (supabaseUser != null) {
-      return _restoreUserFromSupabase(supabaseUser);
+      return sessionRecoveryService.restoreFromSupabaseUser(supabaseUser);
     }
 
-    final restoredUser = await _restoreSupabaseSessionFromLocalTokens();
-    if (restoredUser != null) {
+    final restoredUser = await sessionRecoveryService.restoreFromRefreshToken();
+    if (restoredUser.isLeft()) {
       return restoredUser;
     }
 
-    return _recoverUserFromLocal();
+    final recoveredUser = restoredUser.getOrElse(() => null);
+    if (recoveredUser != null) {
+      return Right(recoveredUser);
+    }
+
+    return sessionRecoveryService.recoverFromLocal();
   }
 
-  Future<AppUser?> _restoreUserFromSupabase(User supabaseUser) async {
-    try {
-      final role = await userRoleDataSource.getUserRole(supabaseUser.id);
-      await _saveUserSession(
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        role: role,
-      );
-
-      globalErrorHandler.logger.i('Sesión restaurada desde Supabase');
-
-      return _buildAppUser(
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        role: role,
-      );
-    } catch (e, st) {
-      final localSession = await _recoverUserFromLocal();
-
-      if (localSession != null && localSession.id == supabaseUser.id) {
-        globalErrorHandler.logger.i(
-          'Sesión recuperada desde almacenamiento local por fallo de red',
-        );
-        return localSession;
-      }
-
-      globalErrorHandler.logger.e(
-        '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
-        error: e,
-        stackTrace: st,
-      );
-
+  Future<Failure?> _getLoginBlockFailure(String cleanEmail) async {
+    final attemptState = await loginAttemptService.getState(cleanEmail);
+    if (!attemptState.isBlocked) {
       return null;
     }
+
+    return _createAuthRateLimitFailure(attemptState.remainingTime);
   }
 
-  Future<AppUser?> _restoreSupabaseSessionFromLocalTokens() async {
+  Future<Either<Failure, AppUser>> _buildLoginSuccess(
+    AuthResponse response,
+    String cleanEmail,
+  ) async {
+    final user = response.user;
+    if (user == null) {
+      _logWarning(AuthErrorCatalog.invalidAuthResponse);
+      return Left(
+        AuthFailure.fromErrorItem(AuthErrorCatalog.invalidAuthResponse),
+      );
+    }
+
+    final role = await userRoleDataSource.getUserRole(user.id);
+    final session = response.session;
+
+    if (session != null) {
+      await sessionStorageService.persistSessionTokens(session);
+    }
+
+    await sessionStorageService.saveUserSession(
+      id: user.id,
+      email: user.email,
+      role: role,
+    );
+    await loginAttemptService.registerSuccess(cleanEmail);
+
+    featureLogger.info(
+      feature: 'auth',
+      action: 'login_succeeded',
+      context: {'email': cleanEmail, 'userId': user.id, 'role': role},
+    );
+
+    return Right(_buildAppUser(id: user.id, email: user.email, role: role));
+  }
+
+  Future<Either<Failure, AppUser>> _handleLoginAuthException(
+    AuthException error,
+    StackTrace stackTrace,
+    String cleanEmail,
+  ) async {
+    final message = error.message.toLowerCase();
+
+    if (message.contains('invalid login credentials')) {
+      final updatedState = await loginAttemptService.registerFailure(
+        cleanEmail,
+      );
+
+      if (updatedState.isBlocked) {
+        return Left(
+          _createAuthRateLimitFailure(
+            updatedState.remainingTime,
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+        );
+      }
+
+      _logWarning(
+        AuthErrorCatalog.invalidCredentials,
+        error: error,
+        stackTrace: stackTrace,
+      );
+
+      return Left(
+        AuthFailure.fromErrorItem(
+          AuthErrorCatalog.invalidCredentials,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+
+    if (message.contains('email not confirmed')) {
+      _logWarning(
+        AuthErrorCatalog.unconfirmedEmail,
+        error: error,
+        stackTrace: stackTrace,
+      );
+
+      return Left(
+        AuthFailure.fromErrorItem(
+          AuthErrorCatalog.unconfirmedEmail,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+
+    final networkFailure = _mapNetworkAuthException(error, stackTrace);
+    if (networkFailure != null) {
+      featureLogger.warn(
+        feature: 'auth',
+        action: 'login_network_failed',
+        code: networkFailure.code,
+        context: {'email': cleanEmail, 'uiKey': networkFailure.uiKey},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(networkFailure);
+    }
+
+    featureLogger.error(
+      feature: 'auth',
+      action: 'login_unhandled_auth_exception',
+      context: {'email': cleanEmail},
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return Left(globalErrorHandler.handle(error, stackTrace));
+  }
+
+  Future<Failure?> _precheckRegister({
+    required String cleanEmail,
+    required String cleanPassword,
+  }) async {
     try {
-      final refreshToken = await sessionLocalDataSource.getRefreshToken();
-      if (refreshToken == null || refreshToken.isEmpty) {
+      final loginResponse = await client.auth.signInWithPassword(
+        email: cleanEmail,
+        password: cleanPassword,
+      );
+
+      if (loginResponse.user == null) {
         return null;
       }
 
-      final response = await client.auth.setSession(refreshToken);
-      final session = response.session;
-      final user = response.user;
+      await client.auth.signOut();
+      _logWarning(AuthErrorCatalog.accountAlreadyExists);
+      return AuthFailure.fromErrorItem(AuthErrorCatalog.accountAlreadyExists);
+    } on AuthException catch (error, stackTrace) {
+      final message = error.message.toLowerCase();
 
-      if (session == null || user == null) {
+      if (message.contains('invalid login credentials')) {
+        featureLogger.info(
+          feature: 'auth',
+          action: 'register_precheck_available',
+          context: {'email': cleanEmail},
+        );
         return null;
       }
 
-      await _persistSessionTokens(session);
-      return _restoreUserFromSupabase(user);
-    } on AuthException catch (e, st) {
-      globalErrorHandler.logger.w(
-        '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
-        error: e,
-        stackTrace: st,
-      );
-      return null;
-    } catch (e, st) {
-      globalErrorHandler.logger.w(
-        '[${ErrorCatalog.sessionRestoreFailed.code}] ${ErrorCatalog.sessionRestoreFailed.message}',
-        error: e,
-        stackTrace: st,
-      );
-      return null;
+      if (message.contains('email not confirmed')) {
+        _logWarning(
+          AuthErrorCatalog.emailNotConfirmedRegister,
+          error: error,
+          stackTrace: stackTrace,
+        );
+
+        return AuthFailure.fromErrorItem(
+          AuthErrorCatalog.emailNotConfirmedRegister,
+          cause: error,
+          stackTrace: stackTrace,
+        );
+      }
+
+      return globalErrorHandler.handle(error, stackTrace);
     }
   }
 
-  Future<AppUser?> _recoverUserFromLocal() async {
-    String? sessionJson;
-    try {
-      sessionJson = await sessionLocalDataSource.getUserSession();
-    } catch (e, st) {
-      globalErrorHandler.logger.w(
-        '[${ErrorCatalog.localSessionRecoveryFailed.code}] ${ErrorCatalog.localSessionRecoveryFailed.message}',
-        error: e,
-        stackTrace: st,
+  Either<Failure, AppUser> _handleRegisterAuthException(
+    AuthException error,
+    StackTrace stackTrace,
+  ) {
+    final message = error.message.toLowerCase();
+
+    if (message.contains('already registered')) {
+      _logWarning(
+        AuthErrorCatalog.emailAlreadyRegistered,
+        error: error,
+        stackTrace: stackTrace,
       );
-      return null;
+
+      return Left(
+        AuthFailure.fromErrorItem(
+          AuthErrorCatalog.emailAlreadyRegistered,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
     }
 
-    if (sessionJson == null || sessionJson.isEmpty) {
-      return null;
+    final networkFailure = _mapNetworkAuthException(error, stackTrace);
+    if (networkFailure != null) {
+      featureLogger.warn(
+        feature: 'auth',
+        action: 'register_network_failed',
+        code: networkFailure.code,
+        context: {'uiKey': networkFailure.uiKey},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(networkFailure);
     }
 
-    try {
-      final map = jsonDecode(sessionJson) as Map<String, dynamic>;
-      final role = map['role'] as String?;
+    featureLogger.error(
+      feature: 'auth',
+      action: 'register_unhandled_auth_exception',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return Left(globalErrorHandler.handle(error, stackTrace));
+  }
 
-      if (role != null && UserRoles.isValid(role)) {
-        return _buildAppUser(
-          id: map['id'] as String,
-          email: map['email'] as String?,
-          role: role,
-        );
-      }
-    } catch (e, st) {
-      globalErrorHandler.logger.w(
-        '[${ErrorCatalog.localSessionRecoveryFailed.code}] ${ErrorCatalog.localSessionRecoveryFailed.message}',
-        error: e,
-        stackTrace: st,
+  Failure? _mapNetworkAuthException(
+    AuthException error,
+    StackTrace stackTrace,
+  ) {
+    final message = error.message.toLowerCase();
+    final runtimeTypeName = error.runtimeType.toString().toLowerCase();
+
+    if (_isTimeoutLikeAuthFailure(message, runtimeTypeName)) {
+      return NetworkFailure.fromErrorItem(
+        ErrorCatalog.requestTimeout,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    if (_isNetworkLikeAuthFailure(message, runtimeTypeName)) {
+      return NetworkFailure.fromErrorItem(
+        ErrorCatalog.networkUnavailable,
+        cause: error,
+        stackTrace: stackTrace,
       );
     }
 
     return null;
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-
-    if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    }
-    return '${seconds}s';
+  bool _isTimeoutLikeAuthFailure(String message, String runtimeTypeName) {
+    return message.contains('timeout') ||
+        message.contains('timed out') ||
+        runtimeTypeName.contains('timeout');
   }
 
-  Future<void> _persistSessionTokens(Session session) async {
-    await sessionLocalDataSource.saveAccessToken(session.accessToken);
-
-    final refreshToken = session.refreshToken;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await sessionLocalDataSource.saveRefreshToken(refreshToken);
-    }
+  bool _isNetworkLikeAuthFailure(String message, String runtimeTypeName) {
+    return runtimeTypeName.contains('retryablefetch') ||
+        message.contains('failed host lookup') ||
+        message.contains('network request failed') ||
+        message.contains('network error') ||
+        message.contains('connection error') ||
+        message.contains('clientexception') ||
+        message.contains('socketexception') ||
+        message.contains('connection closed') ||
+        message.contains('connection refused') ||
+        message.contains('unable to resolve host') ||
+        message.contains('temporarily unavailable');
   }
 
-  Future<void> _saveUserSession({
-    required String id,
-    required String? email,
-    required String role,
-  }) {
-    final sessionJson = jsonEncode({
-      'id': id,
-      'email': email,
-      'role': role,
-    });
-
-    return sessionLocalDataSource.saveUserSession(sessionJson);
+  String _normalizeEmail(String email) {
+    return email.trim().toLowerCase();
   }
 
   AppUser _buildAppUser({
@@ -425,10 +435,21 @@ class AuthRepositoryImpl implements AuthRepository {
     required String? email,
     required String role,
   }) {
-    return AppUser(
-      id: id,
-      email: email,
-      role: role,
+    return AppUser(id: id, email: email, role: role);
+  }
+
+  void _logWarning(
+    ErrorItem errorItem, {
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    featureLogger.warn(
+      feature: 'auth',
+      action: 'domain_warning',
+      code: errorItem.code,
+      context: {'uiKey': errorItem.uiKey},
+      error: error,
+      stackTrace: stackTrace,
     );
   }
 
@@ -439,9 +460,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }) {
     return AuthRateLimitFailure(
       remaining: remaining,
-      code: ErrorCatalog.authRateLimit.code,
-      message:
-          '${ErrorCatalog.authRateLimit.message} Intenta nuevamente en ${_formatDuration(remaining)}.',
+      code: AuthErrorCatalog.authRateLimit.code,
+      uiKey: AuthErrorCatalog.authRateLimit.uiKey,
+      message: AuthErrorCatalog.authRateLimit.code,
       cause: cause,
       stackTrace: stackTrace,
     );

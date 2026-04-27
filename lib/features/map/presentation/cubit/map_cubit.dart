@@ -1,12 +1,7 @@
-import 'dart:async';
-import 'dart:io';
-
-import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/errors/customer_error_catalog.dart';
 import '../../../../core/location/current_location.dart';
+import '../../../../core/logging/feature_logger.dart';
 import '../../../workshops/domain/entities/workshop.dart';
 import '../../../workshops/domain/repositories/workshop_repository.dart';
 import '../../../workshops/domain/services/workshop_proximity_filter.dart';
@@ -14,68 +9,77 @@ import '../../../workshops/domain/services/workshop_search_location_resolver.dar
 import 'map_state.dart';
 
 class MapCubit extends Cubit<MapState> {
-  MapCubit(this._repository, {GlobalErrorHandler? errorHandler})
-    : _errorHandler = errorHandler,
-      super(const MapInitial());
+  MapCubit(this._repository, this._featureLogger) : super(const MapInitial());
 
   final WorkshopRepository _repository;
-  final GlobalErrorHandler? _errorHandler;
+  final FeatureLogger _featureLogger;
   static const _proximityFilter = WorkshopProximityFilter();
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
 
   List<Workshop>? _allWorkshops;
 
   Future<void> loadWorkshops(CurrentLocation? userLocation) async {
+    _featureLogger.info(
+      feature: 'map',
+      action: 'load_workshops_started',
+      context: {'hasUserLocation': userLocation != null},
+    );
+
     if (_allWorkshops == null) {
       emit(const MapLoading());
     }
 
-    try {
-      _allWorkshops ??= await _repository.getWorkshops();
-      final searchLocation = _searchLocationResolver.resolve(userLocation);
-      final nearbyWorkshops = _proximityFilter.filterNearby(
-        workshops: _allWorkshops!.cast(),
-        currentLocation: searchLocation,
-      );
+    final result = await _repository.getWorkshops();
 
-      emit(
-        MapLoaded(
-          nearbyWorkshops,
-          currentLocation: searchLocation,
-          isUsingFallbackLocation: _searchLocationResolver.isUsingFallback(
-            userLocation,
+    result.fold(
+      (failure) {
+        _featureLogger.warn(
+          feature: 'map',
+          action: 'load_workshops_failed',
+          code: failure.code,
+          context: {'uiKey': failure.uiKey},
+          error: failure.cause,
+          stackTrace: failure.stackTrace,
+        );
+
+        emit(
+          MapError(
+            code: failure.code ?? 'UNK_001',
+            uiKey: failure.uiKey,
+            message: failure.message,
           ),
-        ),
-      );
-    } on TimeoutException catch (error, stackTrace) {
-      _emitFailure(
-        CustomerErrorCatalog.workshopNetworkError.message,
-        error,
-        stackTrace,
-      );
-    } on SocketException catch (error, stackTrace) {
-      _emitFailure(
-        CustomerErrorCatalog.workshopNetworkError.message,
-        error,
-        stackTrace,
-      );
-    } on PostgrestException catch (error, stackTrace) {
-      _emitFailure(
-        CustomerErrorCatalog.workshopLoadFailed.message,
-        error,
-        stackTrace,
-      );
-    } catch (error, stackTrace) {
-      _emitFailure(
-        CustomerErrorCatalog.workshopLoadFailed.message,
-        error,
-        stackTrace,
-      );
-    }
-  }
+        );
+      },
+      (workshops) {
+        _allWorkshops = workshops;
+        final searchLocation = _searchLocationResolver.resolve(userLocation);
+        final nearbyWorkshops = _proximityFilter.filterNearby(
+          workshops: workshops,
+          currentLocation: searchLocation,
+        );
 
-  void _emitFailure(String message, Object error, StackTrace stackTrace) {
-    _errorHandler?.handle(error, stackTrace);
-    emit(MapError(message));
+        emit(
+          MapLoaded(
+            nearbyWorkshops,
+            currentLocation: searchLocation,
+            isUsingFallbackLocation: _searchLocationResolver.isUsingFallback(
+              userLocation,
+            ),
+          ),
+        );
+
+        _featureLogger.info(
+          feature: 'map',
+          action: 'load_workshops_succeeded',
+          context: {
+            'totalWorkshops': workshops.length,
+            'nearbyWorkshops': nearbyWorkshops.length,
+            'usingFallbackLocation': _searchLocationResolver.isUsingFallback(
+              userLocation,
+            ),
+          },
+        );
+      },
+    );
   }
 }

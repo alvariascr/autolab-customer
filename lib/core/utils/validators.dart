@@ -1,55 +1,59 @@
-import '../errors/customer_error_catalog.dart';
+import '../../l10n/app_localizations.dart';
 
 class Validators {
-  static String? name(String? value) {
+  static String? name(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return CustomerErrorCatalog.nameRequired.message;
+      return l10n.validationNameRequired;
     }
     if (value.trim().length < 3) {
-      return CustomerErrorCatalog.nameTooShort.message;
+      return l10n.validationNameTooShort;
     }
     return null;
   }
 
-  static String? email(String? value) {
+  static String? email(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return CustomerErrorCatalog.emailRequired.message;
+      return l10n.validationEmailRequired;
     }
 
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
     if (!emailRegex.hasMatch(value.trim())) {
-      return CustomerErrorCatalog.invalidEmail.message;
+      return l10n.validationEmailInvalid;
     }
 
     return null;
   }
 
-  static String? phone(String? value) {
+  static String? phone(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return CustomerErrorCatalog.phoneRequired.message;
+      return l10n.validationPhoneRequired;
     }
     if (value.trim().length < 8) {
-      return CustomerErrorCatalog.invalidPhone.message;
+      return l10n.validationPhoneInvalid;
     }
     return null;
   }
 
-  static String? password(String? value) {
+  static String? password(String? value, AppLocalizations l10n) {
     if (value == null || value.isEmpty) {
-      return CustomerErrorCatalog.passwordRequired.message;
+      return l10n.validationPasswordRequired;
     }
     if (value.length < 6) {
-      return CustomerErrorCatalog.passwordTooShort.message;
+      return l10n.validationPasswordTooShort;
     }
     return null;
   }
 
-  static String? confirmPassword(String? value, String originalPassword) {
+  static String? confirmPassword(
+    String? value,
+    String originalPassword,
+    AppLocalizations l10n,
+  ) {
     if (value == null || value.isEmpty) {
-      return CustomerErrorCatalog.confirmPasswordRequired.message;
+      return l10n.validationConfirmPasswordRequired;
     }
     if (value != originalPassword) {
-      return CustomerErrorCatalog.passwordsDoNotMatch.message;
+      return l10n.validationPasswordsDoNotMatch;
     }
     return null;
   }

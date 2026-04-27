@@ -1,18 +1,21 @@
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/login_attempt_state.dart';
 
 class LoginAttemptService {
+  LoginAttemptService(this._prefs);
+
   static const _prefix = 'login_attempt_';
+  final SharedPreferences _prefs;
 
   // Genera una llave única por correo
   String _key(String email) => '$_prefix${email.trim().toLowerCase()}';
 
   // Obtiene el estado actual del usuario
   Future<LoginAttemptState> getState(String email) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key(email));
+    final raw = _prefs.getString(_key(email));
     if (raw == null) return LoginAttemptState.initial();
     final state = LoginAttemptState.fromJson(jsonDecode(raw));
     if (state.blockedUntil != null &&
@@ -30,8 +33,7 @@ class LoginAttemptService {
 
   // Guarda el estado en almacenamiento local
   Future<void> saveState(String email, LoginAttemptState state) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key(email), jsonEncode(state.toJson()));
+    await _prefs.setString(_key(email), jsonEncode(state.toJson()));
   }
 
   // Se llama cuando el login es exitoso

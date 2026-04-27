@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/location/current_location.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/services/workshop_distance_calculator.dart';
 
@@ -246,6 +247,8 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (widget.currentLocation == null) {
       return Center(
         child: Padding(
@@ -316,7 +319,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               RichAttributionWidget(
                 attributions: [
                   TextSourceAttribution(
-                    'OpenStreetMap contributors',
+                    l10n.mapAttributionOpenStreetMap,
                     onTap: null,
                   ),
                 ],
@@ -326,15 +329,19 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
           Positioned(
             right: 14,
             top: 78,
-            child: _ZoomControls(onZoomIn: _zoomIn, onZoomOut: _zoomOut),
+            child: _ZoomControls(
+              onZoomIn: _zoomIn,
+              onZoomOut: _zoomOut,
+              l10n: l10n,
+            ),
           ),
-          const Positioned(
+          Positioned(
             left: 14,
             bottom: 18,
             child: IgnorePointer(
               child: _MapFloatingBadge(
                 icon: Icons.my_location_rounded,
-                label: 'Tu ubicación',
+                label: l10n.mapYourLocation,
               ),
             ),
           ),
@@ -346,15 +353,14 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               child: _EmptyMapCard(message: widget.emptyMessage),
             ),
           if (_isMapLoading)
-            const Positioned(
+            Positioned(
               top: 56,
               left: 16,
               right: 16,
               child: _MapStatusCard(
                 icon: Icons.map_outlined,
-                title: 'Cargando mapa',
-                message:
-                    'Estamos preparando el mapa y los talleres cercanos para ti.',
+                title: l10n.mapLoadingTitle,
+                message: l10n.mapLoadingMessage,
               ),
             ),
           if (_hasMapError)
@@ -364,10 +370,9 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               right: 16,
               child: _MapStatusCard(
                 icon: Icons.wifi_off_rounded,
-                title: 'No pudimos cargar el mapa',
-                message:
-                    'Revisa tu conexión e inténtalo nuevamente. Los talleres seguirán disponibles cuando el mapa se recupere.',
-                actionLabel: 'Reintentar',
+                title: l10n.mapErrorTitle,
+                message: l10n.mapErrorMessage,
+                actionLabel: l10n.mapRetry,
                 onAction: _retryMapLoad,
               ),
             ),
@@ -381,6 +386,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                 currentLocation: widget.currentLocation!,
                 expanded: _expandedSheet,
                 onTap: _toggleSheet,
+                l10n: l10n,
               ),
             ),
         ],
@@ -416,8 +422,13 @@ class _WorkshopMarker extends StatelessWidget {
 
     return Tooltip(
       message: workshop.locationAddress.isNotEmpty
-          ? '${workshop.name}\n${workshop.locationAddress}'
-          : workshop.name,
+          ? AppLocalizations.of(context)!.mapMarkerTooltipWithAddress(
+              workshop.name,
+              workshop.locationAddress,
+            )
+          : AppLocalizations.of(
+              context,
+            )!.mapMarkerTooltipWithoutAddress(workshop.name),
       child: GestureDetector(
         onTap: onTap,
         child: Column(
@@ -531,12 +542,14 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     required this.currentLocation,
     required this.expanded,
     required this.onTap,
+    required this.l10n,
   });
 
   final Workshop workshop;
   final CurrentLocation currentLocation;
   final bool expanded;
   final VoidCallback onTap;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -604,13 +617,17 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                           children: [
                             _MapInfoChip(
                               icon: Icons.near_me_outlined,
-                              label:
-                                  'A ${WorkshopDistanceCalculator.formatKm(distance)}',
+                              label: l10n.mapInfoDistancePrefix(
+                                WorkshopDistanceCalculator.formatKm(distance),
+                              ),
                             ),
                             _MapInfoChip(
                               icon: Icons.local_shipping_outlined,
-                              label:
-                                  'Cobertura ${WorkshopDistanceCalculator.formatKm(workshop.deliveryRadiusKm)}',
+                              label: l10n.mapInfoCoveragePrefix(
+                                WorkshopDistanceCalculator.formatKm(
+                                  workshop.deliveryRadiusKm,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -633,7 +650,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                 child: Text(
                   workshop.locationAddress.isNotEmpty
                       ? workshop.locationAddress
-                      : 'Ubicación disponible en el mapa.',
+                      : l10n.mapSheetFallbackAddress,
                   maxLines: expanded ? 3 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -658,14 +675,14 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _DetailStat(
-                            label: 'Taller',
+                            label: l10n.mapSheetLabelWorkshop,
                             value: workshop.name,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _DetailStat(
-                            label: 'Alcance',
+                            label: l10n.mapSheetLabelCoverage,
                             value: WorkshopDistanceCalculator.formatKm(
                               workshop.deliveryRadiusKm,
                             ),
@@ -679,7 +696,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                       child: Text(
                         workshop.description.isNotEmpty
                             ? workshop.description
-                            : 'Este taller está listo para atender solicitudes cerca de tu ubicación.',
+                            : l10n.mapSheetFallbackDescription,
                         style: const TextStyle(
                           color: Color(0xFF5F554E),
                           fontSize: 13,
@@ -818,10 +835,15 @@ class _CurrentLocationMarker extends StatelessWidget {
 }
 
 class _ZoomControls extends StatelessWidget {
-  const _ZoomControls({required this.onZoomIn, required this.onZoomOut});
+  const _ZoomControls({
+    required this.onZoomIn,
+    required this.onZoomOut,
+    required this.l10n,
+  });
 
   final VoidCallback onZoomIn;
   final VoidCallback onZoomOut;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -842,7 +864,7 @@ class _ZoomControls extends StatelessWidget {
         children: [
           IconButton(
             key: const ValueKey('map-zoom-in-button'),
-            tooltip: 'Acercar',
+            tooltip: l10n.mapZoomInTooltip,
             onPressed: onZoomIn,
             constraints: const BoxConstraints.tightFor(width: 44, height: 44),
             padding: EdgeInsets.zero,
@@ -851,7 +873,7 @@ class _ZoomControls extends StatelessWidget {
           Container(width: 36, height: 1, color: const Color(0xFFE9DDD2)),
           IconButton(
             key: const ValueKey('map-zoom-out-button'),
-            tooltip: 'Alejar',
+            tooltip: l10n.mapZoomOutTooltip,
             onPressed: onZoomOut,
             constraints: const BoxConstraints.tightFor(width: 44, height: 44),
             padding: EdgeInsets.zero,
@@ -1034,6 +1056,7 @@ class _EmptyMapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
+      key: const ValueKey('nearby-workshops-empty-message'),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(20),

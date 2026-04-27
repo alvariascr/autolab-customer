@@ -1,15 +1,17 @@
+import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/location/location_cubit.dart';
 import '../../../../core/location/location_state.dart';
-import '../cubit/map_cubit.dart';
-import '../cubit/map_state.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../../workshops/presentation/widgets/nearby_workshops_map.dart';
 import '../../../workshops/presentation/workshop_empty_state_resolver.dart';
+import '../cubit/map_cubit.dart';
+import '../cubit/map_state.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({super.key});
@@ -47,6 +49,8 @@ class _MapPageViewState extends State<_MapPageView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4EF),
       appBar: AppBar(
@@ -55,9 +59,9 @@ class _MapPageViewState extends State<_MapPageView> {
         surfaceTintColor: Colors.transparent,
         toolbarHeight: 46,
         leadingWidth: 52,
-        title: const Text(
-          'Mapa',
-          style: TextStyle(
+        title: Text(
+          l10n.mapPageTitle,
+          style: const TextStyle(
             color: Color(0xFF181411),
             fontWeight: FontWeight.w700,
           ),
@@ -81,10 +85,12 @@ class _MapPageViewState extends State<_MapPageView> {
                       MapLoaded(:final isUsingFallbackLocation) =>
                         _emptyStateResolver.resolve(
                           locationState,
+                          l10n: l10n,
                           isUsingFallbackLocation: isUsingFallbackLocation,
                         ),
                       _ => _emptyStateResolver.resolve(
                         locationState,
+                        l10n: l10n,
                         isUsingFallbackLocation: false,
                       ),
                     };
@@ -118,15 +124,15 @@ class _MapPageViewState extends State<_MapPageView> {
                           top: 14,
                           left: 14,
                           child: _MapTopPill(
-                            label: _labelFor(workshopsCount, mapState),
+                            label: _labelFor(workshopsCount, mapState, l10n),
                             dark: true,
                           ),
                         ),
-                        const Positioned(
+                        Positioned(
                           top: 14,
                           right: 14,
                           child: _MapTopPill(
-                            label: 'Explorar mapa',
+                            label: l10n.mapTopPillExplore,
                             icon: Icons.map_outlined,
                           ),
                         ),
@@ -146,19 +152,25 @@ class _MapPageViewState extends State<_MapPageView> {
     );
   }
 
-  String _labelFor(int workshopsCount, MapState mapState) {
+  String _labelFor(
+    int workshopsCount,
+    MapState mapState,
+    AppLocalizations l10n,
+  ) {
     return switch (mapState) {
-      MapLoading() || MapInitial() => 'Cargando talleres',
-      MapError() => 'Sin talleres',
-      MapLoaded() when workshopsCount == 0 => 'Sin talleres',
-      MapLoaded() when workshopsCount == 1 => '1 taller cercano',
-      MapLoaded() => '$workshopsCount talleres cercanos',
+      MapLoading() || MapInitial() => l10n.mapTopPillLoadingWorkshops,
+      MapError() => l10n.mapTopPillNoWorkshops,
+      MapLoaded() when workshopsCount == 0 => l10n.mapTopPillNoWorkshops,
+      MapLoaded() when workshopsCount == 1 => l10n.mapTopPillOneWorkshopNearby,
+      MapLoaded() => l10n.mapTopPillWorkshopsNearby(workshopsCount),
     };
   }
 }
 
 class _MapBody extends StatelessWidget {
   const _MapBody({required this.state, required this.emptyMessage});
+
+  static const _emptyStateResolver = WorkshopEmptyStateResolver();
 
   final MapState state;
   final String emptyMessage;
@@ -168,11 +180,16 @@ class _MapBody extends StatelessWidget {
     return switch (state) {
       MapInitial() ||
       MapLoading() => const Center(child: CircularProgressIndicator()),
-      MapError(:final message) => Center(
+      MapError(:final code, :final uiKey, :final message) => Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            message,
+            _messageFor(
+              code: code,
+              uiKey: uiKey,
+              message: message,
+              l10n: AppLocalizations.of(context)!,
+            ),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Color(0xFF6B5F57)),
           ),
@@ -184,6 +201,17 @@ class _MapBody extends StatelessWidget {
         emptyMessage: emptyMessage,
       ),
     };
+  }
+
+  String _messageFor({
+    required String code,
+    required String? uiKey,
+    required String? message,
+    required AppLocalizations l10n,
+  }) {
+    final failure = Failure(message ?? code, code: code, uiKey: uiKey);
+
+    return _emptyStateResolver.resolveLoadError(failure, l10n);
   }
 }
 

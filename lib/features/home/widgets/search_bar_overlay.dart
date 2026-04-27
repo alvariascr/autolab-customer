@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class SearchBarOverlay extends StatelessWidget {
   const SearchBarOverlay({
     super.key,
@@ -12,6 +14,8 @@ class SearchBarOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
@@ -30,9 +34,9 @@ class SearchBarOverlay extends StatelessWidget {
           child: TextField(
             controller: controller,
             autofocus: showSearchBar,
-            decoration: const InputDecoration(
-              icon: Icon(Icons.search),
-              hintText: 'Buscar talleres...',
+            decoration: InputDecoration(
+              icon: const Icon(Icons.search),
+              hintText: l10n.searchBarHint,
               border: InputBorder.none,
             ),
           ),

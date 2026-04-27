@@ -7,21 +7,22 @@ abstract class LocationFlowRecoveryService {
 
 class SharedPrefsLocationFlowRecoveryService
     implements LocationFlowRecoveryService {
+  SharedPrefsLocationFlowRecoveryService(this._prefs);
+
   static const _pendingSettingsSyncKey = 'location_pending_settings_sync';
+  final SharedPreferences _prefs;
 
   @override
   Future<void> markPendingSettingsSync() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_pendingSettingsSyncKey, true);
+    await _prefs.setBool(_pendingSettingsSyncKey, true);
   }
 
   @override
   Future<bool> consumePendingSettingsSync() async {
-    final prefs = await SharedPreferences.getInstance();
-    final pending = prefs.getBool(_pendingSettingsSyncKey) ?? false;
+    final pending = _prefs.getBool(_pendingSettingsSyncKey) ?? false;
 
     if (pending) {
-      await prefs.remove(_pendingSettingsSyncKey);
+      await _prefs.remove(_pendingSettingsSyncKey);
     }
 
     return pending;

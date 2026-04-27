@@ -1,7 +1,9 @@
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
 import 'package:autolab_customer/features/workshops/presentation/widgets/nearby_workshops_map.dart';
+import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,11 +13,18 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
               height: 320,
-              child: NearbyWorkshopsMap(
+              child: const NearbyWorkshopsMap(
                 workshops: [],
                 currentLocation: CurrentLocation(
                   latitude: 9.9281,
@@ -69,11 +78,18 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
               height: 320,
-              child: NearbyWorkshopsMap(
+              child: const NearbyWorkshopsMap(
                 workshops: workshops,
                 currentLocation: CurrentLocation(
                   latitude: 9.9281,
@@ -97,11 +113,18 @@ void main() {
 
     testWidgets('muestra controles de zoom sobre el mapa', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
               height: 320,
-              child: NearbyWorkshopsMap(
+              child: const NearbyWorkshopsMap(
                 workshops: [],
                 currentLocation: CurrentLocation(
                   latitude: 9.9281,

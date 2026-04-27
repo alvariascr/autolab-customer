@@ -7,12 +7,14 @@ class AuthRateLimitFailure extends Failure {
     required this.remaining,
     required String message,
     String? code,
+    String? uiKey,
     Object? cause,
     StackTrace? stackTrace,
   }) : super(
-    message,
-    code: code,
-    cause: cause,
-    stackTrace: stackTrace,
-  );
+         message,
+         code: code,
+         uiKey: uiKey,
+         cause: cause,
+         stackTrace: stackTrace,
+       );
 }
