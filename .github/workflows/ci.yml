@@ -38,6 +38,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Debug dependency layout
+        run: |
+          pwd
+          ls -la
+          ls -la ..
+          ls -la ../autolab_core
+          test -f .dart_tool/package_config.json && sed -n '1,220p' .dart_tool/package_config.json
+
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib test
 
