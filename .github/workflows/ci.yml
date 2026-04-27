@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          path: autolab_customer
 
       - name: Checkout autolab_core
         uses: actions/checkout@v4
@@ -28,6 +26,9 @@ jobs:
           path: autolab_core
           token: ${{ secrets.AUTOLAB_CORE_READ_TOKEN }}
 
+      - name: Link autolab_core for path dependency
+        run: ln -s "$GITHUB_WORKSPACE/autolab_core" ../autolab_core
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -36,16 +37,12 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-        working-directory: autolab_customer
 
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed lib test
-        working-directory: autolab_customer
 
       - name: Analyze
         run: flutter analyze
-        working-directory: autolab_customer
 
       - name: Test
         run: flutter test
-        working-directory: autolab_customer
