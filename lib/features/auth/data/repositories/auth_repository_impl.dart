@@ -1,16 +1,17 @@
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
+import 'package:autolab_customer/features/auth/data/mappers/auth_exception_mapper.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_login_policy_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_register_precheck_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
-import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
 import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/app_user.dart';
-import '../../domain/failures/auth_rate_limit_failure.dart';
 import '../../repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -18,19 +19,23 @@ class AuthRepositoryImpl implements AuthRepository {
     this.client,
     this.globalErrorHandler,
     this.userRoleDataSource,
-    this.loginAttemptService,
+    this.authLoginPolicyService,
+    this.authRegisterPrecheckService,
     this.sessionStorageService,
     this.sessionRecoveryService,
     this.featureLogger,
+    this.authExceptionMapper,
   );
 
   final SupabaseClient client;
   final GlobalErrorHandler globalErrorHandler;
   final UserRoleDataSource userRoleDataSource;
-  final LoginAttemptService loginAttemptService;
+  final AuthLoginPolicyService authLoginPolicyService;
+  final AuthRegisterPrecheckService authRegisterPrecheckService;
   final AuthSessionStorageService sessionStorageService;
   final AuthSessionRecoveryService sessionRecoveryService;
   final FeatureLogger featureLogger;
+  final AuthExceptionMapper authExceptionMapper;
 
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
@@ -44,7 +49,9 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     try {
-      final blockFailure = await _getLoginBlockFailure(cleanEmail);
+      final blockFailure = await authLoginPolicyService.getBlockFailure(
+        cleanEmail,
+      );
       if (blockFailure != null) {
         featureLogger.warn(
           feature: 'auth',
@@ -89,7 +96,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     try {
-      final precheckFailure = await _precheckRegister(
+      final precheckFailure = await authRegisterPrecheckService.precheck(
         cleanEmail: cleanEmail,
         cleanPassword: cleanPassword,
       );
@@ -161,21 +168,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return restoredUser;
     }
 
-    final recoveredUser = restoredUser.getOrElse(() => null);
+    final recoveredUser = restoredUser.fold((_) => null, (user) => user);
     if (recoveredUser != null) {
       return Right(recoveredUser);
     }
 
     return sessionRecoveryService.recoverFromLocal();
-  }
-
-  Future<Failure?> _getLoginBlockFailure(String cleanEmail) async {
-    final attemptState = await loginAttemptService.getState(cleanEmail);
-    if (!attemptState.isBlocked) {
-      return null;
-    }
-
-    return _createAuthRateLimitFailure(attemptState.remainingTime);
   }
 
   Future<Either<Failure, AppUser>> _buildLoginSuccess(
@@ -202,7 +200,7 @@ class AuthRepositoryImpl implements AuthRepository {
       email: user.email,
       role: role,
     );
-    await loginAttemptService.registerSuccess(cleanEmail);
+    await authLoginPolicyService.registerSuccess(cleanEmail);
 
     featureLogger.info(
       feature: 'auth',
@@ -218,212 +216,116 @@ class AuthRepositoryImpl implements AuthRepository {
     StackTrace stackTrace,
     String cleanEmail,
   ) async {
-    final message = error.message.toLowerCase();
+    final mapping = authExceptionMapper.map(
+      error,
+      stackTrace,
+      flow: AuthExceptionFlow.login,
+    );
+    if (mapping != null) {
+      var mappedFailure = mapping.failure;
+      var classification = mapping.classification;
 
-    if (message.contains('invalid login credentials')) {
-      final updatedState = await loginAttemptService.registerFailure(
-        cleanEmail,
-      );
-
-      if (updatedState.isBlocked) {
-        return Left(
-          _createAuthRateLimitFailure(
-            updatedState.remainingTime,
-            cause: error,
-            stackTrace: stackTrace,
-          ),
+      if (mappedFailure.code == AuthErrorCatalog.invalidCredentials.code) {
+        mappedFailure = await authLoginPolicyService.registerInvalidCredentials(
+          cleanEmail,
+          cause: error,
+          stackTrace: stackTrace,
         );
+        if (mappedFailure.code == AuthErrorCatalog.authRateLimit.code) {
+          classification = 'invalid_credentials_rate_limited';
+        }
       }
 
-      _logWarning(
-        AuthErrorCatalog.invalidCredentials,
-        error: error,
-        stackTrace: stackTrace,
-      );
-
-      return Left(
-        AuthFailure.fromErrorItem(
-          AuthErrorCatalog.invalidCredentials,
-          cause: error,
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-
-    if (message.contains('email not confirmed')) {
-      _logWarning(
-        AuthErrorCatalog.unconfirmedEmail,
-        error: error,
-        stackTrace: stackTrace,
-      );
-
-      return Left(
-        AuthFailure.fromErrorItem(
-          AuthErrorCatalog.unconfirmedEmail,
-          cause: error,
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-
-    final networkFailure = _mapNetworkAuthException(error, stackTrace);
-    if (networkFailure != null) {
       featureLogger.warn(
         feature: 'auth',
-        action: 'login_network_failed',
-        code: networkFailure.code,
-        context: {'email': cleanEmail, 'uiKey': networkFailure.uiKey},
+        action: 'login_auth_exception_mapped',
+        code: mappedFailure.code,
+        context: _buildAuthExceptionContext(
+          error,
+          flow: AuthExceptionFlow.login,
+          email: cleanEmail,
+          failure: mappedFailure,
+          classification: classification,
+        ),
         error: error,
         stackTrace: stackTrace,
       );
-      return Left(networkFailure);
+
+      return Left(mappedFailure);
     }
 
     featureLogger.error(
       feature: 'auth',
       action: 'login_unhandled_auth_exception',
-      context: {'email': cleanEmail},
+      context: _buildAuthExceptionContext(
+        error,
+        flow: AuthExceptionFlow.login,
+        email: cleanEmail,
+        resolution: 'delegated_to_global_error_handler',
+      ),
       error: error,
       stackTrace: stackTrace,
     );
     return Left(globalErrorHandler.handle(error, stackTrace));
-  }
-
-  Future<Failure?> _precheckRegister({
-    required String cleanEmail,
-    required String cleanPassword,
-  }) async {
-    try {
-      final loginResponse = await client.auth.signInWithPassword(
-        email: cleanEmail,
-        password: cleanPassword,
-      );
-
-      if (loginResponse.user == null) {
-        return null;
-      }
-
-      await client.auth.signOut();
-      _logWarning(AuthErrorCatalog.accountAlreadyExists);
-      return AuthFailure.fromErrorItem(AuthErrorCatalog.accountAlreadyExists);
-    } on AuthException catch (error, stackTrace) {
-      final message = error.message.toLowerCase();
-
-      if (message.contains('invalid login credentials')) {
-        featureLogger.info(
-          feature: 'auth',
-          action: 'register_precheck_available',
-          context: {'email': cleanEmail},
-        );
-        return null;
-      }
-
-      if (message.contains('email not confirmed')) {
-        _logWarning(
-          AuthErrorCatalog.emailNotConfirmedRegister,
-          error: error,
-          stackTrace: stackTrace,
-        );
-
-        return AuthFailure.fromErrorItem(
-          AuthErrorCatalog.emailNotConfirmedRegister,
-          cause: error,
-          stackTrace: stackTrace,
-        );
-      }
-
-      return globalErrorHandler.handle(error, stackTrace);
-    }
   }
 
   Either<Failure, AppUser> _handleRegisterAuthException(
     AuthException error,
     StackTrace stackTrace,
   ) {
-    final message = error.message.toLowerCase();
-
-    if (message.contains('already registered')) {
-      _logWarning(
-        AuthErrorCatalog.emailAlreadyRegistered,
-        error: error,
-        stackTrace: stackTrace,
-      );
-
-      return Left(
-        AuthFailure.fromErrorItem(
-          AuthErrorCatalog.emailAlreadyRegistered,
-          cause: error,
-          stackTrace: stackTrace,
-        ),
-      );
-    }
-
-    final networkFailure = _mapNetworkAuthException(error, stackTrace);
-    if (networkFailure != null) {
+    final mapping = authExceptionMapper.map(
+      error,
+      stackTrace,
+      flow: AuthExceptionFlow.register,
+    );
+    if (mapping != null) {
+      final mappedFailure = mapping.failure;
       featureLogger.warn(
         feature: 'auth',
-        action: 'register_network_failed',
-        code: networkFailure.code,
-        context: {'uiKey': networkFailure.uiKey},
+        action: 'register_auth_exception_mapped',
+        code: mappedFailure.code,
+        context: _buildAuthExceptionContext(
+          error,
+          flow: AuthExceptionFlow.register,
+          failure: mappedFailure,
+          classification: mapping.classification,
+        ),
         error: error,
         stackTrace: stackTrace,
       );
-      return Left(networkFailure);
+      return Left(mappedFailure);
     }
 
     featureLogger.error(
       feature: 'auth',
       action: 'register_unhandled_auth_exception',
+      context: _buildAuthExceptionContext(
+        error,
+        flow: AuthExceptionFlow.register,
+        resolution: 'delegated_to_global_error_handler',
+      ),
       error: error,
       stackTrace: stackTrace,
     );
     return Left(globalErrorHandler.handle(error, stackTrace));
   }
 
-  Failure? _mapNetworkAuthException(
-    AuthException error,
-    StackTrace stackTrace,
-  ) {
-    final message = error.message.toLowerCase();
-    final runtimeTypeName = error.runtimeType.toString().toLowerCase();
-
-    if (_isTimeoutLikeAuthFailure(message, runtimeTypeName)) {
-      return NetworkFailure.fromErrorItem(
-        ErrorCatalog.requestTimeout,
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    if (_isNetworkLikeAuthFailure(message, runtimeTypeName)) {
-      return NetworkFailure.fromErrorItem(
-        ErrorCatalog.networkUnavailable,
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    }
-
-    return null;
-  }
-
-  bool _isTimeoutLikeAuthFailure(String message, String runtimeTypeName) {
-    return message.contains('timeout') ||
-        message.contains('timed out') ||
-        runtimeTypeName.contains('timeout');
-  }
-
-  bool _isNetworkLikeAuthFailure(String message, String runtimeTypeName) {
-    return runtimeTypeName.contains('retryablefetch') ||
-        message.contains('failed host lookup') ||
-        message.contains('network request failed') ||
-        message.contains('network error') ||
-        message.contains('connection error') ||
-        message.contains('clientexception') ||
-        message.contains('socketexception') ||
-        message.contains('connection closed') ||
-        message.contains('connection refused') ||
-        message.contains('unable to resolve host') ||
-        message.contains('temporarily unavailable');
+  Map<String, Object?> _buildAuthExceptionContext(
+    AuthException error, {
+    required AuthExceptionFlow flow,
+    Failure? failure,
+    String? email,
+    String? resolution,
+    String? classification,
+  }) {
+    return authExceptionMapper.buildLogContext(
+      error,
+      flow: flow,
+      failure: failure,
+      email: email,
+      resolution: resolution,
+      classification: classification,
+    );
   }
 
   String _normalizeEmail(String email) {
@@ -438,33 +340,12 @@ class AuthRepositoryImpl implements AuthRepository {
     return AppUser(id: id, email: email, role: role);
   }
 
-  void _logWarning(
-    ErrorItem errorItem, {
-    Object? error,
-    StackTrace? stackTrace,
-  }) {
+  void _logWarning(ErrorItem errorItem) {
     featureLogger.warn(
       feature: 'auth',
       action: 'domain_warning',
       code: errorItem.code,
       context: {'uiKey': errorItem.uiKey},
-      error: error,
-      stackTrace: stackTrace,
-    );
-  }
-
-  AuthRateLimitFailure _createAuthRateLimitFailure(
-    Duration remaining, {
-    Object? cause,
-    StackTrace? stackTrace,
-  }) {
-    return AuthRateLimitFailure(
-      remaining: remaining,
-      code: AuthErrorCatalog.authRateLimit.code,
-      uiKey: AuthErrorCatalog.authRateLimit.uiKey,
-      message: AuthErrorCatalog.authRateLimit.code,
-      cause: cause,
-      stackTrace: stackTrace,
     );
   }
 }

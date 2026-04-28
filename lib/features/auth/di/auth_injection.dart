@@ -9,9 +9,14 @@ import '../data/datasources/session_local_data_source.dart';
 import '../data/datasources/session_local_data_source_impl.dart';
 import '../data/datasources/user_role_data_source.dart';
 import '../data/datasources/user_role_data_source_impl.dart';
+import '../data/mappers/auth_exception_mapper.dart';
 import '../data/repositories/auth_repository_impl.dart';
+import '../data/services/auth_local_session_recovery_service.dart';
+import '../data/services/auth_login_policy_service.dart';
+import '../data/services/auth_register_precheck_service.dart';
 import '../data/services/auth_session_recovery_service.dart';
 import '../data/services/auth_session_storage_service.dart';
+import '../data/services/auth_supabase_session_sync_service.dart';
 import '../data/services/login_attempt_service.dart';
 import '../repository/auth_repository.dart';
 
@@ -24,6 +29,14 @@ void registerAuthDependencies(GetIt sl) {
     () => LoginAttemptService(sl<SharedPreferences>()),
   );
 
+  sl.registerLazySingleton<AuthExceptionMapper>(
+    () => const AuthExceptionMapper(),
+  );
+
+  sl.registerLazySingleton<AuthLoginPolicyService>(
+    () => AuthLoginPolicyService(sl<LoginAttemptService>()),
+  );
+
   sl.registerLazySingleton<SessionLocalDataSource>(
     () => SessionLocalDataSourceImpl(sl<SecureStorage>()),
   );
@@ -32,11 +45,36 @@ void registerAuthDependencies(GetIt sl) {
     () => AuthSessionStorageService(sl<SessionLocalDataSource>()),
   );
 
+  sl.registerLazySingleton<AuthSupabaseSessionSyncService>(
+    () => AuthSupabaseSessionSyncService(
+      sessionStorageService: sl<AuthSessionStorageService>(),
+      userRoleDataSource: sl<UserRoleDataSource>(),
+      featureLogger: sl<FeatureLogger>(),
+    ),
+  );
+
+  sl.registerLazySingleton<AuthLocalSessionRecoveryService>(
+    () => AuthLocalSessionRecoveryService(
+      sessionStorageService: sl<AuthSessionStorageService>(),
+      featureLogger: sl<FeatureLogger>(),
+    ),
+  );
+
   sl.registerLazySingleton<AuthSessionRecoveryService>(
     () => AuthSessionRecoveryService(
       client: sl<SupabaseClient>(),
       sessionStorageService: sl<AuthSessionStorageService>(),
-      userRoleDataSource: sl<UserRoleDataSource>(),
+      supabaseSessionSyncService: sl<AuthSupabaseSessionSyncService>(),
+      localSessionRecoveryService: sl<AuthLocalSessionRecoveryService>(),
+      featureLogger: sl<FeatureLogger>(),
+    ),
+  );
+
+  sl.registerLazySingleton<AuthRegisterPrecheckService>(
+    () => AuthRegisterPrecheckService(
+      client: sl<SupabaseClient>(),
+      authExceptionMapper: sl<AuthExceptionMapper>(),
+      globalErrorHandler: sl<GlobalErrorHandler>(),
       featureLogger: sl<FeatureLogger>(),
     ),
   );
@@ -46,10 +84,12 @@ void registerAuthDependencies(GetIt sl) {
       sl<SupabaseClient>(),
       sl<GlobalErrorHandler>(),
       sl<UserRoleDataSource>(),
-      sl<LoginAttemptService>(),
+      sl<AuthLoginPolicyService>(),
+      sl<AuthRegisterPrecheckService>(),
       sl<AuthSessionStorageService>(),
       sl<AuthSessionRecoveryService>(),
       sl<FeatureLogger>(),
+      sl<AuthExceptionMapper>(),
     ),
   );
 

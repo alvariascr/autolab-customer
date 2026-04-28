@@ -3,84 +3,53 @@ import 'package:dartz/dartz.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/logging/feature_logger.dart';
-import '../../domain/constants/user_roles.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/errors/auth_error_catalog.dart';
-import '../datasources/user_role_data_source.dart';
+import 'auth_local_session_recovery_service.dart';
 import 'auth_session_storage_service.dart';
+import 'auth_supabase_session_sync_service.dart';
 
 class AuthSessionRecoveryService {
   AuthSessionRecoveryService({
     required SupabaseClient client,
     required AuthSessionStorageService sessionStorageService,
-    required UserRoleDataSource userRoleDataSource,
+    required AuthSupabaseSessionSyncService supabaseSessionSyncService,
+    required AuthLocalSessionRecoveryService localSessionRecoveryService,
     required FeatureLogger featureLogger,
   }) : _client = client,
        _sessionStorageService = sessionStorageService,
-       _userRoleDataSource = userRoleDataSource,
+       _supabaseSessionSyncService = supabaseSessionSyncService,
+       _localSessionRecoveryService = localSessionRecoveryService,
        _featureLogger = featureLogger;
 
   final SupabaseClient _client;
   final AuthSessionStorageService _sessionStorageService;
-  final UserRoleDataSource _userRoleDataSource;
+  final AuthSupabaseSessionSyncService _supabaseSessionSyncService;
+  final AuthLocalSessionRecoveryService _localSessionRecoveryService;
   final FeatureLogger _featureLogger;
 
   Future<Either<Failure, AppUser?>> restoreFromSupabaseUser(
     User supabaseUser,
   ) async {
-    try {
-      final role = await _userRoleDataSource.getUserRole(supabaseUser.id);
-      await _sessionStorageService.saveUserSession(
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        role: role,
-      );
-
-      _featureLogger.info(
-        feature: 'auth',
-        action: 'restore_from_supabase_user_succeeded',
-        context: {'userId': supabaseUser.id, 'role': role},
-      );
-
-      return Right(
-        _buildAppUser(
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-          role: role,
-        ),
-      );
-    } catch (error, stackTrace) {
-      final localSession = await recoverFromLocal();
-
-      if (localSession.isRight()) {
-        final recoveredUser = localSession.getOrElse(() => null);
-        if (recoveredUser != null && recoveredUser.id == supabaseUser.id) {
-          _featureLogger.info(
-            feature: 'auth',
-            action: 'restore_from_supabase_user_local_fallback',
-            context: {'userId': supabaseUser.id},
-          );
-          return Right(recoveredUser);
-        }
-      }
-
-      final failure = AuthFailure.fromErrorItem(
-        AuthErrorCatalog.sessionRestoreFailed,
-        cause: error,
-        stackTrace: stackTrace,
-      );
-
-      _featureLogger.error(
-        feature: 'auth',
-        action: 'restore_from_supabase_user_failed',
-        code: failure.code,
-        context: {'uiKey': failure.uiKey, 'userId': supabaseUser.id},
-        error: error,
-        stackTrace: stackTrace,
-      );
-
-      return Left(failure);
+    final syncResult = await _supabaseSessionSyncService.syncUser(supabaseUser);
+    if (syncResult.isRight()) {
+      return syncResult;
     }
+
+    final localSession = await _localSessionRecoveryService.recover();
+    if (localSession.isRight()) {
+      final recoveredUser = localSession.getOrElse(() => null);
+      if (recoveredUser != null && recoveredUser.id == supabaseUser.id) {
+        _featureLogger.info(
+          feature: 'auth',
+          action: 'restore_from_supabase_user_local_fallback',
+          context: {'userId': supabaseUser.id},
+        );
+        return Right(recoveredUser);
+      }
+    }
+
+    return syncResult.fold(Left.new, (_) => const Right(null));
   }
 
   Future<Either<Failure, AppUser?>> restoreFromRefreshToken() async {
@@ -117,7 +86,7 @@ class AuthSessionRecoveryService {
         action: 'restore_from_refresh_token_succeeded',
         context: {'userId': user.id},
       );
-      return restoreFromSupabaseUser(user);
+      return _supabaseSessionSyncService.syncUser(user);
     } on AuthException catch (error, stackTrace) {
       final failure = AuthFailure.fromErrorItem(
         AuthErrorCatalog.sessionRestoreFailed,
@@ -152,67 +121,6 @@ class AuthSessionRecoveryService {
   }
 
   Future<Either<Failure, AppUser?>> recoverFromLocal() async {
-    String? sessionJson;
-    try {
-      sessionJson = await _sessionStorageService.getUserSession();
-    } catch (error, stackTrace) {
-      final failure = AuthFailure.fromErrorItem(
-        AuthErrorCatalog.localSessionRecoveryFailed,
-        cause: error,
-        stackTrace: stackTrace,
-      );
-      _featureLogger.warn(
-        feature: 'auth',
-        action: 'recover_from_local_read_failed',
-        code: failure.code,
-        context: {'uiKey': failure.uiKey},
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return Left(failure);
-    }
-
-    if (sessionJson == null || sessionJson.isEmpty) {
-      return const Right(null);
-    }
-
-    try {
-      final storedUser = _sessionStorageService.parseStoredUserSession(
-        sessionJson,
-      );
-      if (storedUser != null && UserRoles.isValid(storedUser.role)) {
-        _featureLogger.info(
-          feature: 'auth',
-          action: 'recover_from_local_succeeded',
-          context: {'userId': storedUser.id, 'role': storedUser.role},
-        );
-        return Right(storedUser);
-      }
-    } catch (error, stackTrace) {
-      final failure = AuthFailure.fromErrorItem(
-        AuthErrorCatalog.localSessionRecoveryFailed,
-        cause: error,
-        stackTrace: stackTrace,
-      );
-      _featureLogger.warn(
-        feature: 'auth',
-        action: 'recover_from_local_parse_failed',
-        code: failure.code,
-        context: {'uiKey': failure.uiKey},
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return Left(failure);
-    }
-
-    return const Right(null);
-  }
-
-  AppUser _buildAppUser({
-    required String id,
-    required String? email,
-    required String role,
-  }) {
-    return AppUser(id: id, email: email, role: role);
+    return _localSessionRecoveryService.recover();
   }
 }

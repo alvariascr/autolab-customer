@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../domain/failures/auth_rate_limit_failure.dart';
 import '../repository/auth_repository.dart';
+import 'auth_feedback.dart';
 import 'register_form_state.dart';
 
 class RegisterFormCubit extends Cubit<RegisterFormState> {
@@ -34,7 +35,7 @@ class RegisterFormCubit extends Cubit<RegisterFormState> {
       (Failure failure) => emit(
         state.copyWith(
           status: RegisterFormStatus.error,
-          message: failure.message,
+          message: authPresentableMessage(failure),
           code: failure.code,
           uiKey: failure.uiKey,
           remaining: failure is AuthRateLimitFailure ? failure.remaining : null,

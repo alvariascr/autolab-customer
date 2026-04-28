@@ -18,7 +18,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  mocktail: ^1.0.4
 
   # Functional / Either
   dartz: ^0.10.1
@@ -30,10 +29,10 @@ dependencies:
   url_launcher: ^6.3.0
 
   # Foundation package
-autolab_core:
-  git:
-    url: https://github.com/BlueZoneCP/autolab-core.git
-    ref: codex/core-architecture-cleanup
+  autolab_core:
+    git:
+      url: https://github.com/BlueZoneCP/autolab-core.git
+      ref: develop
 
   # Navigation
   go_router: ^14.2.7
@@ -53,10 +52,12 @@ autolab_core:
   geocoding: ^4.0.0
   latlong2: ^0.9.1
 
+  intl: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  mocktail: ^1.0.4
   flutter_secure_storage: ^9.2.2
 
 flutter:
