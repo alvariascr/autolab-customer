@@ -24,6 +24,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final class _SupabaseAuthCodes {
+  static const invalidCredentials = 'invalid_credentials';
+  static const noAuthorization = 'no_authorization';
   static const emailNotConfirmed = 'email_not_confirmed';
   static const userAlreadyExists = 'user_already_exists';
   static const requestTimeout = 'request_timeout';
@@ -366,6 +368,51 @@ void main() {
         }, (_) => fail('Se esperaba Left(Failure)'));
       });
 
+      test(
+        'retorna Left cuando Supabase expone invalid_credentials como code explícito',
+        () async {
+          final authException = AuthApiException(
+            'Invalid login credentials',
+            statusCode: '400',
+            code: _SupabaseAuthCodes.invalidCredentials,
+          );
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
+
+          when(
+            () => mockLoginAttemptService.registerFailure('test@test.com'),
+          ).thenAnswer(
+            (_) async => const LoginAttemptState(
+              failedAttempts: 1,
+              lockLevel: 0,
+              blockedUntil: null,
+            ),
+          );
+
+          final result = await repository.login(
+            'test@test.com',
+            'bad-password',
+          );
+
+          expect(result.isLeft(), true);
+
+          result.fold((failure) {
+            expect(failure, isA<Failure>());
+            expect(failure.code, AuthErrorCatalog.invalidCredentials.code);
+            expect(failure.uiKey, AuthErrorCatalog.invalidCredentials.uiKey);
+          }, (_) => fail('Se esperaba Left(Failure)'));
+
+          verifyNever(
+            () => mockGlobalErrorHandler.handle(authException, any()),
+          );
+        },
+      );
+
       test('retorna Left cuando el correo no ha sido confirmado', () async {
         final authException = AuthApiException(
           'Email not confirmed',
@@ -398,6 +445,31 @@ void main() {
             stackTrace: any(named: 'stackTrace'),
           ),
         ).called(1);
+      });
+
+      test('retorna Left cuando Supabase expone no_authorization', () async {
+        final authException = AuthApiException(
+          'Unauthorized',
+          statusCode: '401',
+          code: _SupabaseAuthCodes.noAuthorization,
+        );
+
+        when(
+          () => mockGoTrueClient.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(authException);
+
+        final result = await repository.login('test@test.com', '123456');
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure.code, AuthErrorCatalog.unauthorized.code);
+          expect(failure.uiKey, AuthErrorCatalog.unauthorized.uiKey);
+        }, (_) => fail('Debería ser Left'));
+
+        verifyNever(() => mockGlobalErrorHandler.handle(authException, any()));
       });
 
       test(
@@ -639,6 +711,59 @@ void main() {
           ),
         ).called(1);
       });
+
+      test(
+        'returns Right(AppUser) when precheck receives invalid_credentials code explícito',
+        () async {
+          final user = User(
+            id: 'user-456',
+            appMetadata: const {},
+            userMetadata: const {},
+            aud: 'authenticated',
+            createdAt: DateTime.now().toIso8601String(),
+            email: 'new@test.com',
+          );
+
+          final authResponse = AuthResponse(session: null, user: user);
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(
+            AuthApiException(
+              'Invalid login credentials',
+              statusCode: '400',
+              code: _SupabaseAuthCodes.invalidCredentials,
+            ),
+          );
+
+          when(
+            () => mockGoTrueClient.signUp(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+              data: any(named: 'data'),
+            ),
+          ).thenAnswer((_) async => authResponse);
+
+          final result = await repository.register(
+            'Luis',
+            'new@test.com',
+            '88888888',
+            '123456',
+          );
+
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
+            expect(appUser.id, 'user-456');
+            expect(appUser.email, 'new@test.com');
+            expect(appUser.role, UserRoles.customer);
+          });
+
+          verifyNever(() => mockGlobalErrorHandler.handle(any(), any()));
+        },
+      );
 
       test(
         'returns Left when account already exists (pre-check login success)',

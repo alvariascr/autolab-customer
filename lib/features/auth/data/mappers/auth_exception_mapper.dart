@@ -95,6 +95,10 @@ final class AuthExceptionMapper {
       return false;
     }
 
+    if (error.code == _SupabaseAuthCodes.invalidCredentials) {
+      return true;
+    }
+
     final statusCode = _parseStatusCode(error.statusCode);
     return error.code == null && (statusCode == 400 || statusCode == 401);
   }
@@ -128,7 +132,39 @@ final class AuthExceptionMapper {
     final statusCode = _parseStatusCode(error.statusCode);
 
     switch (errorCode) {
+      case _SupabaseAuthCodes.invalidCredentials:
+        if (flow == AuthExceptionFlow.login) {
+          return _mapping(
+            AuthFailure.fromErrorItem(
+              AuthErrorCatalog.invalidCredentials,
+              cause: error,
+              stackTrace: stackTrace,
+            ),
+            'invalid_credentials',
+          );
+        }
+        break;
+      case _SupabaseAuthCodes.noAuthorization:
+        return _mapping(
+          AuthFailure.fromErrorItem(
+            AuthErrorCatalog.unauthorized,
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+          'unauthorized',
+        );
+      case _SupabaseAuthCodes.badJwt:
+        return _mapping(
+          AuthFailure.fromErrorItem(
+            AuthErrorCatalog.sessionExpired,
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+          'bad_jwt',
+        );
       case _SupabaseAuthCodes.emailNotConfirmed:
+      case _SupabaseAuthCodes.providerEmailNeedsVerification:
+      case _SupabaseAuthCodes.phoneNotConfirmed:
         return _mapping(
           AuthFailure.fromErrorItem(
             flow == AuthExceptionFlow.registerPrecheck
@@ -153,6 +189,24 @@ final class AuthExceptionMapper {
             stackTrace: stackTrace,
           ),
           'account_exists',
+        );
+      case _SupabaseAuthCodes.signupDisabled:
+        return _mapping(
+          AuthFailure.fromErrorItem(
+            AuthErrorCatalog.registerUnexpectedError,
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+          'signup_disabled',
+        );
+      case _SupabaseAuthCodes.userBanned:
+        return _mapping(
+          AuthFailure.fromErrorItem(
+            AuthErrorCatalog.unauthorized,
+            cause: error,
+            stackTrace: stackTrace,
+          ),
+          'user_banned',
         );
       case _SupabaseAuthCodes.weakPassword:
         return _mapping(
@@ -263,7 +317,15 @@ final class AuthExceptionMapper {
 }
 
 final class _SupabaseAuthCodes {
+  static const invalidCredentials = 'invalid_credentials';
+  static const badJwt = 'bad_jwt';
+  static const noAuthorization = 'no_authorization';
+  static const signupDisabled = 'signup_disabled';
+  static const userBanned = 'user_banned';
+  static const providerEmailNeedsVerification =
+      'provider_email_needs_verification';
   static const emailNotConfirmed = 'email_not_confirmed';
+  static const phoneNotConfirmed = 'phone_not_confirmed';
   static const emailExists = 'email_exists';
   static const userAlreadyExists = 'user_already_exists';
   static const identityAlreadyExists = 'identity_already_exists';
