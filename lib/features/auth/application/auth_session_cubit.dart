@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/logging/feature_logger.dart';
 import '../domain/entities/app_user.dart';
 import '../repository/auth_repository.dart';
+import 'auth_feedback.dart';
 import 'auth_session_state.dart';
 
 class AuthSessionCubit extends Cubit<AuthSessionState> {
@@ -42,7 +43,7 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
           state.copyWith(
             status: AuthSessionStatus.unauthenticated,
             clearUser: true,
-            message: failure.message,
+            message: authPresentableMessage(failure),
             code: failure.code,
             uiKey: failure.uiKey,
           ),
@@ -119,7 +120,7 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
         if (previousState.isAuthenticated) {
           emit(
             previousState.copyWith(
-              message: failure.message,
+              message: authPresentableMessage(failure),
               code: failure.code,
               uiKey: failure.uiKey,
             ),
@@ -131,7 +132,7 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
           state.copyWith(
             status: AuthSessionStatus.unauthenticated,
             clearUser: true,
-            message: failure.message,
+            message: authPresentableMessage(failure),
             code: failure.code,
             uiKey: failure.uiKey,
           ),
@@ -145,7 +146,11 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
   }
 
   void clearFeedback() {
-    if (state.message == null && state.code == null && state.uiKey == null) {
+    if (!hasAuthFeedback(
+      message: state.message,
+      code: state.code,
+      uiKey: state.uiKey,
+    )) {
       return;
     }
 

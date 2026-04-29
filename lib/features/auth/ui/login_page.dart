@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
+import '../application/auth_feedback.dart';
 import '../application/auth_session_cubit.dart';
 import '../application/login_form_cubit.dart';
 import '../application/login_form_state.dart';
@@ -119,7 +120,11 @@ class _LoginPageState extends State<LoginPage> {
             BlocListener<LoginFormCubit, LoginFormState>(
               listener: (context, state) {
                 if (state.status == LoginFormStatus.error &&
-                    state.message != null) {
+                    hasAuthFeedback(
+                      message: state.message,
+                      code: state.code,
+                      uiKey: state.uiKey,
+                    )) {
                   final resolvedMessage = AuthUiErrorResolver.resolve(
                     l10n: l10n,
                     code: state.code,
@@ -146,7 +151,11 @@ class _LoginPageState extends State<LoginPage> {
             BlocListener<RegisterFormCubit, RegisterFormState>(
               listener: (context, state) {
                 if (state.status == RegisterFormStatus.error &&
-                    state.message != null) {
+                    hasAuthFeedback(
+                      message: state.message,
+                      code: state.code,
+                      uiKey: state.uiKey,
+                    )) {
                   _showErrorSnackBar(
                     context,
                     AuthUiErrorResolver.resolve(
@@ -193,7 +202,11 @@ class _LoginPageState extends State<LoginPage> {
 
               final String? errorMessage =
                   loginState.status == LoginFormStatus.error &&
-                      loginState.message != null &&
+                      hasAuthFeedback(
+                        message: loginState.message,
+                        code: loginState.code,
+                        uiKey: loginState.uiKey,
+                      ) &&
                       _showLoginError &&
                       _shouldShowInlineLoginError
                   ? AuthUiErrorResolver.resolve(

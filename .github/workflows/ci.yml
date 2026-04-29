@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: BlueZoneCP/autolab-core
-          ref: codex/core-architecture-cleanup
+          ref: develop
           path: autolab_core
           token: ${{ secrets.AUTOLAB_CORE_READ_TOKEN }}
 

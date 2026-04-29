@@ -227,7 +227,6 @@ void main() {
           const AuthSessionState(status: AuthSessionStatus.loading),
           const AuthSessionState(
             status: AuthSessionStatus.unauthenticated,
-            message: 'AUTH_011',
             code: 'AUTH_011',
             uiKey: 'authErrorSessionRestoreFailed',
           ),
