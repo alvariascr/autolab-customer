@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/location/location_cubit.dart';
+import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_session_cubit.dart';
 import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
@@ -46,9 +47,11 @@ class MyApp extends StatelessWidget {
                   previous.uiKey != current.uiKey;
             },
             listener: (context, state) {
-              if (state.message == null &&
-                  (state.code == null || state.code!.isEmpty) &&
-                  (state.uiKey == null || state.uiKey!.isEmpty)) {
+              if (!hasAuthFeedback(
+                message: state.message,
+                code: state.code,
+                uiKey: state.uiKey,
+              )) {
                 return;
               }
 

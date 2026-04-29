@@ -4,10 +4,15 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/data/datasources/session_local_data_source.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
+import 'package:autolab_customer/features/auth/data/mappers/auth_exception_mapper.dart';
 import 'package:autolab_customer/features/auth/data/models/login_attempt_state.dart';
 import 'package:autolab_customer/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_local_session_recovery_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_login_policy_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_register_precheck_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
+import 'package:autolab_customer/features/auth/data/services/auth_supabase_session_sync_service.dart';
 import 'package:autolab_customer/features/auth/data/services/login_attempt_service.dart';
 import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
@@ -17,6 +22,14 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+final class _SupabaseAuthCodes {
+  static const invalidCredentials = 'invalid_credentials';
+  static const noAuthorization = 'no_authorization';
+  static const emailNotConfirmed = 'email_not_confirmed';
+  static const userAlreadyExists = 'user_already_exists';
+  static const requestTimeout = 'request_timeout';
+}
 
 class MockSupabaseClient extends Mock implements SupabaseClient {}
 
@@ -57,6 +70,10 @@ void main() {
     late MockUserRoleDataSource mockUserRoleDataSource;
     late MockLoginAttemptService mockLoginAttemptService;
     late MockSession mockSession;
+    late AuthLoginPolicyService authLoginPolicyService;
+    late AuthRegisterPrecheckService authRegisterPrecheckService;
+    late AuthSupabaseSessionSyncService authSupabaseSessionSyncService;
+    late AuthLocalSessionRecoveryService authLocalSessionRecoveryService;
     late AuthSessionStorageService sessionStorageService;
     late AuthSessionRecoveryService sessionRecoveryService;
     late AuthRepositoryImpl repository;
@@ -172,10 +189,27 @@ void main() {
       sessionStorageService = AuthSessionStorageService(
         mockSessionLocalDataSource,
       );
+      authSupabaseSessionSyncService = AuthSupabaseSessionSyncService(
+        sessionStorageService: sessionStorageService,
+        userRoleDataSource: mockUserRoleDataSource,
+        featureLogger: mockFeatureLogger,
+      );
+      authLocalSessionRecoveryService = AuthLocalSessionRecoveryService(
+        sessionStorageService: sessionStorageService,
+        featureLogger: mockFeatureLogger,
+      );
       sessionRecoveryService = AuthSessionRecoveryService(
         client: mockSupabaseClient,
         sessionStorageService: sessionStorageService,
-        userRoleDataSource: mockUserRoleDataSource,
+        supabaseSessionSyncService: authSupabaseSessionSyncService,
+        localSessionRecoveryService: authLocalSessionRecoveryService,
+        featureLogger: mockFeatureLogger,
+      );
+      authLoginPolicyService = AuthLoginPolicyService(mockLoginAttemptService);
+      authRegisterPrecheckService = AuthRegisterPrecheckService(
+        client: mockSupabaseClient,
+        authExceptionMapper: const AuthExceptionMapper(),
+        globalErrorHandler: mockGlobalErrorHandler,
         featureLogger: mockFeatureLogger,
       );
 
@@ -183,10 +217,12 @@ void main() {
         mockSupabaseClient,
         mockGlobalErrorHandler,
         mockUserRoleDataSource,
-        mockLoginAttemptService,
+        authLoginPolicyService,
+        authRegisterPrecheckService,
         sessionStorageService,
         sessionRecoveryService,
         mockFeatureLogger,
+        const AuthExceptionMapper(),
       );
     });
 
@@ -298,7 +334,10 @@ void main() {
       });
 
       test('retorna Left cuando credenciales son inválidas', () async {
-        const authException = AuthException('Invalid login credentials');
+        final authException = AuthApiException(
+          'Invalid login credentials',
+          statusCode: '400',
+        );
 
         when(
           () => mockGoTrueClient.signInWithPassword(
@@ -329,8 +368,57 @@ void main() {
         }, (_) => fail('Se esperaba Left(Failure)'));
       });
 
+      test(
+        'retorna Left cuando Supabase expone invalid_credentials como code explícito',
+        () async {
+          final authException = AuthApiException(
+            'Invalid login credentials',
+            statusCode: '400',
+            code: _SupabaseAuthCodes.invalidCredentials,
+          );
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(authException);
+
+          when(
+            () => mockLoginAttemptService.registerFailure('test@test.com'),
+          ).thenAnswer(
+            (_) async => const LoginAttemptState(
+              failedAttempts: 1,
+              lockLevel: 0,
+              blockedUntil: null,
+            ),
+          );
+
+          final result = await repository.login(
+            'test@test.com',
+            'bad-password',
+          );
+
+          expect(result.isLeft(), true);
+
+          result.fold((failure) {
+            expect(failure, isA<Failure>());
+            expect(failure.code, AuthErrorCatalog.invalidCredentials.code);
+            expect(failure.uiKey, AuthErrorCatalog.invalidCredentials.uiKey);
+          }, (_) => fail('Se esperaba Left(Failure)'));
+
+          verifyNever(
+            () => mockGlobalErrorHandler.handle(authException, any()),
+          );
+        },
+      );
+
       test('retorna Left cuando el correo no ha sido confirmado', () async {
-        const authException = AuthException('Email not confirmed');
+        final authException = AuthApiException(
+          'Email not confirmed',
+          statusCode: '400',
+          code: _SupabaseAuthCodes.emailNotConfirmed,
+        );
 
         when(
           () => mockGoTrueClient.signInWithPassword(
@@ -350,19 +438,46 @@ void main() {
         verify(
           () => mockFeatureLogger.warn(
             feature: 'auth',
-            action: 'domain_warning',
+            action: 'login_auth_exception_mapped',
             code: AuthErrorCatalog.unconfirmedEmail.code,
-            context: {'uiKey': AuthErrorCatalog.unconfirmedEmail.uiKey},
+            context: any(named: 'context'),
             error: authException,
             stackTrace: any(named: 'stackTrace'),
           ),
         ).called(1);
       });
 
+      test('retorna Left cuando Supabase expone no_authorization', () async {
+        final authException = AuthApiException(
+          'Unauthorized',
+          statusCode: '401',
+          code: _SupabaseAuthCodes.noAuthorization,
+        );
+
+        when(
+          () => mockGoTrueClient.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(authException);
+
+        final result = await repository.login('test@test.com', '123456');
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure.code, AuthErrorCatalog.unauthorized.code);
+          expect(failure.uiKey, AuthErrorCatalog.unauthorized.uiKey);
+        }, (_) => fail('Debería ser Left'));
+
+        verifyNever(() => mockGlobalErrorHandler.handle(authException, any()));
+      });
+
       test(
         'retorna Left(NetworkFailure) cuando Supabase devuelve un error de red',
         () async {
-          const authException = AuthException('Failed host lookup');
+          final authException = AuthRetryableFetchException(
+            message: 'network failed',
+          );
 
           when(
             () => mockGoTrueClient.signInWithPassword(
@@ -389,7 +504,11 @@ void main() {
       test(
         'retorna Left(TimeoutFailure-like) cuando Supabase devuelve timeout en auth',
         () async {
-          const authException = AuthException('Request timed out');
+          final authException = AuthApiException(
+            'Request timed out',
+            statusCode: '504',
+            code: _SupabaseAuthCodes.requestTimeout,
+          );
 
           when(
             () => mockGoTrueClient.signInWithPassword(
@@ -402,7 +521,7 @@ void main() {
 
           expect(result.isLeft(), true);
           result.fold((failure) {
-            expect(failure, isA<NetworkFailure>());
+            expect(failure, isA<TimeoutFailure>());
             expect(failure.code, ErrorCatalog.requestTimeout.code);
             expect(failure.uiKey, ErrorCatalog.requestTimeout.uiKey);
           }, (_) => fail('Debería ser Left'));
@@ -450,7 +569,10 @@ void main() {
       test(
         'returns Left(AuthRateLimitFailure) when invalid credentials trigger block',
         () async {
-          const authException = AuthException('Invalid login credentials');
+          final authException = AuthApiException(
+            'Invalid login credentials',
+            statusCode: '401',
+          );
 
           when(
             () => mockGoTrueClient.signInWithPassword(
@@ -543,7 +665,9 @@ void main() {
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
-        ).thenThrow(const AuthException('Invalid login credentials'));
+        ).thenThrow(
+          AuthApiException('Invalid login credentials', statusCode: '400'),
+        );
 
         when(
           () => mockGoTrueClient.signUp(
@@ -589,6 +713,59 @@ void main() {
       });
 
       test(
+        'returns Right(AppUser) when precheck receives invalid_credentials code explícito',
+        () async {
+          final user = User(
+            id: 'user-456',
+            appMetadata: const {},
+            userMetadata: const {},
+            aud: 'authenticated',
+            createdAt: DateTime.now().toIso8601String(),
+            email: 'new@test.com',
+          );
+
+          final authResponse = AuthResponse(session: null, user: user);
+
+          when(
+            () => mockGoTrueClient.signInWithPassword(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+            ),
+          ).thenThrow(
+            AuthApiException(
+              'Invalid login credentials',
+              statusCode: '400',
+              code: _SupabaseAuthCodes.invalidCredentials,
+            ),
+          );
+
+          when(
+            () => mockGoTrueClient.signUp(
+              email: any(named: 'email'),
+              password: any(named: 'password'),
+              data: any(named: 'data'),
+            ),
+          ).thenAnswer((_) async => authResponse);
+
+          final result = await repository.register(
+            'Luis',
+            'new@test.com',
+            '88888888',
+            '123456',
+          );
+
+          expect(result.isRight(), true);
+          result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
+            expect(appUser.id, 'user-456');
+            expect(appUser.email, 'new@test.com');
+            expect(appUser.role, UserRoles.customer);
+          });
+
+          verifyNever(() => mockGlobalErrorHandler.handle(any(), any()));
+        },
+      );
+
+      test(
         'returns Left when account already exists (pre-check login success)',
         () async {
           final user = User(
@@ -630,7 +807,11 @@ void main() {
       test(
         'returns Left when account exists but not confirmed (pre-check login error)',
         () async {
-          const authException = AuthException('Email not confirmed');
+          final authException = AuthApiException(
+            'Email not confirmed',
+            statusCode: '400',
+            code: _SupabaseAuthCodes.emailNotConfirmed,
+          );
 
           when(
             () => mockGoTrueClient.signInWithPassword(
@@ -672,7 +853,9 @@ void main() {
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
-        ).thenThrow(const AuthException('Invalid login credentials'));
+        ).thenThrow(
+          AuthApiException('Invalid login credentials', statusCode: '400'),
+        );
 
         when(
           () => mockGoTrueClient.signUp(
@@ -716,14 +899,20 @@ void main() {
       test(
         'returns Left when email already registered (signUp exception)',
         () async {
-          const authException = AuthException('User already registered');
+          final authException = AuthApiException(
+            'User already registered',
+            statusCode: '400',
+            code: _SupabaseAuthCodes.userAlreadyExists,
+          );
 
           when(
             () => mockGoTrueClient.signInWithPassword(
               email: any(named: 'email'),
               password: any(named: 'password'),
             ),
-          ).thenThrow(const AuthException('Invalid login credentials'));
+          ).thenThrow(
+            AuthApiException('Invalid login credentials', statusCode: '400'),
+          );
 
           when(
             () => mockGoTrueClient.signUp(
@@ -769,7 +958,9 @@ void main() {
             email: any(named: 'email'),
             password: any(named: 'password'),
           ),
-        ).thenThrow(const AuthException('Invalid login credentials'));
+        ).thenThrow(
+          AuthApiException('Invalid login credentials', statusCode: '400'),
+        );
 
         when(
           () => mockGoTrueClient.signUp(
