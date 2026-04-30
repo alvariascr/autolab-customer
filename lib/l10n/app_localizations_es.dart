@@ -572,6 +572,121 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopCardDescriptionFallback => 'Sin descripción disponible';
 
   @override
+  String get workshopProfileLoadError =>
+      'No fue posible cargar el perfil del taller en este momento.';
+
+  @override
+  String get workshopProfileNotFound => 'No encontramos este taller.';
+
+  @override
+  String get workshopProfileScheduleAction => 'Agendar cita';
+
+  @override
+  String get workshopProfileCallAction => 'Llamar';
+
+  @override
+  String get workshopProfileOpenLocationAction => 'Abrir ubicación';
+
+  @override
+  String get workshopProfileScheduleSoon =>
+      'Próximamente podrás agendar una cita desde aquí.';
+
+  @override
+  String get workshopProfileActionError =>
+      'No fue posible abrir esta acción. Intenta nuevamente.';
+
+  @override
+  String get workshopProfileAboutTitle => 'Acerca del taller';
+
+  @override
+  String get workshopProfileDetailsTitle => 'Detalles';
+
+  @override
+  String get workshopProfileHomeServiceTitle => 'Servicio a domicilio';
+
+  @override
+  String get workshopProfileHomeServiceAvailable => 'Disponible';
+
+  @override
+  String get workshopProfileHomeServiceUnavailable => 'No disponible';
+
+  @override
+  String get workshopProfileCoverageTitle => 'Cobertura';
+
+  @override
+  String workshopProfileCoverageValue(Object distance) {
+    return '$distance km de radio';
+  }
+
+  @override
+  String get workshopProfileCoverageUnavailable => 'Cobertura no disponible';
+
+  @override
+  String get workshopProfilePhoneTitle => 'Teléfono';
+
+  @override
+  String get workshopProfileServicesTitle => 'Servicios';
+
+  @override
+  String get workshopProfileServicesEmpty =>
+      'Este taller aún no tiene servicios publicados.';
+
+  @override
+  String get workshopProfileProductsTitle => 'Productos';
+
+  @override
+  String get workshopProfileProductsEmpty =>
+      'Este taller aún no tiene productos publicados.';
+
+  @override
+  String get workshopProfileProductSearchHint =>
+      'Buscar productos en este taller...';
+
+  @override
+  String get workshopProfileProductsNoResults =>
+      'No encontramos productos que coincidan con tu búsqueda.';
+
+  @override
+  String get workshopProfileBusinessHoursTitle => 'Horario';
+
+  @override
+  String get workshopProfileBusinessHoursEmpty => 'Horario no disponible';
+
+  @override
+  String get workshopProfileClosed => 'Cerrado';
+
+  @override
+  String get workshopProfileUnknownDay => 'Día no disponible';
+
+  @override
+  String get workshopProfilePaymentMethodsTitle => 'Métodos de pago';
+
+  @override
+  String get workshopProfilePaymentMethodsEmpty =>
+      'Métodos de pago no disponibles.';
+
+  @override
+  String get weekdaySunday => 'Domingo';
+
+  @override
+  String get weekdayMonday => 'Lunes';
+
+  @override
+  String get weekdayTuesday => 'Martes';
+
+  @override
+  String get weekdayWednesday => 'Miércoles';
+
+  @override
+  String get weekdayThursday => 'Jueves';
+
+  @override
+  String get weekdayFriday => 'Viernes';
+
+  @override
+  String get weekdaySaturday => 'Sábado';
+
+  @override
   String get workshopEmptySearchingNearby => 'Buscando talleres cercanos...';
 
   @override

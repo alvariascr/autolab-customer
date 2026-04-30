@@ -6,6 +6,7 @@ import '../../features/auth/domain/constants/user_roles.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/home/home_customer_page.dart';
 import '../../features/home/home_page.dart';
+import '../../features/workshops/presentation/pages/workshop_profile_page.dart';
 import 'go_router_refresh_stream.dart';
 
 class AppRouter {
@@ -26,6 +27,12 @@ class AppRouter {
       GoRoute(
         path: '/home-customer',
         builder: (context, state) => const HomeCustomerPage(),
+      ),
+      GoRoute(
+        path: '/workshops/:id',
+        builder: (context, state) {
+          return WorkshopProfilePage(workshopId: state.pathParameters['id']!);
+        },
       ),
     ],
   );

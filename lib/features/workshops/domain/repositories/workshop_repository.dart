@@ -5,4 +5,6 @@ import '../entities/workshop.dart';
 
 abstract class WorkshopRepository {
   Future<Either<Failure, List<Workshop>>> getWorkshops();
+
+  Future<Either<Failure, Workshop?>> getWorkshopById(String id);
 }

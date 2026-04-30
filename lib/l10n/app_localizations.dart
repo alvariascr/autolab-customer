@@ -1078,6 +1078,216 @@ abstract class AppLocalizations {
   /// **'Sin descripción disponible'**
   String get workshopCardDescriptionFallback;
 
+  /// No description provided for @workshopProfileLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible cargar el perfil del taller en este momento.'**
+  String get workshopProfileLoadError;
+
+  /// No description provided for @workshopProfileNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos este taller.'**
+  String get workshopProfileNotFound;
+
+  /// No description provided for @workshopProfileScheduleAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agendar cita'**
+  String get workshopProfileScheduleAction;
+
+  /// No description provided for @workshopProfileCallAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamar'**
+  String get workshopProfileCallAction;
+
+  /// No description provided for @workshopProfileOpenLocationAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir ubicación'**
+  String get workshopProfileOpenLocationAction;
+
+  /// No description provided for @workshopProfileScheduleSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximamente podrás agendar una cita desde aquí.'**
+  String get workshopProfileScheduleSoon;
+
+  /// No description provided for @workshopProfileActionError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible abrir esta acción. Intenta nuevamente.'**
+  String get workshopProfileActionError;
+
+  /// No description provided for @workshopProfileAboutTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Acerca del taller'**
+  String get workshopProfileAboutTitle;
+
+  /// No description provided for @workshopProfileDetailsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalles'**
+  String get workshopProfileDetailsTitle;
+
+  /// No description provided for @workshopProfileHomeServiceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio a domicilio'**
+  String get workshopProfileHomeServiceTitle;
+
+  /// No description provided for @workshopProfileHomeServiceAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponible'**
+  String get workshopProfileHomeServiceAvailable;
+
+  /// No description provided for @workshopProfileHomeServiceUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No disponible'**
+  String get workshopProfileHomeServiceUnavailable;
+
+  /// No description provided for @workshopProfileCoverageTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cobertura'**
+  String get workshopProfileCoverageTitle;
+
+  /// No description provided for @workshopProfileCoverageValue.
+  ///
+  /// In es, this message translates to:
+  /// **'{distance} km de radio'**
+  String workshopProfileCoverageValue(Object distance);
+
+  /// No description provided for @workshopProfileCoverageUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Cobertura no disponible'**
+  String get workshopProfileCoverageUnavailable;
+
+  /// No description provided for @workshopProfilePhoneTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono'**
+  String get workshopProfilePhoneTitle;
+
+  /// No description provided for @workshopProfileServicesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios'**
+  String get workshopProfileServicesTitle;
+
+  /// No description provided for @workshopProfileServicesEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Este taller aún no tiene servicios publicados.'**
+  String get workshopProfileServicesEmpty;
+
+  /// No description provided for @workshopProfileProductsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos'**
+  String get workshopProfileProductsTitle;
+
+  /// No description provided for @workshopProfileProductsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Este taller aún no tiene productos publicados.'**
+  String get workshopProfileProductsEmpty;
+
+  /// No description provided for @workshopProfileProductSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar productos en este taller...'**
+  String get workshopProfileProductSearchHint;
+
+  /// No description provided for @workshopProfileProductsNoResults.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos productos que coincidan con tu búsqueda.'**
+  String get workshopProfileProductsNoResults;
+
+  /// No description provided for @workshopProfileBusinessHoursTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Horario'**
+  String get workshopProfileBusinessHoursTitle;
+
+  /// No description provided for @workshopProfileBusinessHoursEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Horario no disponible'**
+  String get workshopProfileBusinessHoursEmpty;
+
+  /// No description provided for @workshopProfileClosed.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrado'**
+  String get workshopProfileClosed;
+
+  /// No description provided for @workshopProfileUnknownDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Día no disponible'**
+  String get workshopProfileUnknownDay;
+
+  /// No description provided for @workshopProfilePaymentMethodsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Métodos de pago'**
+  String get workshopProfilePaymentMethodsTitle;
+
+  /// No description provided for @workshopProfilePaymentMethodsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Métodos de pago no disponibles.'**
+  String get workshopProfilePaymentMethodsEmpty;
+
+  /// No description provided for @weekdaySunday.
+  ///
+  /// In es, this message translates to:
+  /// **'Domingo'**
+  String get weekdaySunday;
+
+  /// No description provided for @weekdayMonday.
+  ///
+  /// In es, this message translates to:
+  /// **'Lunes'**
+  String get weekdayMonday;
+
+  /// No description provided for @weekdayTuesday.
+  ///
+  /// In es, this message translates to:
+  /// **'Martes'**
+  String get weekdayTuesday;
+
+  /// No description provided for @weekdayWednesday.
+  ///
+  /// In es, this message translates to:
+  /// **'Miércoles'**
+  String get weekdayWednesday;
+
+  /// No description provided for @weekdayThursday.
+  ///
+  /// In es, this message translates to:
+  /// **'Jueves'**
+  String get weekdayThursday;
+
+  /// No description provided for @weekdayFriday.
+  ///
+  /// In es, this message translates to:
+  /// **'Viernes'**
+  String get weekdayFriday;
+
+  /// No description provided for @weekdaySaturday.
+  ///
+  /// In es, this message translates to:
+  /// **'Sábado'**
+  String get weekdaySaturday;
+
   /// No description provided for @workshopEmptySearchingNearby.
   ///
   /// In es, this message translates to:

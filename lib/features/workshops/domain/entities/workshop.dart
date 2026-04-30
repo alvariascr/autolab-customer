@@ -3,22 +3,34 @@ class Workshop {
   final String name;
   final String description;
   final String locationAddress;
+  final String phone;
   final String avatarUrl;
   final String coverUrl;
   final double latitude;
   final double longitude;
   final double deliveryRadiusKm;
+  final bool offersHomeService;
+  final List<WorkshopBusinessHour> businessHours;
+  final List<String> serviceCategories;
+  final List<String> paymentMethods;
+  final List<WorkshopProduct> products;
 
   const Workshop({
     required this.id,
     required this.name,
     required this.description,
     required this.locationAddress,
+    this.phone = '',
     required this.avatarUrl,
     required this.coverUrl,
     required this.latitude,
     required this.longitude,
     required this.deliveryRadiusKm,
+    this.offersHomeService = false,
+    this.businessHours = const [],
+    this.serviceCategories = const [],
+    this.paymentMethods = const [],
+    this.products = const [],
   });
 
   bool get hasValidCoordinates {
@@ -34,4 +46,34 @@ class Workshop {
   bool get hasValidDeliveryRadius {
     return deliveryRadiusKm.isFinite && deliveryRadiusKm > 0;
   }
+}
+
+class WorkshopBusinessHour {
+  final int dayOfWeek;
+  final String openTime;
+  final String closeTime;
+  final bool isClosed;
+
+  const WorkshopBusinessHour({
+    required this.dayOfWeek,
+    required this.openTime,
+    required this.closeTime,
+    required this.isClosed,
+  });
+}
+
+class WorkshopProduct {
+  final String id;
+  final String name;
+  final String description;
+  final double? sellingPrice;
+  final String imageUrl;
+
+  const WorkshopProduct({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.sellingPrice,
+    required this.imageUrl,
+  });
 }

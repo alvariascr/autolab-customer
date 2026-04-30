@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../domain/entities/workshop.dart';
@@ -57,23 +58,6 @@ class WorkshopsCarousel extends StatelessWidget {
   }
 
   void _showWorkshopDetails(BuildContext context, Workshop workshop) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-            child: SingleChildScrollView(
-              child: WorkshopCard(
-                workshop: workshop,
-                referenceLocation: currentLocation,
-                compact: true,
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    context.push('/workshops/${workshop.id}');
   }
 }

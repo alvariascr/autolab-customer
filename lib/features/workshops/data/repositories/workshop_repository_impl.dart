@@ -91,4 +91,78 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
       return Left(failure);
     }
   }
+
+  @override
+  Future<Either<Failure, Workshop?>> getWorkshopById(String id) async {
+    try {
+      featureLogger.info(
+        feature: 'workshops',
+        action: 'get_workshop_by_id_started',
+        context: {'workshopId': id},
+      );
+      final workshop = await remoteDataSource.getWorkshopById(id);
+      featureLogger.info(
+        feature: 'workshops',
+        action: 'get_workshop_by_id_succeeded',
+        context: {'workshopId': id, 'found': workshop != null},
+      );
+      return Right(workshop);
+    } on TimeoutException catch (error, stackTrace) {
+      final failure = TimeoutFailure.fromErrorItem(
+        CustomerErrorCatalog.workshopNetworkError,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+      featureLogger.warn(
+        feature: 'workshops',
+        action: 'get_workshop_by_id_timeout',
+        code: failure.code,
+        context: {'uiKey': failure.uiKey, 'workshopId': id},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(failure);
+    } on SocketException catch (error, stackTrace) {
+      final failure = NetworkFailure.fromErrorItem(
+        CustomerErrorCatalog.workshopNetworkError,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+      featureLogger.warn(
+        feature: 'workshops',
+        action: 'get_workshop_by_id_network_failed',
+        code: failure.code,
+        context: {'uiKey': failure.uiKey, 'workshopId': id},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(failure);
+    } on PostgrestException catch (error, stackTrace) {
+      final failure = ServerFailure.fromErrorItem(
+        CustomerErrorCatalog.workshopLoadFailed,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+      featureLogger.warn(
+        feature: 'workshops',
+        action: 'get_workshop_by_id_server_failed',
+        code: failure.code,
+        context: {'uiKey': failure.uiKey, 'workshopId': id},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(failure);
+    } catch (error, stackTrace) {
+      final failure = errorHandler.handle(error, stackTrace);
+      featureLogger.error(
+        feature: 'workshops',
+        action: 'get_workshop_by_id_unhandled_failed',
+        code: failure.code,
+        context: {'uiKey': failure.uiKey, 'workshopId': id},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(failure);
+    }
+  }
 }

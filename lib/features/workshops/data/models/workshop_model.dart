@@ -6,11 +6,17 @@ class WorkshopModel extends Workshop {
     required super.name,
     required super.description,
     required super.locationAddress,
+    super.phone,
     required super.avatarUrl,
     required super.coverUrl,
     required super.latitude,
     required super.longitude,
     required super.deliveryRadiusKm,
+    super.offersHomeService,
+    super.businessHours,
+    super.serviceCategories,
+    super.paymentMethods,
+    super.products,
   });
 
   factory WorkshopModel.fromMap(Map<String, dynamic> map) {
@@ -19,11 +25,133 @@ class WorkshopModel extends Workshop {
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       locationAddress: map['location_address'] ?? '',
+      phone: map['phone'] ?? '',
       avatarUrl: map['avatar_url'] ?? '',
       coverUrl: map['cover_url'] ?? '',
-      latitude: (map['location_lat'] ?? 0).toDouble(),
-      longitude: (map['location_lng'] ?? 0).toDouble(),
-      deliveryRadiusKm: (map['delivery_radius_km'] ?? 0).toDouble(),
+      latitude: _toDouble(map['location_lat']),
+      longitude: _toDouble(map['location_lng']),
+      deliveryRadiusKm: _toDouble(map['delivery_radius_km']),
+      offersHomeService: map['offers_home_service'] == true,
+      businessHours: _businessHoursFromMap(map),
+      serviceCategories: _serviceCategoriesFromMap(map),
+      paymentMethods: _paymentMethodsFromMap(map),
+      products: _productsFromMap(map),
     );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    if (value is String) {
+      return double.tryParse(value) ?? 0;
+    }
+
+    return 0;
+  }
+
+  static List<WorkshopBusinessHour> _businessHoursFromMap(
+    Map<String, dynamic> map,
+  ) {
+    final items = map['business_hours'];
+
+    if (items is! List) {
+      return const [];
+    }
+
+    final hours = items
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => WorkshopBusinessHour(
+            dayOfWeek: item['day_of_week'] is int ? item['day_of_week'] : 0,
+            openTime: item['open_time']?.toString() ?? '',
+            closeTime: item['close_time']?.toString() ?? '',
+            isClosed: item['is_closed'] == true,
+          ),
+        )
+        .toList();
+
+    hours.sort((left, right) => left.dayOfWeek.compareTo(right.dayOfWeek));
+
+    return hours;
+  }
+
+  static List<String> _serviceCategoriesFromMap(Map<String, dynamic> map) {
+    final items = map['workshop_service_categories'];
+
+    if (items is! List) {
+      return const [];
+    }
+
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map((item) => item['workshop_categories'])
+        .whereType<Map<String, dynamic>>()
+        .map((category) => category['name']?.toString() ?? '')
+        .where((name) => name.isNotEmpty)
+        .toList();
+  }
+
+  static List<String> _paymentMethodsFromMap(Map<String, dynamic> map) {
+    final items = map['workshop_payment_methods'];
+
+    if (items is! List) {
+      return const [];
+    }
+
+    return items
+        .whereType<Map<String, dynamic>>()
+        .map((item) => item['payment_methods'])
+        .whereType<Map<String, dynamic>>()
+        .map((method) => method['name']?.toString() ?? '')
+        .where((name) => name.isNotEmpty)
+        .toList();
+  }
+
+  static List<WorkshopProduct> _productsFromMap(Map<String, dynamic> map) {
+    final items = map['inventory_items'];
+
+    if (items is! List) {
+      return const [];
+    }
+
+    return items
+        .whereType<Map<String, dynamic>>()
+        .where((item) {
+          final status = item['status']?.toString().toLowerCase();
+          final itemType = item['item_type']?.toString().toLowerCase();
+
+          return status != 'inactive' &&
+              status != 'archived' &&
+              itemType != 'service';
+        })
+        .map(
+          (item) => WorkshopProduct(
+            id: item['id']?.toString() ?? '',
+            name: item['name']?.toString() ?? '',
+            description: item['description']?.toString() ?? '',
+            sellingPrice: _nullableDouble(item['selling_price']),
+            imageUrl: item['primary_image_url']?.toString() ?? '',
+          ),
+        )
+        .where((product) => product.id.isNotEmpty && product.name.isNotEmpty)
+        .toList();
+  }
+
+  static double? _nullableDouble(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    if (value is String) {
+      return double.tryParse(value);
+    }
+
+    return null;
   }
 }
