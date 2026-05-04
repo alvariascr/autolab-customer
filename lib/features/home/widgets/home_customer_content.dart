@@ -40,52 +40,42 @@ class HomeCustomerContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BlocBuilder<LocationCubit, LocationState>(
-                      builder: (context, state) {
-                        return DeliveryLocationCard(
+    return BlocBuilder<LocationCubit, LocationState>(
+      builder: (context, state) {
+        final searchLocation = _searchLocationResolver.resolve(state.location);
+
+        return Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1180),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DeliveryLocationCard(
                           state: state,
                           onTap: () => onLocationTap(state),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    BlocBuilder<LocationCubit, LocationState>(
-                      builder: (context, state) {
-                        return WorkshopsSection(
+                        ),
+                        const SizedBox(height: 20),
+                        WorkshopsSection(
                           workshops: workshops,
                           locationState: state,
                           proximityFilter: proximityFilter,
                           emptyStateResolver: emptyStateResolver,
                           isLoading: isWorkshopsLoading,
                           workshopFailure: workshopFailure,
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        BlocBuilder<LocationCubit, LocationState>(
-          builder: (context, state) {
-            final searchLocation = _searchLocationResolver.resolve(
-              state.location,
-            );
-
-            return SearchBarOverlay(
+            SearchBarOverlay(
               showSearchBar: showSearchBar,
               controller: searchController,
               workshops: workshops,
@@ -93,10 +83,10 @@ class HomeCustomerContent extends StatelessWidget {
               isLoading: isWorkshopsLoading,
               workshopFailure: workshopFailure,
               onClose: onSearchClose,
-            );
-          },
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
