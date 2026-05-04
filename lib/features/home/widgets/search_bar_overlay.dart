@@ -76,6 +76,12 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final searchableWorkshops = widget.currentLocation == null
+        ? widget.workshops
+        : SearchBarOverlay._proximityFilter.filterNearby(
+            workshops: widget.workshops,
+            currentLocation: widget.currentLocation,
+          );
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 260),
@@ -183,12 +189,6 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
                         );
                       }
 
-                      final searchableWorkshops = widget.currentLocation == null
-                          ? widget.workshops
-                          : SearchBarOverlay._proximityFilter.filterNearby(
-                              workshops: widget.workshops,
-                              currentLocation: widget.currentLocation,
-                            );
                       final results = SearchBarOverlay._textSearchFilter.filter(
                         workshops: searchableWorkshops,
                         query: query,
