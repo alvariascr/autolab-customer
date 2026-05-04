@@ -31,7 +31,7 @@ class _WorkshopProfileContent extends StatelessWidget {
                       const SizedBox(height: 16),
                       _DeliverySummary(workshop: workshop),
                       const SizedBox(height: 18),
-                      _ProductsSection(products: workshop.products),
+                      _ProductsSection(workshopId: workshop.id),
                     ],
                   ),
                 ),

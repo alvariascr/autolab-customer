@@ -5,6 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
+import '../../features/products/data/datasources/product_remote_data_source.dart';
+import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
+import '../../features/products/data/repositories/product_repository_impl.dart';
+import '../../features/products/domain/repositories/product_repository.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../../features/workshops/data/repositories/workshop_repository_impl.dart';
@@ -77,6 +81,16 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<WorkshopRepository>(
     () => WorkshopRepositoryImpl(
       remoteDataSource: sl<WorkshopRemoteDataSource>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+      featureLogger: sl<FeatureLogger>(),
+    ),
+  );
+  sl.registerLazySingleton<ProductRemoteDataSource>(
+    () => ProductRemoteDataSourceImpl(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<ProductRepository>(
+    () => ProductRepositoryImpl(
+      remoteDataSource: sl<ProductRemoteDataSource>(),
       errorHandler: sl<GlobalErrorHandler>(),
       featureLogger: sl<FeatureLogger>(),
     ),

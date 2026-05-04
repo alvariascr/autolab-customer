@@ -46,23 +46,6 @@ void main() {
             'payment_methods': {'name': 'Efectivo'},
           },
         ],
-        'inventory_items': [
-          {
-            'id': 'product-1',
-            'name': 'Aceite 10W-30',
-            'description': 'Aceite sintético para motor',
-            'item_type': 'product',
-            'status': 'active',
-            'selling_price': '18500',
-            'primary_image_url': 'https://example.com/oil.png',
-          },
-          {
-            'id': 'service-1',
-            'name': 'Cambio de aceite',
-            'item_type': 'service',
-            'status': 'active',
-          },
-        ],
       });
 
       expect(model.id, 'workshop-1');
@@ -75,9 +58,6 @@ void main() {
       expect(model.businessHours.first.isClosed, isTrue);
       expect(model.serviceCategories, ['Frenos', 'Mantenimiento']);
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
-      expect(model.products, hasLength(1));
-      expect(model.products.first.name, 'Aceite 10W-30');
-      expect(model.products.first.sellingPrice, 18500);
     });
   });
 }

@@ -63,15 +63,6 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
             payment_methods (
               name
             )
-          ),
-          inventory_items (
-            id,
-            name,
-            description,
-            item_type,
-            status,
-            selling_price,
-            primary_image_url
           )
         ''')
         .eq('id', id)

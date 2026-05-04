@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../features/products/presentation/widgets/workshop_products_carousel.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/repositories/workshop_repository.dart';

@@ -16,7 +16,6 @@ class WorkshopModel extends Workshop {
     super.businessHours,
     super.serviceCategories,
     super.paymentMethods,
-    super.products,
   });
 
   factory WorkshopModel.fromMap(Map<String, dynamic> map) {
@@ -35,7 +34,6 @@ class WorkshopModel extends Workshop {
       businessHours: _businessHoursFromMap(map),
       serviceCategories: _serviceCategoriesFromMap(map),
       paymentMethods: _paymentMethodsFromMap(map),
-      products: _productsFromMap(map),
     );
   }
 
@@ -107,51 +105,5 @@ class WorkshopModel extends Workshop {
         .map((method) => method['name']?.toString() ?? '')
         .where((name) => name.isNotEmpty)
         .toList();
-  }
-
-  static List<WorkshopProduct> _productsFromMap(Map<String, dynamic> map) {
-    final items = map['inventory_items'];
-
-    if (items is! List) {
-      return const [];
-    }
-
-    return items
-        .whereType<Map<String, dynamic>>()
-        .where((item) {
-          final status = item['status']?.toString().toLowerCase();
-          final itemType = item['item_type']?.toString().toLowerCase();
-
-          return status != 'inactive' &&
-              status != 'archived' &&
-              itemType != 'service';
-        })
-        .map(
-          (item) => WorkshopProduct(
-            id: item['id']?.toString() ?? '',
-            name: item['name']?.toString() ?? '',
-            description: item['description']?.toString() ?? '',
-            sellingPrice: _nullableDouble(item['selling_price']),
-            imageUrl: item['primary_image_url']?.toString() ?? '',
-          ),
-        )
-        .where((product) => product.id.isNotEmpty && product.name.isNotEmpty)
-        .toList();
-  }
-
-  static double? _nullableDouble(dynamic value) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value is num) {
-      return value.toDouble();
-    }
-
-    if (value is String) {
-      return double.tryParse(value);
-    }
-
-    return null;
   }
 }

@@ -13,7 +13,6 @@ class Workshop {
   final List<WorkshopBusinessHour> businessHours;
   final List<String> serviceCategories;
   final List<String> paymentMethods;
-  final List<WorkshopProduct> products;
 
   const Workshop({
     required this.id,
@@ -30,7 +29,6 @@ class Workshop {
     this.businessHours = const [],
     this.serviceCategories = const [],
     this.paymentMethods = const [],
-    this.products = const [],
   });
 
   bool get hasValidCoordinates {
@@ -59,21 +57,5 @@ class WorkshopBusinessHour {
     required this.openTime,
     required this.closeTime,
     required this.isClosed,
-  });
-}
-
-class WorkshopProduct {
-  final String id;
-  final String name;
-  final String description;
-  final double? sellingPrice;
-  final String imageUrl;
-
-  const WorkshopProduct({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.sellingPrice,
-    required this.imageUrl,
   });
 }

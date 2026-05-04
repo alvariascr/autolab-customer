@@ -30,7 +30,7 @@ dependencies:
 
   # Foundation package
   autolab_core:
-    path: ../autolab_core
+    path: ../autolab-core
 
   # Navigation
   go_router: ^14.2.7
