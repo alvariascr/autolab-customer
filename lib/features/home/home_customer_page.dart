@@ -18,7 +18,14 @@ import 'widgets/home_customer_content.dart';
 import 'widgets/location_option_tile.dart';
 
 class HomeCustomerPage extends StatefulWidget {
-  const HomeCustomerPage({super.key});
+  const HomeCustomerPage({
+    super.key,
+    this.initialIndex = 0,
+    this.initialShowSearchBar = false,
+  });
+
+  final int initialIndex;
+  final bool initialShowSearchBar;
 
   @override
   State<HomeCustomerPage> createState() => _HomeCustomerPageState();
@@ -39,6 +46,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
+    _showSearchBar = widget.initialShowSearchBar;
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _triggerInitialLocationLoad();
