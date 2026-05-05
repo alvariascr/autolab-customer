@@ -526,6 +526,42 @@ abstract class AppLocalizations {
   /// **'Buscar talleres...'**
   String get searchBarHint;
 
+  /// No description provided for @workshopSearchClearTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar búsqueda'**
+  String get workshopSearchClearTooltip;
+
+  /// No description provided for @workshopSearchTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Talleres'**
+  String get workshopSearchTitle;
+
+  /// No description provided for @workshopSearchRecentTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Búsquedas recientes'**
+  String get workshopSearchRecentTitle;
+
+  /// No description provided for @workshopSearchSuggestedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Búsquedas sugeridas'**
+  String get workshopSearchSuggestedTitle;
+
+  /// No description provided for @workshopSearchStartMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.'**
+  String get workshopSearchStartMessage;
+
+  /// No description provided for @workshopSearchNoResults.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos talleres que coincidan con tu búsqueda.'**
+  String get workshopSearchNoResults;
+
   /// No description provided for @adminHomeTitle.
   ///
   /// In es, this message translates to:

@@ -405,6 +405,30 @@ void main() {
       expect(find.text('Casa'), findsOneWidget);
       expect(find.text('Trabajo'), findsOneWidget);
     });
+
+    testWidgets('puede iniciar con la búsqueda abierta', (tester) async {
+      when(
+        () => permissionService.getPermissionStatus(),
+      ).thenAnswer((_) async => LocationPermissionStatus.denied);
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          authSessionCubit,
+          locationCubit,
+          child: const HomeCustomerPage(
+            initialIndex: 2,
+            initialShowSearchBar: true,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('workshop-search-overlay-field')),
+        findsOneWidget,
+      );
+    });
   });
 }
 
@@ -420,8 +444,9 @@ Future<void> _pumpPage(
 
 Widget _buildTestApp(
   AuthSessionCubit authSessionCubit,
-  LocationCubit locationCubit,
-) {
+  LocationCubit locationCubit, {
+  Widget child = const HomeCustomerPage(),
+}) {
   return MaterialApp(
     localizationsDelegates: const [
       AppLocalizations.delegate,
@@ -435,7 +460,7 @@ Widget _buildTestApp(
         BlocProvider<AuthSessionCubit>.value(value: authSessionCubit),
         BlocProvider<LocationCubit>.value(value: locationCubit),
       ],
-      child: const HomeCustomerPage(),
+      child: child,
     ),
   );
 }

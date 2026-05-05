@@ -34,8 +34,16 @@ class NavigationHandler {
         return;
 
       case 2:
-        // Buscar
-        // Esto se maneja en HomeCustomerPage
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeCustomerPage(
+              initialIndex: 2,
+              initialShowSearchBar: true,
+            ),
+          ),
+          (route) => false,
+        );
         return;
 
       case 3:
