@@ -2,19 +2,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../../../core/logging/feature_logger.dart';
+import '../../../workshops/application/workshop_discovery_query_store.dart';
 import '../../../workshops/domain/entities/workshop.dart';
 import '../../../workshops/domain/repositories/workshop_repository.dart';
-import '../../../workshops/domain/services/workshop_proximity_filter.dart';
+import '../../../workshops/domain/services/workshop_discovery_filter.dart';
 import '../../../workshops/domain/services/workshop_search_location_resolver.dart';
 import 'map_state.dart';
 
 class MapCubit extends Cubit<MapState> {
-  MapCubit(this._repository, this._featureLogger) : super(const MapInitial());
+  MapCubit(
+    this._repository,
+    this._featureLogger, {
+    WorkshopDiscoveryQueryStore? queryStore,
+  }) : _queryStore = queryStore,
+       super(const MapInitial());
 
   final WorkshopRepository _repository;
   final FeatureLogger _featureLogger;
-  static const _proximityFilter = WorkshopProximityFilter();
+  final WorkshopDiscoveryQueryStore? _queryStore;
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
+  static const _discoveryFilter = WorkshopDiscoveryFilter();
 
   List<Workshop>? _allWorkshops;
 
@@ -53,9 +60,10 @@ class MapCubit extends Cubit<MapState> {
       (workshops) {
         _allWorkshops = workshops;
         final searchLocation = _searchLocationResolver.resolve(userLocation);
-        final nearbyWorkshops = _proximityFilter.filterNearby(
+        final nearbyWorkshops = _discoveryFilter.apply(
           workshops: workshops,
           currentLocation: searchLocation,
+          query: _queryStore?.query ?? '',
         );
 
         emit(
@@ -65,6 +73,7 @@ class MapCubit extends Cubit<MapState> {
             isUsingFallbackLocation: _searchLocationResolver.isUsingFallback(
               userLocation,
             ),
+            query: _queryStore?.query ?? '',
           ),
         );
 

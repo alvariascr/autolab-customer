@@ -23,17 +23,20 @@ final class MapLoaded extends MapState {
     this.workshops, {
     this.currentLocation,
     this.isUsingFallbackLocation = false,
+    this.query = '',
   });
 
   final List<Workshop> workshops;
   final CurrentLocation? currentLocation;
   final bool isUsingFallbackLocation;
+  final String query;
 
   @override
   List<Object?> get props => [
     workshops,
     currentLocation,
     isUsingFallbackLocation,
+    query,
   ];
 }
 

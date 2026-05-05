@@ -9,6 +9,7 @@ import '../../core/location/location_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
+import '../workshops/application/workshop_discovery_query_store.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
@@ -38,6 +39,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
   final TextEditingController _searchController = TextEditingController();
+  WorkshopDiscoveryQueryStore? _queryStore;
 
   int _currentIndex = 0;
   bool _showSearchBar = false;
@@ -48,6 +50,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     super.initState();
     _currentIndex = widget.initialIndex;
     _showSearchBar = widget.initialShowSearchBar;
+    _queryStore = sl.isRegistered<WorkshopDiscoveryQueryStore>()
+        ? sl<WorkshopDiscoveryQueryStore>()
+        : null;
+    if (widget.initialShowSearchBar) {
+      _searchController.text = _queryStore?.query ?? '';
+    } else {
+      _queryStore?.clear();
+    }
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _triggerInitialLocationLoad();
@@ -201,6 +211,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   void _handleBottomNavigation(int index) {
     if (index == 2) {
+      _queryStore?.setQuery(_searchController.text);
       setState(() {
         _currentIndex = 2;
         _showSearchBar = true;
@@ -217,6 +228,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 
   void _closeSearch() {
+    _queryStore?.clear();
     setState(() {
       _currentIndex = 0;
       _showSearchBar = false;
@@ -253,6 +265,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
             onSearchClose: _closeSearch,
+            onSearchQueryChanged: _queryStore?.setQuery,
             workshopFailure: workshopFailure,
           );
         },

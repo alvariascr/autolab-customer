@@ -27,6 +27,7 @@ class SearchBarOverlay extends StatefulWidget {
     required this.isLoading,
     required this.workshopFailure,
     required this.onClose,
+    this.onQueryChanged,
   });
 
   static const _textSearchFilter = WorkshopTextSearchFilter();
@@ -41,6 +42,7 @@ class SearchBarOverlay extends StatefulWidget {
   final bool isLoading;
   final Failure? workshopFailure;
   final VoidCallback onClose;
+  final ValueChanged<String>? onQueryChanged;
 
   @override
   State<SearchBarOverlay> createState() => _SearchBarOverlayState();
@@ -98,6 +100,7 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
       text: query,
       selection: TextSelection.collapsed(offset: query.length),
     );
+    widget.onQueryChanged?.call(query);
   }
 
   @override
@@ -132,6 +135,7 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
                           FocusScope.of(context).unfocus();
                           _saveRecentSearch(widget.controller.text);
                           widget.controller.clear();
+                          widget.onQueryChanged?.call('');
                           widget.onClose();
                         },
                         icon: const Icon(Icons.arrow_back_rounded),
@@ -148,6 +152,7 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
                               controller: widget.controller,
                               autofocus: widget.showSearchBar,
                               textInputAction: TextInputAction.search,
+                              onChanged: widget.onQueryChanged,
                               onSubmitted: _saveRecentSearch,
                               decoration: InputDecoration(
                                 hintText: l10n.searchBarHint,
@@ -163,6 +168,7 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
                                         onPressed: () {
                                           _saveRecentSearch(value.text);
                                           widget.controller.clear();
+                                          widget.onQueryChanged?.call('');
                                         },
                                         icon: const Icon(Icons.close_rounded),
                                       ),
