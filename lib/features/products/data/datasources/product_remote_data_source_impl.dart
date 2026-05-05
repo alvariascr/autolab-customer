@@ -61,7 +61,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .from('inventory_items')
         .select(_productSelect)
         .eq('status', 'active')
-        .neq('item_type', 'service')
         .order('name');
 
     return response.map((item) => ProductModel.fromMap(item)).toList();
@@ -72,7 +71,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .from('inventory_items')
         .select(_productSelect)
         .eq('is_active', true)
-        .neq('item_type', 'service')
         .order('name');
 
     return response.map((item) => ProductModel.fromMap(item)).toList();
@@ -86,7 +84,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .select(_productSelect)
         .eq('workshop_id', workshopId)
         .eq('status', 'active')
-        .neq('item_type', 'service')
         .order('name');
 
     return response.map((item) => ProductModel.fromMap(item)).toList();
@@ -100,7 +97,6 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         .select(_productSelect)
         .eq('workshop_id', workshopId)
         .eq('is_active', true)
-        .neq('item_type', 'service')
         .order('name');
 
     return response.map((item) => ProductModel.fromMap(item)).toList();

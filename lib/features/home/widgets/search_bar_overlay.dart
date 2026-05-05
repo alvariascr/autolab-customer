@@ -2,8 +2,15 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/di/app_injection.dart';
 import '../../../core/location/current_location.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../products/domain/entities/product.dart';
+import '../../products/domain/repositories/product_repository.dart';
+import '../../products/domain/services/product_search_filter.dart';
+import '../../products/domain/services/workshop_product_search_grouper.dart';
+import '../../products/presentation/widgets/product_image.dart';
+import '../../products/presentation/widgets/product_price_text.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
 import '../../workshops/domain/services/workshop_text_search_filter.dart';
@@ -24,6 +31,8 @@ class SearchBarOverlay extends StatefulWidget {
 
   static const _textSearchFilter = WorkshopTextSearchFilter();
   static const _proximityFilter = WorkshopProximityFilter();
+  static const _productSearchFilter = ProductSearchFilter();
+  static const _productSearchGrouper = WorkshopProductSearchGrouper();
 
   final bool showSearchBar;
   final TextEditingController controller;
@@ -47,6 +56,23 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
   ];
 
   final List<String> _recentSearches = <String>[];
+  late final bool _hasProductRepository;
+  late Future<List<Product>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasProductRepository = sl.isRegistered<ProductRepository>();
+    _productsFuture = _hasProductRepository
+        ? _loadProducts()
+        : Future.value(const <Product>[]);
+  }
+
+  Future<List<Product>> _loadProducts() async {
+    final result = await sl<ProductRepository>().getActiveProducts();
+
+    return result.fold((_) => const <Product>[], (products) => products);
+  }
 
   void _saveRecentSearch(String value) {
     final query = value.trim();
@@ -77,13 +103,6 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final searchableWorkshops = widget.currentLocation == null
-        ? widget.workshops
-        : SearchBarOverlay._proximityFilter.filterNearby(
-            workshops: widget.workshops,
-            currentLocation: widget.currentLocation,
-          );
-
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
@@ -96,6 +115,7 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
         child: Material(
           color: const Color(0xFFF8F4EF),
           child: SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -190,18 +210,54 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
                         );
                       }
 
-                      final results = SearchBarOverlay._textSearchFilter.filter(
-                        workshops: searchableWorkshops,
-                        query: query,
-                      );
+                      final searchableWorkshops = widget.currentLocation == null
+                          ? widget.workshops
+                          : SearchBarOverlay._proximityFilter.filterNearby(
+                              workshops: widget.workshops,
+                              currentLocation: widget.currentLocation,
+                            );
+                      final workshopResults = SearchBarOverlay._textSearchFilter
+                          .filter(workshops: searchableWorkshops, query: query);
 
-                      return _WorkshopSearchResults(
-                        workshops: results,
-                        query: query,
-                        currentLocation: widget.currentLocation,
-                        isLoading: widget.isLoading,
-                        failure: widget.workshopFailure,
-                        onSearchCommitted: _saveRecentSearch,
+                      if (!_hasProductRepository) {
+                        return _WorkshopSearchResults(
+                          workshops: workshopResults,
+                          productResults: const [],
+                          query: query,
+                          currentLocation: widget.currentLocation,
+                          isLoading: widget.isLoading,
+                          failure: widget.workshopFailure,
+                          onSearchCommitted: _saveRecentSearch,
+                        );
+                      }
+
+                      return FutureBuilder<List<Product>>(
+                        future: _productsFuture,
+                        builder: (context, snapshot) {
+                          final products = snapshot.data ?? const <Product>[];
+                          final matchingProducts = SearchBarOverlay
+                              ._productSearchFilter
+                              .filter(products: products, query: query);
+                          final productResults = SearchBarOverlay
+                              ._productSearchGrouper
+                              .group(
+                                products: matchingProducts,
+                                workshops: searchableWorkshops,
+                              );
+
+                          return _WorkshopSearchResults(
+                            workshops: workshopResults,
+                            productResults: productResults,
+                            query: query,
+                            currentLocation: widget.currentLocation,
+                            isLoading:
+                                widget.isLoading ||
+                                snapshot.connectionState ==
+                                    ConnectionState.waiting,
+                            failure: widget.workshopFailure,
+                            onSearchCommitted: _saveRecentSearch,
+                          );
+                        },
                       );
                     },
                   ),
@@ -218,6 +274,7 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
 class _WorkshopSearchResults extends StatelessWidget {
   const _WorkshopSearchResults({
     required this.workshops,
+    required this.productResults,
     required this.query,
     required this.currentLocation,
     required this.isLoading,
@@ -226,6 +283,7 @@ class _WorkshopSearchResults extends StatelessWidget {
   });
 
   final List<Workshop> workshops;
+  final List<WorkshopProductSearchResult> productResults;
   final String query;
   final CurrentLocation? currentLocation;
   final bool isLoading;
@@ -246,7 +304,7 @@ class _WorkshopSearchResults extends StatelessWidget {
       );
     }
 
-    if (workshops.isEmpty) {
+    if (productResults.isEmpty && workshops.isEmpty) {
       return _SearchEmptyMessage(
         message: query.isEmpty
             ? l10n.workshopSearchStartMessage
@@ -256,11 +314,23 @@ class _WorkshopSearchResults extends StatelessWidget {
 
     return ListView.separated(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
-      itemCount: workshops.length,
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      itemCount: productResults.length + workshops.length,
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final workshop = workshops[index];
+        if (index < productResults.length) {
+          final result = productResults[index];
+
+          return _WorkshopProductResultCard(
+            result: result,
+            query: query,
+            referenceLocation: currentLocation,
+            onSearchCommitted: onSearchCommitted,
+          );
+        }
+
+        final workshopIndex = index - productResults.length;
+        final workshop = workshops[workshopIndex];
 
         return InkWell(
           borderRadius: BorderRadius.circular(18),
@@ -280,6 +350,223 @@ class _WorkshopSearchResults extends StatelessWidget {
 
   void _showWorkshopDetails(BuildContext context, Workshop workshop) {
     context.push('/workshops/${workshop.id}');
+  }
+}
+
+class _WorkshopProductResultCard extends StatelessWidget {
+  const _WorkshopProductResultCard({
+    required this.result,
+    required this.query,
+    required this.referenceLocation,
+    required this.onSearchCommitted,
+  });
+
+  final WorkshopProductSearchResult result;
+  final String query;
+  final CurrentLocation? referenceLocation;
+  final ValueChanged<String> onSearchCommitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final workshop = result.workshop;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          onSearchCommitted(query);
+          context.push(
+            '/search/workshops/${workshop.id}/products?query=${Uri.encodeComponent(query)}',
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: const Color(0xFFF8F4EF),
+                    backgroundImage: workshop.avatarUrl.trim().isNotEmpty
+                        ? NetworkImage(workshop.avatarUrl)
+                        : null,
+                    child: workshop.avatarUrl.trim().isEmpty
+                        ? const Icon(
+                            Icons.storefront_rounded,
+                            color: Color(0xFF9B3D24),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          workshop.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF181411),
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _WorkshopResultMeta(workshop: workshop),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${result.count} resultado${result.count == 1 ? '' : 's'} para "$query"',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF6B5F57),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded),
+                ],
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 206,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: result.products.take(8).length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final product = result.products[index];
+
+                    return _SearchProductPreview(product: product);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkshopResultMeta extends StatelessWidget {
+  const _WorkshopResultMeta({required this.workshop});
+
+  final Workshop workshop;
+
+  @override
+  Widget build(BuildContext context) {
+    final locationLabel = workshop.locationAddress.trim();
+    final deliveryLabel = workshop.offersHomeService
+        ? 'A domicilio'
+        : 'En taller';
+
+    return Row(
+      children: [
+        const Icon(
+          Icons.location_on_outlined,
+          size: 16,
+          color: Color(0xFF9B3D24),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            locationLabel.isEmpty
+                ? deliveryLabel
+                : '$locationLabel - $deliveryLabel',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF6B5F57),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchProductPreview extends StatelessWidget {
+  const _SearchProductPreview({required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 138,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ProductImage(
+                imageUrl: product.primaryImageUrl,
+                height: 112,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              Positioned(
+                right: 6,
+                bottom: -12,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x22000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Color(0xFF181411),
+                    size: 26,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ProductPriceText(
+            price: product.sellingPrice,
+            style: const TextStyle(
+              color: Color(0xFF181411),
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            product.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF3A332E),
+              fontSize: 14,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

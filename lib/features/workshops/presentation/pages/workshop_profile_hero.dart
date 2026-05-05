@@ -33,7 +33,14 @@ class _ProfileHero extends StatelessWidget {
             left: 16,
             child: _HeroIconButton(
               icon: Icons.close_rounded,
-              onTap: () => Navigator.of(context).maybePop(),
+              onTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                  return;
+                }
+
+                context.go('/home-customer');
+              },
             ),
           ),
           Positioned(
@@ -43,7 +50,9 @@ class _ProfileHero extends StatelessWidget {
               children: [
                 _HeroIconButton(
                   icon: Icons.search_rounded,
-                  onTap: () => _showProductsHint(context),
+                  onTap: () {
+                    context.push('/search/workshops/${workshop.id}/products');
+                  },
                 ),
                 const SizedBox(width: 10),
                 _HeroIconButton(
@@ -89,16 +98,6 @@ class _ProfileHero extends StatelessWidget {
       SnackBar(
         content: Text(
           AppLocalizations.of(context)!.workshopProfileScheduleSoon,
-        ),
-      ),
-    );
-  }
-
-  void _showProductsHint(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppLocalizations.of(context)!.workshopProfileProductSearchHint,
         ),
       ),
     );

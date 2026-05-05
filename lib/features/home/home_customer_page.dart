@@ -227,6 +227,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F4EF),
+      extendBody: true,
       body: FutureBuilder<Either<Failure, List<Workshop>>>(
         future: _workshopsFuture,
         builder: (context, snapshot) {
