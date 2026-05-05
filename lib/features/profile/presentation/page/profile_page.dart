@@ -17,6 +17,11 @@ class _ProfilePageState extends State<ProfilePage> {
   int _currentIndex = 4;
 
   void _handleBottomNavigation(int index) {
+    if (index == 2) {
+      NavigationHandler.handle(context, index);
+      return;
+    }
+
     setState(() {
       _currentIndex = index;
     });
