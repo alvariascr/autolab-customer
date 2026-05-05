@@ -6,8 +6,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../features/products/presentation/widgets/workshop_products_carousel.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../products/domain/entities/product.dart';
+import '../../../products/domain/repositories/product_repository.dart';
+import '../../../products/presentation/pages/product_detail_page.dart';
+import '../../../products/presentation/widgets/product_image.dart';
+import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/repositories/workshop_repository.dart';
 import '../workshop_empty_state_resolver.dart';
