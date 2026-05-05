@@ -57,32 +57,32 @@ void main() {
       await cubit.close();
     });
 
-    test('refiltra marcadores cuando cambia el query sin recargar talleres', () async {
-      await cubit.loadWorkshops(_currentLocation);
+    test(
+      'refiltra marcadores cuando cambia el query sin recargar talleres',
+      () async {
+        await cubit.loadWorkshops(_currentLocation);
 
-      expect(getWorkshopsCalls, 1);
-      expect(cubit.state, isA<MapLoaded>());
-      expect(
-        (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
-        ['Autolab Escazu', 'Frenos Heredia'],
-      );
+        expect(getWorkshopsCalls, 1);
+        expect(cubit.state, isA<MapLoaded>());
+        expect(
+          (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
+          ['Autolab Escazu', 'Frenos Heredia'],
+        );
 
-      queryStore.setQuery('frenos');
+        queryStore.setQuery('frenos');
 
-      expect(getWorkshopsCalls, 1);
-      expect(
-        (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
-        ['Frenos Heredia'],
-      );
-      expect((cubit.state as MapLoaded).query, 'frenos');
-    });
+        expect(getWorkshopsCalls, 1);
+        expect(
+          (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
+          ['Frenos Heredia'],
+        );
+        expect((cubit.state as MapLoaded).query, 'frenos');
+      },
+    );
   });
 }
 
-const _currentLocation = CurrentLocation(
-  latitude: 9.9330,
-  longitude: -84.0800,
-);
+const _currentLocation = CurrentLocation(latitude: 9.9330, longitude: -84.0800);
 
 const _workshops = [
   Workshop(
