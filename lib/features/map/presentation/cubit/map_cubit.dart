@@ -15,7 +15,9 @@ class MapCubit extends Cubit<MapState> {
     this._featureLogger, {
     WorkshopDiscoveryQueryStore? queryStore,
   }) : _queryStore = queryStore,
-       super(const MapInitial());
+       super(const MapInitial()) {
+    _queryStore?.addListener(_handleQueryChanged);
+  }
 
   final WorkshopRepository _repository;
   final FeatureLogger _featureLogger;
@@ -24,8 +26,26 @@ class MapCubit extends Cubit<MapState> {
   static const _discoveryFilter = WorkshopDiscoveryFilter();
 
   List<Workshop>? _allWorkshops;
+  CurrentLocation? _lastUserLocation;
+
+  @override
+  Future<void> close() {
+    _queryStore?.removeListener(_handleQueryChanged);
+    return super.close();
+  }
+
+  void _handleQueryChanged() {
+    final workshops = _allWorkshops;
+
+    if (workshops == null) {
+      return;
+    }
+
+    _emitLoaded(workshops, _lastUserLocation);
+  }
 
   Future<void> loadWorkshops(CurrentLocation? userLocation) async {
+    _lastUserLocation = userLocation;
     _featureLogger.info(
       feature: 'map',
       action: 'load_workshops_started',
@@ -59,23 +79,7 @@ class MapCubit extends Cubit<MapState> {
       },
       (workshops) {
         _allWorkshops = workshops;
-        final searchLocation = _searchLocationResolver.resolve(userLocation);
-        final nearbyWorkshops = _discoveryFilter.apply(
-          workshops: workshops,
-          currentLocation: searchLocation,
-          query: _queryStore?.query ?? '',
-        );
-
-        emit(
-          MapLoaded(
-            nearbyWorkshops,
-            currentLocation: searchLocation,
-            isUsingFallbackLocation: _searchLocationResolver.isUsingFallback(
-              userLocation,
-            ),
-            query: _queryStore?.query ?? '',
-          ),
-        );
+        final nearbyWorkshops = _emitLoaded(workshops, userLocation);
 
         _featureLogger.info(
           feature: 'map',
@@ -90,5 +94,31 @@ class MapCubit extends Cubit<MapState> {
         );
       },
     );
+  }
+
+  List<Workshop> _emitLoaded(
+    List<Workshop> workshops,
+    CurrentLocation? userLocation,
+  ) {
+    final query = _queryStore?.query ?? '';
+    final searchLocation = _searchLocationResolver.resolve(userLocation);
+    final nearbyWorkshops = _discoveryFilter.apply(
+      workshops: workshops,
+      currentLocation: searchLocation,
+      query: query,
+    );
+
+    emit(
+      MapLoaded(
+        nearbyWorkshops,
+        currentLocation: searchLocation,
+        isUsingFallbackLocation: _searchLocationResolver.isUsingFallback(
+          userLocation,
+        ),
+        query: query,
+      ),
+    );
+
+    return nearbyWorkshops;
   }
 }
