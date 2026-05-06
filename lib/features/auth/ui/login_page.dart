@@ -2,6 +2,7 @@ import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
@@ -390,7 +391,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        // Luego aquí puedes conectar recover password
+                        context.go('/forgot-password');
                       },
                       child: Text(
                         l10n.authLoginForgotPassword,

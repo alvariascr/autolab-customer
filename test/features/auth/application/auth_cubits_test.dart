@@ -33,6 +33,16 @@ class FakeSuccessAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) async {
+    return const Right(unit);
+  }
+
+  @override
   Future<Either<Failure, AppUser?>> getCurrentUser() async {
     return const Right(null);
   }
@@ -90,6 +100,16 @@ class FakeFailureAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
+    return const Left(AuthFailure(message: 'No se pudo enviar el correo'));
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) async {
+    return const Left(AuthFailure(message: 'No se pudo actualizar'));
+  }
+
+  @override
   Future<Either<Failure, AppUser?>> getCurrentUser() async {
     return const Right(null);
   }
@@ -113,6 +133,16 @@ class FakeRestoreSessionAuthRepository implements AuthRepository {
 
   @override
   Future<Either<Failure, Unit>> logout() async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) async {
     return const Right(unit);
   }
 
@@ -142,6 +172,16 @@ class FakeRestoreSessionFailureAuthRepository implements AuthRepository {
 
   @override
   Future<Either<Failure, Unit>> logout() async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
+    return const Right(unit);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) async {
     return const Right(unit);
   }
 

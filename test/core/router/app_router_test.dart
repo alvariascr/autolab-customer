@@ -30,6 +30,16 @@ class _UnusedAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Either<Failure, AppUser?>> getCurrentUser() {
     throw UnimplementedError();
   }
@@ -106,6 +116,30 @@ void main() {
         expect(redirect, '/login');
       },
     );
+
+    test('permite pedir recuperación sin estar autenticado', () {
+      final redirect = appRouter.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.unauthenticated,
+        ),
+        location: '/forgot-password',
+      );
+
+      expect(redirect, isNull);
+    });
+
+    test('permite cambiar contraseña durante recovery', () {
+      final redirect = appRouter.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'recovery-user',
+          role: 'customer',
+        ),
+        location: '/reset-password',
+      );
+
+      expect(redirect, isNull);
+    });
 
     test('no redirige mientras auth está cargando', () {
       final redirect = appRouter.redirectFor(

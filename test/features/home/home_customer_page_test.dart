@@ -57,6 +57,16 @@ class _UnusedAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<Either<Failure, AppUser>> register(
     String name,
     String email,
