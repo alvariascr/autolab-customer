@@ -10,7 +10,6 @@ import 'package:autolab_customer/core/location/location_permission_service.dart'
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
-import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:autolab_customer/features/home/home_customer_page.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:dartz/dartz.dart';
@@ -19,6 +18,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../helpers/mock_auth_repository.dart';
 
 class MockLocationPermissionService extends Mock
     implements LocationPermissionService {}
@@ -36,8 +37,6 @@ class MockGlobalErrorHandler extends Mock implements GlobalErrorHandler {}
 class MockAppLogger extends Mock implements AppLogger {}
 
 class MockFeatureLogger extends Mock implements FeatureLogger {}
-
-class MockAuthRepository extends Mock implements AuthRepository {}
 
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
 

@@ -1,12 +1,11 @@
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/features/auth/application/password_recovery_cubit.dart';
 import 'package:autolab_customer/features/auth/application/password_recovery_state.dart';
-import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+import '../../../helpers/mock_auth_repository.dart';
 
 void _stubSendPasswordResetSuccess(MockAuthRepository repository) {
   when(

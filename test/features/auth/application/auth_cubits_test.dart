@@ -7,12 +7,11 @@ import 'package:autolab_customer/features/auth/application/login_form_state.dart
 import 'package:autolab_customer/features/auth/application/register_form_cubit.dart';
 import 'package:autolab_customer/features/auth/application/register_form_state.dart';
 import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
-import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+import '../../../helpers/mock_auth_repository.dart';
 
 class _NoopFeatureLogger extends Fake implements FeatureLogger {
   @override
