@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location/location_cubit.dart';
 import '../features/auth/application/auth_feedback.dart';
+import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
 import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
@@ -36,16 +37,16 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   StreamSubscription<AuthState>? _authStateSubscription;
+  late final AuthNavigationController _authNavigationController;
 
   @override
   void initState() {
     super.initState();
+    _authNavigationController = AuthNavigationController(
+      navigate: widget.router.go,
+    );
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
-        .listen((data) {
-          if (data.event == AuthChangeEvent.passwordRecovery) {
-            widget.router.go('/reset-password');
-          }
-        });
+        .listen(_authNavigationController.handleAuthState);
   }
 
   @override
