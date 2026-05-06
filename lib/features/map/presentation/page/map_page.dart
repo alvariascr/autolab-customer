@@ -40,6 +40,11 @@ class _MapPageViewState extends State<_MapPageView> {
   int _currentIndex = 1;
 
   void _handleBottomNavigation(int index) {
+    if (index == 2) {
+      NavigationHandler.handle(context, index);
+      return;
+    }
+
     setState(() {
       _currentIndex = index;
     });

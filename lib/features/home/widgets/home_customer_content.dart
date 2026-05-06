@@ -23,6 +23,7 @@ class HomeCustomerContent extends StatelessWidget {
     required this.emptyStateResolver,
     required this.onLocationTap,
     required this.onSearchClose,
+    this.onSearchQueryChanged,
     this.workshopFailure,
   });
 
@@ -34,6 +35,7 @@ class HomeCustomerContent extends StatelessWidget {
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
   final VoidCallback onSearchClose;
+  final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
@@ -83,6 +85,7 @@ class HomeCustomerContent extends StatelessWidget {
               isLoading: isWorkshopsLoading,
               workshopFailure: workshopFailure,
               onClose: onSearchClose,
+              onQueryChanged: onSearchQueryChanged,
             ),
           ],
         );

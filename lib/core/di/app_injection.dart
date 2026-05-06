@@ -9,6 +9,7 @@ import '../../features/products/data/datasources/product_remote_data_source.dart
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
 import '../../features/products/domain/repositories/product_repository.dart';
+import '../../features/workshops/application/workshop_discovery_query_store.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../../features/workshops/data/repositories/workshop_repository_impl.dart';
@@ -95,7 +96,14 @@ void _registerFeatureDependencies() {
       featureLogger: sl<FeatureLogger>(),
     ),
   );
+  sl.registerLazySingleton<WorkshopDiscoveryQueryStore>(
+    WorkshopDiscoveryQueryStore.new,
+  );
   sl.registerFactory<MapCubit>(
-    () => MapCubit(sl<WorkshopRepository>(), sl<FeatureLogger>()),
+    () => MapCubit(
+      sl<WorkshopRepository>(),
+      sl<FeatureLogger>(),
+      queryStore: sl<WorkshopDiscoveryQueryStore>(),
+    ),
   );
 }
