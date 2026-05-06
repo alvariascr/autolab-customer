@@ -1,49 +1,12 @@
-import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/core/router/app_router.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
-import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
-class _UnusedAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
-  ) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> logout() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updatePassword(String password) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() {
-    throw UnimplementedError();
-  }
-}
+class MockAuthRepository extends Mock implements AuthRepository {}
 
 class _NoopFeatureLogger extends Fake implements FeatureLogger {
   @override
@@ -82,7 +45,7 @@ void main() {
 
     setUp(() {
       authSessionCubit = AuthSessionCubit(
-        _UnusedAuthRepository(),
+        MockAuthRepository(),
         _NoopFeatureLogger(),
       );
       appRouter = AppRouter(authSessionCubit);

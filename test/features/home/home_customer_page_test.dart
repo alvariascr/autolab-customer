@@ -10,7 +10,6 @@ import 'package:autolab_customer/core/location/location_permission_service.dart'
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
-import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:autolab_customer/features/home/home_customer_page.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
@@ -38,44 +37,9 @@ class MockAppLogger extends Mock implements AppLogger {}
 
 class MockFeatureLogger extends Mock implements FeatureLogger {}
 
+class MockAuthRepository extends Mock implements AuthRepository {}
+
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
-
-class _UnusedAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> logout() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updatePassword(String password) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
-  ) {
-    throw UnimplementedError();
-  }
-}
 
 void main() {
   group('HomeCustomerPage', () {
@@ -86,6 +50,7 @@ void main() {
     late MockGlobalErrorHandler errorHandler;
     late MockAppLogger logger;
     late MockFeatureLogger featureLogger;
+    late MockAuthRepository authRepository;
     late AuthSessionCubit authSessionCubit;
     late LocationCubit locationCubit;
 
@@ -101,10 +66,8 @@ void main() {
       errorHandler = MockGlobalErrorHandler();
       logger = MockAppLogger();
       featureLogger = MockFeatureLogger();
-      authSessionCubit = AuthSessionCubit(
-        _UnusedAuthRepository(),
-        featureLogger,
-      );
+      authRepository = MockAuthRepository();
+      authSessionCubit = AuthSessionCubit(authRepository, featureLogger);
 
       when(() => errorHandler.logger).thenReturn(logger);
       when(

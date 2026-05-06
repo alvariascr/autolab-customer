@@ -10,43 +10,9 @@ import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
 import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
-class FakeSuccessAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) async {
-    return Right(AppUser(id: '123', email: email, role: 'customer'));
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
-  ) async {
-    return Right(AppUser(id: '123', email: email, role: 'customer'));
-  }
-
-  @override
-  Future<Either<Failure, Unit>> logout() async {
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updatePassword(String password) async {
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() async {
-    return const Right(null);
-  }
-}
+class MockAuthRepository extends Mock implements AuthRepository {}
 
 class _NoopFeatureLogger extends Fake implements FeatureLogger {
   @override
@@ -78,132 +44,62 @@ class _NoopFeatureLogger extends Fake implements FeatureLogger {
   }) {}
 }
 
-class FakeFailureAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) async {
-    return const Left(AuthFailure(message: 'Correo o contraseña incorrectos'));
-  }
+MockAuthRepository _mockRepository() => MockAuthRepository();
 
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
-  ) async {
-    return const Left(AuthFailure(message: 'No se pudo registrar'));
-  }
-
-  @override
-  Future<Either<Failure, Unit>> logout() async {
-    return const Left(AuthFailure(message: 'No se pudo cerrar sesión'));
-  }
-
-  @override
-  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
-    return const Left(AuthFailure(message: 'No se pudo enviar el correo'));
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updatePassword(String password) async {
-    return const Left(AuthFailure(message: 'No se pudo actualizar'));
-  }
-
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() async {
-    return const Right(null);
-  }
+void _stubLoginSuccess(MockAuthRepository repository) {
+  when(() => repository.login(any(), any())).thenAnswer((invocation) async {
+    final email = invocation.positionalArguments.first as String;
+    return Right(AppUser(id: '123', email: email, role: 'customer'));
+  });
 }
 
-class FakeRestoreSessionAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) async {
-    return Right(AppUser(id: '123', email: email, role: 'customer'));
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
-  ) async {
-    return Right(AppUser(id: '123', email: email, role: 'customer'));
-  }
-
-  @override
-  Future<Either<Failure, Unit>> logout() async {
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updatePassword(String password) async {
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() async {
-    return const Right(
-      AppUser(id: '123', email: 'test@test.com', role: 'customer'),
-    );
-  }
+void _stubLoginFailure(MockAuthRepository repository) {
+  when(() => repository.login(any(), any())).thenAnswer(
+    (_) async =>
+        const Left(AuthFailure(message: 'Correo o contraseña incorrectos')),
+  );
 }
 
-class FakeRestoreSessionFailureAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) async {
-    return Right(AppUser(id: '123', email: email, role: 'customer'));
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
+void _stubRegisterSuccess(MockAuthRepository repository) {
+  when(() => repository.register(any(), any(), any(), any())).thenAnswer((
+    invocation,
   ) async {
+    final email = invocation.positionalArguments[1] as String;
     return Right(AppUser(id: '123', email: email, role: 'customer'));
-  }
+  });
+}
 
-  @override
-  Future<Either<Failure, Unit>> logout() async {
-    return const Right(unit);
-  }
+void _stubRegisterFailure(MockAuthRepository repository) {
+  when(() => repository.register(any(), any(), any(), any())).thenAnswer(
+    (_) async => const Left(AuthFailure(message: 'No se pudo registrar')),
+  );
+}
 
-  @override
-  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
-    return const Right(unit);
-  }
+void _stubLogoutSuccess(MockAuthRepository repository) {
+  when(() => repository.logout()).thenAnswer((_) async => const Right(unit));
+}
 
-  @override
-  Future<Either<Failure, Unit>> updatePassword(String password) async {
-    return const Right(unit);
-  }
+void _stubCurrentUser(MockAuthRepository repository, AppUser? user) {
+  when(() => repository.getCurrentUser()).thenAnswer((_) async => Right(user));
+}
 
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() async {
-    return Left(
+void _stubCurrentUserFailure(MockAuthRepository repository) {
+  when(() => repository.getCurrentUser()).thenAnswer(
+    (_) async => Left(
       AuthFailure(
         message: 'AUTH_011',
         code: 'AUTH_011',
         uiKey: 'authErrorSessionRestoreFailed',
       ),
-    );
-  }
+    ),
+  );
 }
 
 void main() {
   group('AuthSessionCubit', () {
     test('estado inicial es initial', () {
-      final cubit = AuthSessionCubit(
-        FakeSuccessAuthRepository(),
-        _NoopFeatureLogger(),
-      );
+      final repository = _mockRepository();
+      final cubit = AuthSessionCubit(repository, _NoopFeatureLogger());
 
       expect(cubit.state, const AuthSessionState.initial());
 
@@ -213,10 +109,9 @@ void main() {
     test(
       'restore session sin usuario emite loading y luego unauthenticated',
       () async {
-        final cubit = AuthSessionCubit(
-          FakeSuccessAuthRepository(),
-          _NoopFeatureLogger(),
-        );
+        final repository = _mockRepository();
+        _stubCurrentUser(repository, null);
+        final cubit = AuthSessionCubit(repository, _NoopFeatureLogger());
 
         final expectation = expectLater(
           cubit.stream,
@@ -233,10 +128,12 @@ void main() {
     );
 
     test('restore session con usuario emite authenticated', () async {
-      final cubit = AuthSessionCubit(
-        FakeRestoreSessionAuthRepository(),
-        _NoopFeatureLogger(),
+      final repository = _mockRepository();
+      _stubCurrentUser(
+        repository,
+        const AppUser(id: '123', email: 'test@test.com', role: 'customer'),
       );
+      final cubit = AuthSessionCubit(repository, _NoopFeatureLogger());
 
       final expectation = expectLater(
         cubit.stream,
@@ -256,10 +153,9 @@ void main() {
     });
 
     test('restore session fallida conserva el failure en estado', () async {
-      final cubit = AuthSessionCubit(
-        FakeRestoreSessionFailureAuthRepository(),
-        _NoopFeatureLogger(),
-      );
+      final repository = _mockRepository();
+      _stubCurrentUserFailure(repository);
+      final cubit = AuthSessionCubit(repository, _NoopFeatureLogger());
 
       final expectation = expectLater(
         cubit.stream,
@@ -279,10 +175,9 @@ void main() {
     });
 
     test('logout exitoso deja el estado en unauthenticated', () async {
-      final cubit = AuthSessionCubit(
-        FakeSuccessAuthRepository(),
-        _NoopFeatureLogger(),
-      );
+      final repository = _mockRepository();
+      _stubLogoutSuccess(repository);
+      final cubit = AuthSessionCubit(repository, _NoopFeatureLogger());
       cubit.setAuthenticated(
         const AppUser(id: '123', email: 'test@test.com', role: 'customer'),
       );
@@ -307,7 +202,9 @@ void main() {
 
   group('LoginFormCubit', () {
     test('login exitoso emite submitting y luego success', () async {
-      final cubit = LoginFormCubit(FakeSuccessAuthRepository());
+      final repository = _mockRepository();
+      _stubLoginSuccess(repository);
+      final cubit = LoginFormCubit(repository);
 
       final expectation = expectLater(
         cubit.stream,
@@ -326,7 +223,9 @@ void main() {
     });
 
     test('login fallido emite error con mensaje', () async {
-      final cubit = LoginFormCubit(FakeFailureAuthRepository());
+      final repository = _mockRepository();
+      _stubLoginFailure(repository);
+      final cubit = LoginFormCubit(repository);
 
       final expectation = expectLater(
         cubit.stream,
@@ -347,7 +246,9 @@ void main() {
 
   group('RegisterFormCubit', () {
     test('register exitoso emite success con userId', () async {
-      final cubit = RegisterFormCubit(FakeSuccessAuthRepository());
+      final repository = _mockRepository();
+      _stubRegisterSuccess(repository);
+      final cubit = RegisterFormCubit(repository);
 
       final expectation = expectLater(
         cubit.stream,
@@ -371,7 +272,9 @@ void main() {
     });
 
     test('register fallido emite error con mensaje', () async {
-      final cubit = RegisterFormCubit(FakeFailureAuthRepository());
+      final repository = _mockRepository();
+      _stubRegisterFailure(repository);
+      final cubit = RegisterFormCubit(repository);
 
       final expectation = expectLater(
         cubit.stream,
