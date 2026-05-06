@@ -26,11 +26,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _confirmPasswordCtrl = TextEditingController();
   var _isPasswordHidden = true;
   var _isConfirmPasswordHidden = true;
+  PasswordRecoveryCubit? _passwordRecoveryCubit;
+
+  PasswordRecoveryCubit get _cubit {
+    return _passwordRecoveryCubit ??= PasswordRecoveryCubit(
+      context.read<AuthRepository>(),
+    );
+  }
 
   @override
   void dispose() {
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
+    _passwordRecoveryCubit?.close();
     super.dispose();
   }
 
@@ -48,8 +56,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BlocProvider(
-      create: (_) => PasswordRecoveryCubit(context.read<AuthRepository>()),
+    return BlocProvider.value(
+      value: _cubit,
       child: Scaffold(
         body: BlocListener<PasswordRecoveryCubit, PasswordRecoveryState>(
           listener: (context, state) {
