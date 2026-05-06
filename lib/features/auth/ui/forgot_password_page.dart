@@ -23,10 +23,18 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
+  PasswordRecoveryCubit? _passwordRecoveryCubit;
+
+  PasswordRecoveryCubit get _cubit {
+    return _passwordRecoveryCubit ??= PasswordRecoveryCubit(
+      context.read<AuthRepository>(),
+    );
+  }
 
   @override
   void dispose() {
     _emailCtrl.dispose();
+    _passwordRecoveryCubit?.close();
     super.dispose();
   }
 
@@ -44,8 +52,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return BlocProvider(
-      create: (_) => PasswordRecoveryCubit(context.read<AuthRepository>()),
+    return BlocProvider.value(
+      value: _cubit,
       child: Scaffold(
         body: BlocListener<PasswordRecoveryCubit, PasswordRecoveryState>(
           listener: (context, state) {
