@@ -40,7 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
     final cleanEmail = _normalizeEmail(email);
-    final cleanPassword = password.trim();
+    final cleanPassword = _normalizePassword(password);
 
     featureLogger.info(
       feature: 'auth',
@@ -87,7 +87,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final cleanName = name.trim();
     final cleanEmail = _normalizeEmail(email);
     final cleanPhone = phone.trim();
-    final cleanPassword = password.trim();
+    final cleanPassword = _normalizePassword(password);
 
     featureLogger.info(
       feature: 'auth',
@@ -199,7 +199,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, Unit>> updatePassword(String password) async {
-    final cleanPassword = password.trim();
+    final cleanPassword = _normalizePassword(password);
 
     featureLogger.info(feature: 'auth', action: 'password_update_started');
 
@@ -446,6 +446,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   String _normalizeEmail(String email) {
     return email.trim().toLowerCase();
+  }
+
+  String _normalizePassword(String password) {
+    return password.trim();
   }
 
   AppUser _buildAppUser({
