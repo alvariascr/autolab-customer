@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -27,8 +30,48 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   static const _minimumZoom = 5.0;
   static const _maximumZoom = 17.5;
   static const _zoomStep = 1.0;
+  static const _markerPixelRatio = 3.0;
+  static const _mapStyle = '''
+[
+  {
+    "featureType": "poi.business",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "featureType": "poi.medical",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "featureType": "transit",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#E8EEF3" }]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [{ "color": "#66727A" }]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#D7E7F4" }]
+  },
+  {
+    "featureType": "landscape",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#F8F4EF" }]
+  }
+]
+''';
 
   GoogleMapController? _mapController;
+  BitmapDescriptor? _currentLocationIcon;
+  BitmapDescriptor? _workshopIcon;
+  BitmapDescriptor? _selectedWorkshopIcon;
   double _currentZoom = _initialZoom;
   Workshop? _selectedWorkshop;
   bool _expandedSheet = false;
@@ -49,6 +92,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _loadMarkerIcons();
     WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
   }
 
@@ -220,6 +264,30 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     });
   }
 
+  Future<void> _loadMarkerIcons() async {
+    if (_currentLocationIcon != null &&
+        _workshopIcon != null &&
+        _selectedWorkshopIcon != null) {
+      return;
+    }
+
+    final icons = await Future.wait([
+      _createCurrentLocationIcon(),
+      _createWorkshopPinIcon(isSelected: false),
+      _createWorkshopPinIcon(isSelected: true),
+    ]);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _currentLocationIcon = icons[0];
+      _workshopIcon = icons[1];
+      _selectedWorkshopIcon = icons[2];
+    });
+  }
+
   LatLngBounds _boundsFrom(List<LatLng> points) {
     var minLatitude = points.first.latitude;
     var maxLatitude = points.first.latitude;
@@ -244,6 +312,169 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     return LatLngBounds(
       southwest: LatLng(minLatitude, minLongitude),
       northeast: LatLng(maxLatitude, maxLongitude),
+    );
+  }
+
+  Future<BitmapDescriptor> _createCurrentLocationIcon() async {
+    const size = Size(56, 56);
+    final bytes = await _drawMarkerBytes(size, (canvas) {
+      const center = Offset(28, 28);
+
+      canvas.drawCircle(
+        center,
+        22,
+        Paint()..color = const Color(0xFF181411).withValues(alpha: 0.18),
+      );
+      canvas.drawCircle(center, 12, Paint()..color = Colors.white);
+      canvas.drawCircle(center, 8, Paint()..color = const Color(0xFF181411));
+    });
+
+    return BitmapDescriptor.bytes(
+      bytes,
+      imagePixelRatio: _markerPixelRatio,
+      width: size.width,
+      height: size.height,
+    );
+  }
+
+  Future<BitmapDescriptor> _createWorkshopPinIcon({
+    required bool isSelected,
+  }) async {
+    final size = isSelected ? const Size(78, 92) : const Size(68, 82);
+    final primary = isSelected
+        ? const Color(0xFFE94A3F)
+        : const Color(0xFFC24E2C);
+    final secondary = isSelected
+        ? const Color(0xFF9B3D24)
+        : const Color(0xFF7F2F1A);
+    final centerX = size.width / 2;
+
+    final bytes = await _drawMarkerBytes(size, (canvas) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(centerX, size.height - 8),
+          width: isSelected ? 34 : 28,
+          height: 10,
+        ),
+        Paint()..color = const Color(0x33000000),
+      );
+
+      final pinPath = Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(
+              isSelected ? 9 : 8,
+              6,
+              isSelected ? 60 : 52,
+              isSelected ? 60 : 52,
+            ),
+            Radius.circular(isSelected ? 22 : 20),
+          ),
+        )
+        ..moveTo(centerX - 13, isSelected ? 56 : 50)
+        ..quadraticBezierTo(
+          centerX,
+          size.height - 8,
+          centerX + 13,
+          isSelected ? 56 : 50,
+        )
+        ..close();
+
+      canvas.drawPath(
+        pinPath.shift(const Offset(0, 3)),
+        Paint()..color = const Color(0x26000000),
+      );
+      canvas.drawPath(
+        pinPath,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            const Offset(0, 6),
+            Offset(0, size.height - 12),
+            [primary, secondary],
+          ),
+      );
+      canvas.drawPath(
+        pinPath,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = isSelected ? 4 : 3
+          ..color = Colors.white,
+      );
+
+      final badgeRadius = isSelected ? 19.0 : 16.5;
+      canvas.drawCircle(
+        Offset(centerX, isSelected ? 36 : 32),
+        badgeRadius,
+        Paint()..color = Colors.white,
+      );
+      canvas.drawCircle(
+        Offset(centerX, isSelected ? 36 : 32),
+        badgeRadius - 4,
+        Paint()..color = const Color(0xFFF8F4EF),
+      );
+
+      _paintMarkerGlyph(
+        canvas,
+        text: 'A',
+        center: Offset(centerX, isSelected ? 35 : 31),
+        fontSize: isSelected ? 24 : 20,
+        color: const Color(0xFF181411),
+      );
+    });
+
+    return BitmapDescriptor.bytes(
+      bytes,
+      imagePixelRatio: _markerPixelRatio,
+      width: size.width,
+      height: size.height,
+    );
+  }
+
+  Future<Uint8List> _drawMarkerBytes(
+    Size logicalSize,
+    void Function(Canvas canvas) paint,
+  ) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.scale(_markerPixelRatio);
+
+    paint(canvas);
+
+    final image = await recorder.endRecording().toImage(
+      (logicalSize.width * _markerPixelRatio).round(),
+      (logicalSize.height * _markerPixelRatio).round(),
+    );
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    return byteData!.buffer.asUint8List();
+  }
+
+  void _paintMarkerGlyph(
+    Canvas canvas, {
+    required String text,
+    required Offset center,
+    required double fontSize,
+    required Color color,
+  }) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: color,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    textPainter.paint(
+      canvas,
+      Offset(
+        center.dx - textPainter.width / 2,
+        center.dy - textPainter.height / 2,
+      ),
     );
   }
 
@@ -272,18 +503,24 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       Marker(
         markerId: const MarkerId('current-location'),
         position: center,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        icon:
+            _currentLocationIcon ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         infoWindow: InfoWindow(title: l10n.mapYourLocation),
       ),
       ...widget.workshops.map(
         (workshop) => Marker(
           markerId: MarkerId('workshop-${workshop.id}'),
           position: LatLng(workshop.latitude, workshop.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            _selectedWorkshop?.id == workshop.id
-                ? BitmapDescriptor.hueOrange
-                : BitmapDescriptor.hueRed,
-          ),
+          icon: _selectedWorkshop?.id == workshop.id
+              ? _selectedWorkshopIcon ??
+                    BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueOrange,
+                    )
+              : _workshopIcon ??
+                    BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueRed,
+                    ),
           infoWindow: InfoWindow(
             title: workshop.name,
             snippet: workshop.locationAddress.isEmpty
@@ -305,6 +542,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               target: center,
               zoom: _initialZoom,
             ),
+            style: _mapStyle,
             markers: markers,
             onMapCreated: _handleMapCreated,
             onCameraMove: (position) => _currentZoom = position.zoom,
