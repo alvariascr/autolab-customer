@@ -1,17 +1,22 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location/location_cubit.dart';
 import '../features/auth/application/auth_feedback.dart';
+import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
 import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
 import '../features/auth/ui/auth_ui_error_resolver.dart';
 import '../l10n/app_localizations.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final AuthRepository authRepository;
   final AuthSessionCubit authSessionCubit;
   final LocationCubit locationCubit;
@@ -28,17 +33,59 @@ class MyApp extends StatelessWidget {
   });
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  StreamSubscription<AuthState>? _authStateSubscription;
+  StreamSubscription<Uri>? _appLinkSubscription;
+  final AppLinks _appLinks = AppLinks();
+  late final AuthNavigationController _authNavigationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _authNavigationController = AuthNavigationController(
+      navigate: widget.router.go,
+      clearSession: () async {
+        await widget.authSessionCubit.logout();
+      },
+    );
+    _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
+        .listen(_authNavigationController.handleAuthState);
+    unawaited(_listenForAppLinks());
+  }
+
+  @override
+  void dispose() {
+    _authStateSubscription?.cancel();
+    _appLinkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _listenForAppLinks() async {
+    _appLinkSubscription = _appLinks.uriLinkStream.listen(
+      (uri) => unawaited(_authNavigationController.handleAppLink(uri)),
+    );
+
+    final initialLink = await _appLinks.getInitialLink();
+    if (initialLink == null) return;
+
+    await _authNavigationController.handleAppLink(initialLink);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        RepositoryProvider.value(value: authRepository),
-        BlocProvider.value(value: authSessionCubit),
-        BlocProvider.value(value: locationCubit),
+        RepositoryProvider.value(value: widget.authRepository),
+        BlocProvider.value(value: widget.authSessionCubit),
+        BlocProvider.value(value: widget.locationCubit),
       ],
       child: MaterialApp.router(
-        scaffoldMessengerKey: _scaffoldMessengerKey,
+        scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
         onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-        routerConfig: router,
+        routerConfig: widget.router,
         builder: (context, child) {
           return BlocListener<AuthSessionCubit, AuthSessionState>(
             listenWhen: (previous, current) {
@@ -63,7 +110,7 @@ class MyApp extends StatelessWidget {
                 message: state.message,
               );
 
-              _scaffoldMessengerKey.currentState
+              MyApp._scaffoldMessengerKey.currentState
                 ?..hideCurrentSnackBar()
                 ..showSnackBar(
                   SnackBar(

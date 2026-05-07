@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/application/auth_session_cubit.dart';
 import '../../features/auth/application/auth_session_state.dart';
 import '../../features/auth/domain/constants/user_roles.dart';
+import '../../features/auth/ui/forgot_password_page.dart';
 import '../../features/auth/ui/login_page.dart';
+import '../../features/auth/ui/reset_password_page.dart';
 import '../../features/home/home_customer_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
@@ -24,6 +26,14 @@ class AppRouter {
     ),
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordPage(),
+      ),
       GoRoute(path: '/home', builder: (context, state) => const HomePage()),
       GoRoute(
         path: '/home-customer',
@@ -52,6 +62,12 @@ class AppRouter {
     required String location,
   }) {
     final bool isLoggingIn = location == '/login';
+    final bool isPasswordRecovery =
+        location == '/forgot-password' || location == '/reset-password';
+
+    if (isPasswordRecovery) {
+      return null;
+    }
 
     // Si el estado está cargando, no redirigir todavía.
     // Esto evita el salto visual temporal hacia /login

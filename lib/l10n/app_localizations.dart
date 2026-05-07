@@ -142,6 +142,72 @@ abstract class AppLocalizations {
   /// **'Olvidé mi contraseña'**
   String get authLoginForgotPassword;
 
+  /// No description provided for @authForgotPasswordTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Recuperar contraseña'**
+  String get authForgotPasswordTitle;
+
+  /// No description provided for @authForgotPasswordSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.'**
+  String get authForgotPasswordSubtitle;
+
+  /// No description provided for @authForgotPasswordSubmit.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviar enlace'**
+  String get authForgotPasswordSubmit;
+
+  /// No description provided for @authPasswordResetEmailSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Te enviamos un enlace de recuperación. Revisa tu correo.'**
+  String get authPasswordResetEmailSent;
+
+  /// No description provided for @authResetPasswordTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva contraseña'**
+  String get authResetPasswordTitle;
+
+  /// No description provided for @authResetPasswordSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa una nueva contraseña para volver a entrar a tu cuenta.'**
+  String get authResetPasswordSubtitle;
+
+  /// No description provided for @authResetPasswordNewPasswordLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva contraseña'**
+  String get authResetPasswordNewPasswordLabel;
+
+  /// No description provided for @authResetPasswordNewPasswordHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa tu nueva contraseña'**
+  String get authResetPasswordNewPasswordHint;
+
+  /// No description provided for @authResetPasswordSubmit.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar contraseña'**
+  String get authResetPasswordSubmit;
+
+  /// No description provided for @authPasswordResetSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu contraseña fue actualizada. Inicia sesión nuevamente.'**
+  String get authPasswordResetSuccess;
+
+  /// No description provided for @authPasswordResetBackToLogin.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a iniciar sesión'**
+  String get authPasswordResetBackToLogin;
+
   /// No description provided for @authLoginSocialPrompt.
   ///
   /// In es, this message translates to:
@@ -273,6 +339,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Registro exitoso. Revisa tu correo para confirmar tu cuenta.'**
   String get authRegisterSuccess;
+
+  /// No description provided for @authEmailConfirmedLoginMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu correo fue confirmado. Ya puedes iniciar sesión.'**
+  String get authEmailConfirmedLoginMessage;
 
   /// No description provided for @authTermsRequired.
   ///

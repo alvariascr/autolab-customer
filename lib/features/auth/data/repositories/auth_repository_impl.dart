@@ -40,7 +40,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AppUser>> login(String email, String password) async {
     final cleanEmail = _normalizeEmail(email);
-    final cleanPassword = password.trim();
+    final cleanPassword = _normalizePassword(password);
 
     featureLogger.info(
       feature: 'auth',
@@ -87,7 +87,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final cleanName = name.trim();
     final cleanEmail = _normalizeEmail(email);
     final cleanPhone = phone.trim();
-    final cleanPassword = password.trim();
+    final cleanPassword = _normalizePassword(password);
 
     featureLogger.info(
       feature: 'auth',
@@ -107,6 +107,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await client.auth.signUp(
         email: cleanEmail,
         password: cleanPassword,
+        emailRedirectTo: 'autolab://login-callback/email-confirmed',
         data: {
           'name': cleanName,
           'phone': cleanPhone,
@@ -148,6 +149,79 @@ class AuthRepositoryImpl implements AuthRepository {
       featureLogger.error(
         feature: 'auth',
         action: 'repository_logout_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(globalErrorHandler.handle(error, stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> sendPasswordResetEmail(String email) async {
+    final cleanEmail = _normalizeEmail(email);
+
+    featureLogger.info(
+      feature: 'auth',
+      action: 'password_reset_email_started',
+      context: {'email': cleanEmail},
+    );
+
+    try {
+      await client.auth.resetPasswordForEmail(
+        cleanEmail,
+        redirectTo: 'autolab://login-callback/reset-password',
+      );
+
+      featureLogger.info(
+        feature: 'auth',
+        action: 'password_reset_email_succeeded',
+        context: {'email': cleanEmail},
+      );
+
+      return const Right(unit);
+    } on AuthException catch (error, stackTrace) {
+      return _handlePasswordRecoveryAuthException(
+        error,
+        stackTrace,
+        action: 'password_reset_email_auth_exception',
+        email: cleanEmail,
+      );
+    } catch (error, stackTrace) {
+      featureLogger.error(
+        feature: 'auth',
+        action: 'password_reset_email_failed',
+        context: {'email': cleanEmail},
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(globalErrorHandler.handle(error, stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword(String password) async {
+    final cleanPassword = _normalizePassword(password);
+
+    featureLogger.info(feature: 'auth', action: 'password_update_started');
+
+    try {
+      await client.auth.updateUser(UserAttributes(password: cleanPassword));
+      await client.auth.signOut();
+      await sessionStorageService.clearSession();
+
+      featureLogger.info(feature: 'auth', action: 'password_update_succeeded');
+
+      return const Right(unit);
+    } on AuthException catch (error, stackTrace) {
+      return _handlePasswordRecoveryAuthException(
+        error,
+        stackTrace,
+        action: 'password_update_auth_exception',
+      );
+    } catch (error, stackTrace) {
+      featureLogger.error(
+        feature: 'auth',
+        action: 'password_update_failed',
         error: error,
         stackTrace: stackTrace,
       );
@@ -310,6 +384,49 @@ class AuthRepositoryImpl implements AuthRepository {
     return Left(globalErrorHandler.handle(error, stackTrace));
   }
 
+  Either<Failure, Unit> _handlePasswordRecoveryAuthException(
+    AuthException error,
+    StackTrace stackTrace, {
+    required String action,
+    String? email,
+  }) {
+    final mappedFailure = authExceptionMapper
+        .map(error, stackTrace, flow: AuthExceptionFlow.login)
+        ?.failure;
+
+    if (mappedFailure != null) {
+      featureLogger.warn(
+        feature: 'auth',
+        action: action,
+        code: mappedFailure.code,
+        context: _buildAuthExceptionContext(
+          error,
+          flow: AuthExceptionFlow.login,
+          email: email,
+          failure: mappedFailure,
+          classification: 'password_recovery',
+        ),
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return Left(mappedFailure);
+    }
+
+    featureLogger.error(
+      feature: 'auth',
+      action: action,
+      context: _buildAuthExceptionContext(
+        error,
+        flow: AuthExceptionFlow.login,
+        email: email,
+        resolution: 'delegated_to_global_error_handler',
+      ),
+      error: error,
+      stackTrace: stackTrace,
+    );
+    return Left(globalErrorHandler.handle(error, stackTrace));
+  }
+
   Map<String, Object?> _buildAuthExceptionContext(
     AuthException error, {
     required AuthExceptionFlow flow,
@@ -330,6 +447,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   String _normalizeEmail(String email) {
     return email.trim().toLowerCase();
+  }
+
+  String _normalizePassword(String password) {
+    return password.trim();
   }
 
   AppUser _buildAppUser({

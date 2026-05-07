@@ -673,6 +673,7 @@ void main() {
           () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            emailRedirectTo: any(named: 'emailRedirectTo'),
             data: any(named: 'data'),
           ),
         ).thenAnswer((_) async => authResponse);
@@ -703,6 +704,7 @@ void main() {
           () => mockGoTrueClient.signUp(
             email: 'new@test.com',
             password: '123456',
+            emailRedirectTo: 'autolab://login-callback/email-confirmed',
             data: {
               'name': 'Luis',
               'phone': '88888888',
@@ -743,6 +745,7 @@ void main() {
             () => mockGoTrueClient.signUp(
               email: any(named: 'email'),
               password: any(named: 'password'),
+              emailRedirectTo: any(named: 'emailRedirectTo'),
               data: any(named: 'data'),
             ),
           ).thenAnswer((_) async => authResponse);
@@ -861,6 +864,7 @@ void main() {
           () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            emailRedirectTo: any(named: 'emailRedirectTo'),
             data: any(named: 'data'),
           ),
         ).thenAnswer((_) async => authResponse);
@@ -918,6 +922,7 @@ void main() {
             () => mockGoTrueClient.signUp(
               email: any(named: 'email'),
               password: any(named: 'password'),
+              emailRedirectTo: any(named: 'emailRedirectTo'),
               data: any(named: 'data'),
             ),
           ).thenThrow(authException);
@@ -966,6 +971,7 @@ void main() {
           () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
+            emailRedirectTo: any(named: 'emailRedirectTo'),
             data: any(named: 'data'),
           ),
         ).thenThrow(exception);

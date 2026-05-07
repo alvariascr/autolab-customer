@@ -2,6 +2,7 @@ import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
@@ -37,6 +38,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordHidden = true;
   bool _showLoginError = false;
   bool _isShowingRegister = false;
+  bool _dismissEmailConfirmedMessage = false;
 
   bool get _shouldShowInlineLoginError {
     return !_isShowingRegister && _showLoginError;
@@ -70,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _showLoginError = true;
       _isShowingRegister = false;
+      _dismissEmailConfirmedMessage = true;
     });
 
     context.read<LoginFormCubit>().submit(
@@ -84,6 +87,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _showLoginError = false;
       _isShowingRegister = true;
+      _dismissEmailConfirmedMessage = true;
     });
 
     cardKey.currentState?.toggleCard();
@@ -96,6 +100,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _showLoginError = false;
       _isShowingRegister = false;
+      _dismissEmailConfirmedMessage = true;
     });
 
     cardKey.currentState?.toggleCard();
@@ -217,6 +222,17 @@ class _LoginPageState extends State<LoginPage> {
                       remaining: loginState.remaining,
                     )
                   : null;
+              final showEmailConfirmedMessage =
+                  !_dismissEmailConfirmedMessage &&
+                  !_isShowingRegister &&
+                  errorMessage == null &&
+                  GoRouterState.of(
+                        context,
+                      ).uri.queryParameters['emailConfirmed'] ==
+                      'true';
+              final successMessage = showEmailConfirmedMessage
+                  ? l10n.authEmailConfirmedLoginMessage
+                  : null;
 
               return LayoutBuilder(
                 builder: (context, constraints) {
@@ -246,6 +262,7 @@ class _LoginPageState extends State<LoginPage> {
                         logoSize,
                         isLoginLoading,
                         errorMessage,
+                        successMessage,
                         l10n,
                       ),
                       back: RegisterCard(
@@ -293,6 +310,7 @@ class _LoginPageState extends State<LoginPage> {
     double logoSize,
     bool isLoading,
     String? errorMessage,
+    String? successMessage,
     AppLocalizations l10n,
   ) {
     return AuthCardShell(
@@ -319,6 +337,12 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 20),
                     if (errorMessage != null) ...[
                       AuthErrorBanner(message: errorMessage),
+                      const SizedBox(height: 15),
+                    ] else if (successMessage != null) ...[
+                      AuthErrorBanner(
+                        message: successMessage,
+                        variant: AuthBannerVariant.success,
+                      ),
                       const SizedBox(height: 15),
                     ],
                     TextFormField(
@@ -390,7 +414,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        // Luego aquí puedes conectar recover password
+                        context.go('/forgot-password');
                       },
                       child: Text(
                         l10n.authLoginForgotPassword,

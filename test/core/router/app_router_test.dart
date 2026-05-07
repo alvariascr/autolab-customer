@@ -1,39 +1,9 @@
-import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/core/router/app_router.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
-import 'package:autolab_customer/features/auth/domain/entities/app_user.dart';
-import 'package:autolab_customer/features/auth/repository/auth_repository.dart';
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-class _UnusedAuthRepository implements AuthRepository {
-  @override
-  Future<Either<Failure, AppUser>> login(String email, String password) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AppUser>> register(
-    String name,
-    String email,
-    String phone,
-    String password,
-  ) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, Unit>> logout() {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, AppUser?>> getCurrentUser() {
-    throw UnimplementedError();
-  }
-}
+import '../../helpers/mock_auth_repository.dart';
 
 class _NoopFeatureLogger extends Fake implements FeatureLogger {
   @override
@@ -72,7 +42,7 @@ void main() {
 
     setUp(() {
       authSessionCubit = AuthSessionCubit(
-        _UnusedAuthRepository(),
+        MockAuthRepository(),
         _NoopFeatureLogger(),
       );
       appRouter = AppRouter(authSessionCubit);
@@ -106,6 +76,30 @@ void main() {
         expect(redirect, '/login');
       },
     );
+
+    test('permite pedir recuperación sin estar autenticado', () {
+      final redirect = appRouter.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.unauthenticated,
+        ),
+        location: '/forgot-password',
+      );
+
+      expect(redirect, isNull);
+    });
+
+    test('permite cambiar contraseña durante recovery', () {
+      final redirect = appRouter.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'recovery-user',
+          role: 'customer',
+        ),
+        location: '/reset-password',
+      );
+
+      expect(redirect, isNull);
+    });
 
     test('no redirige mientras auth está cargando', () {
       final redirect = appRouter.redirectFor(

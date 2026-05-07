@@ -33,6 +33,43 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authLoginForgotPassword => 'Olvidé mi contraseña';
 
   @override
+  String get authForgotPasswordTitle => 'Recuperar contraseña';
+
+  @override
+  String get authForgotPasswordSubtitle =>
+      'Ingresa el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.';
+
+  @override
+  String get authForgotPasswordSubmit => 'Enviar enlace';
+
+  @override
+  String get authPasswordResetEmailSent =>
+      'Te enviamos un enlace de recuperación. Revisa tu correo.';
+
+  @override
+  String get authResetPasswordTitle => 'Nueva contraseña';
+
+  @override
+  String get authResetPasswordSubtitle =>
+      'Ingresa una nueva contraseña para volver a entrar a tu cuenta.';
+
+  @override
+  String get authResetPasswordNewPasswordLabel => 'Nueva contraseña';
+
+  @override
+  String get authResetPasswordNewPasswordHint => 'Ingresa tu nueva contraseña';
+
+  @override
+  String get authResetPasswordSubmit => 'Actualizar contraseña';
+
+  @override
+  String get authPasswordResetSuccess =>
+      'Tu contraseña fue actualizada. Inicia sesión nuevamente.';
+
+  @override
+  String get authPasswordResetBackToLogin => 'Volver a iniciar sesión';
+
+  @override
   String get authLoginSocialPrompt => 'O iniciar sesión con:';
 
   @override
@@ -98,6 +135,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get authRegisterSuccess =>
       'Registro exitoso. Revisa tu correo para confirmar tu cuenta.';
+
+  @override
+  String get authEmailConfirmedLoginMessage =>
+      'Tu correo fue confirmado. Ya puedes iniciar sesión.';
 
   @override
   String get authTermsRequired => 'Debes aceptar términos y condiciones.';
