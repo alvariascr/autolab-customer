@@ -2,7 +2,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-enum AuthExceptionFlow { login, register, registerPrecheck }
+enum AuthExceptionFlow { login, register }
 
 final class AuthExceptionMapping {
   const AuthExceptionMapping({
@@ -90,19 +90,6 @@ final class AuthExceptionMapper {
     return null;
   }
 
-  bool isRegisterAvailabilitySignal(AuthException error) {
-    if (error is! AuthApiException) {
-      return false;
-    }
-
-    if (error.code == _SupabaseAuthCodes.invalidCredentials) {
-      return true;
-    }
-
-    final statusCode = _parseStatusCode(error.statusCode);
-    return error.code == null && (statusCode == 400 || statusCode == 401);
-  }
-
   Map<String, Object?> buildLogContext(
     AuthException error, {
     required AuthExceptionFlow flow,
@@ -167,9 +154,9 @@ final class AuthExceptionMapper {
       case _SupabaseAuthCodes.phoneNotConfirmed:
         return _mapping(
           AuthFailure.fromErrorItem(
-            flow == AuthExceptionFlow.registerPrecheck
-                ? AuthErrorCatalog.emailNotConfirmedRegister
-                : AuthErrorCatalog.unconfirmedEmail,
+            flow == AuthExceptionFlow.login
+                ? AuthErrorCatalog.unconfirmedEmail
+                : AuthErrorCatalog.emailNotConfirmedRegister,
             cause: error,
             stackTrace: stackTrace,
           ),

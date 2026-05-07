@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
 import 'widgets/auth_card_shell.dart';
+import 'widgets/auth_error_banner.dart';
 import 'widgets/auth_form_style.dart';
 
 class RegisterCard extends StatefulWidget {
@@ -11,6 +12,8 @@ class RegisterCard extends StatefulWidget {
   final double cardHeight;
   final double logoSize;
   final bool isLoading;
+  final String? emailErrorMessage;
+  final String? formErrorMessage;
   final VoidCallback onBackToLogin;
   final Function({
     required String name,
@@ -26,6 +29,8 @@ class RegisterCard extends StatefulWidget {
     required this.cardHeight,
     required this.logoSize,
     required this.isLoading,
+    this.emailErrorMessage,
+    this.formErrorMessage,
     required this.onBackToLogin,
     required this.onRegisterRequested,
   });
@@ -45,17 +50,30 @@ class RegisterCardState extends State<RegisterCard> {
   bool _isPasswordVisible = true;
   bool _isConfrimPasswordVisible = true;
   bool _acceptsTerms = false;
+  String? _localErrorMessage;
+  bool _hideRemoteEmailError = false;
+
+  @override
+  void didUpdateWidget(covariant RegisterCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.emailErrorMessage != widget.emailErrorMessage) {
+      _hideRemoteEmailError = false;
+    }
+  }
 
   void _register() {
+    setState(() {
+      _localErrorMessage = null;
+      _hideRemoteEmailError = false;
+    });
+
     final ok = _formKeyRegister.currentState?.validate() ?? false;
     if (!ok) return;
 
     if (!_acceptsTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.authTermsRequired),
-        ),
-      );
+      setState(() {
+        _localErrorMessage = AppLocalizations.of(context)!.authTermsRequired;
+      });
       return;
     }
 
@@ -81,6 +99,7 @@ class RegisterCardState extends State<RegisterCard> {
       _acceptsTerms = false;
       _isPasswordVisible = true;
       _isConfrimPasswordVisible = true;
+      _localErrorMessage = null;
     });
   }
 
@@ -97,6 +116,10 @@ class RegisterCardState extends State<RegisterCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final feedbackMessage = _localErrorMessage ?? widget.formErrorMessage;
+    final emailErrorMessage = _hideRemoteEmailError
+        ? null
+        : widget.emailErrorMessage;
 
     return AuthCardShell(
       cardWidth: widget.cardWidth,
@@ -133,11 +156,24 @@ class RegisterCardState extends State<RegisterCard> {
                     TextFormField(
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authRegisterEmailLabel,
-                        hint: l10n.authRegisterEmailHint,
-                        icon: Icons.email_outlined,
-                      ),
+                      onChanged: (_) {
+                        if (_localErrorMessage != null ||
+                            widget.emailErrorMessage != null) {
+                          setState(() {
+                            _localErrorMessage = null;
+                            _hideRemoteEmailError = true;
+                          });
+                        }
+                      },
+                      decoration:
+                          buildAuthInputDecoration(
+                            label: l10n.authRegisterEmailLabel,
+                            hint: l10n.authRegisterEmailHint,
+                            icon: Icons.email_outlined,
+                          ).copyWith(
+                            errorText: emailErrorMessage,
+                            errorMaxLines: 2,
+                          ),
                       validator: (value) => Validators.email(value, l10n),
                     ),
                     const SizedBox(height: 15),
@@ -210,6 +246,9 @@ class RegisterCardState extends State<RegisterCard> {
                           onChanged: (v) {
                             setState(() {
                               _acceptsTerms = v ?? false;
+                              if (_acceptsTerms) {
+                                _localErrorMessage = null;
+                              }
                             });
                           },
                         ),
@@ -241,6 +280,10 @@ class RegisterCardState extends State<RegisterCard> {
                       ],
                     ),
                     const SizedBox(height: 10),
+                    if (feedbackMessage != null) ...[
+                      AuthErrorBanner(message: feedbackMessage),
+                      const SizedBox(height: 12),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       height: 50,

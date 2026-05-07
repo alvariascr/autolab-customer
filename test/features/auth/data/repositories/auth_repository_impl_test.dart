@@ -9,7 +9,6 @@ import 'package:autolab_customer/features/auth/data/models/login_attempt_state.d
 import 'package:autolab_customer/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_local_session_recovery_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_login_policy_service.dart';
-import 'package:autolab_customer/features/auth/data/services/auth_register_precheck_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_supabase_session_sync_service.dart';
@@ -71,7 +70,6 @@ void main() {
     late MockLoginAttemptService mockLoginAttemptService;
     late MockSession mockSession;
     late AuthLoginPolicyService authLoginPolicyService;
-    late AuthRegisterPrecheckService authRegisterPrecheckService;
     late AuthSupabaseSessionSyncService authSupabaseSessionSyncService;
     late AuthLocalSessionRecoveryService authLocalSessionRecoveryService;
     late AuthSessionStorageService sessionStorageService;
@@ -206,19 +204,12 @@ void main() {
         featureLogger: mockFeatureLogger,
       );
       authLoginPolicyService = AuthLoginPolicyService(mockLoginAttemptService);
-      authRegisterPrecheckService = AuthRegisterPrecheckService(
-        client: mockSupabaseClient,
-        authExceptionMapper: const AuthExceptionMapper(),
-        globalErrorHandler: mockGlobalErrorHandler,
-        featureLogger: mockFeatureLogger,
-      );
 
       repository = AuthRepositoryImpl(
         mockSupabaseClient,
         mockGlobalErrorHandler,
         mockUserRoleDataSource,
         authLoginPolicyService,
-        authRegisterPrecheckService,
         sessionStorageService,
         sessionRecoveryService,
         mockFeatureLogger,
@@ -661,15 +652,6 @@ void main() {
         final authResponse = AuthResponse(session: null, user: user);
 
         when(
-          () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenThrow(
-          AuthApiException('Invalid login credentials', statusCode: '400'),
-        );
-
-        when(
           () => mockGoTrueClient.signUp(
             email: any(named: 'email'),
             password: any(named: 'password'),
@@ -694,13 +676,6 @@ void main() {
         });
 
         verify(
-          () => mockGoTrueClient.signInWithPassword(
-            email: 'new@test.com',
-            password: '123456',
-          ),
-        ).called(1);
-
-        verify(
           () => mockGoTrueClient.signUp(
             email: 'new@test.com',
             password: '123456',
@@ -715,31 +690,19 @@ void main() {
       });
 
       test(
-        'returns Right(AppUser) when precheck receives invalid_credentials code explícito',
+        'returns Left when signUp returns an obfuscated existing user',
         () async {
           final user = User(
-            id: 'user-456',
+            id: 'fake-user',
             appMetadata: const {},
             userMetadata: const {},
             aud: 'authenticated',
             createdAt: DateTime.now().toIso8601String(),
-            email: 'new@test.com',
+            email: 'existing@test.com',
+            identities: const [],
           );
 
           final authResponse = AuthResponse(session: null, user: user);
-
-          when(
-            () => mockGoTrueClient.signInWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            ),
-          ).thenThrow(
-            AuthApiException(
-              'Invalid login credentials',
-              statusCode: '400',
-              code: _SupabaseAuthCodes.invalidCredentials,
-            ),
-          );
 
           when(
             () => mockGoTrueClient.signUp(
@@ -752,46 +715,6 @@ void main() {
 
           final result = await repository.register(
             'Luis',
-            'new@test.com',
-            '88888888',
-            '123456',
-          );
-
-          expect(result.isRight(), true);
-          result.fold((_) => fail('Se esperaba Right(AppUser)'), (appUser) {
-            expect(appUser.id, 'user-456');
-            expect(appUser.email, 'new@test.com');
-            expect(appUser.role, UserRoles.customer);
-          });
-
-          verifyNever(() => mockGlobalErrorHandler.handle(any(), any()));
-        },
-      );
-
-      test(
-        'returns Left when account already exists (pre-check login success)',
-        () async {
-          final user = User(
-            id: 'user-456',
-            appMetadata: const {},
-            userMetadata: const {},
-            aud: 'authenticated',
-            createdAt: DateTime.now().toIso8601String(),
-            email: 'existing@test.com',
-          );
-          final authResponse = AuthResponse(session: mockSession, user: user);
-
-          when(
-            () => mockGoTrueClient.signInWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            ),
-          ).thenAnswer((_) async => authResponse);
-
-          when(() => mockGoTrueClient.signOut()).thenAnswer((_) async {});
-
-          final result = await repository.register(
-            'Luis',
             'existing@test.com',
             '88888888',
             '123456',
@@ -799,16 +722,23 @@ void main() {
 
           expect(result.isLeft(), true);
           result.fold((failure) {
-            expect(failure.message, AuthErrorCatalog.accountAlreadyExists.code);
-            expect(failure.code, AuthErrorCatalog.accountAlreadyExists.code);
-            expect(failure.uiKey, AuthErrorCatalog.accountAlreadyExists.uiKey);
+            expect(
+              failure.message,
+              AuthErrorCatalog.emailAlreadyRegistered.code,
+            );
+            expect(failure.code, AuthErrorCatalog.emailAlreadyRegistered.code);
+            expect(
+              failure.uiKey,
+              AuthErrorCatalog.emailAlreadyRegistered.uiKey,
+            );
           }, (_) => fail('Debería ser Left'));
-          verify(() => mockGoTrueClient.signOut()).called(1);
+          verifyNever(() => mockGoTrueClient.signOut());
+          verifyNever(() => mockGlobalErrorHandler.handle(any(), any()));
         },
       );
 
       test(
-        'returns Left when account exists but not confirmed (pre-check login error)',
+        'returns Left when signUp reports account exists but not confirmed',
         () async {
           final authException = AuthApiException(
             'Email not confirmed',
@@ -817,9 +747,11 @@ void main() {
           );
 
           when(
-            () => mockGoTrueClient.signInWithPassword(
+            () => mockGoTrueClient.signUp(
               email: any(named: 'email'),
               password: any(named: 'password'),
+              emailRedirectTo: any(named: 'emailRedirectTo'),
+              data: any(named: 'data'),
             ),
           ).thenThrow(authException);
 
@@ -850,15 +782,6 @@ void main() {
 
       test('returns Left(AuthFailure) when signUp user is null', () async {
         final authResponse = AuthResponse(session: null, user: null);
-
-        when(
-          () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenThrow(
-          AuthApiException('Invalid login credentials', statusCode: '400'),
-        );
 
         when(
           () => mockGoTrueClient.signUp(
@@ -910,15 +833,6 @@ void main() {
           );
 
           when(
-            () => mockGoTrueClient.signInWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            ),
-          ).thenThrow(
-            AuthApiException('Invalid login credentials', statusCode: '400'),
-          );
-
-          when(
             () => mockGoTrueClient.signUp(
               email: any(named: 'email'),
               password: any(named: 'password'),
@@ -956,15 +870,6 @@ void main() {
           code: ErrorCatalog.unknownError.code,
           uiKey: ErrorCatalog.unknownError.uiKey,
           cause: exception,
-        );
-
-        when(
-          () => mockGoTrueClient.signInWithPassword(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
-          ),
-        ).thenThrow(
-          AuthApiException('Invalid login credentials', statusCode: '400'),
         );
 
         when(

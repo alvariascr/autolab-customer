@@ -12,6 +12,7 @@ import '../application/login_form_cubit.dart';
 import '../application/login_form_state.dart';
 import '../application/register_form_cubit.dart';
 import '../application/register_form_state.dart';
+import '../domain/errors/auth_error_catalog.dart';
 import '../repository/auth_repository.dart';
 import 'auth_ui_error_resolver.dart';
 import 'register_card.dart';
@@ -155,24 +156,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
             BlocListener<RegisterFormCubit, RegisterFormState>(
               listener: (context, state) {
-                if (state.status == RegisterFormStatus.error &&
-                    hasAuthFeedback(
-                      message: state.message,
-                      code: state.code,
-                      uiKey: state.uiKey,
-                    )) {
-                  _showErrorSnackBar(
-                    context,
-                    AuthUiErrorResolver.resolve(
-                      l10n: l10n,
-                      code: state.code,
-                      uiKey: state.uiKey,
-                      message: state.message,
-                      remaining: state.remaining,
-                    ),
-                  );
-                }
-
                 if (state.status == RegisterFormStatus.success &&
                     state.userId != null) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -234,6 +217,25 @@ class _LoginPageState extends State<LoginPage> {
                   ? l10n.authEmailConfirmedLoginMessage
                   : null;
 
+              final String? registerErrorMessage =
+                  registerState.status == RegisterFormStatus.error &&
+                      hasAuthFeedback(
+                        message: registerState.message,
+                        code: registerState.code,
+                        uiKey: registerState.uiKey,
+                      )
+                  ? AuthUiErrorResolver.resolve(
+                      l10n: l10n,
+                      code: registerState.code,
+                      uiKey: registerState.uiKey,
+                      message: registerState.message,
+                      remaining: registerState.remaining,
+                    )
+                  : null;
+              final bool isRegisterEmailError = _isRegisterEmailError(
+                registerState,
+              );
+
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final double w = constraints.maxWidth;
@@ -271,6 +273,12 @@ class _LoginPageState extends State<LoginPage> {
                         cardHeight: cardHeight,
                         logoSize: logoSize,
                         isLoading: isRegisterLoading,
+                        emailErrorMessage: isRegisterEmailError
+                            ? registerErrorMessage
+                            : null,
+                        formErrorMessage: isRegisterEmailError
+                            ? null
+                            : registerErrorMessage,
                         onBackToLogin: () => _goToLoginFromRegister(context),
                         onRegisterRequested:
                             ({
@@ -508,5 +516,16 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     );
+  }
+
+  bool _isRegisterEmailError(RegisterFormState state) {
+    final uiKey = state.uiKey;
+    final code = state.code;
+    return uiKey == AuthErrorCatalog.emailAlreadyRegistered.uiKey ||
+        uiKey == AuthErrorCatalog.accountAlreadyExists.uiKey ||
+        uiKey == AuthErrorCatalog.emailNotConfirmedRegister.uiKey ||
+        code == AuthErrorCatalog.emailAlreadyRegistered.code ||
+        code == AuthErrorCatalog.accountAlreadyExists.code ||
+        code == AuthErrorCatalog.emailNotConfirmedRegister.code;
   }
 }
