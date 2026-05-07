@@ -46,12 +46,11 @@ dependencies:
   equatable: ^2.0.5
 
   cupertino_icons: ^1.0.8
-  flutter_map: ^8.3.0
   geolocator: ^14.0.2
   geocoding: ^4.0.0
-  latlong2: ^0.9.1
 
   intl: any
+  google_maps_flutter: ^2.17.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
