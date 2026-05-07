@@ -57,97 +57,62 @@ class _MapPageViewState extends State<_MapPageView> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4EF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F4EF),
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        toolbarHeight: 46,
-        leadingWidth: 52,
-        title: Text(
-          l10n.mapPageTitle,
-          style: const TextStyle(
-            color: Color(0xFF181411),
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-          child: BlocListener<LocationCubit, LocationState>(
-            listenWhen: (previous, current) =>
-                previous.location != current.location ||
-                previous.effectiveStatus != current.effectiveStatus,
-            listener: (context, state) {
-              context.read<MapCubit>().loadWorkshops(state.location);
-            },
-            child: BlocBuilder<LocationCubit, LocationState>(
-              builder: (context, locationState) {
-                return BlocBuilder<MapCubit, MapState>(
-                  builder: (context, mapState) {
-                    final emptyMessage = switch (mapState) {
-                      MapLoaded(:final isUsingFallbackLocation) =>
-                        _emptyStateResolver.resolve(
-                          locationState,
-                          l10n: l10n,
-                          isUsingFallbackLocation: isUsingFallbackLocation,
-                        ),
-                      _ => _emptyStateResolver.resolve(
-                        locationState,
-                        l10n: l10n,
-                        isUsingFallbackLocation: false,
+      backgroundColor: const Color(0xFFE9EEF2),
+      extendBody: true,
+      body: BlocListener<LocationCubit, LocationState>(
+        listenWhen: (previous, current) =>
+            previous.location != current.location ||
+            previous.effectiveStatus != current.effectiveStatus,
+        listener: (context, state) {
+          context.read<MapCubit>().loadWorkshops(state.location);
+        },
+        child: BlocBuilder<LocationCubit, LocationState>(
+          builder: (context, locationState) {
+            return BlocBuilder<MapCubit, MapState>(
+              builder: (context, mapState) {
+                final emptyMessage = switch (mapState) {
+                  MapLoaded(:final isUsingFallbackLocation) =>
+                    _emptyStateResolver.resolve(
+                      locationState,
+                      l10n: l10n,
+                      isUsingFallbackLocation: isUsingFallbackLocation,
+                    ),
+                  _ => _emptyStateResolver.resolve(
+                    locationState,
+                    l10n: l10n,
+                    isUsingFallbackLocation: false,
+                  ),
+                };
+
+                final workshopsCount = switch (mapState) {
+                  MapLoaded(:final workshops) => workshops.length,
+                  _ => 0,
+                };
+
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: _MapBody(
+                        state: mapState,
+                        emptyMessage: emptyMessage,
                       ),
-                    };
-
-                    final workshopsCount = switch (mapState) {
-                      MapLoaded(:final workshops) => workshops.length,
-                      _ => 0,
-                    };
-
-                    return Stack(
-                      children: [
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(32),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x16000000),
-                                  blurRadius: 30,
-                                  offset: Offset(0, 14),
-                                ),
-                              ],
-                            ),
-                            child: _MapBody(
-                              state: mapState,
-                              emptyMessage: emptyMessage,
-                            ),
-                          ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: SafeArea(
+                        bottom: false,
+                        child: _MapDiscoveryOverlay(
+                          countLabel: _labelFor(workshopsCount, mapState, l10n),
                         ),
-                        Positioned(
-                          top: 14,
-                          left: 14,
-                          child: _MapTopPill(
-                            label: _labelFor(workshopsCount, mapState, l10n),
-                            dark: true,
-                          ),
-                        ),
-                        Positioned(
-                          top: 14,
-                          right: 14,
-                          child: _MapTopPill(
-                            label: l10n.mapTopPillExplore,
-                            icon: Icons.map_outlined,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                      ),
+                    ),
+                  ],
                 );
               },
-            ),
-          ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: CustomBottomNavbar(
@@ -220,25 +185,147 @@ class _MapBody extends StatelessWidget {
   }
 }
 
-class _MapTopPill extends StatelessWidget {
-  const _MapTopPill({required this.label, this.icon, this.dark = false});
+class _MapDiscoveryOverlay extends StatelessWidget {
+  const _MapDiscoveryOverlay({required this.countLabel});
 
-  final String label;
-  final IconData? icon;
-  final bool dark;
+  final String countLabel;
 
   @override
   Widget build(BuildContext context) {
-    final background = dark ? const Color(0xFF181411) : Colors.white;
-    final foreground = dark ? Colors.white : const Color(0xFF181411);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(
+        children: [
+          const _MapSearchBar(),
+          const SizedBox(height: 12),
+          const _MapFilterChips(),
+          const SizedBox(height: 14),
+          _MapTopPill(label: countLabel),
+        ],
+      ),
+    );
+  }
+}
 
+class _MapSearchBar extends StatelessWidget {
+  const _MapSearchBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      elevation: 8,
+      shadowColor: const Color(0x24000000),
+      child: SizedBox(
+        height: 52,
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            const Icon(Icons.search_rounded, color: Color(0xFF5F676D)),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Busca talleres cerca de ti',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Color(0xFF5F676D),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Filtros',
+              onPressed: () {},
+              icon: const Icon(Icons.tune_rounded, color: Color(0xFF181411)),
+            ),
+            const SizedBox(width: 6),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapFilterChips extends StatelessWidget {
+  const _MapFilterChips();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: const [
+          _FilterChipPill(icon: Icons.local_offer_outlined, label: 'Ofertas'),
+          SizedBox(width: 10),
+          _FilterChipPill(icon: Icons.build_circle_outlined, label: 'Servicio'),
+          SizedBox(width: 10),
+          _FilterChipPill(icon: Icons.star_rounded, label: 'Mejor calificado'),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChipPill extends StatelessWidget {
+  const _FilterChipPill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: background.withValues(alpha: dark ? 0.94 : 0.9),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(999),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
+            color: Color(0x18000000),
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: const Color(0xFF181411)),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF181411),
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MapTopPill extends StatelessWidget {
+  const _MapTopPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFF181411),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x26000000),
             blurRadius: 14,
             offset: Offset(0, 6),
           ),
@@ -249,16 +336,12 @@ class _MapTopPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 14, color: foreground),
-              const SizedBox(width: 6),
-            ],
             Text(
               label,
-              style: TextStyle(
-                color: foreground,
+              style: const TextStyle(
+                color: Colors.white,
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],

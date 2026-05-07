@@ -532,8 +532,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       ),
     };
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+    return ClipRect(
       child: Stack(
         children: [
           GoogleMap(
@@ -550,11 +549,11 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
             compassEnabled: false,
-            padding: const EdgeInsets.fromLTRB(0, 56, 0, 150),
+            padding: const EdgeInsets.fromLTRB(0, 158, 0, 240),
           ),
           Positioned(
             right: 14,
-            top: 78,
+            top: 192,
             child: _ZoomControls(
               onZoomIn: _zoomIn,
               onZoomOut: _zoomOut,
@@ -562,25 +561,25 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             ),
           ),
           Positioned(
-            left: 14,
-            bottom: 18,
+            right: 14,
+            top: 304,
             child: IgnorePointer(
               child: _MapFloatingBadge(
                 icon: Icons.my_location_rounded,
-                label: l10n.mapYourLocation,
+                tooltip: l10n.mapYourLocation,
               ),
             ),
           ),
           if (widget.workshops.isEmpty)
             Positioned(
-              top: 56,
+              top: 170,
               left: 16,
               right: 16,
               child: _EmptyMapCard(message: widget.emptyMessage),
             ),
           if (_isMapLoading)
             Positioned(
-              top: 56,
+              top: 170,
               left: 16,
               right: 16,
               child: _MapStatusCard(
@@ -591,9 +590,9 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             ),
           if (_selectedWorkshop != null && widget.workshops.isNotEmpty)
             Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
+              left: 0,
+              right: 0,
+              bottom: 86,
               child: _SelectedWorkshopSheet(
                 workshop: _selectedWorkshop!,
                 currentLocation: widget.currentLocation!,
@@ -634,19 +633,19 @@ class _SelectedWorkshopSheet extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.97),
-            borderRadius: BorderRadius.circular(28),
+            color: Colors.white.withValues(alpha: 0.98),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x22000000),
-                blurRadius: 22,
-                offset: Offset(0, 10),
+                blurRadius: 28,
+                offset: Offset(0, -8),
               ),
             ],
           ),
@@ -662,6 +661,18 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Talleres cerca de ti',
+                  style: TextStyle(
+                    color: Color(0xFF181411),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -952,41 +963,31 @@ class _MapInfoChip extends StatelessWidget {
 }
 
 class _MapFloatingBadge extends StatelessWidget {
-  const _MapFloatingBadge({required this.icon, required this.label});
+  const _MapFloatingBadge({required this.icon, required this.tooltip});
 
   final IconData icon;
-  final String label;
+  final String tooltip;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: const Color(0xFF181411)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF181411),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+    return Tooltip(
+      message: tooltip,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.96),
+          shape: BoxShape.circle,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18000000),
+              blurRadius: 14,
+              offset: Offset(0, 6),
             ),
           ],
+        ),
+        child: SizedBox(
+          width: 50,
+          height: 50,
+          child: Icon(icon, size: 22, color: const Color(0xFF181411)),
         ),
       ),
     );
