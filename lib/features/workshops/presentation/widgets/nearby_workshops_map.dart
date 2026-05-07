@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/location/current_location.dart';
@@ -15,11 +16,13 @@ class NearbyWorkshopsMap extends StatefulWidget {
     required this.workshops,
     required this.currentLocation,
     required this.emptyMessage,
+    this.query = '',
   });
 
   final List<Workshop> workshops;
   final CurrentLocation? currentLocation;
   final String emptyMessage;
+  final String query;
 
   @override
   State<NearbyWorkshopsMap> createState() => _NearbyWorkshopsMapState();
@@ -250,6 +253,10 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     setState(() {
       _expandedSheet = !_expandedSheet;
     });
+  }
+
+  void _openWorkshopProfile(Workshop workshop) {
+    context.push('/workshops/${workshop.id}');
   }
 
   void _handleMapCreated(GoogleMapController controller) {
@@ -597,7 +604,11 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                 workshop: _selectedWorkshop!,
                 currentLocation: widget.currentLocation!,
                 expanded: _expandedSheet,
+                results: widget.workshops,
+                query: widget.query,
                 onTap: _toggleSheet,
+                onWorkshopSelected: _selectWorkshop,
+                onWorkshopOpened: _openWorkshopProfile,
                 l10n: l10n,
               ),
             ),
@@ -612,14 +623,22 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     required this.workshop,
     required this.currentLocation,
     required this.expanded,
+    required this.results,
+    required this.query,
     required this.onTap,
+    required this.onWorkshopSelected,
+    required this.onWorkshopOpened,
     required this.l10n,
   });
 
   final Workshop workshop;
   final CurrentLocation currentLocation;
   final bool expanded;
+  final List<Workshop> results;
+  final String query;
   final VoidCallback onTap;
+  final ValueChanged<Workshop> onWorkshopSelected;
+  final ValueChanged<Workshop> onWorkshopOpened;
   final AppLocalizations l10n;
 
   @override
@@ -629,38 +648,40 @@ class _SelectedWorkshopSheet extends StatelessWidget {
       workshop: workshop,
     );
 
+    final shouldShowResults = query.trim().isNotEmpty;
+
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.98),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x22000000),
-                blurRadius: 28,
-                offset: Offset(0, -8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.98),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x22000000),
+              blurRadius: 28,
+              offset: Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE6D7CA),
+                borderRadius: BorderRadius.circular(999),
               ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6D7CA),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 12),
+            if (shouldShowResults)
+              _SearchResultsHeader(count: results.length, query: query)
+            else
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -672,58 +693,172 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              Row(
+            const SizedBox(height: 14),
+            if (shouldShowResults)
+              _WorkshopResultsList(
+                workshops: results,
+                currentLocation: currentLocation,
+                onSelected: onWorkshopSelected,
+                onOpened: onWorkshopOpened,
+                l10n: l10n,
+              )
+            else
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(22),
+                child: _SelectedWorkshopSummary(
+                  workshop: workshop,
+                  currentLocation: currentLocation,
+                  expanded: expanded,
+                  distance: distance,
+                  l10n: l10n,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchResultsHeader extends StatelessWidget {
+  const _SearchResultsHeader({required this.count, required this.query});
+
+  final int count;
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        count == 1 ? '1 resultado' : '$count resultados',
+        style: const TextStyle(
+          color: Color(0xFF181411),
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedWorkshopSummary extends StatelessWidget {
+  const _SelectedWorkshopSummary({
+    required this.workshop,
+    required this.currentLocation,
+    required this.expanded,
+    required this.distance,
+    required this.l10n,
+  });
+
+  final Workshop workshop;
+  final CurrentLocation currentLocation;
+  final bool expanded;
+  final double distance;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _WorkshopCoverThumb(workshop: workshop),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _WorkshopCoverThumb(workshop: workshop),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          workshop.name,
-                          maxLines: expanded ? 2 : 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF181411),
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _MapInfoChip(
-                              icon: Icons.near_me_outlined,
-                              label: l10n.mapInfoDistancePrefix(
-                                WorkshopDistanceCalculator.formatKm(distance),
-                              ),
-                            ),
-                            _MapInfoChip(
-                              icon: Icons.local_shipping_outlined,
-                              label: l10n.mapInfoCoveragePrefix(
-                                WorkshopDistanceCalculator.formatKm(
-                                  workshop.deliveryRadiusKm,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  Text(
+                    workshop.name,
+                    maxLines: expanded ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF181411),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    expanded
-                        ? Icons.keyboard_arrow_down_rounded
-                        : Icons.keyboard_arrow_up_rounded,
-                    color: const Color(0xFF6B5F57),
-                    size: 24,
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _MapInfoChip(
+                        icon: Icons.near_me_outlined,
+                        label: l10n.mapInfoDistancePrefix(
+                          WorkshopDistanceCalculator.formatKm(distance),
+                        ),
+                      ),
+                      _MapInfoChip(
+                        icon: Icons.local_shipping_outlined,
+                        label: l10n.mapInfoCoveragePrefix(
+                          WorkshopDistanceCalculator.formatKm(
+                            workshop.deliveryRadiusKm,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              expanded
+                  ? Icons.keyboard_arrow_down_rounded
+                  : Icons.keyboard_arrow_up_rounded,
+              color: const Color(0xFF6B5F57),
+              size: 24,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            workshop.locationAddress.isNotEmpty
+                ? workshop.locationAddress
+                : l10n.mapSheetFallbackAddress,
+            maxLines: expanded ? 3 : 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF6B5F57),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          crossFadeState: expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 220),
+          firstChild: const SizedBox(height: 0),
+          secondChild: Column(
+            children: [
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFF0E2D6)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _DetailStat(
+                      label: l10n.mapSheetLabelWorkshop,
+                      value: workshop.name,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _DetailStat(
+                      label: l10n.mapSheetLabelCoverage,
+                      value: WorkshopDistanceCalculator.formatKm(
+                        workshop.deliveryRadiusKm,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -731,63 +866,173 @@ class _SelectedWorkshopSheet extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  workshop.locationAddress.isNotEmpty
-                      ? workshop.locationAddress
-                      : l10n.mapSheetFallbackAddress,
-                  maxLines: expanded ? 3 : 1,
-                  overflow: TextOverflow.ellipsis,
+                  workshop.description.isNotEmpty
+                      ? workshop.description
+                      : l10n.mapSheetFallbackDescription,
                   style: const TextStyle(
-                    color: Color(0xFF6B5F57),
+                    color: Color(0xFF5F554E),
                     fontSize: 13,
-                    height: 1.4,
+                    height: 1.5,
                   ),
                 ),
               ),
-              AnimatedCrossFade(
-                crossFadeState: expanded
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                duration: const Duration(milliseconds: 220),
-                firstChild: const SizedBox(height: 0),
-                secondChild: Column(
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WorkshopResultsList extends StatelessWidget {
+  const _WorkshopResultsList({
+    required this.workshops,
+    required this.currentLocation,
+    required this.onSelected,
+    required this.onOpened,
+    required this.l10n,
+  });
+
+  final List<Workshop> workshops;
+  final CurrentLocation currentLocation;
+  final ValueChanged<Workshop> onSelected;
+  final ValueChanged<Workshop> onOpened;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    if (workshops.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(bottom: 18),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'No encontramos talleres para esa búsqueda.',
+            style: TextStyle(
+              color: Color(0xFF6B5F57),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 330),
+      child: ListView.separated(
+        padding: const EdgeInsets.only(bottom: 8),
+        shrinkWrap: true,
+        itemCount: workshops.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final workshop = workshops[index];
+
+          return _WorkshopResultTile(
+            workshop: workshop,
+            currentLocation: currentLocation,
+            onSelected: () => onSelected(workshop),
+            onOpened: () => onOpened(workshop),
+            l10n: l10n,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _WorkshopResultTile extends StatelessWidget {
+  const _WorkshopResultTile({
+    required this.workshop,
+    required this.currentLocation,
+    required this.onSelected,
+    required this.onOpened,
+    required this.l10n,
+  });
+
+  final Workshop workshop;
+  final CurrentLocation currentLocation;
+  final VoidCallback onSelected;
+  final VoidCallback onOpened;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final distance = WorkshopDistanceCalculator.distanceInKm(
+      currentLocation: currentLocation,
+      workshop: workshop,
+    );
+
+    return Material(
+      color: const Color(0xFFFBFAF8),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onOpened,
+        onLongPress: onSelected,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              _WorkshopCoverThumb(workshop: workshop),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: Color(0xFFF0E2D6)),
-                    const SizedBox(height: 12),
-                    Row(
+                    Text(
+                      workshop.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF181411),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      workshop.locationAddress.isNotEmpty
+                          ? workshop.locationAddress
+                          : l10n.mapSheetFallbackAddress,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF6B5F57),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
-                        Expanded(
-                          child: _DetailStat(
-                            label: l10n.mapSheetLabelWorkshop,
-                            value: workshop.name,
+                        _MapInfoChip(
+                          icon: Icons.near_me_outlined,
+                          label: l10n.mapInfoDistancePrefix(
+                            WorkshopDistanceCalculator.formatKm(distance),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _DetailStat(
-                            label: l10n.mapSheetLabelCoverage,
-                            value: WorkshopDistanceCalculator.formatKm(
+                        _MapInfoChip(
+                          icon: Icons.local_shipping_outlined,
+                          label: l10n.mapInfoCoveragePrefix(
+                            WorkshopDistanceCalculator.formatKm(
                               workshop.deliveryRadiusKm,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        workshop.description.isNotEmpty
-                            ? workshop.description
-                            : l10n.mapSheetFallbackDescription,
-                        style: const TextStyle(
-                          color: Color(0xFF5F554E),
-                          fontSize: 13,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
                   ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Ver en mapa',
+                onPressed: onSelected,
+                icon: const Icon(
+                  Icons.location_searching_rounded,
+                  color: Color(0xFF181411),
                 ),
               ),
             ],

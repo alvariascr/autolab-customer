@@ -8,6 +8,7 @@ import '../../../../core/location/location_state.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../../workshops/application/workshop_discovery_query_store.dart';
 import '../../../workshops/presentation/widgets/nearby_workshops_map.dart';
 import '../../../workshops/presentation/workshop_empty_state_resolver.dart';
 import '../cubit/map_cubit.dart';
@@ -37,7 +38,42 @@ class _MapPageView extends StatefulWidget {
 class _MapPageViewState extends State<_MapPageView> {
   static const _emptyStateResolver = WorkshopEmptyStateResolver();
 
+  late final WorkshopDiscoveryQueryStore _queryStore;
+  late final TextEditingController _searchController;
   int _currentIndex = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _queryStore = sl<WorkshopDiscoveryQueryStore>();
+    _searchController = TextEditingController(text: _queryStore.query);
+    _queryStore.addListener(_syncSearchFromStore);
+  }
+
+  @override
+  void dispose() {
+    _queryStore.removeListener(_syncSearchFromStore);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _syncSearchFromStore() {
+    final query = _queryStore.query;
+    if (_searchController.text == query) {
+      return;
+    }
+
+    _searchController.text = query;
+  }
+
+  void _updateSearchQuery(String value) {
+    _queryStore.setQuery(value);
+  }
+
+  void _clearSearchQuery() {
+    _searchController.clear();
+    _queryStore.clear();
+  }
 
   void _handleBottomNavigation(int index) {
     if (index == 2) {
@@ -105,6 +141,9 @@ class _MapPageViewState extends State<_MapPageView> {
                         bottom: false,
                         child: _MapDiscoveryOverlay(
                           countLabel: _labelFor(workshopsCount, mapState, l10n),
+                          controller: _searchController,
+                          onChanged: _updateSearchQuery,
+                          onClear: _clearSearchQuery,
                         ),
                       ),
                     ),
@@ -165,11 +204,13 @@ class _MapBody extends StatelessWidget {
           ),
         ),
       ),
-      MapLoaded(:final workshops, :final currentLocation) => NearbyWorkshopsMap(
-        workshops: workshops,
-        currentLocation: currentLocation,
-        emptyMessage: emptyMessage,
-      ),
+      MapLoaded(:final workshops, :final currentLocation, :final query) =>
+        NearbyWorkshopsMap(
+          workshops: workshops,
+          currentLocation: currentLocation,
+          emptyMessage: emptyMessage,
+          query: query,
+        ),
     };
   }
 
@@ -186,9 +227,17 @@ class _MapBody extends StatelessWidget {
 }
 
 class _MapDiscoveryOverlay extends StatelessWidget {
-  const _MapDiscoveryOverlay({required this.countLabel});
+  const _MapDiscoveryOverlay({
+    required this.countLabel,
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
 
   final String countLabel;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +245,11 @@ class _MapDiscoveryOverlay extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         children: [
-          const _MapSearchBar(),
+          _MapSearchBar(
+            controller: controller,
+            onChanged: onChanged,
+            onClear: onClear,
+          ),
           const SizedBox(height: 12),
           const _MapFilterChips(),
           const SizedBox(height: 14),
@@ -208,43 +261,67 @@ class _MapDiscoveryOverlay extends StatelessWidget {
 }
 
 class _MapSearchBar extends StatelessWidget {
-  const _MapSearchBar();
+  const _MapSearchBar({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(999),
-      elevation: 8,
-      shadowColor: const Color(0x24000000),
-      child: SizedBox(
-        height: 52,
-        child: Row(
-          children: [
-            const SizedBox(width: 16),
-            const Icon(Icons.search_rounded, color: Color(0xFF5F676D)),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'Busca talleres cerca de ti',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xFF5F676D),
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, child) {
+        return Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          elevation: 8,
+          shadowColor: const Color(0x24000000),
+          child: SizedBox(
+            height: 52,
+            child: TextField(
+              controller: controller,
+              onChanged: onChanged,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: 'Busca talleres cerca de ti',
+                hintStyle: const TextStyle(
+                  color: Color(0xFF6D757C),
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: Color(0xFF5F676D),
+                ),
+                suffixIcon: value.text.trim().isEmpty
+                    ? IconButton(
+                        tooltip: 'Filtros',
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.tune_rounded,
+                          color: Color(0xFF181411),
+                        ),
+                      )
+                    : IconButton(
+                        tooltip: 'Limpiar',
+                        onPressed: onClear,
+                        icon: const Icon(
+                          Icons.cancel_rounded,
+                          color: Color(0xFF9AA1A8),
+                        ),
+                      ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 15),
               ),
             ),
-            IconButton(
-              tooltip: 'Filtros',
-              onPressed: () {},
-              icon: const Icon(Icons.tune_rounded, color: Color(0xFF181411)),
-            ),
-            const SizedBox(width: 6),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
