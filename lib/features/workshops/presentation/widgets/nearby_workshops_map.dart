@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -29,21 +28,22 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   static const _maximumZoom = 17.5;
   static const _zoomStep = 1.0;
 
-  late final MapController _mapController;
+  GoogleMapController? _mapController;
   double _currentZoom = _initialZoom;
   Workshop? _selectedWorkshop;
   bool _expandedSheet = false;
   bool _isMapLoading = true;
-  bool _hasLoadedVisibleTile = false;
-  bool _hasMapError = false;
-  int _tileErrorCount = 0;
-  int _mapRefreshSeed = 0;
 
   @override
   void initState() {
     super.initState();
-    _mapController = MapController();
     _syncSelectedWorkshop();
+  }
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -65,9 +65,6 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
   void _resetMapFeedbackState() {
     _isMapLoading = true;
-    _hasLoadedVisibleTile = false;
-    _hasMapError = false;
-    _tileErrorCount = 0;
   }
 
   void _syncSelectedWorkshop() {
@@ -118,7 +115,11 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     setState(() {
       _currentZoom = safeZoom;
     });
-    _mapController.move(center, safeZoom);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: center, zoom: safeZoom),
+      ),
+    );
   }
 
   void _fitToMarkers() {
@@ -145,7 +146,11 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
         focusWorkshop.longitude,
       );
       _currentZoom = 16.4;
-      _mapController.move(focusPoint, _currentZoom);
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: focusPoint, zoom: _currentZoom),
+        ),
+      );
       return;
     }
 
@@ -156,7 +161,11 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
         focusWorkshop.longitude,
       );
       _currentZoom = 15.4;
-      _mapController.move(focusPoint, _currentZoom);
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: focusPoint, zoom: _currentZoom),
+        ),
+      );
       return;
     }
 
@@ -166,14 +175,9 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
         (workshop) => LatLng(workshop.latitude, workshop.longitude),
       ),
     ];
-    final bounds = LatLngBounds.fromPoints(points);
+    final bounds = _boundsFrom(points);
 
-    _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.fromLTRB(42, 64, 42, 180),
-      ),
-    );
+    _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 72));
   }
 
   void _selectWorkshop(Workshop workshop) {
@@ -182,9 +186,15 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       _expandedSheet = false;
     });
 
-    _mapController.move(
-      LatLng(workshop.latitude, workshop.longitude),
-      _currentZoom < 16 ? 16 : _currentZoom,
+    final zoom = _currentZoom < 16 ? 16.0 : _currentZoom;
+    _currentZoom = zoom;
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(workshop.latitude, workshop.longitude),
+          zoom: zoom,
+        ),
+      ),
     );
   }
 
@@ -198,51 +208,43 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     });
   }
 
-  void _handleTileBuilt(TileImage tile) {
-    if (_hasLoadedVisibleTile || tile.imageInfo == null) {
-      return;
-    }
-
-    _hasLoadedVisibleTile = true;
+  void _handleMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    _fitToMarkers();
     if (!mounted) {
       return;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isMapLoading = false;
-        _hasMapError = false;
-      });
+    setState(() {
+      _isMapLoading = false;
     });
   }
 
-  void _handleTileError(TileImage tile, Object error, StackTrace? stackTrace) {
-    _tileErrorCount += 1;
-    if (_hasLoadedVisibleTile || _tileErrorCount < 4 || !mounted) {
-      return;
+  LatLngBounds _boundsFrom(List<LatLng> points) {
+    var minLatitude = points.first.latitude;
+    var maxLatitude = points.first.latitude;
+    var minLongitude = points.first.longitude;
+    var maxLongitude = points.first.longitude;
+
+    for (final point in points.skip(1)) {
+      if (point.latitude < minLatitude) {
+        minLatitude = point.latitude;
+      }
+      if (point.latitude > maxLatitude) {
+        maxLatitude = point.latitude;
+      }
+      if (point.longitude < minLongitude) {
+        minLongitude = point.longitude;
+      }
+      if (point.longitude > maxLongitude) {
+        maxLongitude = point.longitude;
+      }
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isMapLoading = false;
-        _hasMapError = true;
-      });
-    });
-  }
-
-  void _retryMapLoad() {
-    setState(() {
-      _resetMapFeedbackState();
-      _mapRefreshSeed += 1;
-    });
+    return LatLngBounds(
+      southwest: LatLng(minLatitude, minLongitude),
+      northeast: LatLng(maxLatitude, maxLongitude),
+    );
   }
 
   @override
@@ -266,65 +268,51 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       widget.currentLocation!.latitude,
       widget.currentLocation!.longitude,
     );
-    final markers = <Marker>[
+    final markers = <Marker>{
       Marker(
-        point: center,
-        width: 42,
-        height: 42,
-        child: const _CurrentLocationMarker(),
+        markerId: const MarkerId('current-location'),
+        position: center,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        infoWindow: InfoWindow(title: l10n.mapYourLocation),
       ),
       ...widget.workshops.map(
         (workshop) => Marker(
-          point: LatLng(workshop.latitude, workshop.longitude),
-          width: 64,
-          height: 80,
-          child: _WorkshopMarker(
-            workshop: workshop,
-            isSelected: _selectedWorkshop?.id == workshop.id,
-            onTap: () => _selectWorkshop(workshop),
+          markerId: MarkerId('workshop-${workshop.id}'),
+          position: LatLng(workshop.latitude, workshop.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            _selectedWorkshop?.id == workshop.id
+                ? BitmapDescriptor.hueOrange
+                : BitmapDescriptor.hueRed,
           ),
+          infoWindow: InfoWindow(
+            title: workshop.name,
+            snippet: workshop.locationAddress.isEmpty
+                ? null
+                : workshop.locationAddress,
+          ),
+          onTap: () => _selectWorkshop(workshop),
         ),
       ),
-    ];
+    };
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: Stack(
         children: [
-          FlutterMap(
-            key: ValueKey('nearby-map-$_mapRefreshSeed'),
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: center,
-              initialZoom: _initialZoom,
-              interactionOptions: const InteractionOptions(
-                flags:
-                    InteractiveFlag.drag |
-                    InteractiveFlag.pinchZoom |
-                    InteractiveFlag.doubleTapZoom |
-                    InteractiveFlag.flingAnimation,
-              ),
+          GoogleMap(
+            key: const ValueKey('nearby-google-map'),
+            initialCameraPosition: CameraPosition(
+              target: center,
+              zoom: _initialZoom,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.autolab.customer',
-                errorTileCallback: _handleTileError,
-                tileBuilder: (context, tileWidget, tile) {
-                  _handleTileBuilt(tile);
-                  return tileWidget;
-                },
-              ),
-              MarkerLayer(markers: markers),
-              RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution(
-                    l10n.mapAttributionOpenStreetMap,
-                    onTap: null,
-                  ),
-                ],
-              ),
-            ],
+            markers: markers,
+            onMapCreated: _handleMapCreated,
+            onCameraMove: (position) => _currentZoom = position.zoom,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            compassEnabled: false,
+            padding: const EdgeInsets.fromLTRB(0, 56, 0, 150),
           ),
           Positioned(
             right: 14,
@@ -363,19 +351,6 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                 message: l10n.mapLoadingMessage,
               ),
             ),
-          if (_hasMapError)
-            Positioned(
-              top: 56,
-              left: 16,
-              right: 16,
-              child: _MapStatusCard(
-                icon: Icons.wifi_off_rounded,
-                title: l10n.mapErrorTitle,
-                message: l10n.mapErrorMessage,
-                actionLabel: l10n.mapRetry,
-                onAction: _retryMapLoad,
-              ),
-            ),
           if (_selectedWorkshop != null && widget.workshops.isNotEmpty)
             Positioned(
               left: 12,
@@ -390,147 +365,6 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _WorkshopMarker extends StatelessWidget {
-  const _WorkshopMarker({
-    required this.workshop,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final Workshop workshop;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = isSelected
-        ? const LinearGradient(
-            colors: [Color(0xFFC24E2C), Color(0xFF9B3D24)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          )
-        : const LinearGradient(
-            colors: [Color(0xFF9B3D24), Color(0xFF7F2F1A)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          );
-
-    return Tooltip(
-      message: workshop.locationAddress.isNotEmpty
-          ? AppLocalizations.of(context)!.mapMarkerTooltipWithAddress(
-              workshop.name,
-              workshop.locationAddress,
-            )
-          : AppLocalizations.of(
-              context,
-            )!.mapMarkerTooltipWithoutAddress(workshop.name),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          key: ValueKey('workshop-marker-${workshop.id}'),
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: isSelected ? 52 : 44,
-              height: isSelected ? 52 : 44,
-              decoration: BoxDecoration(
-                gradient: background,
-                borderRadius: BorderRadius.circular(isSelected ? 18 : 16),
-                border: Border.all(color: Colors.white, width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: isSelected
-                        ? const Color(0x44000000)
-                        : const Color(0x26000000),
-                    blurRadius: isSelected ? 16 : 12,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: _WorkshopMarkerAvatar(
-                  workshop: workshop,
-                  size: isSelected ? 40 : 34,
-                ),
-              ),
-            ),
-            Transform.translate(
-              offset: const Offset(0, -2),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: isSelected ? 16 : 14,
-                height: isSelected ? 16 : 14,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFFC24E2C)
-                      : const Color(0xFF9B3D24),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(4),
-                    bottomRight: Radius.circular(4),
-                    topLeft: Radius.circular(2),
-                    topRight: Radius.circular(10),
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x22000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                transform: Matrix4.rotationZ(0.78),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _WorkshopMarkerAvatar extends StatelessWidget {
-  const _WorkshopMarkerAvatar({required this.workshop, required this.size});
-
-  final Workshop workshop;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = workshop.avatarUrl.isNotEmpty
-        ? workshop.avatarUrl
-        : workshop.coverUrl;
-
-    if (imageUrl.isEmpty) {
-      return Icon(Icons.build_rounded, color: Colors.white, size: size * 0.58);
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        imageUrl,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return ColoredBox(
-            color: const Color(0xFF7A2E18),
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: Icon(
-                Icons.build_rounded,
-                color: Colors.white,
-                size: size * 0.56,
-              ),
-            ),
-          );
-        },
       ),
     );
   }
@@ -796,44 +630,6 @@ class _DetailStat extends StatelessWidget {
   }
 }
 
-class _CurrentLocationMarker extends StatelessWidget {
-  const _CurrentLocationMarker();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: const Color(0xFF181411).withValues(alpha: 0.18),
-            shape: BoxShape.circle,
-          ),
-        ),
-        Container(
-          key: const ValueKey('current-location-marker'),
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: const Color(0xFF181411),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x22000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ZoomControls extends StatelessWidget {
   const _ZoomControls({
     required this.onZoomIn,
@@ -964,15 +760,11 @@ class _MapStatusCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.actionLabel,
-    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -1024,20 +816,6 @@ class _MapStatusCard extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
-                  if (actionLabel != null && onAction != null) ...[
-                    const SizedBox(height: 10),
-                    OutlinedButton(
-                      onPressed: onAction,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF181411),
-                        side: const BorderSide(color: Color(0xFFE4D6C9)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(actionLabel!),
-                    ),
-                  ],
                 ],
               ),
             ),

@@ -4,8 +4,8 @@ import 'package:autolab_customer/features/workshops/presentation/widgets/nearby_
 import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
   group('NearbyWorkshopsMap', () {
@@ -38,11 +38,10 @@ void main() {
       );
 
       expect(find.text('No encontramos talleres cercanos.'), findsOneWidget);
-      expect(find.byType(FlutterMap), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('current-location-marker')),
-        findsOneWidget,
-      );
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+
+      expect(googleMap.markers, hasLength(1));
+      expect(googleMap.markers.first.markerId.value, 'current-location');
       expect(
         find.byKey(const ValueKey('nearby-workshops-empty-message')),
         findsOneWidget,
@@ -103,12 +102,15 @@ void main() {
       );
       await tester.pump();
 
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final markerIds = googleMap.markers
+          .map((marker) => marker.markerId.value)
+          .toSet();
+
       expect(
-        find.byKey(const ValueKey('current-location-marker')),
-        findsOneWidget,
+        markerIds,
+        containsAll(['current-location', 'workshop-1', 'workshop-2']),
       );
-      expect(find.byKey(const ValueKey('workshop-marker-1')), findsOneWidget);
-      expect(find.byKey(const ValueKey('workshop-marker-2')), findsOneWidget);
     });
 
     testWidgets('muestra controles de zoom sobre el mapa', (tester) async {
