@@ -340,6 +340,12 @@ abstract class AppLocalizations {
   /// **'Registro exitoso. Revisa tu correo para confirmar tu cuenta.'**
   String get authRegisterSuccess;
 
+  /// No description provided for @authEmailConfirmedLoginMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu correo fue confirmado. Ya puedes iniciar sesión.'**
+  String get authEmailConfirmedLoginMessage;
+
   /// No description provided for @authTermsRequired.
   ///
   /// In es, this message translates to:

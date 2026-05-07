@@ -107,6 +107,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await client.auth.signUp(
         email: cleanEmail,
         password: cleanPassword,
+        emailRedirectTo: 'autolab://login-callback/email-confirmed',
         data: {
           'name': cleanName,
           'phone': cleanPhone,

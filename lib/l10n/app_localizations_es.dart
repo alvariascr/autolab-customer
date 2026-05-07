@@ -137,6 +137,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Registro exitoso. Revisa tu correo para confirmar tu cuenta.';
 
   @override
+  String get authEmailConfirmedLoginMessage =>
+      'Tu correo fue confirmado. Ya puedes iniciar sesión.';
+
+  @override
   String get authTermsRequired => 'Debes aceptar términos y condiciones.';
 
   @override

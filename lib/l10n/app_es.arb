@@ -41,6 +41,7 @@
   "authRegisterHaveAccount": "¿Ya tienes cuenta?",
   "authRegisterLoginAction": "Iniciar sesión",
   "authRegisterSuccess": "Registro exitoso. Revisa tu correo para confirmar tu cuenta.",
+  "authEmailConfirmedLoginMessage": "Tu correo fue confirmado. Ya puedes iniciar sesión.",
   "authTermsRequired": "Debes aceptar términos y condiciones.",
   "authErrorInvalidCredentials": "Correo o contraseña incorrectos.",
   "authErrorSessionExpired": "La sesión ha expirado. Inicia sesión nuevamente.",

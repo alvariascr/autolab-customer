@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -37,6 +38,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   StreamSubscription<AuthState>? _authStateSubscription;
+  StreamSubscription<Uri>? _appLinkSubscription;
+  final AppLinks _appLinks = AppLinks();
   late final AuthNavigationController _authNavigationController;
 
   @override
@@ -44,15 +47,31 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _authNavigationController = AuthNavigationController(
       navigate: widget.router.go,
+      clearSession: () async {
+        await widget.authSessionCubit.logout();
+      },
     );
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
+    unawaited(_listenForAppLinks());
   }
 
   @override
   void dispose() {
     _authStateSubscription?.cancel();
+    _appLinkSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _listenForAppLinks() async {
+    _appLinkSubscription = _appLinks.uriLinkStream.listen(
+      (uri) => unawaited(_authNavigationController.handleAppLink(uri)),
+    );
+
+    final initialLink = await _appLinks.getInitialLink();
+    if (initialLink == null) return;
+
+    await _authNavigationController.handleAppLink(initialLink);
   }
 
   @override

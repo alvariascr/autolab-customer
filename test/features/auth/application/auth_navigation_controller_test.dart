@@ -25,5 +25,46 @@ void main() {
 
       expect(navigations, isEmpty);
     });
+
+    test(
+      'navega al login cuando recibe el callback de correo confirmado',
+      () async {
+        final navigations = <String>[];
+        var sessionCleared = false;
+        final controller = AuthNavigationController(
+          navigate: navigations.add,
+          clearSession: () async {
+            sessionCleared = true;
+          },
+        );
+
+        await controller.handleAppLink(
+          Uri.parse('autolab://login-callback/email-confirmed'),
+        );
+
+        expect(sessionCleared, true);
+        expect(navigations, [
+          AuthNavigationController.emailConfirmedLoginRoute,
+        ]);
+      },
+    );
+
+    test('ignora app links que no son de confirmacion de correo', () async {
+      final navigations = <String>[];
+      var sessionCleared = false;
+      final controller = AuthNavigationController(
+        navigate: navigations.add,
+        clearSession: () async {
+          sessionCleared = true;
+        },
+      );
+
+      await controller.handleAppLink(
+        Uri.parse('autolab://login-callback/reset-password'),
+      );
+
+      expect(sessionCleared, false);
+      expect(navigations, isEmpty);
+    });
   });
 }
