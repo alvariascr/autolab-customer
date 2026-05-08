@@ -14,8 +14,8 @@ class _ProfileActions extends StatelessWidget {
         Expanded(
           child: _SegmentedPill(
             children: [
-              _PillTab(label: 'Entrega', selected: true),
-              const _PillTab(label: 'Para llevar'),
+              _PillTab(label: l10n.workshopProfileDeliveryTab, selected: true),
+              _PillTab(label: l10n.workshopProfilePickupTab),
             ],
           ),
         ),
@@ -198,15 +198,7 @@ class _DeliverySummary extends StatelessWidget {
                             workshop.deliveryRadiusKm.toStringAsFixed(0),
                           )
                         : l10n.workshopProfileCoverageUnavailable,
-                    subtitle: 'Área de atención',
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                const Expanded(
-                  child: _SummaryCell(
-                    title: '10 min',
-                    subtitle: 'Respuesta estimada',
-                    icon: Icons.info_outline_rounded,
+                    subtitle: l10n.workshopProfileCoverageAreaSubtitle,
                   ),
                 ),
               ],
@@ -252,11 +244,10 @@ class _DeliverySummary extends StatelessWidget {
 }
 
 class _SummaryCell extends StatelessWidget {
-  const _SummaryCell({required this.title, required this.subtitle, this.icon});
+  const _SummaryCell({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -274,24 +265,10 @@ class _SummaryCell extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF6B5F57),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              if (icon != null) ...[
-                const SizedBox(width: 4),
-                Icon(icon, size: 14, color: const Color(0xFF6B5F57)),
-              ],
-            ],
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF6B5F57), fontSize: 13),
           ),
         ],
       ),

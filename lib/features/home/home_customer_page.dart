@@ -238,7 +238,9 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4EF),
+      backgroundColor: _showSearchBar
+          ? const Color(0xFFE9EEF2)
+          : const Color(0xFFF8F4EF),
       extendBody: true,
       body: FutureBuilder<Either<Failure, List<Workshop>>>(
         future: _workshopsFuture,

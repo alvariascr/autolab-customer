@@ -288,7 +288,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navigationProfile => 'Perfil';
 
   @override
-  String get searchBarHint => 'Buscar talleres...';
+  String get searchBarHint => 'Buscar en Autolab';
 
   @override
   String get workshopSearchClearTooltip => 'Limpiar búsqueda';
@@ -629,12 +629,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopProfileOpenLocationAction => 'Abrir ubicación';
 
   @override
+  String get workshopProfileDirectionsAction => 'Dirígete ahí';
+
+  @override
   String get workshopProfileScheduleSoon =>
       'Próximamente podrás agendar una cita desde aquí.';
 
   @override
   String get workshopProfileActionError =>
       'No fue posible abrir esta acción. Intenta nuevamente.';
+
+  @override
+  String get workshopProfileDeliveryTab => 'Entrega';
+
+  @override
+  String get workshopProfilePickupTab => 'Para llevar';
 
   @override
   String get workshopProfileAboutTitle => 'Acerca del taller';
@@ -652,12 +661,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopProfileHomeServiceUnavailable => 'No disponible';
 
   @override
+  String get workshopProfileMobileServiceLabel => 'Servicio móvil';
+
+  @override
   String get workshopProfileCoverageTitle => 'Cobertura';
 
   @override
   String workshopProfileCoverageValue(Object distance) {
     return '$distance km de radio';
   }
+
+  @override
+  String get workshopProfileCoverageAreaSubtitle => 'Área de atención';
 
   @override
   String get workshopProfileCoverageUnavailable => 'Cobertura no disponible';
@@ -695,6 +710,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get workshopProfileClosed => 'Cerrado';
+
+  @override
+  String workshopProfileOpenUntil(Object time) {
+    return 'Abierto hasta las $time';
+  }
 
   @override
   String get workshopProfileUnknownDay => 'Día no disponible';
@@ -763,6 +783,24 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get mapSearchHint => 'Buscar en Autolab';
+
+  @override
+  String get mapSearchFiltersTooltip => 'Filtros';
+
+  @override
+  String get mapSearchClearTooltip => 'Limpiar';
+
+  @override
+  String get mapFilterOffers => 'Ofertas';
+
+  @override
+  String get mapFilterService => 'Servicio';
+
+  @override
+  String get mapFilterTopRated => 'Mejor calificado';
+
+  @override
   String get mapLoadingTitle => 'Cargando mapa';
 
   @override
@@ -821,6 +859,32 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get mapSheetFallbackDescription =>
       'Este taller está listo para atender solicitudes cerca de tu ubicación.';
+
+  @override
+  String get mapSheetNearbyWorkshopsTitle => 'Talleres cerca de ti';
+
+  @override
+  String get mapSheetOneResult => '1 resultado';
+
+  @override
+  String mapSheetResults(Object count) {
+    return '$count resultados';
+  }
+
+  @override
+  String get mapSheetNoSearchResults =>
+      'No encontramos talleres para esa búsqueda.';
+
+  @override
+  String get mapSheetProductsLabel => 'Productos';
+
+  @override
+  String get mapSheetViewOnMapTooltip => 'Ver en mapa';
+
+  @override
+  String mapSheetProductSearchResults(Object count, Object query) {
+    return '$count resultados para \"$query\"';
+  }
 
   @override
   String mapMarkerTooltipWithAddress(Object name, Object address) {

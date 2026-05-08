@@ -88,7 +88,7 @@
   "navigationSearch": "Buscar",
   "navigationCart": "Carrito",
   "navigationProfile": "Perfil",
-  "searchBarHint": "Buscar talleres...",
+  "searchBarHint": "Buscar en Autolab",
   "workshopSearchClearTooltip": "Limpiar búsqueda",
   "workshopSearchTitle": "Talleres",
   "workshopSearchRecentTitle": "Búsquedas recientes",
@@ -196,13 +196,17 @@
   "workshopProfileScheduleAction": "Agendar cita",
   "workshopProfileCallAction": "Llamar",
   "workshopProfileOpenLocationAction": "Abrir ubicación",
+  "workshopProfileDirectionsAction": "Dirígete ahí",
   "workshopProfileScheduleSoon": "Próximamente podrás agendar una cita desde aquí.",
   "workshopProfileActionError": "No fue posible abrir esta acción. Intenta nuevamente.",
+  "workshopProfileDeliveryTab": "Entrega",
+  "workshopProfilePickupTab": "Para llevar",
   "workshopProfileAboutTitle": "Acerca del taller",
   "workshopProfileDetailsTitle": "Detalles",
   "workshopProfileHomeServiceTitle": "Servicio a domicilio",
   "workshopProfileHomeServiceAvailable": "Disponible",
   "workshopProfileHomeServiceUnavailable": "No disponible",
+  "workshopProfileMobileServiceLabel": "Servicio móvil",
   "workshopProfileCoverageTitle": "Cobertura",
   "workshopProfileCoverageValue": "{distance} km de radio",
   "@workshopProfileCoverageValue": {
@@ -210,6 +214,7 @@
       "distance": {}
     }
   },
+  "workshopProfileCoverageAreaSubtitle": "Área de atención",
   "workshopProfileCoverageUnavailable": "Cobertura no disponible",
   "workshopProfilePhoneTitle": "Teléfono",
   "workshopProfileServicesTitle": "Servicios",
@@ -221,6 +226,12 @@
   "workshopProfileBusinessHoursTitle": "Horario",
   "workshopProfileBusinessHoursEmpty": "Horario no disponible",
   "workshopProfileClosed": "Cerrado",
+  "workshopProfileOpenUntil": "Abierto hasta las {time}",
+  "@workshopProfileOpenUntil": {
+    "placeholders": {
+      "time": {}
+    }
+  },
   "workshopProfileUnknownDay": "Día no disponible",
   "workshopProfilePaymentMethodsTitle": "Métodos de pago",
   "workshopProfilePaymentMethodsEmpty": "Métodos de pago no disponibles.",
@@ -246,6 +257,12 @@
       "count": {}
     }
   },
+  "mapSearchHint": "Buscar en Autolab",
+  "mapSearchFiltersTooltip": "Filtros",
+  "mapSearchClearTooltip": "Limpiar",
+  "mapFilterOffers": "Ofertas",
+  "mapFilterService": "Servicio",
+  "mapFilterTopRated": "Mejor calificado",
   "mapLoadingTitle": "Cargando mapa",
   "mapLoadingMessage": "Estamos preparando el mapa y los talleres cercanos para ti.",
   "mapAttributionOpenStreetMap": "OpenStreetMap contributors",
@@ -273,6 +290,24 @@
   "mapSheetLabelWorkshop": "Taller",
   "mapSheetLabelCoverage": "Alcance",
   "mapSheetFallbackDescription": "Este taller está listo para atender solicitudes cerca de tu ubicación.",
+  "mapSheetNearbyWorkshopsTitle": "Talleres cerca de ti",
+  "mapSheetOneResult": "1 resultado",
+  "mapSheetResults": "{count} resultados",
+  "@mapSheetResults": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "mapSheetNoSearchResults": "No encontramos talleres para esa búsqueda.",
+  "mapSheetProductsLabel": "Productos",
+  "mapSheetViewOnMapTooltip": "Ver en mapa",
+  "mapSheetProductSearchResults": "{count} resultados para \"{query}\"",
+  "@mapSheetProductSearchResults": {
+    "placeholders": {
+      "count": {},
+      "query": {}
+    }
+  },
   "mapMarkerTooltipWithAddress": "{name}\n{address}",
   "@mapMarkerTooltipWithAddress": {
     "placeholders": {

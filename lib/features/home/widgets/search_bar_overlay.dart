@@ -50,12 +50,6 @@ class SearchBarOverlay extends StatefulWidget {
 
 class _SearchBarOverlayState extends State<SearchBarOverlay> {
   static const _maxRecentSearches = 6;
-  static const _suggestedSearches = <String>[
-    'Talleres',
-    'Frenos',
-    'Suspensión',
-    'Escazú',
-  ];
 
   final List<String> _recentSearches = <String>[];
   late final bool _hasProductRepository;
@@ -105,7 +99,6 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
@@ -116,92 +109,33 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
       child: IgnorePointer(
         ignoring: !widget.showSearchBar,
         child: Material(
-          color: const Color(0xFFF8F4EF),
+          color: const Color(0xFFE9EEF2),
           child: SafeArea(
             bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        key: const ValueKey('workshop-search-close-button'),
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).backButtonTooltip,
-                        onPressed: () {
-                          FocusScope.of(context).unfocus();
-                          _saveRecentSearch(widget.controller.text);
-                          widget.controller.clear();
-                          widget.onQueryChanged?.call('');
-                          widget.onClose();
-                        },
-                        icon: const Icon(Icons.arrow_back_rounded),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: widget.controller,
-                          builder: (context, value, child) {
-                            return TextField(
-                              key: const ValueKey(
-                                'workshop-search-overlay-field',
-                              ),
-                              controller: widget.controller,
-                              autofocus: widget.showSearchBar,
-                              textInputAction: TextInputAction.search,
-                              onChanged: widget.onQueryChanged,
-                              onSubmitted: _saveRecentSearch,
-                              decoration: InputDecoration(
-                                hintText: l10n.searchBarHint,
-                                prefixIcon: const Icon(Icons.search_rounded),
-                                suffixIcon: value.text.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        key: const ValueKey(
-                                          'workshop-search-clear-button',
-                                        ),
-                                        tooltip:
-                                            l10n.workshopSearchClearTooltip,
-                                        onPressed: () {
-                                          _saveRecentSearch(value.text);
-                                          widget.controller.clear();
-                                          widget.onQueryChanged?.call('');
-                                        },
-                                        icon: const Icon(Icons.close_rounded),
-                                      ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+                  child: _SearchOverlayField(
+                    controller: widget.controller,
+                    autofocus: widget.showSearchBar,
+                    onChanged: widget.onQueryChanged,
+                    onSubmitted: _saveRecentSearch,
+                    onBack: () {
+                      FocusScope.of(context).unfocus();
+                      _saveRecentSearch(widget.controller.text);
+                      widget.controller.clear();
+                      widget.onQueryChanged?.call('');
+                      widget.onClose();
+                    },
+                    onClear: () {
+                      _saveRecentSearch(widget.controller.text);
+                      widget.controller.clear();
+                      widget.onQueryChanged?.call('');
+                    },
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    l10n.workshopSearchTitle,
-                    style: const TextStyle(
-                      color: Color(0xFF181411),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
                 Expanded(
                   child: ValueListenableBuilder<TextEditingValue>(
                     valueListenable: widget.controller,
@@ -211,17 +145,13 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
                       if (query.isEmpty) {
                         return _RecentSearches(
                           recentSearches: _recentSearches,
-                          suggestedSearches: _suggestedSearches,
                           onSelected: _selectRecentSearch,
                         );
                       }
 
-                      final searchableWorkshops = widget.currentLocation == null
-                          ? widget.workshops
-                          : SearchBarOverlay._proximityFilter.filterNearby(
-                              workshops: widget.workshops,
-                              currentLocation: widget.currentLocation,
-                            );
+                      final searchableWorkshops = _searchableWorkshops(
+                        widget.workshops,
+                      );
                       final workshopResults = SearchBarOverlay._textSearchFilter
                           .filter(workshops: searchableWorkshops, query: query);
 
@@ -273,6 +203,93 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
           ),
         ),
       ),
+    );
+  }
+
+  List<Workshop> _searchableWorkshops(List<Workshop> workshops) {
+    if (widget.currentLocation == null) {
+      return workshops;
+    }
+
+    return SearchBarOverlay._proximityFilter.filterNearby(
+      workshops: workshops,
+      currentLocation: widget.currentLocation,
+    );
+  }
+}
+
+class _SearchOverlayField extends StatelessWidget {
+  const _SearchOverlayField({
+    required this.controller,
+    required this.autofocus,
+    required this.onChanged,
+    required this.onSubmitted,
+    required this.onBack,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final bool autofocus;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String> onSubmitted;
+  final VoidCallback onBack;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, child) {
+        return Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          elevation: 8,
+          shadowColor: const Color(0x24000000),
+          child: SizedBox(
+            height: 52,
+            child: TextField(
+              key: const ValueKey('workshop-search-overlay-field'),
+              controller: controller,
+              autofocus: autofocus,
+              textInputAction: TextInputAction.search,
+              onChanged: onChanged,
+              onSubmitted: onSubmitted,
+              decoration: InputDecoration(
+                hintText: l10n.searchBarHint,
+                hintStyle: const TextStyle(
+                  color: Color(0xFF6D757C),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+                prefixIcon: IconButton(
+                  key: const ValueKey('workshop-search-close-button'),
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  onPressed: onBack,
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Color(0xFF5F676D),
+                  ),
+                ),
+                suffixIcon: value.text.trim().isEmpty
+                    ? const Icon(Icons.search_rounded, color: Color(0xFF5F676D))
+                    : IconButton(
+                        key: const ValueKey('workshop-search-clear-button'),
+                        tooltip: l10n.workshopSearchClearTooltip,
+                        onPressed: onClear,
+                        icon: const Icon(
+                          Icons.cancel_rounded,
+                          color: Color(0xFF9AA1A8),
+                        ),
+                      ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -579,28 +596,25 @@ class _SearchProductPreview extends StatelessWidget {
 class _RecentSearches extends StatelessWidget {
   const _RecentSearches({
     required this.recentSearches,
-    required this.suggestedSearches,
     required this.onSelected,
   });
 
   final List<String> recentSearches;
-  final List<String> suggestedSearches;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    final hasRecentSearches = recentSearches.isNotEmpty;
-    final chips = hasRecentSearches ? recentSearches : suggestedSearches;
+    if (recentSearches.isEmpty) {
+      return _SearchEmptyMessage(message: l10n.workshopSearchStartMessage);
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
         Text(
-          hasRecentSearches
-              ? l10n.workshopSearchRecentTitle
-              : l10n.workshopSearchSuggestedTitle,
+          l10n.workshopSearchRecentTitle,
           style: const TextStyle(
             color: Color(0xFF181411),
             fontSize: 15,
@@ -611,19 +625,10 @@ class _RecentSearches extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: chips.map((query) {
+          children: recentSearches.map((query) {
             return ActionChip(
-              key: ValueKey(
-                hasRecentSearches
-                    ? 'recent-search-$query'
-                    : 'suggested-search-$query',
-              ),
-              avatar: Icon(
-                hasRecentSearches
-                    ? Icons.history_rounded
-                    : Icons.search_rounded,
-                size: 17,
-              ),
+              key: ValueKey('recent-search-$query'),
+              avatar: const Icon(Icons.history_rounded, size: 17),
               label: Text(query),
               onPressed: () => onSelected(query),
               backgroundColor: Colors.white,

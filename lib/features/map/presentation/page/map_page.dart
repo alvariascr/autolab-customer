@@ -281,6 +281,8 @@ class _MapSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, child) {
@@ -296,7 +298,7 @@ class _MapSearchBar extends StatelessWidget {
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Busca talleres cerca de ti',
+                hintText: l10n.mapSearchHint,
                 hintStyle: const TextStyle(
                   color: Color(0xFF6D757C),
                   fontSize: 16,
@@ -308,7 +310,7 @@ class _MapSearchBar extends StatelessWidget {
                 ),
                 suffixIcon: value.text.trim().isEmpty
                     ? IconButton(
-                        tooltip: 'Filtros',
+                        tooltip: l10n.mapSearchFiltersTooltip,
                         onPressed: () {},
                         icon: const Icon(
                           Icons.tune_rounded,
@@ -316,7 +318,7 @@ class _MapSearchBar extends StatelessWidget {
                         ),
                       )
                     : IconButton(
-                        tooltip: 'Limpiar',
+                        tooltip: l10n.mapSearchClearTooltip,
                         onPressed: onClear,
                         icon: const Icon(
                           Icons.cancel_rounded,
@@ -339,16 +341,27 @@ class _MapFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       height: 42,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        children: const [
-          _FilterChipPill(icon: Icons.local_offer_outlined, label: 'Ofertas'),
-          SizedBox(width: 10),
-          _FilterChipPill(icon: Icons.build_circle_outlined, label: 'Servicio'),
-          SizedBox(width: 10),
-          _FilterChipPill(icon: Icons.star_rounded, label: 'Mejor calificado'),
+        children: [
+          _FilterChipPill(
+            icon: Icons.local_offer_outlined,
+            label: l10n.mapFilterOffers,
+          ),
+          const SizedBox(width: 10),
+          _FilterChipPill(
+            icon: Icons.build_circle_outlined,
+            label: l10n.mapFilterService,
+          ),
+          const SizedBox(width: 10),
+          _FilterChipPill(
+            icon: Icons.star_rounded,
+            label: l10n.mapFilterTopRated,
+          ),
         ],
       ),
     );

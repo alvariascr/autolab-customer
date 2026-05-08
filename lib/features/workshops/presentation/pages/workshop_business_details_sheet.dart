@@ -85,25 +85,12 @@ class _BusinessDetailsSheet extends StatelessWidget {
                             )
                           : l10n.workshopProfileCoverageUnavailable,
                     ),
-                    const Divider(height: 28),
-                    const _InfoListRow(
-                      icon: Icons.star_border_rounded,
-                      title: '4.6 (290+ calificaciones)',
-                      trailing: Icons.info_outline_rounded,
-                    ),
-                    const Divider(height: 28),
                     _InfoListRow(
                       icon: Icons.info_outline_rounded,
                       title: l10n.workshopProfileAboutTitle,
                       subtitle: workshop.description.isNotEmpty
                           ? workshop.description
                           : l10n.workshopCardDescriptionFallback,
-                    ),
-                    const Divider(height: 28),
-                    const _InfoListRow(
-                      icon: Icons.person_add_alt_1_outlined,
-                      title: '120+ pidieron de nuevo',
-                      subtitle: 'en el año pasado',
                     ),
                     if (workshop.phone.isNotEmpty) ...[
                       const Divider(height: 28),
@@ -157,7 +144,7 @@ class _BusinessDetailsSheet extends StatelessWidget {
       return l10n.workshopProfileBusinessHoursEmpty;
     }
 
-    return 'Abierto hasta las ${_trimTime(openHour.closeTime)}';
+    return l10n.workshopProfileOpenUntil(_trimTime(openHour.closeTime));
   }
 
   String _trimTime(String value) {
@@ -172,18 +159,99 @@ class _LocationPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final hasCoordinates = workshop.hasValidCoordinates;
+    final position = hasCoordinates
+        ? LatLng(workshop.latitude, workshop.longitude)
+        : null;
+
     return SizedBox(
       height: 230,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Container(color: const Color(0xFFE4E9EC)),
-          CustomPaint(painter: _MapPreviewPainter()),
-          Align(
-            alignment: const Alignment(-0.16, 0.25),
-            child: _MapDot(label: '210 m'),
+          if (position != null)
+            IgnorePointer(
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: position,
+                  zoom: 15.5,
+                ),
+                markers: {
+                  Marker(
+                    markerId: MarkerId('workshop-${workshop.id}'),
+                    position: position,
+                    infoWindow: InfoWindow(title: workshop.name),
+                  ),
+                },
+                liteModeEnabled: true,
+                myLocationButtonEnabled: false,
+                mapToolbarEnabled: false,
+                zoomControlsEnabled: false,
+                compassEnabled: false,
+              ),
+            )
+          else
+            DecoratedBox(
+              decoration: const BoxDecoration(color: Color(0xFFE8EEF3)),
+              child: Center(
+                child: Icon(
+                  Icons.location_on_outlined,
+                  size: 64,
+                  color: Color(0xFF6B5F57),
+                ),
+              ),
+            ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.08),
+                    Colors.white.withValues(alpha: 0.0),
+                    Colors.white.withValues(alpha: 0.18),
+                  ],
+                ),
+              ),
+            ),
           ),
-          Align(alignment: const Alignment(0.32, -0.28), child: _MapPin()),
+          if (position != null)
+            Positioned(
+              right: 24,
+              top: 86,
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                elevation: 6,
+                shadowColor: const Color(0x22000000),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => _ProfileActions.openLocation(context, workshop),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.workshopProfileDirectionsAction,
+                          style: const TextStyle(
+                            color: Color(0xFF181411),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right_rounded, size: 22),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             left: 24,
             right: 24,
@@ -205,7 +273,7 @@ class _LocationPreview extends StatelessWidget {
                 child: Text(
                   workshop.locationAddress.isNotEmpty
                       ? workshop.locationAddress
-                      : AppLocalizations.of(context)!.mapSheetFallbackAddress,
+                      : l10n.mapSheetFallbackAddress,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -217,117 +285,6 @@ class _LocationPreview extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MapPreviewPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final roadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
-    final mainRoadPaint = Paint()
-      ..color = const Color(0xFFB8C8EA)
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round;
-    final routePaint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-
-    for (var index = -1; index < 5; index++) {
-      final y = size.height * (0.2 + index * 0.18);
-      canvas.drawLine(
-        Offset(-20, y),
-        Offset(size.width + 20, y + 28),
-        roadPaint,
-      );
-    }
-
-    for (var index = 0; index < 5; index++) {
-      final x = size.width * (0.05 + index * 0.23);
-      canvas.drawLine(
-        Offset(x, -20),
-        Offset(x + 42, size.height + 20),
-        roadPaint,
-      );
-    }
-
-    canvas.drawLine(
-      Offset(size.width * 0.36, size.height),
-      Offset(size.width * 0.63, 0),
-      mainRoadPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.39, size.height * 0.67),
-      Offset(size.width * 0.6, size.height * 0.32),
-      routePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _MapDot extends StatelessWidget {
-  const _MapDot({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: const [
-              BoxShadow(color: Color(0x22000000), blurRadius: 8),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        const _MapPin(size: 28),
-      ],
-    );
-  }
-}
-
-class _MapPin extends StatelessWidget {
-  const _MapPin({this.size = 30});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Container(
-          width: size * 0.34,
-          height: size * 0.34,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-        ),
       ),
     );
   }

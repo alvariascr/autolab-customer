@@ -235,86 +235,75 @@ class _HeaderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final distance = workshop.hasValidDeliveryRadius
-        ? '${workshop.deliveryRadiusKm.toStringAsFixed(0)} km'
-        : '0,2 km';
-
-    return Column(
-      children: [
-        Transform.translate(
-          offset: const Offset(0, -40),
-          child: CircleAvatar(
-            radius: 44,
-            backgroundColor: Colors.white,
-            child: CircleAvatar(
-              radius: 39,
-              backgroundColor: const Color(0xFFE9DDD2),
-              backgroundImage: workshop.avatarUrl.isNotEmpty
-                  ? NetworkImage(workshop.avatarUrl)
-                  : null,
-              child: workshop.avatarUrl.isEmpty
-                  ? const Icon(Icons.storefront_outlined, size: 34)
-                  : null,
-            ),
+    final l10n = AppLocalizations.of(context)!;
+    final metadata = <Widget>[
+      if (workshop.hasValidDeliveryRadius)
+        Text(
+          l10n.workshopCardCoveragePrefix(
+            '${workshop.deliveryRadiusKm.toStringAsFixed(0)} km',
           ),
         ),
-        Transform.translate(
-          offset: const Offset(0, -28),
-          child: Column(
-            children: [
-              Text(
-                workshop.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF181411),
-                  fontWeight: FontWeight.w900,
-                  fontSize: 30,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 5,
-                runSpacing: 5,
-                children: [
-                  const Text('4.6'),
-                  const Icon(Icons.star_rounded, size: 18),
-                  const Text('(290+)'),
-                  const Text('•'),
-                  Text('Cobertura $distance'),
-                  const Text('•'),
-                  if (workshop.offersHomeService)
-                    const Text(
-                      'Servicio móvil',
-                      style: TextStyle(
-                        color: Color(0xFF9B6A00),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Color(0xFFEAF6EE),
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Text(
-                    '120+ pidieron de nuevo',
-                    style: TextStyle(
-                      color: Color(0xFF0E6F3B),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      if (workshop.offersHomeService) ...[
+        if (workshop.hasValidDeliveryRadius) const Text('•'),
+        Text(
+          l10n.workshopProfileMobileServiceLabel,
+          style: const TextStyle(
+            color: Color(0xFF9B6A00),
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],
+    ];
+
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        children: [
+          Text(
+            workshop.name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF181411),
+              fontWeight: FontWeight.w900,
+              fontSize: 30,
+            ),
+          ),
+          if (metadata.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 5,
+              runSpacing: 5,
+              children: metadata,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkshopAvatar extends StatelessWidget {
+  const _WorkshopAvatar({required this.workshop});
+
+  final Workshop workshop;
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: 44,
+      backgroundColor: Colors.white,
+      child: CircleAvatar(
+        radius: 39,
+        backgroundColor: const Color(0xFFE9DDD2),
+        backgroundImage: workshop.avatarUrl.isNotEmpty
+            ? NetworkImage(workshop.avatarUrl)
+            : null,
+        child: workshop.avatarUrl.isEmpty
+            ? const Icon(Icons.storefront_outlined, size: 34)
+            : null,
+      ),
     );
   }
 }

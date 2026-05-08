@@ -711,11 +711,11 @@ class _SelectedWorkshopSheet extends StatelessWidget {
             if (shouldShowResults)
               _SearchResultsHeader(count: resultsCount, query: query)
             else
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Talleres cerca de ti',
-                  style: TextStyle(
+                  l10n.mapSheetNearbyWorkshopsTitle,
+                  style: const TextStyle(
                     color: Color(0xFF181411),
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -762,10 +762,12 @@ class _SearchResultsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
-        count == 1 ? '1 resultado' : '$count resultados',
+        count == 1 ? l10n.mapSheetOneResult : l10n.mapSheetResults(count),
         style: const TextStyle(
           color: Color(0xFF181411),
           fontSize: 20,
@@ -952,13 +954,13 @@ class _WorkshopResultsList extends StatelessWidget {
     }
 
     if (productResults.isEmpty && workshops.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(bottom: 18),
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 18),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'No encontramos talleres para esa búsqueda.',
-            style: TextStyle(
+            l10n.mapSheetNoSearchResults,
+            style: const TextStyle(
               color: Color(0xFF6B5F57),
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -1063,7 +1065,10 @@ class _WorkshopProductResultTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${result.count} resultado${result.count == 1 ? '' : 's'} para "$query"',
+                          l10n.mapSheetProductSearchResults(
+                            result.count,
+                            query,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -1079,7 +1084,7 @@ class _WorkshopProductResultTile extends StatelessWidget {
                           children: [
                             _MapInfoChip(
                               icon: Icons.inventory_2_outlined,
-                              label: 'Productos',
+                              label: l10n.mapSheetProductsLabel,
                             ),
                             _MapInfoChip(
                               icon: Icons.near_me_outlined,
@@ -1093,7 +1098,7 @@ class _WorkshopProductResultTile extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Ver en mapa',
+                    tooltip: l10n.mapSheetViewOnMapTooltip,
                     onPressed: onSelected,
                     icon: const Icon(
                       Icons.location_searching_rounded,
@@ -1237,7 +1242,7 @@ class _WorkshopResultTile extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Ver en mapa',
+                tooltip: l10n.mapSheetViewOnMapTooltip,
                 onPressed: onSelected,
                 icon: const Icon(
                   Icons.location_searching_rounded,

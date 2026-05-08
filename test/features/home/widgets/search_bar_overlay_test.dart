@@ -1,6 +1,7 @@
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/features/home/widgets/search_bar_overlay.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
+import 'package:autolab_customer/features/workshops/presentation/widgets/workshop_card.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -20,12 +21,17 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Autolab Escazu'), findsNothing);
-      expect(find.text('Frenos Heredia'), findsNothing);
-      expect(find.text('Búsquedas sugeridas'), findsOneWidget);
+      expect(
+        find.text(
+          'Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(WorkshopCard), findsNothing);
+      expect(find.text('Búsquedas sugeridas'), findsNothing);
       expect(
         find.byKey(const ValueKey('suggested-search-Frenos')),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -201,6 +207,7 @@ const _workshops = [
     latitude: 9.9330,
     longitude: -84.0800,
     deliveryRadiusKm: 8,
+    serviceCategories: ['Mantenimiento'],
   ),
   Workshop(
     id: '2',
@@ -212,5 +219,6 @@ const _workshops = [
     latitude: 9.9340,
     longitude: -84.0810,
     deliveryRadiusKm: 12,
+    serviceCategories: ['Frenos'],
   ),
 ];
