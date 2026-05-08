@@ -1,7 +1,12 @@
+import 'dart:async';
+
+import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/map/presentation/cubit/map_cubit.dart';
 import 'package:autolab_customer/features/map/presentation/cubit/map_state.dart';
+import 'package:autolab_customer/features/products/domain/entities/product.dart';
+import 'package:autolab_customer/features/products/domain/repositories/product_repository.dart';
 import 'package:autolab_customer/features/workshops/application/workshop_discovery_query_store.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
 import 'package:autolab_customer/features/workshops/domain/repositories/workshop_repository.dart';
@@ -11,11 +16,14 @@ import 'package:mocktail/mocktail.dart';
 
 class MockWorkshopRepository extends Mock implements WorkshopRepository {}
 
+class MockProductRepository extends Mock implements ProductRepository {}
+
 class MockFeatureLogger extends Mock implements FeatureLogger {}
 
 void main() {
   group('MapCubit', () {
     late MockWorkshopRepository repository;
+    late MockProductRepository productRepository;
     late MockFeatureLogger featureLogger;
     late WorkshopDiscoveryQueryStore queryStore;
     late MapCubit cubit;
@@ -23,6 +31,7 @@ void main() {
 
     setUp(() {
       repository = MockWorkshopRepository();
+      productRepository = MockProductRepository();
       featureLogger = MockFeatureLogger();
       queryStore = WorkshopDiscoveryQueryStore();
       getWorkshopsCalls = 0;
@@ -31,6 +40,9 @@ void main() {
         getWorkshopsCalls += 1;
         return const Right(_workshops);
       });
+      when(
+        () => productRepository.getActiveProducts(),
+      ).thenAnswer((_) async => const Right(<Product>[]));
       when(
         () => featureLogger.info(
           feature: any(named: 'feature'),
@@ -50,11 +62,18 @@ void main() {
         ),
       ).thenReturn(null);
 
-      cubit = MapCubit(repository, featureLogger, queryStore: queryStore);
+      cubit = MapCubit(
+        repository,
+        productRepository,
+        featureLogger,
+        queryStore: queryStore,
+      );
     });
 
     tearDown(() async {
-      await cubit.close();
+      if (!cubit.isClosed) {
+        await cubit.close();
+      }
     });
 
     test(
@@ -77,6 +96,23 @@ void main() {
           ['Frenos Heredia'],
         );
         expect((cubit.state as MapLoaded).query, 'frenos');
+      },
+    );
+
+    test(
+      'ignora respuestas de talleres cuando el cubit ya fue cerrado',
+      () async {
+        final pendingWorkshops = Completer<Either<Failure, List<Workshop>>>();
+        when(
+          () => repository.getWorkshops(),
+        ).thenAnswer((_) => pendingWorkshops.future);
+
+        final loadFuture = cubit.loadWorkshops(_currentLocation);
+
+        await cubit.close();
+        pendingWorkshops.complete(const Right(_workshops));
+
+        await expectLater(loadFuture, completes);
       },
     );
   });

@@ -102,6 +102,7 @@ void _registerFeatureDependencies() {
   sl.registerFactory<MapCubit>(
     () => MapCubit(
       sl<WorkshopRepository>(),
+      sl<ProductRepository>(),
       sl<FeatureLogger>(),
       queryStore: sl<WorkshopDiscoveryQueryStore>(),
     ),

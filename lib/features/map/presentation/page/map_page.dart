@@ -204,12 +204,20 @@ class _MapBody extends StatelessWidget {
           ),
         ),
       ),
-      MapLoaded(:final workshops, :final currentLocation, :final query) =>
+      MapLoaded(
+        :final workshops,
+        :final currentLocation,
+        :final query,
+        :final productResults,
+        :final isLoadingProductResults,
+      ) =>
         NearbyWorkshopsMap(
           workshops: workshops,
           currentLocation: currentLocation,
           emptyMessage: emptyMessage,
           query: query,
+          productResults: productResults,
+          isLoadingProductResults: isLoadingProductResults,
         ),
     };
   }

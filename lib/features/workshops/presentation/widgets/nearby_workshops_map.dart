@@ -7,6 +7,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../../core/location/current_location.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../products/domain/services/workshop_product_search_grouper.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/services/workshop_distance_calculator.dart';
 
@@ -17,12 +18,16 @@ class NearbyWorkshopsMap extends StatefulWidget {
     required this.currentLocation,
     required this.emptyMessage,
     this.query = '',
+    this.productResults = const [],
+    this.isLoadingProductResults = false,
   });
 
   final List<Workshop> workshops;
   final CurrentLocation? currentLocation;
   final String emptyMessage;
   final String query;
+  final List<WorkshopProductSearchResult> productResults;
+  final bool isLoadingProductResults;
 
   @override
   State<NearbyWorkshopsMap> createState() => _NearbyWorkshopsMapState();
@@ -257,6 +262,12 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
   void _openWorkshopProfile(Workshop workshop) {
     context.push('/workshops/${workshop.id}');
+  }
+
+  void _openWorkshopProducts(WorkshopProductSearchResult result) {
+    context.push(
+      '/search/workshops/${result.workshop.id}/products?query=${Uri.encodeComponent(widget.query)}',
+    );
   }
 
   void _handleMapCreated(GoogleMapController controller) {
@@ -606,9 +617,12 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                 expanded: _expandedSheet,
                 results: widget.workshops,
                 query: widget.query,
+                productResults: widget.productResults,
+                isLoadingProductResults: widget.isLoadingProductResults,
                 onTap: _toggleSheet,
                 onWorkshopSelected: _selectWorkshop,
                 onWorkshopOpened: _openWorkshopProfile,
+                onProductResultOpened: _openWorkshopProducts,
                 l10n: l10n,
               ),
             ),
@@ -625,9 +639,12 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     required this.expanded,
     required this.results,
     required this.query,
+    required this.productResults,
+    required this.isLoadingProductResults,
     required this.onTap,
     required this.onWorkshopSelected,
     required this.onWorkshopOpened,
+    required this.onProductResultOpened,
     required this.l10n,
   });
 
@@ -636,9 +653,12 @@ class _SelectedWorkshopSheet extends StatelessWidget {
   final bool expanded;
   final List<Workshop> results;
   final String query;
+  final List<WorkshopProductSearchResult> productResults;
+  final bool isLoadingProductResults;
   final VoidCallback onTap;
   final ValueChanged<Workshop> onWorkshopSelected;
   final ValueChanged<Workshop> onWorkshopOpened;
+  final ValueChanged<WorkshopProductSearchResult> onProductResultOpened;
   final AppLocalizations l10n;
 
   @override
@@ -649,6 +669,15 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     );
 
     final shouldShowResults = query.trim().isNotEmpty;
+    final productWorkshopIds = productResults
+        .map((result) => result.workshop.id)
+        .toSet();
+    final workshopResults = shouldShowResults
+        ? results
+              .where((workshop) => !productWorkshopIds.contains(workshop.id))
+              .toList(growable: false)
+        : results;
+    final resultsCount = productResults.length + workshopResults.length;
 
     return Material(
       color: Colors.transparent,
@@ -680,7 +709,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             if (shouldShowResults)
-              _SearchResultsHeader(count: results.length, query: query)
+              _SearchResultsHeader(count: resultsCount, query: query)
             else
               const Align(
                 alignment: Alignment.centerLeft,
@@ -696,10 +725,14 @@ class _SelectedWorkshopSheet extends StatelessWidget {
             const SizedBox(height: 14),
             if (shouldShowResults)
               _WorkshopResultsList(
-                workshops: results,
+                workshops: workshopResults,
+                productResults: productResults,
+                isLoadingProductResults: isLoadingProductResults,
+                query: query,
                 currentLocation: currentLocation,
                 onSelected: onWorkshopSelected,
                 onOpened: onWorkshopOpened,
+                onProductResultOpened: onProductResultOpened,
                 l10n: l10n,
               )
             else
@@ -887,21 +920,38 @@ class _SelectedWorkshopSummary extends StatelessWidget {
 class _WorkshopResultsList extends StatelessWidget {
   const _WorkshopResultsList({
     required this.workshops,
+    required this.productResults,
+    required this.isLoadingProductResults,
+    required this.query,
     required this.currentLocation,
     required this.onSelected,
     required this.onOpened,
+    required this.onProductResultOpened,
     required this.l10n,
   });
 
   final List<Workshop> workshops;
+  final List<WorkshopProductSearchResult> productResults;
+  final bool isLoadingProductResults;
+  final String query;
   final CurrentLocation currentLocation;
   final ValueChanged<Workshop> onSelected;
   final ValueChanged<Workshop> onOpened;
+  final ValueChanged<WorkshopProductSearchResult> onProductResultOpened;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    if (workshops.isEmpty) {
+    if (isLoadingProductResults &&
+        productResults.isEmpty &&
+        workshops.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(bottom: 18),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (productResults.isEmpty && workshops.isEmpty) {
       return const Padding(
         padding: EdgeInsets.only(bottom: 18),
         child: Align(
@@ -923,10 +973,24 @@ class _WorkshopResultsList extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: 8),
         shrinkWrap: true,
-        itemCount: workshops.length,
+        itemCount: productResults.length + workshops.length,
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final workshop = workshops[index];
+          if (index < productResults.length) {
+            final result = productResults[index];
+
+            return _WorkshopProductResultTile(
+              result: result,
+              query: query,
+              currentLocation: currentLocation,
+              onSelected: () => onSelected(result.workshop),
+              onOpened: () => onProductResultOpened(result),
+              l10n: l10n,
+            );
+          }
+
+          final workshopIndex = index - productResults.length;
+          final workshop = workshops[workshopIndex];
 
           return _WorkshopResultTile(
             workshop: workshop,
@@ -936,6 +1000,151 @@ class _WorkshopResultsList extends StatelessWidget {
             l10n: l10n,
           );
         },
+      ),
+    );
+  }
+}
+
+class _WorkshopProductResultTile extends StatelessWidget {
+  const _WorkshopProductResultTile({
+    required this.result,
+    required this.query,
+    required this.currentLocation,
+    required this.onSelected,
+    required this.onOpened,
+    required this.l10n,
+  });
+
+  final WorkshopProductSearchResult result;
+  final String query;
+  final CurrentLocation currentLocation;
+  final VoidCallback onSelected;
+  final VoidCallback onOpened;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final workshop = result.workshop;
+    final distance = WorkshopDistanceCalculator.distanceInKm(
+      currentLocation: currentLocation,
+      workshop: workshop,
+    );
+    final previewProducts = result.products.take(3).toList(growable: false);
+
+    return Material(
+      color: const Color(0xFFFFF8ED),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onOpened,
+        onLongPress: onSelected,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _WorkshopCoverThumb(workshop: workshop),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          workshop.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF181411),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${result.count} resultado${result.count == 1 ? '' : 's'} para "$query"',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF6B5F57),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            _MapInfoChip(
+                              icon: Icons.inventory_2_outlined,
+                              label: 'Productos',
+                            ),
+                            _MapInfoChip(
+                              icon: Icons.near_me_outlined,
+                              label: l10n.mapInfoDistancePrefix(
+                                WorkshopDistanceCalculator.formatKm(distance),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Ver en mapa',
+                    onPressed: onSelected,
+                    icon: const Icon(
+                      Icons.location_searching_rounded,
+                      color: Color(0xFF181411),
+                    ),
+                  ),
+                ],
+              ),
+              if (previewProducts.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final product in previewProducts)
+                      _ProductMatchChip(label: product.name),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductMatchChip extends StatelessWidget {
+  const _ProductMatchChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFF0E2D6)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Color(0xFF181411),
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
