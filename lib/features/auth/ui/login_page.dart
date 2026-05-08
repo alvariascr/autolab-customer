@@ -40,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _showLoginError = false;
   bool _isShowingRegister = false;
   bool _dismissEmailConfirmedMessage = false;
+  bool _showRegisterSuccessMessage = false;
 
   bool get _shouldShowInlineLoginError {
     return !_isShowingRegister && _showLoginError;
@@ -74,6 +75,7 @@ class _LoginPageState extends State<LoginPage> {
       _showLoginError = true;
       _isShowingRegister = false;
       _dismissEmailConfirmedMessage = true;
+      _showRegisterSuccessMessage = false;
     });
 
     context.read<LoginFormCubit>().submit(
@@ -89,6 +91,7 @@ class _LoginPageState extends State<LoginPage> {
       _showLoginError = false;
       _isShowingRegister = true;
       _dismissEmailConfirmedMessage = true;
+      _showRegisterSuccessMessage = false;
     });
 
     cardKey.currentState?.toggleCard();
@@ -102,6 +105,7 @@ class _LoginPageState extends State<LoginPage> {
       _showLoginError = false;
       _isShowingRegister = false;
       _dismissEmailConfirmedMessage = true;
+      _showRegisterSuccessMessage = false;
     });
 
     cardKey.currentState?.toggleCard();
@@ -158,19 +162,14 @@ class _LoginPageState extends State<LoginPage> {
               listener: (context, state) {
                 if (state.status == RegisterFormStatus.success &&
                     state.userId != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.authRegisterSuccess),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-
                   registerCardKey.currentState?.cleanRegistry();
                   context.read<RegisterFormCubit>().reset();
 
                   setState(() {
                     _showLoginError = false;
                     _isShowingRegister = false;
+                    _dismissEmailConfirmedMessage = true;
+                    _showRegisterSuccessMessage = true;
                   });
 
                   cardKey.currentState?.toggleCard();
@@ -215,6 +214,8 @@ class _LoginPageState extends State<LoginPage> {
                       'true';
               final successMessage = showEmailConfirmedMessage
                   ? l10n.authEmailConfirmedLoginMessage
+                  : _showRegisterSuccessMessage
+                  ? l10n.authRegisterSuccess
                   : null;
 
               final String? registerErrorMessage =
@@ -290,6 +291,7 @@ class _LoginPageState extends State<LoginPage> {
                               setState(() {
                                 _showLoginError = false;
                                 _isShowingRegister = true;
+                                _showRegisterSuccessMessage = false;
                               });
 
                               context.read<RegisterFormCubit>().submit(
