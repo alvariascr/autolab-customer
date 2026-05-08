@@ -50,51 +50,36 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
     return BlocProvider.value(
       value: _cubit,
       child: Scaffold(
-        body: BlocListener<PasswordRecoveryCubit, PasswordRecoveryState>(
-          listener: (context, state) {
-            if (state.status != PasswordRecoveryStatus.success) return;
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final h = MediaQuery.of(context).size.height;
+            final isTabletWeb = w >= 700;
+            final isWideWeb = w >= 1100;
+            final cardWidth = isWideWeb
+                ? 560.0
+                : isTabletWeb
+                ? 520.0
+                : w * 0.92;
+            final cardHeight = (h * 0.78).clamp(500.0, 640.0);
+            final logoSize = isTabletWeb ? 210.0 : 180.0;
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.authPasswordResetEmailSent),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
+            return Center(
+              child: AuthCardShell(
+                cardWidth: cardWidth,
+                cardHeight: cardHeight,
+                logoSize: logoSize,
+                child: _ForgotPasswordForm(
+                  formKey: _formKey,
+                  emailCtrl: _emailCtrl,
+                  onSubmit: () => _submit(context),
+                ),
               ),
             );
           },
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final h = MediaQuery.of(context).size.height;
-              final isTabletWeb = w >= 700;
-              final isWideWeb = w >= 1100;
-              final cardWidth = isWideWeb
-                  ? 560.0
-                  : isTabletWeb
-                  ? 520.0
-                  : w * 0.92;
-              final cardHeight = (h * 0.78).clamp(500.0, 640.0);
-              final logoSize = isTabletWeb ? 210.0 : 180.0;
-
-              return Center(
-                child: AuthCardShell(
-                  cardWidth: cardWidth,
-                  cardHeight: cardHeight,
-                  logoSize: logoSize,
-                  child: _ForgotPasswordForm(
-                    formKey: _formKey,
-                    emailCtrl: _emailCtrl,
-                    onSubmit: () => _submit(context),
-                  ),
-                ),
-              );
-            },
-          ),
         ),
       ),
     );
@@ -117,6 +102,9 @@ class _ForgotPasswordForm extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final state = context.watch<PasswordRecoveryCubit>().state;
     final isLoading = state.status == PasswordRecoveryStatus.submitting;
+    final successMessage = state.status == PasswordRecoveryStatus.success
+        ? l10n.authPasswordResetEmailSent
+        : null;
     final errorMessage =
         state.status == PasswordRecoveryStatus.error &&
             hasAuthFeedback(
@@ -153,6 +141,12 @@ class _ForgotPasswordForm extends StatelessWidget {
             const SizedBox(height: 20),
             if (errorMessage != null) ...[
               AuthErrorBanner(message: errorMessage),
+              const SizedBox(height: 15),
+            ] else if (successMessage != null) ...[
+              AuthErrorBanner(
+                message: successMessage,
+                variant: AuthBannerVariant.success,
+              ),
               const SizedBox(height: 15),
             ],
             TextFormField(
