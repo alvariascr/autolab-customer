@@ -1,21 +1,23 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/di/app_injection.dart';
 import '../../../core/location/current_location.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/repositories/product_repository.dart';
-import '../../products/domain/services/product_search_filter.dart';
 import '../../products/domain/services/workshop_product_search_grouper.dart';
 import '../../products/presentation/widgets/product_image.dart';
 import '../../products/presentation/widgets/product_price_text.dart';
 import '../../workshops/domain/entities/workshop.dart';
-import '../../workshops/domain/services/workshop_proximity_filter.dart';
-import '../../workshops/domain/services/workshop_text_search_filter.dart';
 import '../../workshops/presentation/widgets/workshop_card.dart';
 import '../../workshops/presentation/workshop_empty_state_resolver.dart';
+import '../application/recent_searches_store.dart';
+import '../application/search_overlay_cubit.dart';
+import '../application/search_overlay_state.dart';
 
 class SearchBarOverlay extends StatefulWidget {
   const SearchBarOverlay({
@@ -28,12 +30,9 @@ class SearchBarOverlay extends StatefulWidget {
     required this.workshopFailure,
     required this.onClose,
     this.onQueryChanged,
+    this.productRepository,
+    this.recentSearchesStore,
   });
-
-  static const _textSearchFilter = WorkshopTextSearchFilter();
-  static const _proximityFilter = WorkshopProximityFilter();
-  static const _productSearchFilter = ProductSearchFilter();
-  static const _productSearchGrouper = WorkshopProductSearchGrouper();
 
   final bool showSearchBar;
   final TextEditingController controller;
@@ -43,50 +42,70 @@ class SearchBarOverlay extends StatefulWidget {
   final Failure? workshopFailure;
   final VoidCallback onClose;
   final ValueChanged<String>? onQueryChanged;
+  final ProductRepository? productRepository;
+  final RecentSearchesStore? recentSearchesStore;
 
   @override
   State<SearchBarOverlay> createState() => _SearchBarOverlayState();
 }
 
 class _SearchBarOverlayState extends State<SearchBarOverlay> {
-  static const _maxRecentSearches = 6;
-
-  final List<String> _recentSearches = <String>[];
-  late final bool _hasProductRepository;
-  late Future<List<Product>> _productsFuture;
+  late final SearchOverlayCubit _cubit;
 
   @override
   void initState() {
     super.initState();
-    _hasProductRepository = sl.isRegistered<ProductRepository>();
-    _productsFuture = _hasProductRepository
-        ? _loadProducts()
-        : Future.value(const <Product>[]);
+    _cubit = SearchOverlayCubit(
+      productRepository: widget.productRepository,
+      recentSearchesStore: widget.recentSearchesStore,
+    );
+    widget.controller.addListener(_handleControllerChanged);
+    unawaited(
+      _cubit.initialize(
+        query: widget.controller.text,
+        workshops: widget.workshops,
+        currentLocation: widget.currentLocation,
+        isLoadingWorkshops: widget.isLoading,
+        workshopFailure: widget.workshopFailure,
+      ),
+    );
   }
 
-  Future<List<Product>> _loadProducts() async {
-    final result = await sl<ProductRepository>().getActiveProducts();
+  @override
+  void didUpdateWidget(covariant SearchBarOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-    return result.fold((_) => const <Product>[], (products) => products);
-  }
-
-  void _saveRecentSearch(String value) {
-    final query = value.trim();
-
-    if (query.isEmpty) {
-      return;
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleControllerChanged);
+      widget.controller.addListener(_handleControllerChanged);
+      _handleControllerChanged();
     }
 
-    setState(() {
-      _recentSearches.removeWhere(
-        (item) => item.toLowerCase() == query.toLowerCase(),
+    if (oldWidget.workshops != widget.workshops ||
+        oldWidget.currentLocation != widget.currentLocation ||
+        oldWidget.isLoading != widget.isLoading ||
+        oldWidget.workshopFailure != widget.workshopFailure) {
+      _cubit.updateSearchContext(
+        workshops: widget.workshops,
+        currentLocation: widget.currentLocation,
+        isLoadingWorkshops: widget.isLoading,
+        workshopFailure: widget.workshopFailure,
       );
-      _recentSearches.insert(0, query);
+    }
+  }
 
-      if (_recentSearches.length > _maxRecentSearches) {
-        _recentSearches.removeRange(_maxRecentSearches, _recentSearches.length);
-      }
-    });
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleControllerChanged);
+    _cubit.close();
+    super.dispose();
+  }
+
+  void _handleControllerChanged() {
+    final query = widget.controller.text;
+
+    _cubit.onQueryChanged(query);
+    widget.onQueryChanged?.call(query);
   }
 
   void _selectRecentSearch(String query) {
@@ -94,126 +113,110 @@ class _SearchBarOverlayState extends State<SearchBarOverlay> {
       text: query,
       selection: TextSelection.collapsed(offset: query.length),
     );
-    widget.onQueryChanged?.call(query);
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      top: widget.showSearchBar ? 0 : MediaQuery.sizeOf(context).height,
-      left: 0,
-      right: 0,
-      bottom: widget.showSearchBar ? 0 : -MediaQuery.sizeOf(context).height,
-      child: IgnorePointer(
-        ignoring: !widget.showSearchBar,
-        child: Material(
-          color: const Color(0xFFE9EEF2),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
-                  child: _SearchOverlayField(
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
+    return BlocProvider<SearchOverlayCubit>.value(
+      value: _cubit,
+      child: AnimatedPositioned(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        top: widget.showSearchBar ? 0 : screenHeight,
+        left: 0,
+        right: 0,
+        bottom: widget.showSearchBar ? 0 : -screenHeight,
+        child: IgnorePointer(
+          ignoring: !widget.showSearchBar,
+          child: TickerMode(
+            enabled: widget.showSearchBar,
+            child: widget.showSearchBar
+                ? _SearchOverlayContent(
                     controller: widget.controller,
                     autofocus: widget.showSearchBar,
-                    onChanged: widget.onQueryChanged,
-                    onSubmitted: _saveRecentSearch,
                     onBack: () {
                       FocusScope.of(context).unfocus();
-                      _saveRecentSearch(widget.controller.text);
+                      unawaited(_cubit.commitSearch(widget.controller.text));
                       widget.controller.clear();
-                      widget.onQueryChanged?.call('');
                       widget.onClose();
                     },
                     onClear: () {
-                      _saveRecentSearch(widget.controller.text);
+                      unawaited(_cubit.commitSearch(widget.controller.text));
                       widget.controller.clear();
-                      widget.onQueryChanged?.call('');
                     },
-                  ),
-                ),
-                Expanded(
-                  child: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: widget.controller,
-                    builder: (context, value, child) {
-                      final query = value.text.trim();
-
-                      if (query.isEmpty) {
-                        return _RecentSearches(
-                          recentSearches: _recentSearches,
-                          onSelected: _selectRecentSearch,
-                        );
-                      }
-
-                      final searchableWorkshops = _searchableWorkshops(
-                        widget.workshops,
-                      );
-                      final workshopResults = SearchBarOverlay._textSearchFilter
-                          .filter(workshops: searchableWorkshops, query: query);
-
-                      if (!_hasProductRepository) {
-                        return _WorkshopSearchResults(
-                          workshops: workshopResults,
-                          productResults: const [],
-                          query: query,
-                          currentLocation: widget.currentLocation,
-                          isLoading: widget.isLoading,
-                          failure: widget.workshopFailure,
-                          onSearchCommitted: _saveRecentSearch,
-                        );
-                      }
-
-                      return FutureBuilder<List<Product>>(
-                        future: _productsFuture,
-                        builder: (context, snapshot) {
-                          final products = snapshot.data ?? const <Product>[];
-                          final matchingProducts = SearchBarOverlay
-                              ._productSearchFilter
-                              .filter(products: products, query: query);
-                          final productResults = SearchBarOverlay
-                              ._productSearchGrouper
-                              .group(
-                                products: matchingProducts,
-                                workshops: searchableWorkshops,
-                              );
-
-                          return _WorkshopSearchResults(
-                            workshops: workshopResults,
-                            productResults: productResults,
-                            query: query,
-                            currentLocation: widget.currentLocation,
-                            isLoading:
-                                widget.isLoading ||
-                                snapshot.connectionState ==
-                                    ConnectionState.waiting,
-                            failure: widget.workshopFailure,
-                            onSearchCommitted: _saveRecentSearch,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+                    onRecentSearchSelected: _selectRecentSearch,
+                  )
+                : const SizedBox.shrink(),
           ),
         ),
       ),
     );
   }
+}
 
-  List<Workshop> _searchableWorkshops(List<Workshop> workshops) {
-    if (widget.currentLocation == null) {
-      return workshops;
-    }
+class _SearchOverlayContent extends StatelessWidget {
+  const _SearchOverlayContent({
+    required this.controller,
+    required this.autofocus,
+    required this.onBack,
+    required this.onClear,
+    required this.onRecentSearchSelected,
+  });
 
-    return SearchBarOverlay._proximityFilter.filterNearby(
-      workshops: workshops,
-      currentLocation: widget.currentLocation,
+  final TextEditingController controller;
+  final bool autofocus;
+  final VoidCallback onBack;
+  final VoidCallback onClear;
+  final ValueChanged<String> onRecentSearchSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFE9EEF2),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+              child: _SearchOverlayField(
+                controller: controller,
+                autofocus: autofocus,
+                onSubmitted: context.read<SearchOverlayCubit>().commitSearch,
+                onBack: onBack,
+                onClear: onClear,
+              ),
+            ),
+            Expanded(
+              child: BlocBuilder<SearchOverlayCubit, SearchOverlayState>(
+                builder: (context, state) {
+                  if (!state.hasQuery) {
+                    return _RecentSearches(
+                      recentSearches: state.recentSearches,
+                      onSelected: onRecentSearchSelected,
+                    );
+                  }
+
+                  return _WorkshopSearchResults(
+                    workshops: state.workshopResults,
+                    productResults: state.productResults,
+                    query: state.query,
+                    currentLocation: state.currentLocation,
+                    isLoading: state.isLoading,
+                    failure: state.workshopFailure,
+                    onSearchCommitted: context
+                        .read<SearchOverlayCubit>()
+                        .commitSearch,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -222,7 +225,6 @@ class _SearchOverlayField extends StatelessWidget {
   const _SearchOverlayField({
     required this.controller,
     required this.autofocus,
-    required this.onChanged,
     required this.onSubmitted,
     required this.onBack,
     required this.onClear,
@@ -230,7 +232,6 @@ class _SearchOverlayField extends StatelessWidget {
 
   final TextEditingController controller;
   final bool autofocus;
-  final ValueChanged<String>? onChanged;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onBack;
   final VoidCallback onClear;
@@ -254,7 +255,6 @@ class _SearchOverlayField extends StatelessWidget {
               controller: controller,
               autofocus: autofocus,
               textInputAction: TextInputAction.search,
-              onChanged: onChanged,
               onSubmitted: onSubmitted,
               decoration: InputDecoration(
                 hintText: l10n.searchBarHint,

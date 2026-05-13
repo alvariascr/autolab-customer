@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/di/auth_injection.dart';
+import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
@@ -98,6 +99,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<WorkshopDiscoveryQueryStore>(
     WorkshopDiscoveryQueryStore.new,
+  );
+  sl.registerLazySingleton<RecentSearchesStore>(
+    () => SharedPreferencesRecentSearchesStore(sl<SharedPreferences>()),
   );
   sl.registerFactory<MapCubit>(
     () => MapCubit(

@@ -50,7 +50,7 @@ void main() {
         find.byKey(const ValueKey('workshop-search-overlay-field')),
         'frenos',
       );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Frenos Heredia'), findsWidgets);
       expect(find.text('Autolab Escazu'), findsNothing);
@@ -70,12 +70,12 @@ void main() {
         'frenos',
       );
       await tester.testTextInput.receiveAction(TextInputAction.search);
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       await tester.tap(
         find.byKey(const ValueKey('workshop-search-clear-button')),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Búsquedas recientes'), findsOneWidget);
       expect(
@@ -84,7 +84,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const ValueKey('recent-search-frenos')));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(controller.text, 'frenos');
       expect(find.text('Frenos Heredia'), findsWidgets);
@@ -105,12 +105,12 @@ void main() {
         find.byKey(const ValueKey('workshop-search-overlay-field')),
         'heredia',
       );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       await tester.tap(
         find.byKey(const ValueKey('workshop-search-clear-button')),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Búsquedas recientes'), findsOneWidget);
       expect(

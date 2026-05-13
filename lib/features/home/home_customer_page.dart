@@ -9,11 +9,13 @@ import '../../core/location/location_state.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
+import '../products/domain/repositories/product_repository.dart';
 import '../workshops/application/workshop_discovery_query_store.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import 'application/recent_searches_store.dart';
 import 'location/location_ui_presenter.dart';
 import 'widgets/home_customer_content.dart';
 import 'widgets/location_option_tile.dart';
@@ -267,6 +269,12 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
             onSearchClose: _closeSearch,
+            productRepository: sl.isRegistered<ProductRepository>()
+                ? sl<ProductRepository>()
+                : null,
+            recentSearchesStore: sl.isRegistered<RecentSearchesStore>()
+                ? sl<RecentSearchesStore>()
+                : null,
             onSearchQueryChanged: _queryStore?.setQuery,
             workshopFailure: workshopFailure,
           );
