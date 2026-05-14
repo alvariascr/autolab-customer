@@ -4,6 +4,8 @@ abstract class RecentSearchesStore {
   Future<List<String>> load();
 
   Future<List<String>> save(String query);
+
+  Future<void> clear();
 }
 
 class SharedPreferencesRecentSearchesStore implements RecentSearchesStore {
@@ -40,6 +42,11 @@ class SharedPreferencesRecentSearchesStore implements RecentSearchesStore {
 
     return limitedSearches;
   }
+
+  @override
+  Future<void> clear() async {
+    await _preferences.remove(_key);
+  }
 }
 
 class MemoryRecentSearchesStore implements RecentSearchesStore {
@@ -69,5 +76,10 @@ class MemoryRecentSearchesStore implements RecentSearchesStore {
     }
 
     return List.unmodifiable(_searches);
+  }
+
+  @override
+  Future<void> clear() async {
+    _searches.clear();
   }
 }

@@ -92,6 +92,7 @@
   "workshopSearchClearTooltip": "Limpiar búsqueda",
   "workshopSearchTitle": "Talleres",
   "workshopSearchRecentTitle": "Búsquedas recientes",
+  "workshopSearchRecentClearAction": "Limpiar",
   "workshopSearchSuggestedTitle": "Búsquedas sugeridas",
   "workshopSearchStartMessage": "Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.",
   "workshopSearchNoResults": "No encontramos talleres que coincidan con tu búsqueda.",

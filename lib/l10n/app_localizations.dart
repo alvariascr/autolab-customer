@@ -616,6 +616,12 @@ abstract class AppLocalizations {
   /// **'Búsquedas recientes'**
   String get workshopSearchRecentTitle;
 
+  /// No description provided for @workshopSearchRecentClearAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar'**
+  String get workshopSearchRecentClearAction;
+
   /// No description provided for @workshopSearchSuggestedTitle.
   ///
   /// In es, this message translates to:

@@ -116,6 +116,14 @@ class SearchOverlayCubit extends Cubit<SearchOverlayState> {
     }
   }
 
+  Future<void> clearRecentSearches() async {
+    await _recentSearchesStore.clear();
+
+    if (!isClosed) {
+      emit(state.copyWith(recentSearches: const <String>[]));
+    }
+  }
+
   @override
   Future<void> close() {
     _debounce?.cancel();

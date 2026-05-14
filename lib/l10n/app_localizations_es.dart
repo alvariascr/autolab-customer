@@ -300,6 +300,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopSearchRecentTitle => 'Búsquedas recientes';
 
   @override
+  String get workshopSearchRecentClearAction => 'Limpiar';
+
+  @override
   String get workshopSearchSuggestedTitle => 'Búsquedas sugeridas';
 
   @override

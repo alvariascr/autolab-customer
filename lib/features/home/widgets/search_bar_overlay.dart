@@ -197,6 +197,9 @@ class _SearchOverlayContent extends StatelessWidget {
                     return _RecentSearches(
                       recentSearches: state.recentSearches,
                       onSelected: onRecentSearchSelected,
+                      onClear: context
+                          .read<SearchOverlayCubit>()
+                          .clearRecentSearches,
                     );
                   }
 
@@ -597,10 +600,12 @@ class _RecentSearches extends StatelessWidget {
   const _RecentSearches({
     required this.recentSearches,
     required this.onSelected,
+    required this.onClear,
   });
 
   final List<String> recentSearches;
   final ValueChanged<String> onSelected;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -613,13 +618,24 @@ class _RecentSearches extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
-        Text(
-          l10n.workshopSearchRecentTitle,
-          style: const TextStyle(
-            color: Color(0xFF181411),
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.workshopSearchRecentTitle,
+                style: const TextStyle(
+                  color: Color(0xFF181411),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            TextButton(
+              key: const ValueKey('recent-search-clear-all-button'),
+              onPressed: onClear,
+              child: Text(l10n.workshopSearchRecentClearAction),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Wrap(

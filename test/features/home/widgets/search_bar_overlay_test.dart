@@ -119,6 +119,48 @@ void main() {
       );
     });
 
+    testWidgets('permite limpiar todas las busquedas recientes', (
+      tester,
+    ) async {
+      final controller = TextEditingController();
+
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        _buildTestApp(controller: controller, showSearchBar: true),
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey('workshop-search-overlay-field')),
+        'frenos',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(
+        find.byKey(const ValueKey('workshop-search-clear-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('recent-search-frenos')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('recent-search-clear-all-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('recent-search-frenos')), findsNothing);
+      expect(
+        find.text(
+          'Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.',
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('muestra mensaje claro cuando no hay coincidencias', (
       tester,
     ) async {
