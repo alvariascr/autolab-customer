@@ -13,7 +13,6 @@ import '../data/mappers/auth_exception_mapper.dart';
 import '../data/repositories/auth_repository_impl.dart';
 import '../data/services/auth_local_session_recovery_service.dart';
 import '../data/services/auth_login_policy_service.dart';
-import '../data/services/auth_register_precheck_service.dart';
 import '../data/services/auth_session_recovery_service.dart';
 import '../data/services/auth_session_storage_service.dart';
 import '../data/services/auth_supabase_session_sync_service.dart';
@@ -70,22 +69,12 @@ void registerAuthDependencies(GetIt sl) {
     ),
   );
 
-  sl.registerLazySingleton<AuthRegisterPrecheckService>(
-    () => AuthRegisterPrecheckService(
-      client: sl<SupabaseClient>(),
-      authExceptionMapper: sl<AuthExceptionMapper>(),
-      globalErrorHandler: sl<GlobalErrorHandler>(),
-      featureLogger: sl<FeatureLogger>(),
-    ),
-  );
-
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
       sl<SupabaseClient>(),
       sl<GlobalErrorHandler>(),
       sl<UserRoleDataSource>(),
       sl<AuthLoginPolicyService>(),
-      sl<AuthRegisterPrecheckService>(),
       sl<AuthSessionStorageService>(),
       sl<AuthSessionRecoveryService>(),
       sl<FeatureLogger>(),

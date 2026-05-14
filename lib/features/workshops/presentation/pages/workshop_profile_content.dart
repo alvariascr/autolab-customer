@@ -20,20 +20,32 @@ class _WorkshopProfileContent extends StatelessWidget {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 840),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _HeaderSummary(workshop: workshop),
-                      const SizedBox(height: 18),
-                      _ProfileActions(workshop: workshop),
-                      const SizedBox(height: 16),
-                      _DeliverySummary(workshop: workshop),
-                      const SizedBox(height: 18),
-                      _ProductsSection(workshopId: workshop.id),
-                    ],
-                  ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.topCenter,
+                  children: [
+                    Positioned(
+                      top: -44,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: _WorkshopAvatar(workshop: workshop)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 52, 20, 28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _HeaderSummary(workshop: workshop),
+                          const SizedBox(height: 18),
+                          _ProfileActions(workshop: workshop),
+                          const SizedBox(height: 16),
+                          _DeliverySummary(workshop: workshop),
+                          const SizedBox(height: 18),
+                          _ProductsSection(workshopId: workshop.id),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

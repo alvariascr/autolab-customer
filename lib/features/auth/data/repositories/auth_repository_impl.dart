@@ -3,7 +3,6 @@ import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/data/datasources/user_role_data_source.dart';
 import 'package:autolab_customer/features/auth/data/mappers/auth_exception_mapper.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_login_policy_service.dart';
-import 'package:autolab_customer/features/auth/data/services/auth_register_precheck_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_recovery_service.dart';
 import 'package:autolab_customer/features/auth/data/services/auth_session_storage_service.dart';
 import 'package:autolab_customer/features/auth/domain/constants/user_roles.dart';
@@ -20,7 +19,6 @@ class AuthRepositoryImpl implements AuthRepository {
     this.globalErrorHandler,
     this.userRoleDataSource,
     this.authLoginPolicyService,
-    this.authRegisterPrecheckService,
     this.sessionStorageService,
     this.sessionRecoveryService,
     this.featureLogger,
@@ -31,7 +29,6 @@ class AuthRepositoryImpl implements AuthRepository {
   final GlobalErrorHandler globalErrorHandler;
   final UserRoleDataSource userRoleDataSource;
   final AuthLoginPolicyService authLoginPolicyService;
-  final AuthRegisterPrecheckService authRegisterPrecheckService;
   final AuthSessionStorageService sessionStorageService;
   final AuthSessionRecoveryService sessionRecoveryService;
   final FeatureLogger featureLogger;
@@ -96,14 +93,6 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     try {
-      final precheckFailure = await authRegisterPrecheckService.precheck(
-        cleanEmail: cleanEmail,
-        cleanPassword: cleanPassword,
-      );
-      if (precheckFailure != null) {
-        return Left(precheckFailure);
-      }
-
       final response = await client.auth.signUp(
         email: cleanEmail,
         password: cleanPassword,
@@ -115,17 +104,7 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
 
-      final user = response.user;
-      if (user == null) {
-        _logWarning(AuthErrorCatalog.invalidRegisterResponse);
-        return Left(
-          AuthFailure.fromErrorItem(AuthErrorCatalog.invalidRegisterResponse),
-        );
-      }
-
-      return Right(
-        _buildAppUser(id: user.id, email: user.email, role: UserRoles.customer),
-      );
+      return _buildRegisterSuccess(response, cleanEmail);
     } on AuthException catch (error, stackTrace) {
       return _handleRegisterAuthException(error, stackTrace);
     } on AuthFailure catch (failure) {
@@ -283,6 +262,44 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     return Right(_buildAppUser(id: user.id, email: user.email, role: role));
+  }
+
+  Either<Failure, AppUser> _buildRegisterSuccess(
+    AuthResponse response,
+    String cleanEmail,
+  ) {
+    final user = response.user;
+    if (user == null) {
+      _logWarning(AuthErrorCatalog.invalidRegisterResponse);
+      return Left(
+        AuthFailure.fromErrorItem(AuthErrorCatalog.invalidRegisterResponse),
+      );
+    }
+
+    if (_isObfuscatedExistingUser(user)) {
+      featureLogger.warn(
+        feature: 'auth',
+        action: 'register_existing_user_obfuscated',
+        code: AuthErrorCatalog.emailAlreadyRegistered.code,
+        context: {
+          'email': cleanEmail,
+          'uiKey': AuthErrorCatalog.emailAlreadyRegistered.uiKey,
+        },
+      );
+      return Left(
+        AuthFailure.fromErrorItem(AuthErrorCatalog.emailAlreadyRegistered),
+      );
+    }
+
+    featureLogger.info(
+      feature: 'auth',
+      action: 'register_succeeded',
+      context: {'email': cleanEmail, 'userId': user.id},
+    );
+
+    return Right(
+      _buildAppUser(id: user.id, email: user.email, role: UserRoles.customer),
+    );
   }
 
   Future<Either<Failure, AppUser>> _handleLoginAuthException(
@@ -459,6 +476,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String role,
   }) {
     return AppUser(id: id, email: email, role: role);
+  }
+
+  bool _isObfuscatedExistingUser(User user) {
+    final identities = user.identities;
+    return identities != null && identities.isEmpty;
   }
 
   void _logWarning(ErrorItem errorItem) {

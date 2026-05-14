@@ -12,6 +12,7 @@ import '../application/login_form_cubit.dart';
 import '../application/login_form_state.dart';
 import '../application/register_form_cubit.dart';
 import '../application/register_form_state.dart';
+import '../domain/errors/auth_error_catalog.dart';
 import '../repository/auth_repository.dart';
 import 'auth_ui_error_resolver.dart';
 import 'register_card.dart';
@@ -39,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _showLoginError = false;
   bool _isShowingRegister = false;
   bool _dismissEmailConfirmedMessage = false;
+  bool _showRegisterSuccessMessage = false;
 
   bool get _shouldShowInlineLoginError {
     return !_isShowingRegister && _showLoginError;
@@ -73,6 +75,7 @@ class _LoginPageState extends State<LoginPage> {
       _showLoginError = true;
       _isShowingRegister = false;
       _dismissEmailConfirmedMessage = true;
+      _showRegisterSuccessMessage = false;
     });
 
     context.read<LoginFormCubit>().submit(
@@ -88,6 +91,7 @@ class _LoginPageState extends State<LoginPage> {
       _showLoginError = false;
       _isShowingRegister = true;
       _dismissEmailConfirmedMessage = true;
+      _showRegisterSuccessMessage = false;
     });
 
     cardKey.currentState?.toggleCard();
@@ -101,6 +105,7 @@ class _LoginPageState extends State<LoginPage> {
       _showLoginError = false;
       _isShowingRegister = false;
       _dismissEmailConfirmedMessage = true;
+      _showRegisterSuccessMessage = false;
     });
 
     cardKey.currentState?.toggleCard();
@@ -155,39 +160,16 @@ class _LoginPageState extends State<LoginPage> {
             ),
             BlocListener<RegisterFormCubit, RegisterFormState>(
               listener: (context, state) {
-                if (state.status == RegisterFormStatus.error &&
-                    hasAuthFeedback(
-                      message: state.message,
-                      code: state.code,
-                      uiKey: state.uiKey,
-                    )) {
-                  _showErrorSnackBar(
-                    context,
-                    AuthUiErrorResolver.resolve(
-                      l10n: l10n,
-                      code: state.code,
-                      uiKey: state.uiKey,
-                      message: state.message,
-                      remaining: state.remaining,
-                    ),
-                  );
-                }
-
                 if (state.status == RegisterFormStatus.success &&
                     state.userId != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.authRegisterSuccess),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-
                   registerCardKey.currentState?.cleanRegistry();
                   context.read<RegisterFormCubit>().reset();
 
                   setState(() {
                     _showLoginError = false;
                     _isShowingRegister = false;
+                    _dismissEmailConfirmedMessage = true;
+                    _showRegisterSuccessMessage = true;
                   });
 
                   cardKey.currentState?.toggleCard();
@@ -232,7 +214,28 @@ class _LoginPageState extends State<LoginPage> {
                       'true';
               final successMessage = showEmailConfirmedMessage
                   ? l10n.authEmailConfirmedLoginMessage
+                  : _showRegisterSuccessMessage
+                  ? l10n.authRegisterSuccess
                   : null;
+
+              final String? registerErrorMessage =
+                  registerState.status == RegisterFormStatus.error &&
+                      hasAuthFeedback(
+                        message: registerState.message,
+                        code: registerState.code,
+                        uiKey: registerState.uiKey,
+                      )
+                  ? AuthUiErrorResolver.resolve(
+                      l10n: l10n,
+                      code: registerState.code,
+                      uiKey: registerState.uiKey,
+                      message: registerState.message,
+                      remaining: registerState.remaining,
+                    )
+                  : null;
+              final bool isRegisterEmailError = _isRegisterEmailError(
+                registerState,
+              );
 
               return LayoutBuilder(
                 builder: (context, constraints) {
@@ -271,6 +274,12 @@ class _LoginPageState extends State<LoginPage> {
                         cardHeight: cardHeight,
                         logoSize: logoSize,
                         isLoading: isRegisterLoading,
+                        emailErrorMessage: isRegisterEmailError
+                            ? registerErrorMessage
+                            : null,
+                        formErrorMessage: isRegisterEmailError
+                            ? null
+                            : registerErrorMessage,
                         onBackToLogin: () => _goToLoginFromRegister(context),
                         onRegisterRequested:
                             ({
@@ -282,6 +291,7 @@ class _LoginPageState extends State<LoginPage> {
                               setState(() {
                                 _showLoginError = false;
                                 _isShowingRegister = true;
+                                _showRegisterSuccessMessage = false;
                               });
 
                               context.read<RegisterFormCubit>().submit(
@@ -508,5 +518,16 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     );
+  }
+
+  bool _isRegisterEmailError(RegisterFormState state) {
+    final uiKey = state.uiKey;
+    final code = state.code;
+    return uiKey == AuthErrorCatalog.emailAlreadyRegistered.uiKey ||
+        uiKey == AuthErrorCatalog.accountAlreadyExists.uiKey ||
+        uiKey == AuthErrorCatalog.emailNotConfirmedRegister.uiKey ||
+        code == AuthErrorCatalog.emailAlreadyRegistered.code ||
+        code == AuthErrorCatalog.accountAlreadyExists.code ||
+        code == AuthErrorCatalog.emailNotConfirmedRegister.code;
   }
 }
