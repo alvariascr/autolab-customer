@@ -15,6 +15,7 @@ import '../../../products/presentation/widgets/product_image.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/repositories/workshop_repository.dart';
+import '../../domain/services/workshop_today_business_hours_resolver.dart';
 import '../workshop_empty_state_resolver.dart';
 
 part 'workshop_profile_content.dart';

@@ -3,6 +3,9 @@ part of 'workshop_profile_page.dart';
 class _BusinessDetailsSheet extends StatelessWidget {
   const _BusinessDetailsSheet({required this.workshop});
 
+  static const _todayBusinessHoursResolver =
+      WorkshopTodayBusinessHoursResolver();
+
   final Workshop workshop;
 
   @override
@@ -14,12 +17,12 @@ class _BusinessDetailsSheet extends StatelessWidget {
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.92,
-      minChildSize: 0.55,
+      initialChildSize: 0.68,
+      minChildSize: 0.5,
       maxChildSize: 0.96,
       builder: (context, scrollController) {
         return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           child: ListView(
             controller: scrollController,
             padding: EdgeInsets.zero,
@@ -35,6 +38,12 @@ class _BusinessDetailsSheet extends StatelessWidget {
                       onTap: () => Navigator.of(context).pop(),
                     ),
                   ),
+                  const Positioned(
+                    top: 10,
+                    left: 0,
+                    right: 0,
+                    child: Center(child: _SheetDragHandle()),
+                  ),
                 ],
               ),
               Padding(
@@ -45,7 +54,7 @@ class _BusinessDetailsSheet extends StatelessWidget {
                     Text(
                       workshop.name,
                       style: const TextStyle(
-                        color: Color(0xFF181411),
+                        color: _BusinessSheetColors.textPrimary,
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                       ),
@@ -54,7 +63,7 @@ class _BusinessDetailsSheet extends StatelessWidget {
                     Text(
                       categories,
                       style: const TextStyle(
-                        color: Color(0xFF6B5F57),
+                        color: _BusinessSheetColors.textSecondary,
                         fontSize: 16,
                         height: 1.35,
                       ),
@@ -134,21 +143,36 @@ class _BusinessDetailsSheet extends StatelessWidget {
       return l10n.workshopProfileBusinessHoursEmpty;
     }
 
-    final openHour = hours.where((hour) => !hour.isClosed).firstOrNull;
+    final todayHours = _todayBusinessHoursResolver.resolve(hours);
 
-    if (openHour == null) {
+    if (todayHours == null || todayHours.isClosed) {
       return l10n.workshopProfileClosed;
     }
 
-    if (openHour.closeTime.isEmpty) {
+    if (todayHours.closeTime.isEmpty) {
       return l10n.workshopProfileBusinessHoursEmpty;
     }
 
-    return l10n.workshopProfileOpenUntil(_trimTime(openHour.closeTime));
+    return l10n.workshopProfileOpenUntil(_trimTime(todayHours.closeTime));
   }
 
   String _trimTime(String value) {
     return value.length >= 5 ? value.substring(0, 5) : value;
+  }
+}
+
+class _SheetDragHandle extends StatelessWidget {
+  const _SheetDragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: _BusinessSheetColors.handle,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const SizedBox(width: 46, height: 5),
+    );
   }
 }
 
@@ -193,12 +217,14 @@ class _LocationPreview extends StatelessWidget {
             )
           else
             DecoratedBox(
-              decoration: const BoxDecoration(color: Color(0xFFE8EEF3)),
+              decoration: const BoxDecoration(
+                color: _BusinessSheetColors.mapFallback,
+              ),
               child: Center(
                 child: Icon(
                   Icons.location_on_outlined,
                   size: 64,
-                  color: Color(0xFF6B5F57),
+                  color: _BusinessSheetColors.textSecondary,
                 ),
               ),
             ),
@@ -240,7 +266,7 @@ class _LocationPreview extends StatelessWidget {
                         Text(
                           l10n.workshopProfileDirectionsAction,
                           style: const TextStyle(
-                            color: Color(0xFF181411),
+                            color: _BusinessSheetColors.textPrimary,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -277,7 +303,7 @@ class _LocationPreview extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFF181411),
+                    color: _BusinessSheetColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -308,7 +334,7 @@ class _InfoListRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 30, color: const Color(0xFF6B5F57)),
+        Icon(icon, size: 30, color: _BusinessSheetColors.textSecondary),
         const SizedBox(width: 18),
         Expanded(
           child: Column(
@@ -317,7 +343,7 @@ class _InfoListRow extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Color(0xFF181411),
+                  color: _BusinessSheetColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   height: 1.25,
@@ -328,7 +354,7 @@ class _InfoListRow extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: const TextStyle(
-                    color: Color(0xFF6B5F57),
+                    color: _BusinessSheetColors.textSecondary,
                     fontSize: 16,
                     height: 1.35,
                   ),
@@ -339,9 +365,19 @@ class _InfoListRow extends StatelessWidget {
         ),
         if (trailing != null) ...[
           const SizedBox(width: 12),
-          Icon(trailing, size: 28, color: const Color(0xFF9A9A9A)),
+          Icon(trailing, size: 28, color: _BusinessSheetColors.iconMuted),
         ],
       ],
     );
   }
+}
+
+class _BusinessSheetColors {
+  const _BusinessSheetColors._();
+
+  static const textPrimary = Color(0xFF181411);
+  static const textSecondary = Color(0xFF6B5F57);
+  static const iconMuted = Color(0xFF9A9A9A);
+  static const mapFallback = Color(0xFFE8EEF3);
+  static const handle = Color(0xCCFFFFFF);
 }
