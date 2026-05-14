@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/location/current_location.dart';
@@ -20,7 +22,9 @@ class MapCubit extends Cubit<MapState> {
     this._productRepository,
     this._featureLogger, {
     WorkshopDiscoveryQueryStore? queryStore,
+    Duration queryDebounceDuration = const Duration(milliseconds: 300),
   }) : _queryStore = queryStore,
+       _queryDebounceDuration = queryDebounceDuration,
        super(const MapInitial()) {
     _queryStore?.addListener(_handleQueryChanged);
   }
@@ -29,6 +33,7 @@ class MapCubit extends Cubit<MapState> {
   final ProductRepository _productRepository;
   final FeatureLogger _featureLogger;
   final WorkshopDiscoveryQueryStore? _queryStore;
+  final Duration _queryDebounceDuration;
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
   static const _proximityFilter = WorkshopProximityFilter();
   static const _textSearchFilter = WorkshopTextSearchFilter();
@@ -40,14 +45,32 @@ class MapCubit extends Cubit<MapState> {
   CurrentLocation? _lastUserLocation;
   bool _isLoadingProducts = false;
   bool _hasLoadedProducts = false;
+  int _currentLoadToken = 0;
+  Timer? _queryDebounce;
 
   @override
   Future<void> close() {
+    _queryDebounce?.cancel();
     _queryStore?.removeListener(_handleQueryChanged);
     return super.close();
   }
 
   void _handleQueryChanged() {
+    if (isClosed) {
+      return;
+    }
+
+    _queryDebounce?.cancel();
+
+    if (_queryDebounceDuration == Duration.zero) {
+      _emitQueryResults();
+      return;
+    }
+
+    _queryDebounce = Timer(_queryDebounceDuration, _emitQueryResults);
+  }
+
+  void _emitQueryResults() {
     if (isClosed) {
       return;
     }
@@ -66,6 +89,8 @@ class MapCubit extends Cubit<MapState> {
       return;
     }
 
+    final loadToken = ++_currentLoadToken;
+
     _lastUserLocation = userLocation;
     _featureLogger.info(
       feature: 'map',
@@ -79,7 +104,7 @@ class MapCubit extends Cubit<MapState> {
 
     final result = await _repository.getWorkshops();
 
-    if (isClosed) {
+    if (isClosed || loadToken != _currentLoadToken) {
       return;
     }
 
@@ -107,7 +132,7 @@ class MapCubit extends Cubit<MapState> {
       (workshops) {
         _allWorkshops = workshops;
         final nearbyWorkshops = _emitLoaded(workshops, userLocation);
-        _loadProductsIfNeeded();
+        unawaited(_loadProductsIfNeeded());
 
         _featureLogger.info(
           feature: 'map',
@@ -174,12 +199,10 @@ class MapCubit extends Cubit<MapState> {
     List<Workshop> workshopResults,
     List<WorkshopProductSearchResult> productResults,
   ) {
-    final byId = <String, Workshop>{
+    return {
       for (final result in productResults) result.workshop.id: result.workshop,
       for (final workshop in workshopResults) workshop.id: workshop,
-    };
-
-    return byId.values.toList(growable: false);
+    }.values.toList(growable: false);
   }
 
   Future<void> _loadProductsIfNeeded() async {

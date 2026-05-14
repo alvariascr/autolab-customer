@@ -67,6 +67,7 @@ void main() {
         productRepository,
         featureLogger,
         queryStore: queryStore,
+        queryDebounceDuration: Duration.zero,
       );
     });
 
@@ -115,6 +116,112 @@ void main() {
         await expectLater(loadFuture, completes);
       },
     );
+
+    test('emite loading mientras carga talleres por primera vez', () async {
+      final pendingWorkshops = Completer<Either<Failure, List<Workshop>>>();
+      when(
+        () => repository.getWorkshops(),
+      ).thenAnswer((_) => pendingWorkshops.future);
+
+      final loadFuture = cubit.loadWorkshops(_currentLocation);
+
+      expect(cubit.state, const MapLoading());
+
+      pendingWorkshops.complete(const Right(_workshops));
+      await loadFuture;
+    });
+
+    test('aplica debounce al refiltrar por query', () async {
+      final debouncedQueryStore = WorkshopDiscoveryQueryStore();
+      final debouncedCubit = MapCubit(
+        repository,
+        productRepository,
+        featureLogger,
+        queryStore: debouncedQueryStore,
+        queryDebounceDuration: const Duration(milliseconds: 30),
+      );
+
+      addTearDown(debouncedCubit.close);
+
+      await debouncedCubit.loadWorkshops(_currentLocation);
+
+      debouncedQueryStore.setQuery('frenos');
+
+      expect(
+        (debouncedCubit.state as MapLoaded).workshops.map(
+          (workshop) => workshop.name,
+        ),
+        ['Autolab Escazu', 'Frenos Heredia'],
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect(
+        (debouncedCubit.state as MapLoaded).workshops.map(
+          (workshop) => workshop.name,
+        ),
+        ['Frenos Heredia'],
+      );
+    });
+
+    test('solo aplica el ultimo query durante el debounce', () async {
+      final debouncedQueryStore = WorkshopDiscoveryQueryStore();
+      final debouncedCubit = MapCubit(
+        repository,
+        productRepository,
+        featureLogger,
+        queryStore: debouncedQueryStore,
+        queryDebounceDuration: const Duration(milliseconds: 30),
+      );
+
+      addTearDown(debouncedCubit.close);
+
+      await debouncedCubit.loadWorkshops(_currentLocation);
+
+      debouncedQueryStore.setQuery('auto');
+      debouncedQueryStore.setQuery('frenos');
+
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+
+      expect((debouncedCubit.state as MapLoaded).query, 'frenos');
+      expect(
+        (debouncedCubit.state as MapLoaded).workshops.map(
+          (workshop) => workshop.name,
+        ),
+        ['Frenos Heredia'],
+      );
+    });
+
+    test('ignora respuestas viejas cuando hay cargas concurrentes', () async {
+      final firstLoad = Completer<Either<Failure, List<Workshop>>>();
+      final secondLoad = Completer<Either<Failure, List<Workshop>>>();
+      var callIndex = 0;
+
+      when(() => repository.getWorkshops()).thenAnswer((_) {
+        callIndex += 1;
+        return callIndex == 1 ? firstLoad.future : secondLoad.future;
+      });
+
+      final firstFuture = cubit.loadWorkshops(_currentLocation);
+      final secondFuture = cubit.loadWorkshops(_currentLocation);
+
+      secondLoad.complete(const Right([_updatedWorkshop]));
+      await secondFuture;
+
+      expect(cubit.state, isA<MapLoaded>());
+      expect(
+        (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
+        ['Taller Actualizado'],
+      );
+
+      firstLoad.complete(const Right(_workshops));
+      await firstFuture;
+
+      expect(
+        (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
+        ['Taller Actualizado'],
+      );
+    });
   });
 }
 
@@ -155,3 +262,15 @@ const _workshops = [
     deliveryRadiusKm: 2,
   ),
 ];
+
+const _updatedWorkshop = Workshop(
+  id: '4',
+  name: 'Taller Actualizado',
+  description: 'Carga mas reciente',
+  locationAddress: 'San Jose',
+  avatarUrl: '',
+  coverUrl: '',
+  latitude: 9.9330,
+  longitude: -84.0800,
+  deliveryRadiusKm: 8,
+);
