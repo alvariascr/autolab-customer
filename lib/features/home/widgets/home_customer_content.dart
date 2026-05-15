@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/location/location_cubit.dart';
 import '../../../core/location/location_state.dart';
+import '../../products/domain/repositories/product_repository.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
 import '../../workshops/domain/services/workshop_search_location_resolver.dart';
 import '../../workshops/presentation/workshop_empty_state_resolver.dart';
+import '../application/recent_searches_store.dart';
 import 'delivery_location_card.dart';
 import 'search_bar_overlay.dart';
 import 'workshops_section.dart';
@@ -25,6 +27,8 @@ class HomeCustomerContent extends StatelessWidget {
     required this.onSearchClose,
     this.onSearchQueryChanged,
     this.workshopFailure,
+    this.productRepository,
+    this.recentSearchesStore,
   });
 
   final List<Workshop> workshops;
@@ -35,6 +39,8 @@ class HomeCustomerContent extends StatelessWidget {
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
   final VoidCallback onSearchClose;
+  final ProductRepository? productRepository;
+  final RecentSearchesStore? recentSearchesStore;
   final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
 
@@ -86,6 +92,8 @@ class HomeCustomerContent extends StatelessWidget {
               workshopFailure: workshopFailure,
               onClose: onSearchClose,
               onQueryChanged: onSearchQueryChanged,
+              productRepository: productRepository,
+              recentSearchesStore: recentSearchesStore,
             ),
           ],
         );

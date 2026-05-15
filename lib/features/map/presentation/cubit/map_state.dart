@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/location/current_location.dart';
+import '../../../products/domain/services/workshop_product_search_grouper.dart';
 import '../../../workshops/domain/entities/workshop.dart';
 
 sealed class MapState extends Equatable {
@@ -24,12 +25,16 @@ final class MapLoaded extends MapState {
     this.currentLocation,
     this.isUsingFallbackLocation = false,
     this.query = '',
+    this.productResults = const [],
+    this.isLoadingProductResults = false,
   });
 
   final List<Workshop> workshops;
   final CurrentLocation? currentLocation;
   final bool isUsingFallbackLocation;
   final String query;
+  final List<WorkshopProductSearchResult> productResults;
+  final bool isLoadingProductResults;
 
   @override
   List<Object?> get props => [
@@ -37,6 +42,8 @@ final class MapLoaded extends MapState {
     currentLocation,
     isUsingFallbackLocation,
     query,
+    productResults,
+    isLoadingProductResults,
   ];
 }
 

@@ -54,8 +54,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
     return BlocProvider.value(
       value: _cubit,
       child: Scaffold(
@@ -63,14 +61,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           listener: (context, state) {
             if (state.status != PasswordRecoveryStatus.success) return;
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.authPasswordResetSuccess),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-            context.go('/login');
+            Future<void>.delayed(const Duration(milliseconds: 1200), () {
+              if (!context.mounted) return;
+              context.go('/login');
+            });
           },
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -145,6 +139,9 @@ class _ResetPasswordForm extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final state = context.watch<PasswordRecoveryCubit>().state;
     final isLoading = state.status == PasswordRecoveryStatus.submitting;
+    final successMessage = state.status == PasswordRecoveryStatus.success
+        ? l10n.authPasswordResetSuccess
+        : null;
     final errorMessage =
         state.status == PasswordRecoveryStatus.error &&
             hasAuthFeedback(
@@ -181,6 +178,12 @@ class _ResetPasswordForm extends StatelessWidget {
             const SizedBox(height: 20),
             if (errorMessage != null) ...[
               AuthErrorBanner(message: errorMessage),
+              const SizedBox(height: 15),
+            ] else if (successMessage != null) ...[
+              AuthErrorBanner(
+                message: successMessage,
+                variant: AuthBannerVariant.success,
+              ),
               const SizedBox(height: 15),
             ],
             TextFormField(

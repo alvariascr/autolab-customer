@@ -595,7 +595,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchBarHint.
   ///
   /// In es, this message translates to:
-  /// **'Buscar talleres...'**
+  /// **'Buscar en Autolab'**
   String get searchBarHint;
 
   /// No description provided for @workshopSearchClearTooltip.
@@ -615,6 +615,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Búsquedas recientes'**
   String get workshopSearchRecentTitle;
+
+  /// No description provided for @workshopSearchRecentClearAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar'**
+  String get workshopSearchRecentClearAction;
 
   /// No description provided for @workshopSearchSuggestedTitle.
   ///
@@ -1180,6 +1186,12 @@ abstract class AppLocalizations {
   /// **'Abrir ubicación'**
   String get workshopProfileOpenLocationAction;
 
+  /// No description provided for @workshopProfileDirectionsAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirígete ahí'**
+  String get workshopProfileDirectionsAction;
+
   /// No description provided for @workshopProfileScheduleSoon.
   ///
   /// In es, this message translates to:
@@ -1191,6 +1203,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No fue posible abrir esta acción. Intenta nuevamente.'**
   String get workshopProfileActionError;
+
+  /// No description provided for @workshopProfileDeliveryTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Entrega'**
+  String get workshopProfileDeliveryTab;
+
+  /// No description provided for @workshopProfilePickupTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Para llevar'**
+  String get workshopProfilePickupTab;
 
   /// No description provided for @workshopProfileAboutTitle.
   ///
@@ -1222,6 +1246,12 @@ abstract class AppLocalizations {
   /// **'No disponible'**
   String get workshopProfileHomeServiceUnavailable;
 
+  /// No description provided for @workshopProfileMobileServiceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio móvil'**
+  String get workshopProfileMobileServiceLabel;
+
   /// No description provided for @workshopProfileCoverageTitle.
   ///
   /// In es, this message translates to:
@@ -1233,6 +1263,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{distance} km de radio'**
   String workshopProfileCoverageValue(Object distance);
+
+  /// No description provided for @workshopProfileCoverageAreaSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Área de atención'**
+  String get workshopProfileCoverageAreaSubtitle;
 
   /// No description provided for @workshopProfileCoverageUnavailable.
   ///
@@ -1299,6 +1335,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Cerrado'**
   String get workshopProfileClosed;
+
+  /// No description provided for @workshopProfileOpenUntil.
+  ///
+  /// In es, this message translates to:
+  /// **'Abierto hasta las {time}'**
+  String workshopProfileOpenUntil(Object time);
 
   /// No description provided for @workshopProfileUnknownDay.
   ///
@@ -1432,6 +1474,42 @@ abstract class AppLocalizations {
   /// **'{count} talleres cercanos'**
   String mapTopPillWorkshopsNearby(Object count);
 
+  /// No description provided for @mapSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en Autolab'**
+  String get mapSearchHint;
+
+  /// No description provided for @mapSearchFiltersTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtros'**
+  String get mapSearchFiltersTooltip;
+
+  /// No description provided for @mapSearchClearTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar'**
+  String get mapSearchClearTooltip;
+
+  /// No description provided for @mapFilterOffers.
+  ///
+  /// In es, this message translates to:
+  /// **'Ofertas'**
+  String get mapFilterOffers;
+
+  /// No description provided for @mapFilterService.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio'**
+  String get mapFilterService;
+
+  /// No description provided for @mapFilterTopRated.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor calificado'**
+  String get mapFilterTopRated;
+
   /// No description provided for @mapLoadingTitle.
   ///
   /// In es, this message translates to:
@@ -1533,6 +1611,48 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Este taller está listo para atender solicitudes cerca de tu ubicación.'**
   String get mapSheetFallbackDescription;
+
+  /// No description provided for @mapSheetNearbyWorkshopsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Talleres cerca de ti'**
+  String get mapSheetNearbyWorkshopsTitle;
+
+  /// No description provided for @mapSheetOneResult.
+  ///
+  /// In es, this message translates to:
+  /// **'1 resultado'**
+  String get mapSheetOneResult;
+
+  /// No description provided for @mapSheetResults.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} resultados'**
+  String mapSheetResults(Object count);
+
+  /// No description provided for @mapSheetNoSearchResults.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos talleres para esa búsqueda.'**
+  String get mapSheetNoSearchResults;
+
+  /// No description provided for @mapSheetProductsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos'**
+  String get mapSheetProductsLabel;
+
+  /// No description provided for @mapSheetViewOnMapTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver en mapa'**
+  String get mapSheetViewOnMapTooltip;
+
+  /// No description provided for @mapSheetProductSearchResults.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} resultados para \"{query}\"'**
+  String mapSheetProductSearchResults(Object count, Object query);
 
   /// No description provided for @mapMarkerTooltipWithAddress.
   ///

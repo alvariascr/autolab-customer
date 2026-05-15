@@ -1,6 +1,7 @@
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/features/home/widgets/search_bar_overlay.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
+import 'package:autolab_customer/features/workshops/presentation/widgets/workshop_card.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -20,12 +21,17 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Autolab Escazu'), findsNothing);
-      expect(find.text('Frenos Heredia'), findsNothing);
-      expect(find.text('Búsquedas sugeridas'), findsOneWidget);
+      expect(
+        find.text(
+          'Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(WorkshopCard), findsNothing);
+      expect(find.text('Búsquedas sugeridas'), findsNothing);
       expect(
         find.byKey(const ValueKey('suggested-search-Frenos')),
-        findsOneWidget,
+        findsNothing,
       );
     });
 
@@ -44,7 +50,7 @@ void main() {
         find.byKey(const ValueKey('workshop-search-overlay-field')),
         'frenos',
       );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Frenos Heredia'), findsWidgets);
       expect(find.text('Autolab Escazu'), findsNothing);
@@ -64,12 +70,12 @@ void main() {
         'frenos',
       );
       await tester.testTextInput.receiveAction(TextInputAction.search);
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       await tester.tap(
         find.byKey(const ValueKey('workshop-search-clear-button')),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Búsquedas recientes'), findsOneWidget);
       expect(
@@ -78,7 +84,7 @@ void main() {
       );
 
       await tester.tap(find.byKey(const ValueKey('recent-search-frenos')));
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(controller.text, 'frenos');
       expect(find.text('Frenos Heredia'), findsWidgets);
@@ -99,16 +105,58 @@ void main() {
         find.byKey(const ValueKey('workshop-search-overlay-field')),
         'heredia',
       );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       await tester.tap(
         find.byKey(const ValueKey('workshop-search-clear-button')),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Búsquedas recientes'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('recent-search-heredia')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('permite limpiar todas las busquedas recientes', (
+      tester,
+    ) async {
+      final controller = TextEditingController();
+
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        _buildTestApp(controller: controller, showSearchBar: true),
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey('workshop-search-overlay-field')),
+        'frenos',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(
+        find.byKey(const ValueKey('workshop-search-clear-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('recent-search-frenos')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('recent-search-clear-all-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('recent-search-frenos')), findsNothing);
+      expect(
+        find.text(
+          'Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.',
+        ),
         findsOneWidget,
       );
     });
@@ -201,6 +249,7 @@ const _workshops = [
     latitude: 9.9330,
     longitude: -84.0800,
     deliveryRadiusKm: 8,
+    serviceCategories: ['Mantenimiento'],
   ),
   Workshop(
     id: '2',
@@ -212,5 +261,6 @@ const _workshops = [
     latitude: 9.9340,
     longitude: -84.0810,
     deliveryRadiusKm: 12,
+    serviceCategories: ['Frenos'],
   ),
 ];
