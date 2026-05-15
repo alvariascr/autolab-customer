@@ -224,6 +224,8 @@
   "workshopProfileUnknownDay": "Día no disponible",
   "workshopProfilePaymentMethodsTitle": "Métodos de pago",
   "workshopProfilePaymentMethodsEmpty": "Métodos de pago no disponibles.",
+  "appointmentSelectServiceRequired": "Selecciona un servicio para continuar.",
+  "appointmentSelectDateTimeRequired": "Selecciona un día y una hora.",
   "weekdaySunday": "Domingo",
   "weekdayMonday": "Lunes",
   "weekdayTuesday": "Martes",

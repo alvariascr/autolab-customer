@@ -707,6 +707,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Métodos de pago no disponibles.';
 
   @override
+  String get appointmentSelectServiceRequired =>
+      'Selecciona un servicio para continuar.';
+
+  @override
+  String get appointmentSelectDateTimeRequired =>
+      'Selecciona un día y una hora.';
+
+  @override
   String get weekdaySunday => 'Domingo';
 
   @override

@@ -1318,6 +1318,18 @@ abstract class AppLocalizations {
   /// **'Métodos de pago no disponibles.'**
   String get workshopProfilePaymentMethodsEmpty;
 
+  /// No description provided for @appointmentSelectServiceRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un servicio para continuar.'**
+  String get appointmentSelectServiceRequired;
+
+  /// No description provided for @appointmentSelectDateTimeRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un día y una hora.'**
+  String get appointmentSelectDateTimeRequired;
+
   /// No description provided for @weekdaySunday.
   ///
   /// In es, this message translates to:

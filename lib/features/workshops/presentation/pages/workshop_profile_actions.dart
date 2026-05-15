@@ -21,16 +21,26 @@ class _ProfileActions extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         _ActionPill(
+          key: const ValueKey('workshop-profile-schedule-button'),
           icon: Icons.calendar_month_outlined,
           label: l10n.workshopProfileScheduleAction,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.workshopProfileScheduleSoon)),
-            );
-          },
+          onTap: () => context.push(appointmentRoute(workshop)),
         ),
       ],
     );
+  }
+
+  static String appointmentRoute(Workshop workshop) {
+    return Uri(
+      path: '/workshops/${workshop.id}/appointment',
+      queryParameters: {
+        'name': workshop.name,
+        if (workshop.locationAddress.isNotEmpty)
+          'address': workshop.locationAddress,
+        if (workshop.phone.isNotEmpty) 'phone': workshop.phone,
+        if (workshop.avatarUrl.isNotEmpty) 'avatarUrl': workshop.avatarUrl,
+      },
+    ).toString();
   }
 
   static Future<void> launchPhone(BuildContext context, String phone) async {
@@ -132,6 +142,7 @@ class _PillTab extends StatelessWidget {
 
 class _ActionPill extends StatelessWidget {
   const _ActionPill({
+    super.key,
     required this.icon,
     required this.label,
     required this.onTap,

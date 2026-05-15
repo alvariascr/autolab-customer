@@ -9,6 +9,7 @@ import '../../features/auth/ui/reset_password_page.dart';
 import '../../features/home/home_customer_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
+import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../features/workshops/presentation/pages/workshop_profile_page.dart';
 import 'go_router_refresh_stream.dart';
 
@@ -43,6 +44,18 @@ class AppRouter {
         path: '/workshops/:id',
         builder: (context, state) {
           return WorkshopProfilePage(workshopId: state.pathParameters['id']!);
+        },
+      ),
+      GoRoute(
+        path: '/workshops/:id/appointment',
+        builder: (context, state) {
+          return WorkshopAppointmentPage(
+            workshopId: state.pathParameters['id']!,
+            workshopName: state.uri.queryParameters['name'],
+            workshopAddress: state.uri.queryParameters['address'],
+            workshopPhone: state.uri.queryParameters['phone'],
+            workshopAvatarUrl: state.uri.queryParameters['avatarUrl'],
+          );
         },
       ),
       GoRoute(
