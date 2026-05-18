@@ -130,7 +130,7 @@ class _ProfileHero extends StatelessWidget {
                   icon: Icons.calendar_month_outlined,
                   title: l10n.workshopProfileScheduleAction,
                   onTap: () => rootContext.push(
-                    _ProfileActions.appointmentRoute(workshop),
+                    _ProfileActions.appointmentRoute(workshop.id),
                   ),
                 ),
                 _MenuAction(

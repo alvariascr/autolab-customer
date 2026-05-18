@@ -24,14 +24,14 @@ class _ProfileActions extends StatelessWidget {
           key: const ValueKey('workshop-profile-schedule-button'),
           icon: Icons.calendar_month_outlined,
           label: l10n.workshopProfileScheduleAction,
-          onTap: () => context.push(appointmentRoute(workshop)),
+          onTap: () => context.push(appointmentRoute(workshop.id)),
         ),
       ],
     );
   }
 
-  static String appointmentRoute(Workshop workshop) {
-    return '/workshops/${workshop.id}/appointment';
+  static String appointmentRoute(String workshopId) {
+    return '/workshops/$workshopId/appointment';
   }
 
   static Future<void> launchPhone(BuildContext context, String phone) async {
