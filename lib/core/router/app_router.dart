@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/application/auth_session_cubit.dart';
@@ -43,26 +44,38 @@ class AppRouter {
       GoRoute(
         path: '/workshops/:id',
         builder: (context, state) {
-          return WorkshopProfilePage(workshopId: state.pathParameters['id']!);
+          final workshopId = state.pathParameters['id'];
+
+          if (workshopId == null || workshopId.isEmpty) {
+            return const _InvalidRoutePage();
+          }
+
+          return WorkshopProfilePage(workshopId: workshopId);
         },
       ),
       GoRoute(
         path: '/workshops/:id/appointment',
         builder: (context, state) {
-          return WorkshopAppointmentPage(
-            workshopId: state.pathParameters['id']!,
-            workshopName: state.uri.queryParameters['name'],
-            workshopAddress: state.uri.queryParameters['address'],
-            workshopPhone: state.uri.queryParameters['phone'],
-            workshopAvatarUrl: state.uri.queryParameters['avatarUrl'],
-          );
+          final workshopId = state.pathParameters['id'];
+
+          if (workshopId == null || workshopId.isEmpty) {
+            return const _InvalidRoutePage();
+          }
+
+          return WorkshopAppointmentPage(workshopId: workshopId);
         },
       ),
       GoRoute(
         path: '/search/workshops/:id/products',
         builder: (context, state) {
+          final workshopId = state.pathParameters['id'];
+
+          if (workshopId == null || workshopId.isEmpty) {
+            return const _InvalidRoutePage();
+          }
+
           return WorkshopSearchProductsPage(
-            workshopId: state.pathParameters['id']!,
+            workshopId: workshopId,
             query: state.uri.queryParameters['query'] ?? '',
           );
         },
@@ -115,5 +128,14 @@ class AppRouter {
     }
 
     return null;
+  }
+}
+
+class _InvalidRoutePage extends StatelessWidget {
+  const _InvalidRoutePage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: Text('ID de taller no valido')));
   }
 }

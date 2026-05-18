@@ -7,22 +7,13 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
+import '../../domain/entities/workshop.dart';
+import '../../domain/repositories/workshop_repository.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
-  const WorkshopAppointmentPage({
-    super.key,
-    required this.workshopId,
-    this.workshopName,
-    this.workshopAddress,
-    this.workshopPhone,
-    this.workshopAvatarUrl,
-  });
+  const WorkshopAppointmentPage({super.key, required this.workshopId});
 
   final String workshopId;
-  final String? workshopName;
-  final String? workshopAddress;
-  final String? workshopPhone;
-  final String? workshopAvatarUrl;
 
   @override
   State<WorkshopAppointmentPage> createState() =>
@@ -34,6 +25,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   static const ink = Color(0xFF171717);
   static const muted = Color(0xFF7B828C);
   final _customerFormKey = GlobalKey<FormState>();
+  Workshop? _workshop;
 
   final List<_AppointmentStep> _steps = const [
     _AppointmentStep('Seleccionar tipo de vehiculo', Icons.directions_car),
@@ -72,6 +64,24 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   final List<_SelectedProduct> _selectedProducts = [];
   DateTime? _selectedDate;
   String? _selectedTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkshop();
+  }
+
+  Future<void> _loadWorkshop() async {
+    final result = await sl<WorkshopRepository>().getWorkshopById(
+      widget.workshopId,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    result.fold((_) {}, (workshop) => setState(() => _workshop = workshop));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,23 +247,23 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }
 
   String get _workshopName {
-    final name = widget.workshopName?.trim();
+    final name = _workshop?.name.trim();
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
   }
 
   String get _workshopAddress {
-    final address = widget.workshopAddress?.trim();
+    final address = _workshop?.locationAddress.trim();
     return address == null || address.isEmpty
         ? 'Direccion no registrada'
         : address;
   }
 
   String get _workshopPhone {
-    final phone = widget.workshopPhone?.trim();
+    final phone = _workshop?.phone.trim();
     return phone == null || phone.isEmpty ? 'Telefono no registrado' : phone;
   }
 
-  String get _workshopAvatarUrl => widget.workshopAvatarUrl?.trim() ?? '';
+  String get _workshopAvatarUrl => _workshop?.avatarUrl.trim() ?? '';
 
   void _handleBack() {
     if (_currentStep == 0) {

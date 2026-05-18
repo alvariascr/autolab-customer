@@ -31,16 +31,7 @@ class _ProfileActions extends StatelessWidget {
   }
 
   static String appointmentRoute(Workshop workshop) {
-    return Uri(
-      path: '/workshops/${workshop.id}/appointment',
-      queryParameters: {
-        'name': workshop.name,
-        if (workshop.locationAddress.isNotEmpty)
-          'address': workshop.locationAddress,
-        if (workshop.phone.isNotEmpty) 'phone': workshop.phone,
-        if (workshop.avatarUrl.isNotEmpty) 'avatarUrl': workshop.avatarUrl,
-      },
-    ).toString();
+    return '/workshops/${workshop.id}/appointment';
   }
 
   static Future<void> launchPhone(BuildContext context, String phone) async {
