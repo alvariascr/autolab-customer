@@ -1372,6 +1372,132 @@ abstract class AppLocalizations {
   /// **'Selecciona un día y una hora.'**
   String get appointmentSelectDateTimeRequired;
 
+  /// No description provided for @appointmentStepVehicle.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar tipo de vehículo'**
+  String get appointmentStepVehicle;
+
+  /// No description provided for @appointmentStepWorkshop.
+  ///
+  /// In es, this message translates to:
+  /// **'Taller seleccionado'**
+  String get appointmentStepWorkshop;
+
+  /// No description provided for @appointmentStepService.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar servicio'**
+  String get appointmentStepService;
+
+  /// No description provided for @appointmentStepProducts.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos adicionales'**
+  String get appointmentStepProducts;
+
+  /// No description provided for @appointmentStepDateTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar día y hora'**
+  String get appointmentStepDateTime;
+
+  /// No description provided for @appointmentStepCustomerInfo.
+  ///
+  /// In es, this message translates to:
+  /// **'Información del cliente'**
+  String get appointmentStepCustomerInfo;
+
+  /// No description provided for @appointmentStepConfirmation.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmación'**
+  String get appointmentStepConfirmation;
+
+  /// No description provided for @appointmentStepPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Método de pago'**
+  String get appointmentStepPayment;
+
+  /// No description provided for @appointmentVehicleCar.
+  ///
+  /// In es, this message translates to:
+  /// **'AUTOMÓVIL'**
+  String get appointmentVehicleCar;
+
+  /// No description provided for @appointmentVehicleMotorcycle.
+  ///
+  /// In es, this message translates to:
+  /// **'MOTOCICLETA / CUADRACICLO'**
+  String get appointmentVehicleMotorcycle;
+
+  /// No description provided for @appointmentVehicleLightLoad.
+  ///
+  /// In es, this message translates to:
+  /// **'CARGA LIVIANA'**
+  String get appointmentVehicleLightLoad;
+
+  /// No description provided for @appointmentVehicleTaxi.
+  ///
+  /// In es, this message translates to:
+  /// **'TAXI'**
+  String get appointmentVehicleTaxi;
+
+  /// No description provided for @appointmentVehicleHeavyLoad.
+  ///
+  /// In es, this message translates to:
+  /// **'CARGA PESADA'**
+  String get appointmentVehicleHeavyLoad;
+
+  /// No description provided for @appointmentVehicleBus.
+  ///
+  /// In es, this message translates to:
+  /// **'AUTOBÚS-MICROBÚS'**
+  String get appointmentVehicleBus;
+
+  /// No description provided for @appointmentVehicleSpecialEquipment.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipos Especiales'**
+  String get appointmentVehicleSpecialEquipment;
+
+  /// No description provided for @appointmentVehicleSpecialEquipmentSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No transitan por vías públicas'**
+  String get appointmentVehicleSpecialEquipmentSubtitle;
+
+  /// No description provided for @appointmentVehicleTrailer.
+  ///
+  /// In es, this message translates to:
+  /// **'REMOLQUE-SEMIREMOLQUE'**
+  String get appointmentVehicleTrailer;
+
+  /// No description provided for @appointmentVehiclePublicTransport.
+  ///
+  /// In es, this message translates to:
+  /// **'AUTOBÚS-MICROBÚS TRANSPORTE PÚBLICO'**
+  String get appointmentVehiclePublicTransport;
+
+  /// No description provided for @appointmentProductsSwitchLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesito productos para este servicio'**
+  String get appointmentProductsSwitchLabel;
+
+  /// No description provided for @appointmentProductsOptionalMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes continuar sin agregar productos.'**
+  String get appointmentProductsOptionalMessage;
+
+  /// No description provided for @appointmentProductsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Este taller no tiene productos adicionales disponibles.'**
+  String get appointmentProductsEmpty;
+
   /// No description provided for @weekdaySunday.
   ///
   /// In es, this message translates to:

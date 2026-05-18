@@ -10,6 +10,9 @@ import '../../features/products/data/datasources/product_remote_data_source.dart
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
 import '../../features/products/domain/repositories/product_repository.dart';
+import '../../features/products/domain/usecases/get_additional_products_by_workshop.dart';
+import '../../features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
+import '../../features/workshops/application/appointment_cubit.dart';
 import '../../features/workshops/application/workshop_discovery_query_store.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
@@ -97,11 +100,24 @@ void _registerFeatureDependencies() {
       featureLogger: sl<FeatureLogger>(),
     ),
   );
+  sl.registerLazySingleton<GetSchedulableServicesByWorkshop>(
+    () => GetSchedulableServicesByWorkshop(sl<ProductRepository>()),
+  );
+  sl.registerLazySingleton<GetAdditionalProductsByWorkshop>(
+    () => GetAdditionalProductsByWorkshop(sl<ProductRepository>()),
+  );
   sl.registerLazySingleton<WorkshopDiscoveryQueryStore>(
     WorkshopDiscoveryQueryStore.new,
   );
   sl.registerLazySingleton<RecentSearchesStore>(
     () => SharedPreferencesRecentSearchesStore(sl<SharedPreferences>()),
+  );
+  sl.registerFactory<AppointmentCubit>(
+    () => AppointmentCubit(
+      workshopRepository: sl<WorkshopRepository>(),
+      getSchedulableServices: sl<GetSchedulableServicesByWorkshop>(),
+      getAdditionalProducts: sl<GetAdditionalProductsByWorkshop>(),
+    ),
   );
   sl.registerFactory<MapCubit>(
     () => MapCubit(

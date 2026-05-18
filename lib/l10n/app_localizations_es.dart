@@ -738,6 +738,74 @@ class AppLocalizationsEs extends AppLocalizations {
       'Selecciona un día y una hora.';
 
   @override
+  String get appointmentStepVehicle => 'Seleccionar tipo de vehículo';
+
+  @override
+  String get appointmentStepWorkshop => 'Taller seleccionado';
+
+  @override
+  String get appointmentStepService => 'Seleccionar servicio';
+
+  @override
+  String get appointmentStepProducts => 'Productos adicionales';
+
+  @override
+  String get appointmentStepDateTime => 'Seleccionar día y hora';
+
+  @override
+  String get appointmentStepCustomerInfo => 'Información del cliente';
+
+  @override
+  String get appointmentStepConfirmation => 'Confirmación';
+
+  @override
+  String get appointmentStepPayment => 'Método de pago';
+
+  @override
+  String get appointmentVehicleCar => 'AUTOMÓVIL';
+
+  @override
+  String get appointmentVehicleMotorcycle => 'MOTOCICLETA / CUADRACICLO';
+
+  @override
+  String get appointmentVehicleLightLoad => 'CARGA LIVIANA';
+
+  @override
+  String get appointmentVehicleTaxi => 'TAXI';
+
+  @override
+  String get appointmentVehicleHeavyLoad => 'CARGA PESADA';
+
+  @override
+  String get appointmentVehicleBus => 'AUTOBÚS-MICROBÚS';
+
+  @override
+  String get appointmentVehicleSpecialEquipment => 'Equipos Especiales';
+
+  @override
+  String get appointmentVehicleSpecialEquipmentSubtitle =>
+      'No transitan por vías públicas';
+
+  @override
+  String get appointmentVehicleTrailer => 'REMOLQUE-SEMIREMOLQUE';
+
+  @override
+  String get appointmentVehiclePublicTransport =>
+      'AUTOBÚS-MICROBÚS TRANSPORTE PÚBLICO';
+
+  @override
+  String get appointmentProductsSwitchLabel =>
+      'Necesito productos para este servicio';
+
+  @override
+  String get appointmentProductsOptionalMessage =>
+      'Puedes continuar sin agregar productos.';
+
+  @override
+  String get appointmentProductsEmpty =>
+      'Este taller no tiene productos adicionales disponibles.';
+
+  @override
   String get weekdaySunday => 'Domingo';
 
   @override
