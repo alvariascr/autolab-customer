@@ -718,24 +718,25 @@ class _ServiceSelectionStepState extends State<_ServiceSelectionStep> {
       return const _EmptyServicesMessage();
     }
 
-    return SizedBox(
-      height: _appointmentListHeight(widget.services.length),
-      child: ListView.builder(
-        padding: EdgeInsets.zero,
-        itemCount: widget.services.length,
-        itemBuilder: (context, index) {
-          final service = widget.services[index];
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: widget.services.length,
+      itemBuilder: (context, index) {
+        final service = widget.services[index];
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _ServiceCard(
-              service: service,
-              selected: widget.selectedService?.id == service.id,
-              onTap: () => widget.onSelected(service),
-            ),
-          );
-        },
-      ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: index == widget.services.length - 1 ? 0 : 12,
+          ),
+          child: _ServiceCard(
+            service: service,
+            selected: widget.selectedService?.id == service.id,
+            onTap: () => widget.onSelected(service),
+          ),
+        );
+      },
     );
   }
 }
@@ -978,45 +979,42 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
           else if (widget.products.isEmpty)
             _ProductsInfoMessage(message: l10n.appointmentProductsEmpty)
           else
-            SizedBox(
-              height: _appointmentListHeight(widget.products.length),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: widget.products.length,
-                itemBuilder: (context, index) {
-                  final product = widget.products[index];
-                  AppointmentSelectedProduct? selectedProduct;
-                  for (final item in widget.selectedProducts) {
-                    if (item.product.id == product.id) {
-                      selectedProduct = item;
-                      break;
-                    }
+            ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: widget.products.length,
+              itemBuilder: (context, index) {
+                final product = widget.products[index];
+                AppointmentSelectedProduct? selectedProduct;
+                for (final item in widget.selectedProducts) {
+                  if (item.product.id == product.id) {
+                    selectedProduct = item;
+                    break;
                   }
-                  final selected = selectedProduct != null;
-                  final quantity = selectedProduct?.quantity ?? 0;
+                }
+                final selected = selectedProduct != null;
+                final quantity = selectedProduct?.quantity ?? 0;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _ProductOptionCard(
-                      product: product,
-                      selected: selected,
-                      quantity: quantity,
-                      onTap: () => widget.onProductToggled(product),
-                      onQuantityChanged: (delta) =>
-                          widget.onQuantityChanged(product, delta),
-                    ),
-                  );
-                },
-              ),
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == widget.products.length - 1 ? 0 : 12,
+                  ),
+                  child: _ProductOptionCard(
+                    product: product,
+                    selected: selected,
+                    quantity: quantity,
+                    onTap: () => widget.onProductToggled(product),
+                    onQuantityChanged: (delta) =>
+                        widget.onQuantityChanged(product, delta),
+                  ),
+                );
+              },
             ),
         ],
       ],
     );
   }
-}
-
-double _appointmentListHeight(int itemCount) {
-  return (itemCount * 132.0).clamp(132.0, 560.0).toDouble();
 }
 
 class _ProductOptionCard extends StatelessWidget {
