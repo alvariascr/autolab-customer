@@ -11,6 +11,8 @@ class Product {
     required this.itemType,
     required this.status,
     required this.requiresAppointment,
+    this.isSchedulable = false,
+    this.estimatedDurationHours,
     required this.skuNumber,
     required this.barcode,
     required this.categoryName,
@@ -31,6 +33,8 @@ class Product {
   final String itemType;
   final String status;
   final bool requiresAppointment;
+  final bool isSchedulable;
+  final double? estimatedDurationHours;
   final String skuNumber;
   final String barcode;
   final String categoryName;

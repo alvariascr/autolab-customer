@@ -13,7 +13,9 @@ void main() {
         'barcode': '744100000001',
         'item_type': 'product',
         'status': 'active',
+        'is_schedulable': true,
         'requires_appointment': true,
+        'estimated_duration_hours': '1.5',
         'current_stock': 12,
         'minimum_stock_alert': '3',
         'selling_price': '18500',
@@ -38,6 +40,8 @@ void main() {
       expect(model.workshopName, 'Autolab Escazu');
       expect(model.workshopAvatarUrl, 'https://example.com/avatar.png');
       expect(model.requiresAppointment, isTrue);
+      expect(model.isSchedulable, isTrue);
+      expect(model.estimatedDurationHours, 1.5);
       expect(model.currentStock, 12);
       expect(model.minimumStockAlert, 3);
       expect(model.sellingPrice, 18500);

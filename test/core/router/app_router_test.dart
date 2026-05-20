@@ -1,59 +1,13 @@
-import 'package:autolab_customer/core/logging/feature_logger.dart';
-import 'package:autolab_customer/core/router/app_router.dart';
-import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
+import 'package:autolab_customer/core/router/app_redirect_guard.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../helpers/mock_auth_repository.dart';
-
-class _NoopFeatureLogger extends Fake implements FeatureLogger {
-  @override
-  void info({
-    required String feature,
-    required String action,
-    String? code,
-    Map<String, Object?> context = const {},
-  }) {}
-
-  @override
-  void warn({
-    required String feature,
-    required String action,
-    String? code,
-    Map<String, Object?> context = const {},
-    Object? error,
-    StackTrace? stackTrace,
-  }) {}
-
-  @override
-  void error({
-    required String feature,
-    required String action,
-    String? code,
-    Map<String, Object?> context = const {},
-    Object? error,
-    StackTrace? stackTrace,
-  }) {}
-}
 
 void main() {
-  group('AppRouter.redirectFor', () {
-    late AuthSessionCubit authSessionCubit;
-    late AppRouter appRouter;
+  group('AppRedirectGuard.redirectFor', () {
+    const guard = AppRedirectGuard();
 
-    setUp(() {
-      authSessionCubit = AuthSessionCubit(
-        MockAuthRepository(),
-        _NoopFeatureLogger(),
-      );
-      appRouter = AppRouter(authSessionCubit);
-    });
-
-    tearDown(() async {
-      await authSessionCubit.close();
-    });
-
-    test('permite quedarse en /login cuando no está autenticado', () {
-      final redirect = appRouter.redirectFor(
+    test('permite quedarse en /login cuando no esta autenticado', () {
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.unauthenticated,
         ),
@@ -64,9 +18,9 @@ void main() {
     });
 
     test(
-      'redirige a /login cuando no está autenticado y visita ruta privada',
+      'redirige a /login cuando no esta autenticado y visita ruta privada',
       () {
-        final redirect = appRouter.redirectFor(
+        final redirect = guard.redirectFor(
           authState: const AuthSessionState(
             status: AuthSessionStatus.unauthenticated,
           ),
@@ -77,8 +31,8 @@ void main() {
       },
     );
 
-    test('permite pedir recuperación sin estar autenticado', () {
-      final redirect = appRouter.redirectFor(
+    test('permite pedir recuperacion sin estar autenticado', () {
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.unauthenticated,
         ),
@@ -88,8 +42,8 @@ void main() {
       expect(redirect, isNull);
     });
 
-    test('permite cambiar contraseña durante recovery', () {
-      final redirect = appRouter.redirectFor(
+    test('permite cambiar contrasena durante recovery', () {
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'recovery-user',
@@ -101,8 +55,8 @@ void main() {
       expect(redirect, isNull);
     });
 
-    test('no redirige mientras auth está cargando', () {
-      final redirect = appRouter.redirectFor(
+    test('no redirige mientras auth esta cargando', () {
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(status: AuthSessionStatus.loading),
         location: '/home',
       );
@@ -111,7 +65,7 @@ void main() {
     });
 
     test('redirige customer autenticado de /login a /home-customer', () {
-      final redirect = appRouter.redirectFor(
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'user-1',
@@ -124,7 +78,7 @@ void main() {
     });
 
     test('redirige admin autenticado de /login a /home', () {
-      final redirect = appRouter.redirectFor(
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'user-1',
@@ -137,7 +91,7 @@ void main() {
     });
 
     test('protege /home para customer', () {
-      final redirect = appRouter.redirectFor(
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'user-1',
@@ -150,7 +104,7 @@ void main() {
     });
 
     test('protege /home-customer para admin', () {
-      final redirect = appRouter.redirectFor(
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'user-1',
@@ -163,7 +117,7 @@ void main() {
     });
 
     test('permite la ruta correcta para el rol autenticado', () {
-      final redirect = appRouter.redirectFor(
+      final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'user-1',

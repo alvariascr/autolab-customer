@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location/location_cubit.dart';
+import '../core/theme/app_theme.dart';
 import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
@@ -84,6 +85,7 @@ class _MyAppState extends State<MyApp> {
       ],
       child: MaterialApp.router(
         scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
+        theme: AppTheme.light,
         onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
         routerConfig: widget.router,
         builder: (context, child) {
