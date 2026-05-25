@@ -10,6 +10,7 @@ import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
+import '../../data/datasources/appointment_booking_remote_data_source.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({super.key, required this.workshopId});
@@ -97,7 +98,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           child: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
               isDesktop ? 92 : 28,
-              isDesktop ? 96 : 28,
+              isDesktop ? 96 : 22,
               isDesktop ? 92 : 28,
               32,
             ),
@@ -118,6 +119,8 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           canGoBack: state.currentStep > 0,
           isLastStep: state.currentStep == steps.length - 1,
           isPaymentEntryStep: state.currentStep == steps.length - 2,
+          isSubmitting:
+              state.submitStatus == AppointmentSubmitStatus.submitting,
           onBack: () => context.read<AppointmentCubit>().goBack(),
           onNext: () => _goNextStep(context, state, steps.length),
         ),
@@ -131,15 +134,43 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     required List<_AppointmentStep> steps,
     required bool isDesktop,
   }) {
-    final l10n = AppLocalizations.of(context)!;
-
     switch (state.currentStep) {
       case 0:
         return _VehicleStep(
           title: steps[state.currentStep].title,
-          vehicles: _vehicleTypes(l10n),
-          selectedVehicle: state.selectedVehicle,
-          onSelected: context.read<AppointmentCubit>().selectVehicle,
+          vehicles: state.vehicles,
+          vehiclesStatus: state.vehiclesStatus,
+          selectedVehicleId: state.selectedVehicleId,
+          licensePlate: state.vehicleLicensePlate,
+          vehicleType: state.vehicleType,
+          brand: state.vehicleBrand,
+          model: state.vehicleModel,
+          year: state.vehicleYear,
+          color: state.vehicleColor,
+          fuelType: state.vehicleFuelType,
+          transmissionType: state.vehicleTransmissionType,
+          onExistingVehicleSelected: context
+              .read<AppointmentCubit>()
+              .selectExistingVehicle,
+          onNewVehicleSelected: context
+              .read<AppointmentCubit>()
+              .startNewVehicle,
+          onLicensePlateChanged: context
+              .read<AppointmentCubit>()
+              .updateVehicleLicensePlate,
+          onVehicleTypeChanged: context
+              .read<AppointmentCubit>()
+              .updateVehicleType,
+          onBrandChanged: context.read<AppointmentCubit>().updateVehicleBrand,
+          onModelChanged: context.read<AppointmentCubit>().updateVehicleModel,
+          onYearChanged: context.read<AppointmentCubit>().updateVehicleYear,
+          onColorChanged: context.read<AppointmentCubit>().updateVehicleColor,
+          onFuelTypeChanged: context
+              .read<AppointmentCubit>()
+              .updateVehicleFuelType,
+          onTransmissionTypeChanged: context
+              .read<AppointmentCubit>()
+              .updateVehicleTransmissionType,
           isDesktop: isDesktop,
         );
       case 1:
@@ -190,6 +221,8 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             selectedDate: state.selectedDate,
             selectedTime: state.selectedTime,
             focusedDate: state.focusedDate ?? DateTime.utc(2026, 5, 1),
+            unavailableDates: state.unavailableDates,
+            unavailableTimesByDate: state.unavailableTimesByDate,
             onDaySelected: context.read<AppointmentCubit>().selectDate,
             onFocusedDateChanged: context.read<AppointmentCubit>().focusDate,
             onSelected: context.read<AppointmentCubit>().selectTime,
@@ -208,7 +241,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           child: _ConfirmationMock(
             workshopName: _workshopName(state),
             service: state.selectedService,
-            vehicle: state.selectedVehicle,
+            licensePlate: state.vehicleLicensePlate,
             products: state.selectedProducts,
             date: state.selectedDate,
             time: state.selectedTime ?? '9:00 AM',
@@ -256,31 +289,92 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     context.read<AppointmentCubit>().goBack();
   }
 
-  void _goNextStep(
+  Future<void> _goNextStep(
     BuildContext context,
     AppointmentState state,
     int stepCount,
-  ) {
+  ) async {
     final l10n = AppLocalizations.of(context)!;
 
     if (state.currentStep == stepCount - 1) {
-      context.pop();
+      final cubit = context.read<AppointmentCubit>();
+      final appointmentId = await cubit.submitBooking();
+
+      if (!context.mounted) {
+        return;
+      }
+
+      final submitState = cubit.state;
+      if (appointmentId != null) {
+        _showAppointmentMessage(
+          context,
+          message: l10n.appointmentCreatedSuccess,
+          type: _AppointmentMessageType.success,
+        );
+        context.pop();
+      } else {
+        _showAppointmentMessage(
+          context,
+          message: _appointmentSubmitErrorMessage(submitState, l10n),
+          type: _AppointmentMessageType.error,
+        );
+      }
       return;
+    }
+
+    if (state.currentStep == 0) {
+      final cubit = context.read<AppointmentCubit>();
+      final isVehicleValid = await cubit.validateVehicleForBooking();
+
+      if (!context.mounted) {
+        return;
+      }
+
+      if (!isVehicleValid) {
+        _showAppointmentMessage(
+          context,
+          message: _appointmentSubmitErrorMessage(cubit.state, l10n),
+          type: _AppointmentMessageType.warning,
+        );
+        return;
+      }
     }
 
     if (state.currentStep == 2 && state.selectedService == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.appointmentSelectServiceRequired)),
+      _showAppointmentMessage(
+        context,
+        message: l10n.appointmentSelectServiceRequired,
+        type: _AppointmentMessageType.warning,
       );
       return;
     }
 
-    if (state.currentStep == 4 &&
-        (state.selectedDate == null || state.selectedTime == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.appointmentSelectDateTimeRequired)),
-      );
-      return;
+    if (state.currentStep == 4) {
+      if (state.selectedDate == null || state.selectedTime == null) {
+        _showAppointmentMessage(
+          context,
+          message: l10n.appointmentSelectDateTimeRequired,
+          type: _AppointmentMessageType.warning,
+        );
+        return;
+      }
+
+      final cubit = context.read<AppointmentCubit>();
+      final isScheduleAvailable = await cubit
+          .validateSelectedScheduleForBooking();
+
+      if (!context.mounted) {
+        return;
+      }
+
+      if (!isScheduleAvailable) {
+        _showAppointmentMessage(
+          context,
+          message: _appointmentSubmitErrorMessage(cubit.state, l10n),
+          type: _AppointmentMessageType.warning,
+        );
+        return;
+      }
     }
 
     if (state.currentStep == 5 &&
@@ -290,11 +384,82 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
     context.read<AppointmentCubit>().goNext();
   }
+
+  void _showAppointmentMessage(
+    BuildContext context, {
+    required String message,
+    required _AppointmentMessageType type,
+  }) {
+    final theme = Theme.of(context);
+    final config = switch (type) {
+      _AppointmentMessageType.success => (
+        icon: Icons.check_circle_outline,
+        color: const Color(0xFF167A3A),
+        background: const Color(0xFFEAF7EF),
+      ),
+      _AppointmentMessageType.warning => (
+        icon: Icons.info_outline,
+        color: const Color(0xFFB26A00),
+        background: const Color(0xFFFFF5DF),
+      ),
+      _AppointmentMessageType.error => (
+        icon: Icons.error_outline,
+        color: _appointmentPrimary(context),
+        background: const Color(0xFFFFECEA),
+      ),
+    };
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          elevation: 4,
+          margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          padding: EdgeInsets.zero,
+          backgroundColor: Colors.transparent,
+          duration: const Duration(seconds: 4),
+          content: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: config.background,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: config.color.withValues(alpha: 0.35)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 14,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(config.icon, color: config.color, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w700,
+                      height: 1.25,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+  }
 }
+
+enum _AppointmentMessageType { success, warning, error }
 
 List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   return [
-    _AppointmentStep(l10n.appointmentStepVehicle, Icons.directions_car),
+    _AppointmentStep(l10n.appointmentStepVehicleInfo, Icons.directions_car),
     _AppointmentStep(l10n.appointmentStepWorkshop, Icons.storefront_outlined),
     _AppointmentStep(l10n.appointmentStepService, Icons.build_circle_outlined),
     _AppointmentStep(l10n.appointmentStepProducts, Icons.inventory_2_outlined),
@@ -308,31 +473,38 @@ List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   ];
 }
 
-List<_VehicleType> _vehicleTypes(AppLocalizations l10n) {
-  return [
-    _VehicleType(
-      l10n.appointmentVehicleCar,
-      Icons.directions_car_filled_outlined,
-    ),
-    _VehicleType(l10n.appointmentVehicleMotorcycle, Icons.two_wheeler_outlined),
-    _VehicleType(
-      l10n.appointmentVehicleLightLoad,
-      Icons.local_shipping_outlined,
-    ),
-    _VehicleType(l10n.appointmentVehicleTaxi, Icons.local_taxi_outlined),
-    _VehicleType(l10n.appointmentVehicleHeavyLoad, Icons.fire_truck_outlined),
-    _VehicleType(l10n.appointmentVehicleBus, Icons.directions_bus_outlined),
-    _VehicleType(
-      l10n.appointmentVehicleSpecialEquipment,
-      Icons.agriculture_outlined,
-      subtitle: l10n.appointmentVehicleSpecialEquipmentSubtitle,
-    ),
-    _VehicleType(l10n.appointmentVehicleTrailer, Icons.rv_hookup_outlined),
-    _VehicleType(
-      l10n.appointmentVehiclePublicTransport,
-      Icons.airport_shuttle_outlined,
-    ),
-  ];
+String _appointmentSubmitErrorMessage(
+  AppointmentState state,
+  AppLocalizations l10n,
+) {
+  return switch (state.submitError) {
+    AppointmentSubmitError.dateUnavailable => l10n.appointmentDateUnavailable,
+    AppointmentSubmitError.scheduleRequired => l10n.appointmentScheduleRequired,
+    AppointmentSubmitError.slotUnavailable => l10n.appointmentSlotUnavailable,
+    AppointmentSubmitError.scheduleValidationFailed =>
+      l10n.appointmentScheduleValidationFailed,
+    AppointmentSubmitError.vehiclePlateRequired =>
+      l10n.appointmentVehiclePlateRequired,
+    AppointmentSubmitError.vehiclePlateConflict =>
+      l10n.appointmentVehiclePlateConflict,
+    AppointmentSubmitError.vehicleValidationFailed =>
+      l10n.appointmentVehicleValidationFailedDetailed,
+    AppointmentSubmitError.bookingIncomplete =>
+      l10n.appointmentBookingIncomplete,
+    AppointmentSubmitError.authRequired => l10n.appointmentAuthRequired,
+    AppointmentSubmitError.dateTimeInPast => l10n.appointmentDateTimeInPast,
+    AppointmentSubmitError.customerNameRequired =>
+      l10n.appointmentCustomerNameRequired,
+    AppointmentSubmitError.customerPhoneRequired =>
+      l10n.appointmentCustomerPhoneRequired,
+    AppointmentSubmitError.serviceNotSchedulable =>
+      l10n.appointmentServiceNotSchedulable,
+    AppointmentSubmitError.vehicleNotOwned => l10n.appointmentVehicleNotOwned,
+    AppointmentSubmitError.vehiclePlateRequiredForBooking =>
+      l10n.appointmentVehiclePlateRequiredForBooking,
+    AppointmentSubmitError.bookingFailed => l10n.appointmentCreateFailed,
+    null => state.submitErrorMessage ?? l10n.appointmentCreateFailed,
+  };
 }
 
 Color _appointmentPrimary(BuildContext context) {
@@ -387,9 +559,11 @@ class _DesktopRail extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Servicio y mantenimiento automotriz',
-            style: TextStyle(color: _WorkshopAppointmentPageState.muted),
+          Text(
+            AppLocalizations.of(
+              context,
+            )!.appointmentWorkshopFallbackDescription,
+            style: const TextStyle(color: _WorkshopAppointmentPageState.muted),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -490,67 +664,47 @@ class _MobileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(color: Colors.white),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: onBack,
-                  icon: Icon(Icons.arrow_back_rounded),
-                ),
-                const SizedBox(width: 8),
-                const _AutolabLogo(),
-              ],
-            ),
-          ),
-          Container(
-            height: 92,
-            color: const Color(0xFFF6F6F6),
-            alignment: Alignment.centerLeft,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 20),
-              scrollDirection: Axis.horizontal,
-              itemCount: steps.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final active = index == currentStep;
+      child: Container(
+        height: 84,
+        color: const Color(0xFFF6F6F6),
+        alignment: Alignment.centerLeft,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 18),
+          scrollDirection: Axis.horizontal,
+          itemCount: steps.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            final active = index == currentStep;
 
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: active ? 20 : 18,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: active
-                          ? _appointmentPrimary(context)
-                          : AppColors.subtleBorder,
-                      width: active ? 2 : 1,
-                    ),
-                  ),
-                  child: Text(
-                    active
-                        ? '${index + 1} ${steps[index].title}'
-                        : '${index + 1}',
-                    style: TextStyle(
-                      color: active
-                          ? _appointmentPrimary(context)
-                          : _WorkshopAppointmentPageState.ink,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: EdgeInsets.symmetric(
+                horizontal: active ? 20 : 18,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: active
+                      ? _appointmentPrimary(context)
+                      : AppColors.subtleBorder,
+                  width: active ? 2 : 1,
+                ),
+              ),
+              child: Text(
+                active ? '${index + 1} ${steps[index].title}' : '${index + 1}',
+                style: TextStyle(
+                  color: active
+                      ? _appointmentPrimary(context)
+                      : _WorkshopAppointmentPageState.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -560,15 +714,51 @@ class _VehicleStep extends StatelessWidget {
   const _VehicleStep({
     required this.title,
     required this.vehicles,
-    required this.selectedVehicle,
-    required this.onSelected,
+    required this.vehiclesStatus,
+    required this.selectedVehicleId,
+    required this.licensePlate,
+    required this.vehicleType,
+    required this.brand,
+    required this.model,
+    required this.year,
+    required this.color,
+    required this.fuelType,
+    required this.transmissionType,
+    required this.onExistingVehicleSelected,
+    required this.onNewVehicleSelected,
+    required this.onLicensePlateChanged,
+    required this.onVehicleTypeChanged,
+    required this.onBrandChanged,
+    required this.onModelChanged,
+    required this.onYearChanged,
+    required this.onColorChanged,
+    required this.onFuelTypeChanged,
+    required this.onTransmissionTypeChanged,
     required this.isDesktop,
   });
 
   final String title;
-  final List<_VehicleType> vehicles;
-  final String? selectedVehicle;
-  final ValueChanged<String> onSelected;
+  final List<AppointmentVehicleRecord> vehicles;
+  final AppointmentLoadStatus vehiclesStatus;
+  final String? selectedVehicleId;
+  final String licensePlate;
+  final String vehicleType;
+  final String brand;
+  final String model;
+  final String year;
+  final String color;
+  final String? fuelType;
+  final String? transmissionType;
+  final ValueChanged<AppointmentVehicleRecord> onExistingVehicleSelected;
+  final VoidCallback onNewVehicleSelected;
+  final ValueChanged<String> onLicensePlateChanged;
+  final ValueChanged<String> onVehicleTypeChanged;
+  final ValueChanged<String> onBrandChanged;
+  final ValueChanged<String> onModelChanged;
+  final ValueChanged<String> onYearChanged;
+  final ValueChanged<String> onColorChanged;
+  final ValueChanged<String?> onFuelTypeChanged;
+  final ValueChanged<String?> onTransmissionTypeChanged;
   final bool isDesktop;
 
   @override
@@ -585,103 +775,523 @@ class _VehicleStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: vehicles.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isDesktop ? 3 : 1,
-            mainAxisExtent: isDesktop ? 64 : 94,
-            mainAxisSpacing: isDesktop ? 6 : 10,
-            crossAxisSpacing: 6,
-          ),
-          itemBuilder: (context, index) {
-            final vehicle = vehicles[index];
-
-            return _VehicleCard(
-              vehicle: vehicle,
-              selected: selectedVehicle == vehicle.title,
-              onTap: () => onSelected(vehicle.title),
-            );
-          },
+        _VehiclePickerStrip(
+          vehicles: vehicles,
+          status: vehiclesStatus,
+          selectedVehicleId: selectedVehicleId,
+          onSelected: onExistingVehicleSelected,
+          onNewVehicle: onNewVehicleSelected,
+        ),
+        const SizedBox(height: 20),
+        _VehicleFormCard(
+          readOnly: selectedVehicleId != null,
+          licensePlate: licensePlate,
+          vehicleType: vehicleType,
+          brand: brand,
+          model: model,
+          year: year,
+          color: color,
+          fuelType: fuelType,
+          transmissionType: transmissionType,
+          onLicensePlateChanged: onLicensePlateChanged,
+          onVehicleTypeChanged: onVehicleTypeChanged,
+          onBrandChanged: onBrandChanged,
+          onModelChanged: onModelChanged,
+          onYearChanged: onYearChanged,
+          onColorChanged: onColorChanged,
+          onFuelTypeChanged: onFuelTypeChanged,
+          onTransmissionTypeChanged: onTransmissionTypeChanged,
         ),
       ],
     );
   }
 }
 
-class _VehicleCard extends StatelessWidget {
-  const _VehicleCard({
+class _VehicleFormCard extends StatelessWidget {
+  const _VehicleFormCard({
+    required this.readOnly,
+    required this.licensePlate,
+    required this.vehicleType,
+    required this.brand,
+    required this.model,
+    required this.year,
+    required this.color,
+    required this.fuelType,
+    required this.transmissionType,
+    required this.onLicensePlateChanged,
+    required this.onVehicleTypeChanged,
+    required this.onBrandChanged,
+    required this.onModelChanged,
+    required this.onYearChanged,
+    required this.onColorChanged,
+    required this.onFuelTypeChanged,
+    required this.onTransmissionTypeChanged,
+  });
+
+  final bool readOnly;
+  final String licensePlate;
+  final String vehicleType;
+  final String brand;
+  final String model;
+  final String year;
+  final String color;
+  final String? fuelType;
+  final String? transmissionType;
+  final ValueChanged<String> onLicensePlateChanged;
+  final ValueChanged<String> onVehicleTypeChanged;
+  final ValueChanged<String> onBrandChanged;
+  final ValueChanged<String> onModelChanged;
+  final ValueChanged<String> onYearChanged;
+  final ValueChanged<String> onColorChanged;
+  final ValueChanged<String?> onFuelTypeChanged;
+  final ValueChanged<String?> onTransmissionTypeChanged;
+
+  static const _vehicleTypeValues = {
+    'car',
+    'motorcycle',
+    'pickup',
+    'suv',
+    'truck',
+    'bus',
+    'trailer',
+    'special_equipment',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: AppColors.border),
+    );
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: _appointmentPrimary(context), width: 2),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          TextFormField(
+            key: ValueKey('plate-$readOnly'),
+            initialValue: licensePlate,
+            readOnly: readOnly,
+            textCapitalization: TextCapitalization.characters,
+            decoration: InputDecoration(
+              labelText: l10n.appointmentVehiclePlateLabel,
+              hintText: 'Ej. ABC123',
+              prefixIcon: const Icon(Icons.confirmation_number_outlined),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: focusedBorder,
+            ),
+            onChanged: onLicensePlateChanged,
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            key: ValueKey('vehicle-type-$vehicleType-$readOnly'),
+            initialValue: _vehicleTypeValues.contains(vehicleType)
+                ? vehicleType
+                : null,
+            decoration: InputDecoration(
+              labelText: l10n.appointmentVehicleTypeLabel,
+              prefixIcon: const Icon(Icons.category_outlined),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: focusedBorder,
+            ),
+            items: [
+              DropdownMenuItem(
+                value: 'car',
+                child: Text(l10n.appointmentVehicleTypeCar),
+              ),
+              DropdownMenuItem(
+                value: 'motorcycle',
+                child: Text(l10n.appointmentVehicleTypeMotorcycle),
+              ),
+              DropdownMenuItem(
+                value: 'pickup',
+                child: Text(l10n.appointmentVehicleTypePickup),
+              ),
+              DropdownMenuItem(
+                value: 'suv',
+                child: Text(l10n.appointmentVehicleTypeSuv),
+              ),
+              DropdownMenuItem(
+                value: 'truck',
+                child: Text(l10n.appointmentVehicleTypeTruck),
+              ),
+              DropdownMenuItem(
+                value: 'bus',
+                child: Text(l10n.appointmentVehicleTypeBus),
+              ),
+              DropdownMenuItem(
+                value: 'trailer',
+                child: Text(l10n.appointmentVehicleTypeTrailer),
+              ),
+              DropdownMenuItem(
+                value: 'special_equipment',
+                child: Text(l10n.appointmentVehicleTypeSpecialEquipment),
+              ),
+            ],
+            onChanged: readOnly
+                ? null
+                : (value) {
+                    if (value != null) {
+                      onVehicleTypeChanged(value);
+                    }
+                  },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            key: ValueKey('brand-$readOnly'),
+            initialValue: brand,
+            readOnly: readOnly,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: l10n.appointmentVehicleBrandLabel,
+              hintText: 'Ej. Toyota',
+              prefixIcon: const Icon(Icons.directions_car_outlined),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: focusedBorder,
+            ),
+            onChanged: onBrandChanged,
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            key: ValueKey('model-$readOnly'),
+            initialValue: model,
+            readOnly: readOnly,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: l10n.appointmentVehicleModelLabel,
+              hintText: 'Ej. Yaris',
+              prefixIcon: const Icon(Icons.badge_outlined),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: focusedBorder,
+            ),
+            onChanged: onModelChanged,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  key: ValueKey('year-$readOnly'),
+                  initialValue: year,
+                  readOnly: readOnly,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: l10n.appointmentVehicleYearLabel,
+                    hintText: 'Ej. 2019',
+                    prefixIcon: const Icon(Icons.calendar_today_outlined),
+                    border: border,
+                    enabledBorder: border,
+                    focusedBorder: focusedBorder,
+                  ),
+                  onChanged: onYearChanged,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  key: ValueKey('color-$readOnly'),
+                  initialValue: color,
+                  readOnly: readOnly,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    labelText: l10n.appointmentVehicleColorLabel,
+                    hintText: 'Ej. Negro',
+                    prefixIcon: const Icon(Icons.palette_outlined),
+                    border: border,
+                    enabledBorder: border,
+                    focusedBorder: focusedBorder,
+                  ),
+                  onChanged: onColorChanged,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            key: ValueKey('fuel-$fuelType-$readOnly'),
+            initialValue: fuelType,
+            decoration: InputDecoration(
+              labelText: l10n.appointmentVehicleFuelLabel,
+              prefixIcon: const Icon(Icons.local_gas_station_outlined),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: focusedBorder,
+            ),
+            items: [
+              DropdownMenuItem(
+                value: 'gasoline',
+                child: Text(l10n.appointmentVehicleFuelGasoline),
+              ),
+              DropdownMenuItem(
+                value: 'diesel',
+                child: Text(l10n.appointmentVehicleFuelDiesel),
+              ),
+              DropdownMenuItem(
+                value: 'electric',
+                child: Text(l10n.appointmentVehicleFuelElectric),
+              ),
+              DropdownMenuItem(
+                value: 'hybrid',
+                child: Text(l10n.appointmentVehicleFuelHybrid),
+              ),
+            ],
+            onChanged: readOnly ? null : onFuelTypeChanged,
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            key: ValueKey('transmission-$transmissionType-$readOnly'),
+            initialValue: transmissionType,
+            decoration: InputDecoration(
+              labelText: l10n.appointmentVehicleTransmissionLabel,
+              prefixIcon: const Icon(Icons.settings_outlined),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: focusedBorder,
+            ),
+            items: [
+              DropdownMenuItem(
+                value: 'manual',
+                child: Text(l10n.appointmentVehicleTransmissionManual),
+              ),
+              DropdownMenuItem(
+                value: 'automatic',
+                child: Text(l10n.appointmentVehicleTransmissionAutomatic),
+              ),
+            ],
+            onChanged: readOnly ? null : onTransmissionTypeChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VehiclePickerStrip extends StatelessWidget {
+  const _VehiclePickerStrip({
+    required this.vehicles,
+    required this.status,
+    required this.selectedVehicleId,
+    required this.onSelected,
+    required this.onNewVehicle,
+  });
+
+  final List<AppointmentVehicleRecord> vehicles;
+  final AppointmentLoadStatus status;
+  final String? selectedVehicleId;
+  final ValueChanged<AppointmentVehicleRecord> onSelected;
+  final VoidCallback onNewVehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (status == AppointmentLoadStatus.loading) {
+      return const SizedBox(
+        height: 126,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.appointmentMyVehiclesTitle,
+                style: const TextStyle(
+                  color: _WorkshopAppointmentPageState.ink,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: onNewVehicle,
+              child: Text(
+                l10n.appointmentNewVehicleAction,
+                style: TextStyle(
+                  color: _appointmentPrimary(context),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (vehicles.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Text(
+              l10n.appointmentNoVehiclesForWorkshop,
+              style: const TextStyle(
+                color: _WorkshopAppointmentPageState.muted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 140,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: vehicles.length + 1,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                if (index == vehicles.length) {
+                  return _NewVehicleCard(onTap: onNewVehicle);
+                }
+
+                final vehicle = vehicles[index];
+                return _ExistingVehicleCard(
+                  vehicle: vehicle,
+                  selected: selectedVehicleId == vehicle.id,
+                  onTap: () => onSelected(vehicle),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ExistingVehicleCard extends StatelessWidget {
+  const _ExistingVehicleCard({
     required this.vehicle,
     required this.selected,
     required this.onTap,
   });
 
-  final _VehicleType vehicle;
+  final AppointmentVehicleRecord vehicle;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppColors.appointmentSelectedBackground : Colors.white,
-      elevation: 1.5,
-      shadowColor: Colors.black38,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: selected ? _appointmentPrimary(context) : AppColors.border,
-              width: selected ? 2 : 1,
+    final title = [
+      vehicle.brand,
+      vehicle.model,
+    ].where((value) => value != null && value.trim().isNotEmpty).join(' ');
+    final subtitle = [
+      vehicle.licensePlate,
+      if (vehicle.year != null) vehicle.year.toString(),
+    ].join(' ');
+
+    return SizedBox(
+      width: 132,
+      child: Material(
+        color: selected
+            ? AppColors.appointmentSelectedBackground
+            : Colors.white,
+        elevation: 1.5,
+        shadowColor: Colors.black26,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: selected
+                    ? _appointmentPrimary(context)
+                    : AppColors.border,
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Icon(
+                    selected
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: selected
+                        ? _appointmentPrimary(context)
+                        : AppColors.muted,
+                    size: 20,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.directions_car_filled_outlined,
+                  color: _appointmentPrimary(context),
+                  size: 28,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title.isEmpty ? vehicle.licensePlate : title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _WorkshopAppointmentPageState.ink,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _WorkshopAppointmentPageState.muted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: _appointmentPrimary(context),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(vehicle.icon, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vehicle.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: _WorkshopAppointmentPageState.ink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    if (vehicle.subtitle != null) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        vehicle.subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: _WorkshopAppointmentPageState.muted,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
+      ),
+    );
+  }
+}
+
+class _NewVehicleCard extends StatelessWidget {
+  const _NewVehicleCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 92,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _appointmentPrimary(context),
+          side: BorderSide(color: _appointmentPrimary(context)),
+          shape: const RoundedRectangleBorder(),
+        ),
+        child: const Icon(Icons.add, size: 34),
       ),
     );
   }
@@ -886,8 +1496,8 @@ class _EmptyServicesMessage extends StatelessWidget {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Este taller no tiene servicios disponibles para agendar.',
-              style: TextStyle(
+              AppLocalizations.of(context)!.appointmentNoSchedulableServices,
+              style: const TextStyle(
                 color: _WorkshopAppointmentPageState.ink,
                 fontSize: 16,
               ),
@@ -1217,23 +1827,24 @@ class _PaymentMethodStep extends StatelessWidget {
   final String selectedMethod;
   final ValueChanged<String> onSelected;
 
-  static const _methods = [
-    _PaymentMethodOption(
-      title: 'Tarjeta',
-      subtitle: 'Pago con tarjeta de credito o debito.',
-      icon: Icons.credit_card_outlined,
-    ),
-    _PaymentMethodOption(
-      title: 'SINPE Movil',
-      subtitle: 'Recibiras las instrucciones para completar el pago.',
-      icon: Icons.phone_android_outlined,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final methods = [
+      _PaymentMethodOption(
+        title: l10n.appointmentPaymentCard,
+        subtitle: l10n.appointmentPaymentCardSubtitle,
+        icon: Icons.credit_card_outlined,
+      ),
+      _PaymentMethodOption(
+        title: l10n.appointmentPaymentSinpe,
+        subtitle: l10n.appointmentPaymentSinpeSubtitle,
+        icon: Icons.phone_android_outlined,
+      ),
+    ];
+
     return Column(
-      children: _methods.map((method) {
+      children: methods.map((method) {
         final selected = selectedMethod == method.title;
 
         return Padding(
@@ -1347,6 +1958,7 @@ class _FooterActions extends StatelessWidget {
     required this.canGoBack,
     required this.isLastStep,
     required this.isPaymentEntryStep,
+    required this.isSubmitting,
     required this.onBack,
     required this.onNext,
   });
@@ -1354,11 +1966,13 @@ class _FooterActions extends StatelessWidget {
   final bool canGoBack;
   final bool isLastStep;
   final bool isPaymentEntryStep;
+  final bool isSubmitting;
   final VoidCallback onBack;
   final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Padding(
@@ -1373,21 +1987,32 @@ class _FooterActions extends StatelessWidget {
                 Expanded(
                   child: _OutlineActionButton(
                     icon: canGoBack ? Icons.chevron_left : Icons.add,
-                    label: canGoBack ? 'ANTERIOR' : 'NUEVO SERVICIO',
-                    onPressed: canGoBack ? onBack : () {},
+                    label: canGoBack
+                        ? l10n.appointmentBackAction
+                        : l10n.appointmentNewServiceAction,
+                    onPressed: isSubmitting
+                        ? null
+                        : canGoBack
+                        ? onBack
+                        : () {},
                   ),
                 ),
                 Expanded(
                   child: _OutlineActionButton(
-                    trailingIcon: isLastStep
+                    trailingIcon: isSubmitting
+                        ? null
+                        : isLastStep
                         ? Icons.check_rounded
                         : Icons.chevron_right,
-                    label: isLastStep
-                        ? 'FINALIZAR'
+                    label: isSubmitting
+                        ? l10n.appointmentCreatingAction
+                        : isLastStep
+                        ? l10n.appointmentFinishAction
                         : isPaymentEntryStep
-                        ? 'PAGAR'
-                        : 'SIGUIENTE',
-                    onPressed: onNext,
+                        ? l10n.appointmentPayAction
+                        : l10n.appointmentNextAction,
+                    onPressed: isSubmitting ? null : onNext,
+                    isLoading: isSubmitting,
                   ),
                 ),
               ],
@@ -1405,12 +2030,14 @@ class _OutlineActionButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.trailingIcon,
+    this.isLoading = false,
   });
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final IconData? icon;
   final IconData? trailingIcon;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -1428,6 +2055,14 @@ class _OutlineActionButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (isLoading) ...[
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+              ],
               if (icon != null) ...[
                 Icon(icon, size: 28),
                 const SizedBox(width: 6),
@@ -1604,6 +2239,8 @@ class _DateTimeMock extends StatelessWidget {
     required this.selectedDate,
     required this.selectedTime,
     required this.focusedDate,
+    required this.unavailableDates,
+    required this.unavailableTimesByDate,
     required this.onDaySelected,
     required this.onFocusedDateChanged,
     required this.onSelected,
@@ -1612,6 +2249,8 @@ class _DateTimeMock extends StatelessWidget {
   final DateTime? selectedDate;
   final String? selectedTime;
   final DateTime focusedDate;
+  final List<DateTime> unavailableDates;
+  final Map<DateTime, Set<String>> unavailableTimesByDate;
   final ValueChanged<DateTime> onDaySelected;
   final ValueChanged<DateTime> onFocusedDateChanged;
   final ValueChanged<String> onSelected;
@@ -1619,84 +2258,17 @@ class _DateTimeMock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const times = [
-      '06:10',
-      '06:15',
-      '06:20',
-      '06:35',
-      '06:40',
-      '06:45',
-      '07:10',
-      '07:15',
-      '07:20',
-      '07:25',
-      '08:05',
-      '08:10',
-      '08:15',
-      '08:20',
-      '08:50',
-      '09:10',
-      '09:15',
-      '09:20',
-      '10:45',
-      '11:10',
-      '11:20',
-      '11:25',
-      '11:40',
-      '11:45',
-      '11:50',
-      '11:55',
+      '07:00',
+      '08:00',
+      '09:00',
+      '10:00',
+      '11:00',
       '12:00',
-      '12:05',
-      '12:15',
-      '12:20',
-      '12:25',
-      '12:30',
-      '12:35',
-      '12:40',
-      '12:45',
-      '12:50',
-      '12:55',
-      '13:10',
-      '13:15',
-      '13:20',
-      '13:25',
-      '13:35',
-      '13:40',
-      '13:45',
-      '13:50',
-      '14:10',
-      '14:15',
-      '14:20',
-      '14:25',
-      '14:35',
-      '14:40',
-      '14:45',
-      '14:50',
-      '15:05',
-      '15:10',
-      '15:15',
-      '15:25',
-      '15:35',
-      '15:45',
-      '15:50',
-      '15:55',
-      '16:05',
-      '16:10',
-      '16:15',
-      '16:20',
-      '16:50',
-      '16:55',
+      '13:00',
+      '14:00',
+      '15:00',
+      '16:00',
       '17:00',
-      '17:05',
-      '17:10',
-      '17:15',
-      '17:50',
-      '17:55',
-      '18:20',
-      '18:25',
-      '19:10',
-      '19:40',
-      '20:00',
     ];
 
     return Column(
@@ -1705,6 +2277,7 @@ class _DateTimeMock extends StatelessWidget {
         _AppointmentCalendar(
           selectedDate: selectedDate,
           focusedDate: focusedDate,
+          unavailableDates: unavailableDates,
           onDaySelected: onDaySelected,
           onFocusedDateChanged: onFocusedDateChanged,
         ),
@@ -1713,11 +2286,27 @@ class _DateTimeMock extends StatelessWidget {
           _AvailableHoursPanel(
             times: times,
             selectedTime: selectedTime,
+            unavailableTimes: _unavailableTimesForSelectedDate(),
             onSelected: onSelected,
           ),
         ],
       ],
     );
+  }
+
+  Set<String> _unavailableTimesForSelectedDate() {
+    final date = selectedDate;
+    if (date == null) {
+      return const {};
+    }
+
+    for (final entry in unavailableTimesByDate.entries) {
+      if (isSameDay(entry.key, date)) {
+        return entry.value;
+      }
+    }
+
+    return const {};
   }
 }
 
@@ -1725,12 +2314,14 @@ class _AppointmentCalendar extends StatelessWidget {
   const _AppointmentCalendar({
     required this.selectedDate,
     required this.focusedDate,
+    required this.unavailableDates,
     required this.onDaySelected,
     required this.onFocusedDateChanged,
   });
 
   final DateTime? selectedDate;
   final DateTime focusedDate;
+  final List<DateTime> unavailableDates;
   final ValueChanged<DateTime> onDaySelected;
   final ValueChanged<DateTime> onFocusedDateChanged;
 
@@ -1739,6 +2330,7 @@ class _AppointmentCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1752,6 +2344,11 @@ class _AppointmentCalendar extends StatelessWidget {
           availableGestures: AvailableGestures.none,
           daysOfWeekHeight: 34,
           rowHeight: 78,
+          enabledDayPredicate: (day) {
+            return !unavailableDates.any(
+              (unavailableDate) => isSameDay(unavailableDate, day),
+            );
+          },
           selectedDayPredicate: (day) =>
               selectedDate != null && isSameDay(day, selectedDate),
           onDaySelected: (selected, focused) {
@@ -1797,7 +2394,7 @@ class _AppointmentCalendar extends StatelessWidget {
               return _TableCalendarDay(day: day);
             },
             disabledBuilder: (context, day, focusedDay) {
-              return _TableCalendarDay(day: day);
+              return _TableCalendarDay(day: day, disabled: true);
             },
             outsideBuilder: (context, day, focusedDay) {
               return _TableCalendarDay(day: day, outside: true);
@@ -1814,9 +2411,16 @@ class _AppointmentCalendar extends StatelessWidget {
           children: [
             _CalendarLegend(
               color: _appointmentPrimary(context),
-              label: 'Dia seleccionado',
+              label: l10n.appointmentSelectedDayLegend,
             ),
-            _CalendarLegend(color: Color(0xFFD9DDE2), label: 'Dia disponible'),
+            _CalendarLegend(
+              color: Color(0xFFD9DDE2),
+              label: l10n.appointmentAvailableDayLegend,
+            ),
+            _CalendarLegend(
+              color: Color(0xFFF2C6C6),
+              label: l10n.appointmentOccupiedDayLegend,
+            ),
           ],
         ),
       ],
@@ -1829,19 +2433,25 @@ class _TableCalendarDay extends StatelessWidget {
     required this.day,
     this.selected = false,
     this.outside = false,
+    this.disabled = false,
   });
 
   final DateTime day;
   final bool selected;
   final bool outside;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = selected
+    final backgroundColor = disabled
+        ? const Color(0xFFFFF3F3)
+        : selected
         ? _appointmentPrimary(context)
         : Colors.white;
     final textColor = selected
         ? Colors.white
+        : disabled
+        ? const Color(0xFFC96B6B)
         : outside
         ? AppColors.disabledBorder
         : day.weekday == DateTime.saturday || day.weekday == DateTime.sunday
@@ -1861,6 +2471,7 @@ class _TableCalendarDay extends StatelessWidget {
           color: textColor,
           fontSize: 20,
           fontWeight: selected ? FontWeight.w900 : FontWeight.w500,
+          decoration: disabled ? TextDecoration.lineThrough : null,
         ),
       ),
     );
@@ -1896,15 +2507,18 @@ class _AvailableHoursPanel extends StatelessWidget {
   const _AvailableHoursPanel({
     required this.times,
     required this.selectedTime,
+    required this.unavailableTimes,
     required this.onSelected,
   });
 
   final List<String> times;
   final String? selectedTime;
+  final Set<String> unavailableTimes;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -1927,7 +2541,7 @@ class _AvailableHoursPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Horas disponibles',
+                  l10n.appointmentAvailableHoursTitle,
                   style: TextStyle(
                     color: _appointmentPrimary(context),
                     fontSize: 22,
@@ -1939,11 +2553,11 @@ class _AvailableHoursPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 22),
-          const Padding(
-            padding: EdgeInsets.only(left: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
             child: Text(
-              'AUTOMOVIL:',
-              style: TextStyle(
+              '${l10n.appointmentVehicleTypeCar.toUpperCase()}:',
+              style: const TextStyle(
                 color: _WorkshopAppointmentPageState.ink,
                 fontWeight: FontWeight.w600,
               ),
@@ -1955,22 +2569,29 @@ class _AvailableHoursPanel extends StatelessWidget {
             runSpacing: 7,
             children: times.map((time) {
               final selected = selectedTime == time;
+              final unavailable = unavailableTimes.contains(time);
 
               return SizedBox(
                 width: 60,
                 height: 40,
                 child: OutlinedButton(
-                  onPressed: () => onSelected(time),
+                  onPressed: unavailable ? null : () => onSelected(time),
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    backgroundColor: selected
+                    backgroundColor: unavailable
+                        ? const Color(0xFFF1F1F1)
+                        : selected
                         ? _appointmentPrimary(context)
                         : Colors.white,
-                    foregroundColor: selected
+                    foregroundColor: unavailable
+                        ? AppColors.disabledIcon
+                        : selected
                         ? Colors.white
                         : const Color(0xFF344050),
                     side: BorderSide(
-                      color: selected
+                      color: unavailable
+                          ? AppColors.disabledBorder
+                          : selected
                           ? _appointmentPrimary(context)
                           : const Color(0xFF555555),
                     ),
@@ -2059,7 +2680,7 @@ class _ConfirmationMock extends StatelessWidget {
   const _ConfirmationMock({
     required this.workshopName,
     required this.service,
-    required this.vehicle,
+    required this.licensePlate,
     required this.products,
     required this.date,
     required this.time,
@@ -2067,15 +2688,16 @@ class _ConfirmationMock extends StatelessWidget {
 
   final String workshopName;
   final Product? service;
-  final String? vehicle;
+  final String licensePlate;
   final List<AppointmentSelectedProduct> products;
   final DateTime? date;
   final String time;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final dayLabel = date == null
-        ? 'fecha pendiente'
+        ? l10n.appointmentPendingDate
         : '${date!.day} de ${_monthName(date!.month)} ${date!.year}';
     final servicePrice = service?.sellingPrice ?? 0;
     final productsTotal = products.fold<double>(
@@ -2123,10 +2745,10 @@ class _ConfirmationMock extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Cita lista para confirmar',
-                      style: TextStyle(
+                      l10n.appointmentConfirmationReadyTitle,
+                      style: const TextStyle(
                         color: _WorkshopAppointmentPageState.ink,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -2137,20 +2759,28 @@ class _ConfirmationMock extends StatelessWidget {
               ),
               const SizedBox(height: 22),
               _SummaryRow(
-                label: 'Vehiculo',
-                value: vehicle ?? 'Vehiculo pendiente',
+                label: l10n.appointmentVehiclePlateLabel,
+                value: licensePlate.trim().isEmpty
+                    ? l10n.appointmentPendingPlate
+                    : licensePlate.trim().toUpperCase(),
               ),
-              _SummaryRow(label: 'Taller', value: workshopName),
               _SummaryRow(
-                label: 'Servicio',
-                value: service?.name ?? 'Servicio pendiente',
+                label: l10n.appointmentWorkshopLabel,
+                value: workshopName,
+              ),
+              _SummaryRow(
+                label: l10n.appointmentServiceLabel,
+                value: service?.name ?? l10n.appointmentPendingService,
                 trailing: formatProductPrice(service?.sellingPrice),
               ),
-              _SummaryRow(label: 'Fecha', value: '$dayLabel, $time'),
+              _SummaryRow(
+                label: l10n.appointmentDateLabel,
+                value: '$dayLabel, $time',
+              ),
               const Divider(height: 28, color: AppColors.border),
-              const Text(
-                'Productos',
-                style: TextStyle(
+              Text(
+                l10n.appointmentProductsLabel,
+                style: const TextStyle(
                   color: _WorkshopAppointmentPageState.ink,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -2158,9 +2788,9 @@ class _ConfirmationMock extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               if (products.isEmpty)
-                const Text(
-                  'Sin productos adicionales.',
-                  style: TextStyle(
+                Text(
+                  l10n.appointmentNoAdditionalProducts,
+                  style: const TextStyle(
                     color: _WorkshopAppointmentPageState.muted,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -2170,16 +2800,16 @@ class _ConfirmationMock extends StatelessWidget {
                 ...products.map((item) => _ProductSummaryRow(item: item)),
               const Divider(height: 30, color: AppColors.border),
               _SummaryRow(
-                label: 'Total a pagar',
+                label: l10n.appointmentTotalToPayLabel,
                 value: hasPricelessItems
-                    ? 'Por confirmar'
+                    ? l10n.appointmentPriceToConfirm
                     : formatProductPrice(total),
                 emphasize: true,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Recibiras los detalles por correo o WhatsApp.',
-                style: TextStyle(
+              Text(
+                l10n.appointmentConfirmationDeliveryMessage,
+                style: const TextStyle(
                   color: _WorkshopAppointmentPageState.muted,
                   fontSize: 15,
                   height: 1.35,
@@ -2304,7 +2934,9 @@ class _ProductSummaryRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            subtotal == null ? 'Por confirmar' : formatProductPrice(subtotal),
+            subtotal == null
+                ? AppLocalizations.of(context)!.appointmentPriceToConfirm
+                : formatProductPrice(subtotal),
             style: TextStyle(
               color: _WorkshopAppointmentPageState.ink,
               fontSize: 16,
@@ -2387,12 +3019,4 @@ class _AppointmentStep {
 
   final String title;
   final IconData icon;
-}
-
-class _VehicleType {
-  const _VehicleType(this.title, this.icon, {this.subtitle});
-
-  final String title;
-  final IconData icon;
-  final String? subtitle;
 }

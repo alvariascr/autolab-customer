@@ -14,6 +14,7 @@ import '../../features/products/domain/usecases/get_additional_products_by_works
 import '../../features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import '../../features/workshops/application/appointment_cubit.dart';
 import '../../features/workshops/application/workshop_discovery_query_store.dart';
+import '../../features/workshops/data/datasources/appointment_booking_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../../features/workshops/data/repositories/workshop_repository_impl.dart';
@@ -83,6 +84,9 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<WorkshopRemoteDataSource>(
     () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),
   );
+  sl.registerLazySingleton<AppointmentBookingRemoteDataSource>(
+    () => SupabaseAppointmentBookingRemoteDataSource(sl<SupabaseClient>()),
+  );
   sl.registerLazySingleton<WorkshopRepository>(
     () => WorkshopRepositoryImpl(
       remoteDataSource: sl<WorkshopRemoteDataSource>(),
@@ -117,6 +121,7 @@ void _registerFeatureDependencies() {
       workshopRepository: sl<WorkshopRepository>(),
       getSchedulableServices: sl<GetSchedulableServicesByWorkshop>(),
       getAdditionalProducts: sl<GetAdditionalProductsByWorkshop>(),
+      bookingRemoteDataSource: sl<AppointmentBookingRemoteDataSource>(),
     ),
   );
   sl.registerFactory<MapCubit>(
