@@ -10,7 +10,7 @@ import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
-import '../../data/datasources/appointment_booking_remote_data_source.dart';
+import '../../domain/entities/appointment_vehicle.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({super.key, required this.workshopId});

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/entities/appointment_vehicle.dart';
+
 abstract class AppointmentBookingRemoteDataSource {
   Future<List<AppointmentVehicleRecord>> getCustomerVehicles({
     required String workshopId,
@@ -38,44 +40,6 @@ abstract class AppointmentBookingRemoteDataSource {
   });
 }
 
-class AppointmentVehicleRecord {
-  const AppointmentVehicleRecord({
-    required this.id,
-    required this.licensePlate,
-    this.vehicleType,
-    this.brand,
-    this.model,
-    this.year,
-    this.color,
-    this.fuelType,
-    this.transmissionType,
-  });
-
-  factory AppointmentVehicleRecord.fromMap(Map<String, dynamic> map) {
-    return AppointmentVehicleRecord(
-      id: map['id']?.toString() ?? '',
-      licensePlate: map['license_plate']?.toString() ?? '',
-      vehicleType: map['vehicle_type']?.toString(),
-      brand: map['brand']?.toString(),
-      model: map['model']?.toString(),
-      year: map['year'] is int ? map['year'] as int : null,
-      color: map['color']?.toString(),
-      fuelType: map['fuel_type']?.toString(),
-      transmissionType: map['transmission_type']?.toString(),
-    );
-  }
-
-  final String id;
-  final String licensePlate;
-  final String? vehicleType;
-  final String? brand;
-  final String? model;
-  final int? year;
-  final String? color;
-  final String? fuelType;
-  final String? transmissionType;
-}
-
 class SupabaseAppointmentBookingRemoteDataSource
     implements AppointmentBookingRemoteDataSource {
   const SupabaseAppointmentBookingRemoteDataSource(this.client);
@@ -112,9 +76,7 @@ class SupabaseAppointmentBookingRemoteDataSource
         .eq('customers.workshop_id', workshopId)
         .order('updated_at', ascending: false);
 
-    return response
-        .map((item) => AppointmentVehicleRecord.fromMap(item))
-        .toList();
+    return response.map((item) => _appointmentVehicleFromMap(item)).toList();
   }
 
   @override
@@ -140,7 +102,7 @@ class SupabaseAppointmentBookingRemoteDataSource
       return null;
     }
 
-    return AppointmentVehicleRecord.fromMap(response);
+    return _appointmentVehicleFromMap(response);
   }
 
   @override
@@ -218,4 +180,18 @@ class SupabaseAppointmentBookingRemoteDataSource
 
     return response.toString();
   }
+}
+
+AppointmentVehicleRecord _appointmentVehicleFromMap(Map<String, dynamic> map) {
+  return AppointmentVehicleRecord(
+    id: map['id']?.toString() ?? '',
+    licensePlate: map['license_plate']?.toString() ?? '',
+    vehicleType: map['vehicle_type']?.toString(),
+    brand: map['brand']?.toString(),
+    model: map['model']?.toString(),
+    year: map['year'] is int ? map['year'] as int : null,
+    color: map['color']?.toString(),
+    fuelType: map['fuel_type']?.toString(),
+    transmissionType: map['transmission_type']?.toString(),
+  );
 }

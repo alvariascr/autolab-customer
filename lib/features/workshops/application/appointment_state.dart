@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../products/domain/entities/product.dart';
-import '../data/datasources/appointment_booking_remote_data_source.dart';
+import '../domain/entities/appointment_vehicle.dart';
 import '../domain/entities/workshop.dart';
 
 enum AppointmentLoadStatus { initial, loading, success, failure }

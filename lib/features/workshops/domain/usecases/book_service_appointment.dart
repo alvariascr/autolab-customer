@@ -1,0 +1,39 @@
+import '../repositories/appointment_booking_repository.dart';
+
+class BookServiceAppointment {
+  const BookServiceAppointment(this._repository);
+
+  final AppointmentBookingRepository _repository;
+
+  Future<String> call({
+    required String workshopId,
+    required String inventoryItemId,
+    required DateTime scheduledDateTime,
+    String? note,
+    String? vehicleId,
+    String? licensePlate,
+    String? vehicleType,
+    String? vehicleBrand,
+    String? vehicleModel,
+    int? vehicleYear,
+    String? vehicleColor,
+    String? fuelType,
+    String? transmissionType,
+  }) {
+    return _repository.bookServiceAppointment(
+      workshopId: workshopId,
+      inventoryItemId: inventoryItemId,
+      scheduledDateTime: scheduledDateTime,
+      note: note,
+      vehicleId: vehicleId,
+      licensePlate: licensePlate,
+      vehicleType: vehicleType,
+      vehicleBrand: vehicleBrand,
+      vehicleModel: vehicleModel,
+      vehicleYear: vehicleYear,
+      vehicleColor: vehicleColor,
+      fuelType: fuelType,
+      transmissionType: transmissionType,
+    );
+  }
+}

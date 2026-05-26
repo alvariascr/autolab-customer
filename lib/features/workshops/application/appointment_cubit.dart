@@ -5,8 +5,13 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/usecases/get_additional_products_by_workshop.dart';
 import '../../products/domain/usecases/get_schedulable_services_by_workshop.dart';
-import '../data/datasources/appointment_booking_remote_data_source.dart';
+import '../domain/entities/appointment_vehicle.dart';
 import '../domain/repositories/workshop_repository.dart';
+import '../domain/usecases/book_service_appointment.dart';
+import '../domain/usecases/get_booked_appointment_slots.dart';
+import '../domain/usecases/get_customer_vehicle_by_plate.dart';
+import '../domain/usecases/get_customer_vehicles.dart';
+import '../domain/usecases/is_appointment_slot_available.dart';
 import 'appointment_state.dart';
 
 class AppointmentCubit extends Cubit<AppointmentState> {
@@ -14,17 +19,29 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     required WorkshopRepository workshopRepository,
     required GetSchedulableServicesByWorkshop getSchedulableServices,
     required GetAdditionalProductsByWorkshop getAdditionalProducts,
-    required AppointmentBookingRemoteDataSource bookingRemoteDataSource,
+    required GetCustomerVehicles getCustomerVehicles,
+    required GetCustomerVehicleByPlate getCustomerVehicleByPlate,
+    required IsAppointmentSlotAvailable isAppointmentSlotAvailable,
+    required GetBookedAppointmentSlots getBookedAppointmentSlots,
+    required BookServiceAppointment bookServiceAppointment,
   }) : _workshopRepository = workshopRepository,
        _getSchedulableServices = getSchedulableServices,
        _getAdditionalProducts = getAdditionalProducts,
-       _bookingRemoteDataSource = bookingRemoteDataSource,
+       _getCustomerVehicles = getCustomerVehicles,
+       _getCustomerVehicleByPlate = getCustomerVehicleByPlate,
+       _isAppointmentSlotAvailable = isAppointmentSlotAvailable,
+       _getBookedAppointmentSlots = getBookedAppointmentSlots,
+       _bookServiceAppointment = bookServiceAppointment,
        super(const AppointmentState());
 
   final WorkshopRepository _workshopRepository;
   final GetSchedulableServicesByWorkshop _getSchedulableServices;
   final GetAdditionalProductsByWorkshop _getAdditionalProducts;
-  final AppointmentBookingRemoteDataSource _bookingRemoteDataSource;
+  final GetCustomerVehicles _getCustomerVehicles;
+  final GetCustomerVehicleByPlate _getCustomerVehicleByPlate;
+  final IsAppointmentSlotAvailable _isAppointmentSlotAvailable;
+  final GetBookedAppointmentSlots _getBookedAppointmentSlots;
+  final BookServiceAppointment _bookServiceAppointment;
   static const _bookingTimes = [
     '07:00',
     '08:00',
@@ -106,9 +123,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
   Future<void> _loadVehicles(String workshopId) async {
     try {
-      final vehicles = await _bookingRemoteDataSource.getCustomerVehicles(
-        workshopId: workshopId,
-      );
+      final vehicles = await _getCustomerVehicles(workshopId: workshopId);
 
       emit(
         state.copyWith(
@@ -325,11 +340,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     }
 
     try {
-      final isAvailable = await _bookingRemoteDataSource
-          .isAppointmentSlotAvailable(
-            workshopId: workshopId,
-            scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
-          );
+      final isAvailable = await _isAppointmentSlotAvailable(
+        workshopId: workshopId,
+        scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
+      );
 
       if (isAvailable) {
         emit(state.copyWith(clearSubmitErrorMessage: true));
@@ -381,7 +395,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     }
 
     try {
-      final vehicle = await _bookingRemoteDataSource.getCustomerVehicleByPlate(
+      final vehicle = await _getCustomerVehicleByPlate(
         workshopId: workshopId,
         licensePlate: state.vehicleLicensePlate,
       );
@@ -449,38 +463,37 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     );
 
     try {
-      final appointmentId = await _bookingRemoteDataSource
-          .bookServiceAppointment(
-            workshopId: workshopId,
-            inventoryItemId: selectedService.id,
-            scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
-            note: _buildBookingNote(),
-            vehicleId: state.selectedVehicleId,
-            licensePlate: state.selectedVehicleId == null
-                ? state.vehicleLicensePlate.trim().toUpperCase()
-                : null,
-            vehicleType: state.selectedVehicleId == null
-                ? _trimOrNull(state.vehicleType)
-                : null,
-            vehicleBrand: state.selectedVehicleId == null
-                ? _trimOrNull(state.vehicleBrand)
-                : null,
-            vehicleModel: state.selectedVehicleId == null
-                ? _trimOrNull(state.vehicleModel)
-                : null,
-            vehicleYear: state.selectedVehicleId == null
-                ? int.tryParse(state.vehicleYear.trim())
-                : null,
-            vehicleColor: state.selectedVehicleId == null
-                ? _trimOrNull(state.vehicleColor)
-                : null,
-            fuelType: state.selectedVehicleId == null
-                ? state.vehicleFuelType
-                : null,
-            transmissionType: state.selectedVehicleId == null
-                ? state.vehicleTransmissionType
-                : null,
-          );
+      final appointmentId = await _bookServiceAppointment(
+        workshopId: workshopId,
+        inventoryItemId: selectedService.id,
+        scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
+        note: _buildBookingNote(),
+        vehicleId: state.selectedVehicleId,
+        licensePlate: state.selectedVehicleId == null
+            ? state.vehicleLicensePlate.trim().toUpperCase()
+            : null,
+        vehicleType: state.selectedVehicleId == null
+            ? _trimOrNull(state.vehicleType)
+            : null,
+        vehicleBrand: state.selectedVehicleId == null
+            ? _trimOrNull(state.vehicleBrand)
+            : null,
+        vehicleModel: state.selectedVehicleId == null
+            ? _trimOrNull(state.vehicleModel)
+            : null,
+        vehicleYear: state.selectedVehicleId == null
+            ? int.tryParse(state.vehicleYear.trim())
+            : null,
+        vehicleColor: state.selectedVehicleId == null
+            ? _trimOrNull(state.vehicleColor)
+            : null,
+        fuelType: state.selectedVehicleId == null
+            ? state.vehicleFuelType
+            : null,
+        transmissionType: state.selectedVehicleId == null
+            ? state.vehicleTransmissionType
+            : null,
+      );
 
       emit(
         state.copyWith(
@@ -519,12 +532,11 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     try {
       final startDate = DateTime(focusedDate.year, focusedDate.month);
       final endDate = DateTime(focusedDate.year, focusedDate.month + 1);
-      final bookedSlots = await _bookingRemoteDataSource
-          .getBookedAppointmentSlots(
-            workshopId: workshopId,
-            startDate: startDate,
-            endDate: endDate,
-          );
+      final bookedSlots = await _getBookedAppointmentSlots(
+        workshopId: workshopId,
+        startDate: startDate,
+        endDate: endDate,
+      );
       final bookedByDate = <DateTime, Set<String>>{};
 
       for (final slot in bookedSlots) {

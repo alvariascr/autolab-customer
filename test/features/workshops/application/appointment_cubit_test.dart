@@ -3,8 +3,12 @@ import 'package:autolab_customer/features/products/domain/repositories/product_r
 import 'package:autolab_customer/features/products/domain/usecases/get_additional_products_by_workshop.dart';
 import 'package:autolab_customer/features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import 'package:autolab_customer/features/workshops/application/appointment_cubit.dart';
-import 'package:autolab_customer/features/workshops/data/datasources/appointment_booking_remote_data_source.dart';
 import 'package:autolab_customer/features/workshops/domain/repositories/workshop_repository.dart';
+import 'package:autolab_customer/features/workshops/domain/usecases/book_service_appointment.dart';
+import 'package:autolab_customer/features/workshops/domain/usecases/get_booked_appointment_slots.dart';
+import 'package:autolab_customer/features/workshops/domain/usecases/get_customer_vehicle_by_plate.dart';
+import 'package:autolab_customer/features/workshops/domain/usecases/get_customer_vehicles.dart';
+import 'package:autolab_customer/features/workshops/domain/usecases/is_appointment_slot_available.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -12,23 +16,38 @@ class MockWorkshopRepository extends Mock implements WorkshopRepository {}
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
-class MockAppointmentBookingRemoteDataSource extends Mock
-    implements AppointmentBookingRemoteDataSource {}
+class MockGetCustomerVehicles extends Mock implements GetCustomerVehicles {}
+
+class MockGetCustomerVehicleByPlate extends Mock
+    implements GetCustomerVehicleByPlate {}
+
+class MockIsAppointmentSlotAvailable extends Mock
+    implements IsAppointmentSlotAvailable {}
+
+class MockGetBookedAppointmentSlots extends Mock
+    implements GetBookedAppointmentSlots {}
+
+class MockBookServiceAppointment extends Mock
+    implements BookServiceAppointment {}
 
 void main() {
   late AppointmentCubit cubit;
-  late MockAppointmentBookingRemoteDataSource bookingRemoteDataSource;
+  late MockBookServiceAppointment bookServiceAppointment;
 
   setUp(() {
     final productRepository = MockProductRepository();
-    bookingRemoteDataSource = MockAppointmentBookingRemoteDataSource();
+    bookServiceAppointment = MockBookServiceAppointment();
     cubit = AppointmentCubit(
       workshopRepository: MockWorkshopRepository(),
       getSchedulableServices: GetSchedulableServicesByWorkshop(
         productRepository,
       ),
       getAdditionalProducts: GetAdditionalProductsByWorkshop(productRepository),
-      bookingRemoteDataSource: bookingRemoteDataSource,
+      getCustomerVehicles: MockGetCustomerVehicles(),
+      getCustomerVehicleByPlate: MockGetCustomerVehicleByPlate(),
+      isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
+      getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
+      bookServiceAppointment: bookServiceAppointment,
     );
   });
 
@@ -66,7 +85,7 @@ void main() {
       final selectedDate = DateTime(2026, 5, 28);
 
       when(
-        () => bookingRemoteDataSource.bookServiceAppointment(
+        () => bookServiceAppointment(
           workshopId: 'workshop-1',
           inventoryItemId: 'service-1',
           scheduledDateTime: any(named: 'scheduledDateTime'),
@@ -102,7 +121,7 @@ void main() {
       expect(cubit.state.createdAppointmentId, 'appointment-1');
 
       verify(
-        () => bookingRemoteDataSource.bookServiceAppointment(
+        () => bookServiceAppointment(
           workshopId: 'workshop-1',
           inventoryItemId: 'service-1',
           scheduledDateTime: DateTime(2026, 5, 28, 6, 15),
