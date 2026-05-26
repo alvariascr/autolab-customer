@@ -14,10 +14,18 @@ import '../../features/products/domain/usecases/get_additional_products_by_works
 import '../../features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import '../../features/workshops/application/appointment_cubit.dart';
 import '../../features/workshops/application/workshop_discovery_query_store.dart';
+import '../../features/workshops/data/datasources/appointment_booking_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
+import '../../features/workshops/data/repositories/appointment_booking_repository_impl.dart';
 import '../../features/workshops/data/repositories/workshop_repository_impl.dart';
+import '../../features/workshops/domain/repositories/appointment_booking_repository.dart';
 import '../../features/workshops/domain/repositories/workshop_repository.dart';
+import '../../features/workshops/domain/usecases/book_service_appointment.dart';
+import '../../features/workshops/domain/usecases/get_booked_appointment_slots.dart';
+import '../../features/workshops/domain/usecases/get_customer_vehicle_by_plate.dart';
+import '../../features/workshops/domain/usecases/get_customer_vehicles.dart';
+import '../../features/workshops/domain/usecases/is_appointment_slot_available.dart';
 import '../location/current_location_data_source.dart';
 import '../location/geocoding_client.dart';
 import '../location/geolocator_client.dart';
@@ -83,6 +91,14 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<WorkshopRemoteDataSource>(
     () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),
   );
+  sl.registerLazySingleton<AppointmentBookingRemoteDataSource>(
+    () => SupabaseAppointmentBookingRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<AppointmentBookingRepository>(
+    () => AppointmentBookingRepositoryImpl(
+      sl<AppointmentBookingRemoteDataSource>(),
+    ),
+  );
   sl.registerLazySingleton<WorkshopRepository>(
     () => WorkshopRepositoryImpl(
       remoteDataSource: sl<WorkshopRemoteDataSource>(),
@@ -106,6 +122,21 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<GetAdditionalProductsByWorkshop>(
     () => GetAdditionalProductsByWorkshop(sl<ProductRepository>()),
   );
+  sl.registerLazySingleton<GetCustomerVehicles>(
+    () => GetCustomerVehicles(sl<AppointmentBookingRepository>()),
+  );
+  sl.registerLazySingleton<GetCustomerVehicleByPlate>(
+    () => GetCustomerVehicleByPlate(sl<AppointmentBookingRepository>()),
+  );
+  sl.registerLazySingleton<IsAppointmentSlotAvailable>(
+    () => IsAppointmentSlotAvailable(sl<AppointmentBookingRepository>()),
+  );
+  sl.registerLazySingleton<GetBookedAppointmentSlots>(
+    () => GetBookedAppointmentSlots(sl<AppointmentBookingRepository>()),
+  );
+  sl.registerLazySingleton<BookServiceAppointment>(
+    () => BookServiceAppointment(sl<AppointmentBookingRepository>()),
+  );
   sl.registerLazySingleton<WorkshopDiscoveryQueryStore>(
     WorkshopDiscoveryQueryStore.new,
   );
@@ -117,6 +148,11 @@ void _registerFeatureDependencies() {
       workshopRepository: sl<WorkshopRepository>(),
       getSchedulableServices: sl<GetSchedulableServicesByWorkshop>(),
       getAdditionalProducts: sl<GetAdditionalProductsByWorkshop>(),
+      getCustomerVehicles: sl<GetCustomerVehicles>(),
+      getCustomerVehicleByPlate: sl<GetCustomerVehicleByPlate>(),
+      isAppointmentSlotAvailable: sl<IsAppointmentSlotAvailable>(),
+      getBookedAppointmentSlots: sl<GetBookedAppointmentSlots>(),
+      bookServiceAppointment: sl<BookServiceAppointment>(),
     ),
   );
   sl.registerFactory<MapCubit>(

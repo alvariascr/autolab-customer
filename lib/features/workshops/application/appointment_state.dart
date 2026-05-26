@@ -1,9 +1,31 @@
 import 'package:equatable/equatable.dart';
 
 import '../../products/domain/entities/product.dart';
+import '../domain/entities/appointment_vehicle.dart';
 import '../domain/entities/workshop.dart';
 
 enum AppointmentLoadStatus { initial, loading, success, failure }
+
+enum AppointmentSubmitStatus { initial, submitting, success, failure }
+
+enum AppointmentSubmitError {
+  dateUnavailable,
+  scheduleRequired,
+  slotUnavailable,
+  scheduleValidationFailed,
+  vehiclePlateRequired,
+  vehiclePlateConflict,
+  vehicleValidationFailed,
+  bookingIncomplete,
+  authRequired,
+  dateTimeInPast,
+  customerNameRequired,
+  customerPhoneRequired,
+  serviceNotSchedulable,
+  vehicleNotOwned,
+  vehiclePlateRequiredForBooking,
+  bookingFailed,
+}
 
 class AppointmentState extends Equatable {
   const AppointmentState({
@@ -14,8 +36,20 @@ class AppointmentState extends Equatable {
     this.servicesStatus = AppointmentLoadStatus.initial,
     this.products = const [],
     this.productsStatus = AppointmentLoadStatus.initial,
+    this.vehicles = const [],
+    this.vehiclesStatus = AppointmentLoadStatus.initial,
+    this.unavailableDates = const [],
+    this.unavailableTimesByDate = const {},
+    this.selectedVehicleId,
     this.currentStep = 0,
-    this.selectedVehicle = 'AUTOMOVIL',
+    this.vehicleLicensePlate = '',
+    this.vehicleType = '',
+    this.vehicleBrand = '',
+    this.vehicleModel = '',
+    this.vehicleYear = '',
+    this.vehicleColor = '',
+    this.vehicleFuelType,
+    this.vehicleTransmissionType,
     this.selectedService,
     this.includeProducts = false,
     this.selectedProducts = const [],
@@ -23,6 +57,10 @@ class AppointmentState extends Equatable {
     this.selectedTime,
     this.focusedDate,
     this.selectedPaymentMethod = 'Tarjeta',
+    this.submitStatus = AppointmentSubmitStatus.initial,
+    this.submitError,
+    this.createdAppointmentId,
+    this.submitErrorMessage,
   });
 
   final String workshopId;
@@ -32,8 +70,20 @@ class AppointmentState extends Equatable {
   final AppointmentLoadStatus servicesStatus;
   final List<Product> products;
   final AppointmentLoadStatus productsStatus;
+  final List<AppointmentVehicleRecord> vehicles;
+  final AppointmentLoadStatus vehiclesStatus;
+  final List<DateTime> unavailableDates;
+  final Map<DateTime, Set<String>> unavailableTimesByDate;
+  final String? selectedVehicleId;
   final int currentStep;
-  final String? selectedVehicle;
+  final String vehicleLicensePlate;
+  final String vehicleType;
+  final String vehicleBrand;
+  final String vehicleModel;
+  final String vehicleYear;
+  final String vehicleColor;
+  final String? vehicleFuelType;
+  final String? vehicleTransmissionType;
   final Product? selectedService;
   final bool includeProducts;
   final List<AppointmentSelectedProduct> selectedProducts;
@@ -41,6 +91,10 @@ class AppointmentState extends Equatable {
   final String? selectedTime;
   final DateTime? focusedDate;
   final String selectedPaymentMethod;
+  final AppointmentSubmitStatus submitStatus;
+  final AppointmentSubmitError? submitError;
+  final String? createdAppointmentId;
+  final String? submitErrorMessage;
 
   AppointmentState copyWith({
     String? workshopId,
@@ -51,8 +105,23 @@ class AppointmentState extends Equatable {
     AppointmentLoadStatus? servicesStatus,
     List<Product>? products,
     AppointmentLoadStatus? productsStatus,
+    List<AppointmentVehicleRecord>? vehicles,
+    AppointmentLoadStatus? vehiclesStatus,
+    List<DateTime>? unavailableDates,
+    Map<DateTime, Set<String>>? unavailableTimesByDate,
+    String? selectedVehicleId,
+    bool clearSelectedVehicleId = false,
     int? currentStep,
-    String? selectedVehicle,
+    String? vehicleLicensePlate,
+    String? vehicleType,
+    String? vehicleBrand,
+    String? vehicleModel,
+    String? vehicleYear,
+    String? vehicleColor,
+    String? vehicleFuelType,
+    bool clearVehicleFuelType = false,
+    String? vehicleTransmissionType,
+    bool clearVehicleTransmissionType = false,
     Product? selectedService,
     bool clearSelectedService = false,
     bool? includeProducts,
@@ -63,6 +132,13 @@ class AppointmentState extends Equatable {
     bool clearSelectedTime = false,
     DateTime? focusedDate,
     String? selectedPaymentMethod,
+    AppointmentSubmitStatus? submitStatus,
+    AppointmentSubmitError? submitError,
+    bool clearSubmitError = false,
+    String? createdAppointmentId,
+    bool clearCreatedAppointmentId = false,
+    String? submitErrorMessage,
+    bool clearSubmitErrorMessage = false,
   }) {
     return AppointmentState(
       workshopId: workshopId ?? this.workshopId,
@@ -72,8 +148,27 @@ class AppointmentState extends Equatable {
       servicesStatus: servicesStatus ?? this.servicesStatus,
       products: products ?? this.products,
       productsStatus: productsStatus ?? this.productsStatus,
+      vehicles: vehicles ?? this.vehicles,
+      vehiclesStatus: vehiclesStatus ?? this.vehiclesStatus,
+      unavailableDates: unavailableDates ?? this.unavailableDates,
+      unavailableTimesByDate:
+          unavailableTimesByDate ?? this.unavailableTimesByDate,
+      selectedVehicleId: clearSelectedVehicleId
+          ? null
+          : selectedVehicleId ?? this.selectedVehicleId,
       currentStep: currentStep ?? this.currentStep,
-      selectedVehicle: selectedVehicle ?? this.selectedVehicle,
+      vehicleLicensePlate: vehicleLicensePlate ?? this.vehicleLicensePlate,
+      vehicleType: vehicleType ?? this.vehicleType,
+      vehicleBrand: vehicleBrand ?? this.vehicleBrand,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
+      vehicleYear: vehicleYear ?? this.vehicleYear,
+      vehicleColor: vehicleColor ?? this.vehicleColor,
+      vehicleFuelType: clearVehicleFuelType
+          ? null
+          : vehicleFuelType ?? this.vehicleFuelType,
+      vehicleTransmissionType: clearVehicleTransmissionType
+          ? null
+          : vehicleTransmissionType ?? this.vehicleTransmissionType,
       selectedService: clearSelectedService
           ? null
           : selectedService ?? this.selectedService,
@@ -88,6 +183,14 @@ class AppointmentState extends Equatable {
       focusedDate: focusedDate ?? this.focusedDate,
       selectedPaymentMethod:
           selectedPaymentMethod ?? this.selectedPaymentMethod,
+      submitStatus: submitStatus ?? this.submitStatus,
+      submitError: clearSubmitError ? null : submitError ?? this.submitError,
+      createdAppointmentId: clearCreatedAppointmentId
+          ? null
+          : createdAppointmentId ?? this.createdAppointmentId,
+      submitErrorMessage: clearSubmitErrorMessage
+          ? null
+          : submitErrorMessage ?? this.submitErrorMessage,
     );
   }
 
@@ -100,8 +203,20 @@ class AppointmentState extends Equatable {
     servicesStatus,
     products,
     productsStatus,
+    vehicles,
+    vehiclesStatus,
+    unavailableDates,
+    unavailableTimesByDate,
+    selectedVehicleId,
     currentStep,
-    selectedVehicle,
+    vehicleLicensePlate,
+    vehicleType,
+    vehicleBrand,
+    vehicleModel,
+    vehicleYear,
+    vehicleColor,
+    vehicleFuelType,
+    vehicleTransmissionType,
     selectedService,
     includeProducts,
     selectedProducts,
@@ -109,6 +224,10 @@ class AppointmentState extends Equatable {
     selectedTime,
     focusedDate,
     selectedPaymentMethod,
+    submitStatus,
+    submitError,
+    createdAppointmentId,
+    submitErrorMessage,
   ];
 }
 

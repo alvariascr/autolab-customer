@@ -1803,6 +1803,450 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.'**
   String get homePlaceholderSubtitle;
+
+  /// No description provided for @appointmentCreatedSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu cita fue creada correctamente.'**
+  String get appointmentCreatedSuccess;
+
+  /// No description provided for @appointmentCreateFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos crear la cita. Inténtalo nuevamente.'**
+  String get appointmentCreateFailed;
+
+  /// No description provided for @appointmentVehicleValidationFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos validar el vehículo.'**
+  String get appointmentVehicleValidationFailed;
+
+  /// No description provided for @appointmentScheduleValidationFailedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos validar el horario.'**
+  String get appointmentScheduleValidationFailedShort;
+
+  /// No description provided for @appointmentDateUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese día ya no tiene horarios disponibles. Selecciona otra fecha.'**
+  String get appointmentDateUnavailable;
+
+  /// No description provided for @appointmentScheduleRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona fecha y hora para continuar.'**
+  String get appointmentScheduleRequired;
+
+  /// No description provided for @appointmentSlotUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese horario acaba de ocuparse. Selecciona otra hora.'**
+  String get appointmentSlotUnavailable;
+
+  /// No description provided for @appointmentScheduleValidationFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos validar el horario. Inténtalo nuevamente.'**
+  String get appointmentScheduleValidationFailed;
+
+  /// No description provided for @appointmentVehiclePlateRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa la placa del vehículo para continuar.'**
+  String get appointmentVehiclePlateRequired;
+
+  /// No description provided for @appointmentVehiclePlateConflict.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya tienes un vehículo con esta placa. Selecciónalo de la lista o edítalo desde Gestionar vehículos.'**
+  String get appointmentVehiclePlateConflict;
+
+  /// No description provided for @appointmentVehicleValidationFailedDetailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos validar el vehículo. Revisa la información e inténtalo de nuevo.'**
+  String get appointmentVehicleValidationFailedDetailed;
+
+  /// No description provided for @appointmentBookingIncomplete.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa que el vehículo, servicio, fecha y hora estén completos.'**
+  String get appointmentBookingIncomplete;
+
+  /// No description provided for @appointmentAuthRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicia sesión para poder reservar tu cita.'**
+  String get appointmentAuthRequired;
+
+  /// No description provided for @appointmentDateTimeInPast.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona una fecha y hora disponible más adelante.'**
+  String get appointmentDateTimeInPast;
+
+  /// No description provided for @appointmentCustomerNameRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa tu nombre en el perfil antes de reservar.'**
+  String get appointmentCustomerNameRequired;
+
+  /// No description provided for @appointmentCustomerPhoneRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa tu teléfono en el perfil antes de reservar.'**
+  String get appointmentCustomerPhoneRequired;
+
+  /// No description provided for @appointmentServiceNotSchedulable.
+  ///
+  /// In es, this message translates to:
+  /// **'Este servicio ya no está disponible para agendar.'**
+  String get appointmentServiceNotSchedulable;
+
+  /// No description provided for @appointmentVehicleNotOwned.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos usar ese vehículo con tu usuario.'**
+  String get appointmentVehicleNotOwned;
+
+  /// No description provided for @appointmentVehiclePlateRequiredForBooking.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa la placa del vehículo para reservar.'**
+  String get appointmentVehiclePlateRequiredForBooking;
+
+  /// No description provided for @appointmentStepVehicleInfo.
+  ///
+  /// In es, this message translates to:
+  /// **'Información del vehículo'**
+  String get appointmentStepVehicleInfo;
+
+  /// No description provided for @appointmentWorkshopFallbackDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio y mantenimiento automotriz'**
+  String get appointmentWorkshopFallbackDescription;
+
+  /// No description provided for @appointmentVehiclePlateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Placa'**
+  String get appointmentVehiclePlateLabel;
+
+  /// No description provided for @appointmentVehicleTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de vehículo'**
+  String get appointmentVehicleTypeLabel;
+
+  /// No description provided for @appointmentVehicleTypeCar.
+  ///
+  /// In es, this message translates to:
+  /// **'Automóvil'**
+  String get appointmentVehicleTypeCar;
+
+  /// No description provided for @appointmentVehicleTypeMotorcycle.
+  ///
+  /// In es, this message translates to:
+  /// **'Motocicleta'**
+  String get appointmentVehicleTypeMotorcycle;
+
+  /// No description provided for @appointmentVehicleTypePickup.
+  ///
+  /// In es, this message translates to:
+  /// **'Pickup'**
+  String get appointmentVehicleTypePickup;
+
+  /// No description provided for @appointmentVehicleTypeSuv.
+  ///
+  /// In es, this message translates to:
+  /// **'SUV'**
+  String get appointmentVehicleTypeSuv;
+
+  /// No description provided for @appointmentVehicleTypeTruck.
+  ///
+  /// In es, this message translates to:
+  /// **'Camión'**
+  String get appointmentVehicleTypeTruck;
+
+  /// No description provided for @appointmentVehicleTypeBus.
+  ///
+  /// In es, this message translates to:
+  /// **'Bus'**
+  String get appointmentVehicleTypeBus;
+
+  /// No description provided for @appointmentVehicleTypeTrailer.
+  ///
+  /// In es, this message translates to:
+  /// **'Remolque'**
+  String get appointmentVehicleTypeTrailer;
+
+  /// No description provided for @appointmentVehicleTypeSpecialEquipment.
+  ///
+  /// In es, this message translates to:
+  /// **'Equipo especial'**
+  String get appointmentVehicleTypeSpecialEquipment;
+
+  /// No description provided for @appointmentVehicleBrandLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get appointmentVehicleBrandLabel;
+
+  /// No description provided for @appointmentVehicleModelLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo'**
+  String get appointmentVehicleModelLabel;
+
+  /// No description provided for @appointmentVehicleYearLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Año'**
+  String get appointmentVehicleYearLabel;
+
+  /// No description provided for @appointmentVehicleColorLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Color'**
+  String get appointmentVehicleColorLabel;
+
+  /// No description provided for @appointmentVehicleFuelLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Combustible'**
+  String get appointmentVehicleFuelLabel;
+
+  /// No description provided for @appointmentVehicleFuelGasoline.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasolina'**
+  String get appointmentVehicleFuelGasoline;
+
+  /// No description provided for @appointmentVehicleFuelDiesel.
+  ///
+  /// In es, this message translates to:
+  /// **'Diésel'**
+  String get appointmentVehicleFuelDiesel;
+
+  /// No description provided for @appointmentVehicleFuelElectric.
+  ///
+  /// In es, this message translates to:
+  /// **'Eléctrico'**
+  String get appointmentVehicleFuelElectric;
+
+  /// No description provided for @appointmentVehicleFuelHybrid.
+  ///
+  /// In es, this message translates to:
+  /// **'Híbrido'**
+  String get appointmentVehicleFuelHybrid;
+
+  /// No description provided for @appointmentVehicleTransmissionLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Transmisión'**
+  String get appointmentVehicleTransmissionLabel;
+
+  /// No description provided for @appointmentVehicleTransmissionManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Manual'**
+  String get appointmentVehicleTransmissionManual;
+
+  /// No description provided for @appointmentVehicleTransmissionAutomatic.
+  ///
+  /// In es, this message translates to:
+  /// **'Automática'**
+  String get appointmentVehicleTransmissionAutomatic;
+
+  /// No description provided for @appointmentMyVehiclesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis vehículos'**
+  String get appointmentMyVehiclesTitle;
+
+  /// No description provided for @appointmentNewVehicleAction.
+  ///
+  /// In es, this message translates to:
+  /// **'+ Nuevo'**
+  String get appointmentNewVehicleAction;
+
+  /// No description provided for @appointmentNoVehiclesForWorkshop.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes vehículos registrados para este taller.'**
+  String get appointmentNoVehiclesForWorkshop;
+
+  /// No description provided for @appointmentNoSchedulableServices.
+  ///
+  /// In es, this message translates to:
+  /// **'Este taller no tiene servicios disponibles para agendar.'**
+  String get appointmentNoSchedulableServices;
+
+  /// No description provided for @appointmentBackAction.
+  ///
+  /// In es, this message translates to:
+  /// **'ANTERIOR'**
+  String get appointmentBackAction;
+
+  /// No description provided for @appointmentExitAction.
+  ///
+  /// In es, this message translates to:
+  /// **'SALIR'**
+  String get appointmentExitAction;
+
+  /// No description provided for @appointmentNewServiceAction.
+  ///
+  /// In es, this message translates to:
+  /// **'NUEVO SERVICIO'**
+  String get appointmentNewServiceAction;
+
+  /// No description provided for @appointmentCreatingAction.
+  ///
+  /// In es, this message translates to:
+  /// **'CREANDO'**
+  String get appointmentCreatingAction;
+
+  /// No description provided for @appointmentFinishAction.
+  ///
+  /// In es, this message translates to:
+  /// **'FINALIZAR'**
+  String get appointmentFinishAction;
+
+  /// No description provided for @appointmentPayAction.
+  ///
+  /// In es, this message translates to:
+  /// **'PAGAR'**
+  String get appointmentPayAction;
+
+  /// No description provided for @appointmentNextAction.
+  ///
+  /// In es, this message translates to:
+  /// **'SIGUIENTE'**
+  String get appointmentNextAction;
+
+  /// No description provided for @appointmentSelectedDayLegend.
+  ///
+  /// In es, this message translates to:
+  /// **'Día seleccionado'**
+  String get appointmentSelectedDayLegend;
+
+  /// No description provided for @appointmentAvailableDayLegend.
+  ///
+  /// In es, this message translates to:
+  /// **'Día disponible'**
+  String get appointmentAvailableDayLegend;
+
+  /// No description provided for @appointmentOccupiedDayLegend.
+  ///
+  /// In es, this message translates to:
+  /// **'Día ocupado'**
+  String get appointmentOccupiedDayLegend;
+
+  /// No description provided for @appointmentAvailableHoursTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Horas disponibles'**
+  String get appointmentAvailableHoursTitle;
+
+  /// No description provided for @appointmentPendingDate.
+  ///
+  /// In es, this message translates to:
+  /// **'fecha pendiente'**
+  String get appointmentPendingDate;
+
+  /// No description provided for @appointmentConfirmationReadyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cita lista para confirmar'**
+  String get appointmentConfirmationReadyTitle;
+
+  /// No description provided for @appointmentPendingPlate.
+  ///
+  /// In es, this message translates to:
+  /// **'Placa pendiente'**
+  String get appointmentPendingPlate;
+
+  /// No description provided for @appointmentServiceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio'**
+  String get appointmentServiceLabel;
+
+  /// No description provided for @appointmentPendingService.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio pendiente'**
+  String get appointmentPendingService;
+
+  /// No description provided for @appointmentDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get appointmentDateLabel;
+
+  /// No description provided for @appointmentPaymentCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta'**
+  String get appointmentPaymentCard;
+
+  /// No description provided for @appointmentPaymentSinpe.
+  ///
+  /// In es, this message translates to:
+  /// **'SINPE Móvil'**
+  String get appointmentPaymentSinpe;
+
+  /// No description provided for @appointmentPaymentCardSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago con tarjeta de crédito o débito.'**
+  String get appointmentPaymentCardSubtitle;
+
+  /// No description provided for @appointmentPaymentSinpeSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Recibirás las instrucciones para completar el pago.'**
+  String get appointmentPaymentSinpeSubtitle;
+
+  /// No description provided for @appointmentConfirmationDeliveryMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Recibirás los detalles por correo o WhatsApp.'**
+  String get appointmentConfirmationDeliveryMessage;
+
+  /// No description provided for @appointmentWorkshopLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Taller'**
+  String get appointmentWorkshopLabel;
+
+  /// No description provided for @appointmentProductsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos'**
+  String get appointmentProductsLabel;
+
+  /// No description provided for @appointmentNoAdditionalProducts.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin productos adicionales.'**
+  String get appointmentNoAdditionalProducts;
+
+  /// No description provided for @appointmentTotalToPayLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Total a pagar'**
+  String get appointmentTotalToPayLabel;
+
+  /// No description provided for @appointmentPriceToConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Por confirmar'**
+  String get appointmentPriceToConfirm;
 }
 
 class _AppLocalizationsDelegate

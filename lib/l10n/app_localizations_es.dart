@@ -981,4 +981,250 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get homePlaceholderSubtitle =>
       'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.';
+
+  @override
+  String get appointmentCreatedSuccess => 'Tu cita fue creada correctamente.';
+
+  @override
+  String get appointmentCreateFailed =>
+      'No pudimos crear la cita. Inténtalo nuevamente.';
+
+  @override
+  String get appointmentVehicleValidationFailed =>
+      'No pudimos validar el vehículo.';
+
+  @override
+  String get appointmentScheduleValidationFailedShort =>
+      'No pudimos validar el horario.';
+
+  @override
+  String get appointmentDateUnavailable =>
+      'Ese día ya no tiene horarios disponibles. Selecciona otra fecha.';
+
+  @override
+  String get appointmentScheduleRequired =>
+      'Selecciona fecha y hora para continuar.';
+
+  @override
+  String get appointmentSlotUnavailable =>
+      'Ese horario acaba de ocuparse. Selecciona otra hora.';
+
+  @override
+  String get appointmentScheduleValidationFailed =>
+      'No pudimos validar el horario. Inténtalo nuevamente.';
+
+  @override
+  String get appointmentVehiclePlateRequired =>
+      'Ingresa la placa del vehículo para continuar.';
+
+  @override
+  String get appointmentVehiclePlateConflict =>
+      'Ya tienes un vehículo con esta placa. Selecciónalo de la lista o edítalo desde Gestionar vehículos.';
+
+  @override
+  String get appointmentVehicleValidationFailedDetailed =>
+      'No pudimos validar el vehículo. Revisa la información e inténtalo de nuevo.';
+
+  @override
+  String get appointmentBookingIncomplete =>
+      'Revisa que el vehículo, servicio, fecha y hora estén completos.';
+
+  @override
+  String get appointmentAuthRequired =>
+      'Inicia sesión para poder reservar tu cita.';
+
+  @override
+  String get appointmentDateTimeInPast =>
+      'Selecciona una fecha y hora disponible más adelante.';
+
+  @override
+  String get appointmentCustomerNameRequired =>
+      'Completa tu nombre en el perfil antes de reservar.';
+
+  @override
+  String get appointmentCustomerPhoneRequired =>
+      'Completa tu teléfono en el perfil antes de reservar.';
+
+  @override
+  String get appointmentServiceNotSchedulable =>
+      'Este servicio ya no está disponible para agendar.';
+
+  @override
+  String get appointmentVehicleNotOwned =>
+      'No pudimos usar ese vehículo con tu usuario.';
+
+  @override
+  String get appointmentVehiclePlateRequiredForBooking =>
+      'Ingresa la placa del vehículo para reservar.';
+
+  @override
+  String get appointmentStepVehicleInfo => 'Información del vehículo';
+
+  @override
+  String get appointmentWorkshopFallbackDescription =>
+      'Servicio y mantenimiento automotriz';
+
+  @override
+  String get appointmentVehiclePlateLabel => 'Placa';
+
+  @override
+  String get appointmentVehicleTypeLabel => 'Tipo de vehículo';
+
+  @override
+  String get appointmentVehicleTypeCar => 'Automóvil';
+
+  @override
+  String get appointmentVehicleTypeMotorcycle => 'Motocicleta';
+
+  @override
+  String get appointmentVehicleTypePickup => 'Pickup';
+
+  @override
+  String get appointmentVehicleTypeSuv => 'SUV';
+
+  @override
+  String get appointmentVehicleTypeTruck => 'Camión';
+
+  @override
+  String get appointmentVehicleTypeBus => 'Bus';
+
+  @override
+  String get appointmentVehicleTypeTrailer => 'Remolque';
+
+  @override
+  String get appointmentVehicleTypeSpecialEquipment => 'Equipo especial';
+
+  @override
+  String get appointmentVehicleBrandLabel => 'Marca';
+
+  @override
+  String get appointmentVehicleModelLabel => 'Modelo';
+
+  @override
+  String get appointmentVehicleYearLabel => 'Año';
+
+  @override
+  String get appointmentVehicleColorLabel => 'Color';
+
+  @override
+  String get appointmentVehicleFuelLabel => 'Combustible';
+
+  @override
+  String get appointmentVehicleFuelGasoline => 'Gasolina';
+
+  @override
+  String get appointmentVehicleFuelDiesel => 'Diésel';
+
+  @override
+  String get appointmentVehicleFuelElectric => 'Eléctrico';
+
+  @override
+  String get appointmentVehicleFuelHybrid => 'Híbrido';
+
+  @override
+  String get appointmentVehicleTransmissionLabel => 'Transmisión';
+
+  @override
+  String get appointmentVehicleTransmissionManual => 'Manual';
+
+  @override
+  String get appointmentVehicleTransmissionAutomatic => 'Automática';
+
+  @override
+  String get appointmentMyVehiclesTitle => 'Mis vehículos';
+
+  @override
+  String get appointmentNewVehicleAction => '+ Nuevo';
+
+  @override
+  String get appointmentNoVehiclesForWorkshop =>
+      'Aún no tienes vehículos registrados para este taller.';
+
+  @override
+  String get appointmentNoSchedulableServices =>
+      'Este taller no tiene servicios disponibles para agendar.';
+
+  @override
+  String get appointmentBackAction => 'ANTERIOR';
+
+  @override
+  String get appointmentExitAction => 'SALIR';
+
+  @override
+  String get appointmentNewServiceAction => 'NUEVO SERVICIO';
+
+  @override
+  String get appointmentCreatingAction => 'CREANDO';
+
+  @override
+  String get appointmentFinishAction => 'FINALIZAR';
+
+  @override
+  String get appointmentPayAction => 'PAGAR';
+
+  @override
+  String get appointmentNextAction => 'SIGUIENTE';
+
+  @override
+  String get appointmentSelectedDayLegend => 'Día seleccionado';
+
+  @override
+  String get appointmentAvailableDayLegend => 'Día disponible';
+
+  @override
+  String get appointmentOccupiedDayLegend => 'Día ocupado';
+
+  @override
+  String get appointmentAvailableHoursTitle => 'Horas disponibles';
+
+  @override
+  String get appointmentPendingDate => 'fecha pendiente';
+
+  @override
+  String get appointmentConfirmationReadyTitle => 'Cita lista para confirmar';
+
+  @override
+  String get appointmentPendingPlate => 'Placa pendiente';
+
+  @override
+  String get appointmentServiceLabel => 'Servicio';
+
+  @override
+  String get appointmentPendingService => 'Servicio pendiente';
+
+  @override
+  String get appointmentDateLabel => 'Fecha';
+
+  @override
+  String get appointmentPaymentCard => 'Tarjeta';
+
+  @override
+  String get appointmentPaymentSinpe => 'SINPE Móvil';
+
+  @override
+  String get appointmentPaymentCardSubtitle =>
+      'Pago con tarjeta de crédito o débito.';
+
+  @override
+  String get appointmentPaymentSinpeSubtitle =>
+      'Recibirás las instrucciones para completar el pago.';
+
+  @override
+  String get appointmentConfirmationDeliveryMessage =>
+      'Recibirás los detalles por correo o WhatsApp.';
+
+  @override
+  String get appointmentWorkshopLabel => 'Taller';
+
+  @override
+  String get appointmentProductsLabel => 'Productos';
+
+  @override
+  String get appointmentNoAdditionalProducts => 'Sin productos adicionales.';
+
+  @override
+  String get appointmentTotalToPayLabel => 'Total a pagar';
+
+  @override
+  String get appointmentPriceToConfirm => 'Por confirmar';
 }
