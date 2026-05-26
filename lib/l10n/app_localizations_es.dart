@@ -1148,6 +1148,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentBackAction => 'ANTERIOR';
 
   @override
+  String get appointmentExitAction => 'SALIR';
+
+  @override
   String get appointmentNewServiceAction => 'NUEVO SERVICIO';
 
   @override

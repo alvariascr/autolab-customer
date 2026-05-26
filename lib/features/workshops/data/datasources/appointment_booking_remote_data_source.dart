@@ -176,7 +176,8 @@ class SupabaseAppointmentBookingRemoteDataSource
         .not('appointment_status', 'in', '(cancelled,no_show)');
 
     return response
-        .map((item) => DateTime.parse(item['scheduled_datetime'].toString()))
+        .map((item) => DateTime.tryParse(item['scheduled_datetime'].toString()))
+        .whereType<DateTime>()
         .toList();
   }
 

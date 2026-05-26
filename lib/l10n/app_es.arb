@@ -395,6 +395,7 @@
   "appointmentNoVehiclesForWorkshop": "Aún no tienes vehículos registrados para este taller.",
   "appointmentNoSchedulableServices": "Este taller no tiene servicios disponibles para agendar.",
   "appointmentBackAction": "ANTERIOR",
+  "appointmentExitAction": "SALIR",
   "appointmentNewServiceAction": "NUEVO SERVICIO",
   "appointmentCreatingAction": "CREANDO",
   "appointmentFinishAction": "FINALIZAR",

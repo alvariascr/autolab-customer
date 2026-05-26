@@ -2092,6 +2092,12 @@ abstract class AppLocalizations {
   /// **'ANTERIOR'**
   String get appointmentBackAction;
 
+  /// No description provided for @appointmentExitAction.
+  ///
+  /// In es, this message translates to:
+  /// **'SALIR'**
+  String get appointmentExitAction;
+
   /// No description provided for @appointmentNewServiceAction.
   ///
   /// In es, this message translates to:

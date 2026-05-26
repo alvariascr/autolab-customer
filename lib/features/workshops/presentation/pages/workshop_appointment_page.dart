@@ -784,6 +784,7 @@ class _VehicleStep extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         _VehicleFormCard(
+          key: ValueKey(selectedVehicleId ?? 'new-vehicle-form'),
           readOnly: selectedVehicleId != null,
           licensePlate: licensePlate,
           vehicleType: vehicleType,
@@ -809,6 +810,7 @@ class _VehicleStep extends StatelessWidget {
 
 class _VehicleFormCard extends StatelessWidget {
   const _VehicleFormCard({
+    super.key,
     required this.readOnly,
     required this.licensePlate,
     required this.vehicleType,
@@ -1986,15 +1988,11 @@ class _FooterActions extends StatelessWidget {
               children: [
                 Expanded(
                   child: _OutlineActionButton(
-                    icon: canGoBack ? Icons.chevron_left : Icons.add,
+                    icon: canGoBack ? Icons.chevron_left : Icons.close_rounded,
                     label: canGoBack
                         ? l10n.appointmentBackAction
-                        : l10n.appointmentNewServiceAction,
-                    onPressed: isSubmitting
-                        ? null
-                        : canGoBack
-                        ? onBack
-                        : () {},
+                        : l10n.appointmentExitAction,
+                    onPressed: isSubmitting ? null : onBack,
                   ),
                 ),
                 Expanded(
