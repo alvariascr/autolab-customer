@@ -1,0 +1,50 @@
+language: es
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+
+  path_instructions:
+    - path: "lib/**"
+      instructions: |
+        Revisar como proyecto Flutter/Dart.
+        Priorizar bugs funcionales, manejo de estado, navegación, errores async,
+        localización, separación de capas y consistencia con la arquitectura existente.
+        Evitar comentarios de estilo si no afectan mantenibilidad o funcionalidad.
+
+    - path: "lib/features/workshops/**"
+      instructions: |
+        Esta área contiene el flujo de talleres, productos, servicios y reserva de citas.
+        Revisar especialmente:
+        - Uso correcto de Cubit/State.
+        - Validaciones antes de avanzar en el flujo.
+        - Llamadas a Supabase.
+        - Manejo de errores controlados.
+        - Evitar lógica de negocio compleja en widgets.
+        - Evitar textos visibles hardcodeados.
+
+    - path: "lib/l10n/**"
+      instructions: |
+        Revisar consistencia de claves de localización.
+        No sugerir cambios manuales innecesarios en archivos generados si provienen de flutter gen-l10n.
+
+    - path: "test/**"
+      instructions: |
+        Revisar que las pruebas cubran comportamiento relevante.
+        Sugerir pruebas solo cuando haya riesgo funcional real.
+
+    - path: "linux/**"
+      instructions: |
+        Ignorar cambios generados de Flutter desktop salvo que el PR trate específicamente de desktop.
+
+    - path: "macos/**"
+      instructions: |
+        Ignorar cambios generados de Flutter desktop salvo que el PR trate específicamente de desktop.
+
+    - path: "windows/**"
+      instructions: |
+        Ignorar cambios generados de Flutter desktop salvo que el PR trate específicamente de desktop.
