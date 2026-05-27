@@ -11,31 +11,77 @@ reviews:
   path_instructions:
     - path: "lib/**"
       instructions: |
-        Revisar como proyecto Flutter/Dart.
-        Priorizar bugs funcionales, manejo de estado, navegación, errores async,
-        localización, separación de capas y consistencia con la arquitectura existente.
-        Evitar comentarios de estilo si no afectan mantenibilidad o funcionalidad.
+        Proyecto Flutter/Dart.
+        Priorizar hallazgos funcionales, errores async, manejo de estado, navegación,
+        validaciones, localización, separación de capas y mantenibilidad.
+        Evitar comentarios cosméticos o de estilo si no afectan funcionalidad,
+        legibilidad o consistencia del proyecto.
+
+    - path: "lib/features/**/presentation/**"
+      instructions: |
+        Revisar como capa de presentación.
+        Los widgets no deben contener lógica de negocio compleja.
+        Validar manejo correcto de estados loading, empty, error y success.
+        Evitar textos visibles hardcodeados; usar localización cuando aplique.
+        Revisar navegación, bloqueos de avance y mensajes de error al usuario.
+
+    - path: "lib/features/**/application/**"
+      instructions: |
+        Revisar como capa de aplicación.
+        Cubits deben coordinar estado y casos de uso, no acceder directamente
+        a datasources ni a Supabase.
+        Ruta esperada:
+        Cubit -> UseCase -> Repository -> DataSource.
+        Señalar si se inyecta un datasource directo en un Cubit.
+
+    - path: "lib/features/**/domain/**"
+      instructions: |
+        Revisar como capa de dominio.
+        Esta capa debe mantenerse libre de dependencias de Flutter, Supabase,
+        widgets o detalles de infraestructura.
+        Entidades, repositorios abstractos y casos de uso deben representar
+        reglas o contratos del negocio.
+
+    - path: "lib/features/**/data/**"
+      instructions: |
+        Revisar como capa de datos.
+        Aquí sí pueden existir implementaciones contra Supabase, mappers,
+        DTOs, datasources y repositorios concretos.
+        Validar manejo de errores, parsing seguro, queries correctas y que
+        no se expongan datos de otros usuarios.
 
     - path: "lib/features/workshops/**"
       instructions: |
-        Esta área contiene el flujo de talleres, productos, servicios y reserva de citas.
+        Esta área contiene talleres, servicios, productos y reserva de citas.
         Revisar especialmente:
-        - Uso correcto de Cubit/State.
-        - Validaciones antes de avanzar en el flujo.
-        - Llamadas a Supabase.
-        - Manejo de errores controlados.
-        - Evitar lógica de negocio compleja en widgets.
+        - Flujo de reserva completo.
+        - Validación de vehículo, servicio, horario y método de pago.
+        - Consistencia entre Cubit, State y UI.
+        - Manejo de horarios ocupados.
+        - Uso correcto de casos de uso y repositorios.
+        - Evitar lógica de negocio dentro de widgets.
         - Evitar textos visibles hardcodeados.
+
+    - path: "lib/features/**/data/datasources/**"
+      instructions: |
+        Revisar consultas a Supabase.
+        Validar filtros por usuario, taller y relaciones necesarias.
+        Señalar riesgos de seguridad, datos cruzados entre usuarios,
+        parsing inseguro o manejo débil de errores.
+        Para fechas, preferir parsing seguro y manejo de valores inesperados.
 
     - path: "lib/l10n/**"
       instructions: |
         Revisar consistencia de claves de localización.
-        No sugerir cambios manuales innecesarios en archivos generados si provienen de flutter gen-l10n.
+        No sugerir cambios manuales innecesarios en archivos generados por gen-l10n.
+        Validar que nuevos textos visibles tengan traducción.
 
     - path: "test/**"
       instructions: |
         Revisar que las pruebas cubran comportamiento relevante.
-        Sugerir pruebas solo cuando haya riesgo funcional real.
+        Sugerir pruebas cuando haya riesgo funcional real:
+        validaciones, errores, estados del Cubit, navegación crítica,
+        llamadas a casos de uso o parsing de datos.
 
     - path: "linux/**"
       instructions: |
