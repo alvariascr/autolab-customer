@@ -11,31 +11,167 @@ reviews:
   path_instructions:
     - path: "lib/**"
       instructions: |
-        Revisar como proyecto Flutter/Dart.
-        Priorizar bugs funcionales, manejo de estado, navegación, errores async,
-        localización, separación de capas y consistencia con la arquitectura existente.
-        Evitar comentarios de estilo si no afectan mantenibilidad o funcionalidad.
+        Proyecto Flutter/Dart.
+        Priorizar hallazgos funcionales, errores async, manejo de estado, navegación,
+        validaciones, localización, separación de capas, seguridad y mantenibilidad.
+        Evitar comentarios cosméticos o de estilo si no afectan funcionalidad,
+        legibilidad, seguridad o consistencia del proyecto.
+
+        Revisar DRY y responsabilidad única:
+        - Detectar duplicación real de lógica, validaciones, widgets o queries.
+        - Sugerir extracción cuando mejore claridad o reduzca riesgo de inconsistencias.
+        - Evitar sugerir abstracciones prematuras para código simple o duplicación pequeña.
+        - Señalar componentes, métodos o clases que mezclen responsabilidades no relacionadas.
+
+        Revisar seguridad:
+        - Señalar exposición accidental de datos sensibles, tokens, claves, secretos o credenciales.
+        - Señalar logs que impriman información sensible del usuario.
+        - Revisar manejo inseguro de errores que pueda exponer detalles internos.
+        - Validar que la app no confíe únicamente en validaciones de frontend para reglas críticas.
+        - Señalar uso inseguro de URLs, archivos, rutas, permisos o datos externos.
+        - Señalar dependencias nuevas o patrones que puedan introducir vulnerabilidades.
+
+    - path: "lib/features/**/presentation/**"
+      instructions: |
+        Revisar como capa de presentación.
+        Los widgets no deben contener lógica de negocio compleja.
+        Validar manejo correcto de estados loading, empty, error y success.
+        Evitar textos visibles hardcodeados; usar localización cuando aplique.
+        Revisar navegación, bloqueos de avance y mensajes de error al usuario.
+
+        Revisar principios DRY y responsabilidad única:
+        - Evitar widgets demasiado grandes con múltiples responsabilidades.
+        - Sugerir extracción de sub-widgets cuando una sección tenga lógica o UI repetida.
+        - Sugerir helpers privados solo si reducen duplicación real.
+        - Evitar duplicar validaciones que ya existen en Cubit o casos de uso.
+        - No sugerir abstracciones innecesarias para duplicación trivial.
+
+        Revisar seguridad:
+        - No exponer información sensible en mensajes visibles o logs.
+        - No confiar en datos manipulables desde UI para decisiones críticas sin validación backend.
+        - Revisar que errores técnicos se traduzcan a mensajes seguros y comprensibles.
+
+    - path: "lib/features/**/application/**"
+      instructions: |
+        Revisar como capa de aplicación.
+        Cubits deben coordinar estado y casos de uso, no acceder directamente
+        a datasources ni a Supabase.
+        Ruta esperada:
+        Cubit -> UseCase -> Repository -> DataSource.
+        Señalar si se inyecta un datasource directo en un Cubit.
+
+        Revisar principios DRY y responsabilidad única:
+        - El Cubit debe coordinar estado, no contener queries ni lógica de infraestructura.
+        - Evitar métodos muy largos con múltiples responsabilidades.
+        - Sugerir extracción a casos de uso o servicios de dominio cuando haya lógica reutilizable.
+        - Evitar duplicación de validaciones entre métodos.
+        - No sugerir refactors cosméticos si no reducen complejidad real.
+
+        Revisar seguridad:
+        - Validar que decisiones críticas no dependan solo del estado local.
+        - Señalar flujos que permitan saltarse validaciones.
+        - Revisar manejo de errores para no filtrar detalles internos.
+        - Revisar que datos sensibles no queden persistidos o logueados innecesariamente.
+
+    - path: "lib/features/**/domain/**"
+      instructions: |
+        Revisar como capa de dominio.
+        Esta capa debe mantenerse libre de dependencias de Flutter, Supabase,
+        widgets o detalles de infraestructura.
+        Entidades, repositorios abstractos y casos de uso deben representar
+        reglas o contratos del negocio.
+
+        Revisar responsabilidad única:
+        - Cada caso de uso debe representar una acción clara.
+        - Evitar casos de uso que mezclen varias responsabilidades no relacionadas.
+        - Evitar duplicación de reglas de negocio entre use cases.
+
+        Revisar seguridad:
+        - Señalar reglas críticas de negocio que no estén representadas claramente.
+        - Verificar que contratos de repositorio no obliguen a exponer datos innecesarios.
+
+    - path: "lib/features/**/data/**"
+      instructions: |
+        Revisar como capa de datos.
+        Aquí sí pueden existir implementaciones contra Supabase, mappers,
+        DTOs, datasources y repositorios concretos.
+        Validar manejo de errores, parsing seguro, queries correctas y que
+        no se expongan datos de otros usuarios.
+
+        Revisar seguridad:
+        - Validar filtros por usuario autenticado, taller, customer o entidades relacionadas.
+        - Señalar consultas que puedan devolver datos de otros usuarios.
+        - Revisar parsing de datos externos con DateTime.tryParse u opciones seguras cuando aplique.
+        - Señalar uso de datos no validados en queries, RPC params o URLs.
+        - Revisar que errores de infraestructura se transformen antes de llegar a UI.
+        - Señalar operaciones sensibles que deberían estar protegidas por RLS o RPC transaccional.
+
+    - path: "lib/features/**/data/datasources/**"
+      instructions: |
+        Revisar consultas a Supabase.
+        Validar filtros por usuario, taller y relaciones necesarias.
+        Señalar riesgos de seguridad, datos cruzados entre usuarios,
+        parsing inseguro o manejo débil de errores.
+        Para fechas, preferir parsing seguro y manejo de valores inesperados.
+
+        Revisar RPC y Supabase:
+        - Validar que llamadas RPC envíen parámetros mínimos y necesarios.
+        - Señalar si el frontend intenta hacer múltiples inserts que deberían ser transaccionales.
+        - Señalar consultas que dependan de email/teléfono para seguridad en vez de user_id/auth.uid().
+        - Revisar que no se expongan claves, tokens o datos internos.
 
     - path: "lib/features/workshops/**"
       instructions: |
-        Esta área contiene el flujo de talleres, productos, servicios y reserva de citas.
+        Esta área contiene talleres, servicios, productos y reserva de citas.
         Revisar especialmente:
-        - Uso correcto de Cubit/State.
-        - Validaciones antes de avanzar en el flujo.
-        - Llamadas a Supabase.
-        - Manejo de errores controlados.
-        - Evitar lógica de negocio compleja en widgets.
+        - Flujo de reserva completo.
+        - Validación de vehículo, servicio, horario y método de pago.
+        - Consistencia entre Cubit, State y UI.
+        - Manejo de horarios ocupados.
+        - Uso correcto de casos de uso y repositorios.
+        - Evitar lógica de negocio dentro de widgets.
         - Evitar textos visibles hardcodeados.
+
+        Revisar seguridad del flujo:
+        - El cliente solo debe ver o gestionar datos propios.
+        - No se deben consultar citas, vehículos, órdenes o customers de otros usuarios.
+        - La reserva debe depender de RPC transaccional para evitar registros parciales.
+        - Validaciones críticas como disponibilidad, ownership del vehículo y customer deben vivir en backend.
+        - La UI puede prevenir errores, pero no debe ser la única barrera de seguridad.
 
     - path: "lib/l10n/**"
       instructions: |
         Revisar consistencia de claves de localización.
-        No sugerir cambios manuales innecesarios en archivos generados si provienen de flutter gen-l10n.
+        No sugerir cambios manuales innecesarios en archivos generados por gen-l10n.
+        Validar que nuevos textos visibles tengan traducción.
 
     - path: "test/**"
       instructions: |
         Revisar que las pruebas cubran comportamiento relevante.
-        Sugerir pruebas solo cuando haya riesgo funcional real.
+        Sugerir pruebas cuando haya riesgo funcional real:
+        validaciones, errores, estados del Cubit, navegación crítica,
+        llamadas a casos de uso, repositorios, parsing de datos o seguridad.
+
+        Revisar seguridad en pruebas:
+        - Sugerir casos que validen acceso solo a datos propios cuando aplique.
+        - Sugerir pruebas para errores controlados de backend/RPC.
+        - Sugerir pruebas para evitar bypass de validaciones críticas.
+
+    - path: "supabase/**"
+      instructions: |
+        Revisar SQL, migraciones, funciones RPC, políticas RLS y permisos.
+        Priorizar seguridad, atomicidad, integridad de datos y compatibilidad con datos existentes.
+
+        Revisar seguridad:
+        - Validar uso correcto de auth.uid().
+        - Revisar políticas RLS para SELECT, INSERT, UPDATE y DELETE.
+        - Señalar funciones SECURITY DEFINER que no tengan search_path definido.
+        - Señalar RPCs que permitan acceder o modificar datos de otros usuarios.
+        - Validar ownership de customer, vehicle, order y appointment.
+        - Evitar SQL dinámico innecesario.
+        - Revisar grants excesivos.
+        - Revisar condiciones de carrera en reservas y operaciones críticas.
+        - Preferir operaciones transaccionales para flujos de varios inserts.
 
     - path: "linux/**"
       instructions: |
