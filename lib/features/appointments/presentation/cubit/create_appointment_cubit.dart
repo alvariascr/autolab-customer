@@ -12,6 +12,10 @@ class CreateAppointmentCubit extends Cubit<CreateAppointmentState> {
   final AppointmentRepository _repository;
 
   Future<void> create(AppointmentDraft draft) async {
+    if (state.status == CreateAppointmentStatus.submitting) {
+      return;
+    }
+
     emit(
       state.copyWith(
         status: CreateAppointmentStatus.submitting,

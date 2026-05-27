@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/appointments/data/datasources/appointment_remote_data_source.dart';
 import 'package:autolab_customer/features/appointments/data/models/appointment_model.dart';
@@ -8,6 +10,7 @@ import 'package:autolab_customer/features/appointments/data/repositories/appoint
 import 'package:autolab_customer/features/appointments/domain/entities/appointment.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockAppointmentRemoteDataSource extends Mock
     implements AppointmentRemoteDataSource {}
@@ -24,6 +27,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_draft());
+    registerFallbackValue(StackTrace.current);
   });
 
   setUp(() {
@@ -34,6 +38,7 @@ void main() {
       remoteDataSource: remoteDataSource,
       errorHandler: errorHandler,
       featureLogger: featureLogger,
+      currentUserIdProvider: () => 'user-1',
     );
   });
 
@@ -49,19 +54,30 @@ void main() {
     verify(() => remoteDataSource.createAppointment(any())).called(1);
   });
 
-  test('getAppointmentsByWorkshop retorna citas del datasource', () async {
-    when(
-      () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
-    ).thenAnswer((_) async => [_appointment()]);
+  test(
+    'getAppointmentsByWorkshop retorna solo citas del usuario actual',
+    () async {
+      when(
+        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+      ).thenAnswer(
+        (_) async => [
+          _appointment(id: 'appt-1', customerId: 'user-1'),
+          _appointment(id: 'appt-2', customerId: 'other-user'),
+        ],
+      );
 
-    final result = await repository.getAppointmentsByWorkshop('workshop-1');
+      final result = await repository.getAppointmentsByWorkshop('workshop-1');
+      final appointments = result.getOrElse(() => const []);
 
-    expect(result.isRight(), isTrue);
-    expect(result.getOrElse(() => const []), hasLength(1));
-    verify(
-      () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
-    ).called(1);
-  });
+      expect(result.isRight(), isTrue);
+      expect(appointments, hasLength(1));
+      expect(appointments.first.id, 'appt-1');
+      expect(appointments.first.customerId, 'user-1');
+      verify(
+        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+      ).called(1);
+    },
+  );
 
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(
@@ -72,6 +88,121 @@ void main() {
 
     expect(result.isLeft(), isTrue);
   });
+
+  test('createAppointment mapea error de red a Failure controlado', () async {
+    when(
+      () => remoteDataSource.createAppointment(any()),
+    ).thenThrow(const SocketException('sin conexion'));
+
+    final result = await repository.createAppointment(_draft());
+
+    expect(result.isLeft(), isTrue);
+  });
+
+  test(
+    'createAppointment usa error item especifico para PostgrestException',
+    () async {
+      when(
+        () => remoteDataSource.createAppointment(any()),
+      ).thenThrow(const PostgrestException(message: 'server error'));
+
+      final result = await repository.createAppointment(_draft());
+
+      final failure = result.swap().getOrElse(
+        () => throw StateError('expected failure'),
+      );
+
+      expect(failure.code, CustomerErrorCatalog.createAppointmentFailed.code);
+      expect(failure.uiKey, CustomerErrorCatalog.createAppointmentFailed.uiKey);
+    },
+  );
+
+  test(
+    'createAppointment mapea error de parsing a Failure controlado',
+    () async {
+      final failure = const ValidationFailure(message: 'payload invalido');
+      when(
+        () => remoteDataSource.createAppointment(any()),
+      ).thenThrow(const FormatException('payload invalido'));
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+      final result = await repository.createAppointment(_draft());
+
+      expect(result.isLeft(), isTrue);
+      expect(result.swap().getOrElse(() => failure), failure);
+      verify(() => errorHandler.handle(any(), any())).called(1);
+    },
+  );
+
+  test('createAppointment reporta error cuando datasource falla', () async {
+    final failure = const UnknownFailure(message: 'missing appointment id');
+    when(
+      () => remoteDataSource.createAppointment(any()),
+    ).thenThrow(StateError('missing appointment id'));
+    when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+    final result = await repository.createAppointment(_draft());
+
+    expect(result.isLeft(), isTrue);
+    expect(result.swap().getOrElse(() => failure), failure);
+    verify(() => errorHandler.handle(any(), any())).called(1);
+  });
+
+  test(
+    'getAppointmentsByWorkshop mapea timeout a Failure controlado',
+    () async {
+      when(
+        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+      ).thenThrow(TimeoutException('timeout'));
+
+      final result = await repository.getAppointmentsByWorkshop('workshop-1');
+
+      expect(result.isLeft(), isTrue);
+    },
+  );
+
+  test(
+    'getAppointmentsByWorkshop mapea error de red a Failure controlado',
+    () async {
+      when(
+        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+      ).thenThrow(const SocketException('sin conexion'));
+
+      final result = await repository.getAppointmentsByWorkshop('workshop-1');
+
+      expect(result.isLeft(), isTrue);
+    },
+  );
+
+  test(
+    'getAppointmentsByWorkshop mapea error de servidor a Failure controlado',
+    () async {
+      when(
+        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+      ).thenThrow(const PostgrestException(message: 'server error'));
+
+      final result = await repository.getAppointmentsByWorkshop('workshop-1');
+
+      expect(result.isLeft(), isTrue);
+    },
+  );
+
+  test(
+    'getAppointmentsByWorkshop mapea error de parsing a Failure controlado',
+    () async {
+      final failure = const ValidationFailure(message: 'payload invalido');
+      when(
+        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+      ).thenThrow(const FormatException('payload invalido'));
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+      final result = await repository.getAppointmentsByWorkshop('workshop-1');
+
+      expect(result.isLeft(), isTrue);
+      expect(result.swap().getOrElse(() => failure), failure);
+      verify(() => errorHandler.handle(any(), any())).called(1);
+    },
+  );
 }
 
 AppointmentDraft _draft() {
@@ -86,9 +217,13 @@ AppointmentDraft _draft() {
   );
 }
 
-AppointmentModel _appointment() {
+AppointmentModel _appointment({
+  String id = 'appt-1',
+  String customerId = 'user-1',
+}) {
   return AppointmentModel(
-    id: 'appt-1',
+    id: id,
+    customerId: customerId,
     workshopId: 'workshop-1',
     serviceId: 'service-1',
     customerName: 'Cliente Autolab',

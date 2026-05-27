@@ -7,6 +7,7 @@ void main() {
     test('parsea cita con productos asociados', () {
       final model = AppointmentModel.fromMap({
         'id': 'appointment-1',
+        'customer_id': 'user-1',
         'workshop_id': 'workshop-1',
         'service_id': 'service-1',
         'customer_name': 'Cliente Autolab',
@@ -25,6 +26,7 @@ void main() {
       });
 
       expect(model.id, 'appointment-1');
+      expect(model.customerId, 'user-1');
       expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
       expect(model.customerName, 'Cliente Autolab');
@@ -67,6 +69,133 @@ void main() {
       expect(map['status'], 'pending');
       expect(map['payment_method'], 'tarjeta');
       expect(map['total_amount'], 30000);
+      expect(map.containsKey('products'), isFalse);
+      expect(map.containsKey('appointment_products'), isFalse);
+    });
+
+    test('convierte draft a parametros de RPC atomica', () {
+      final draft = AppointmentDraft(
+        workshopId: 'workshop-1',
+        serviceId: 'service-1',
+        customerName: 'Cliente Autolab',
+        customerPhone: '8888-8888',
+        customerEmail: 'cliente@autolab.app',
+        vehicleType: 'AUTOMOVIL',
+        scheduledAt: DateTime.utc(2026, 5, 28, 6, 15),
+        paymentMethod: 'sinpe',
+        totalAmount: 35000,
+        products: const [
+          AppointmentProductLine(
+            productId: 'product-1',
+            quantity: 2,
+            unitPrice: 5000,
+          ),
+        ],
+      );
+
+      final params = AppointmentModel.toCreateRpcParams(draft);
+      final products = params['p_products'] as List;
+      final firstProduct = products.first as Map<String, dynamic>;
+
+      expect(params['p_workshop_id'], 'workshop-1');
+      expect(params['p_service_id'], 'service-1');
+      expect(params['p_customer_name'], 'Cliente Autolab');
+      expect(params['p_scheduled_at'], '2026-05-28T06:15:00.000Z');
+      expect(params['p_payment_method'], 'sinpe');
+      expect(params['p_total_amount'], 35000);
+      expect(products, hasLength(1));
+      expect(firstProduct['product_id'], 'product-1');
+      expect(firstProduct['quantity'], 2);
+      expect(firstProduct['unit_price'], 5000);
+    });
+
+    test('lanza FormatException cuando scheduled_at es invalido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'customer_name': 'Cliente Autolab',
+          'customer_phone': '8888-8888',
+          'customer_email': 'cliente@autolab.app',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': 'fecha-invalida',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta un campo requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'service_id': 'service-1',
+          'customer_name': 'Cliente Autolab',
+          'customer_phone': '8888-8888',
+          'customer_email': 'cliente@autolab.app',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando total_amount es malformado', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'customer_name': 'Cliente Autolab',
+          'customer_phone': '8888-8888',
+          'customer_email': 'cliente@autolab.app',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+          'total_amount': 'monto-invalido',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando appointment_products no es lista', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'customer_name': 'Cliente Autolab',
+          'customer_phone': '8888-8888',
+          'customer_email': 'cliente@autolab.app',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+          'appointment_products': 'producto-invalido',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando producto asociado es malformado', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'customer_name': 'Cliente Autolab',
+          'customer_phone': '8888-8888',
+          'customer_email': 'cliente@autolab.app',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+          'appointment_products': [
+            {'product_id': 'product-1', 'quantity': 0, 'unit_price': '5000'},
+          ],
+        }),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 }

@@ -102,4 +102,9 @@ final class CustomerErrorCatalog {
     code: 'CUS_WRK_002',
     uiKey: 'workshopErrorNetwork',
   );
+
+  static const createAppointmentFailed = ErrorItem(
+    code: 'CUS_APT_001',
+    uiKey: 'appointmentCreateFailed',
+  );
 }

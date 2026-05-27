@@ -11,6 +11,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
 
   static const _appointmentSelect = '''
     id,
+    customer_id,
     workshop_id,
     service_id,
     customer_name,
@@ -28,40 +29,37 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
 
   @override
   Future<AppointmentModel> createAppointment(AppointmentDraft draft) async {
-    final response = await client
-        .from('appointments')
-        .insert(AppointmentModel.toInsertMap(draft))
-        .select(_appointmentSelect)
-        .single();
-
-    final appointment = AppointmentModel.fromMap(
-      Map<String, dynamic>.from(response),
+    final response = await client.rpc(
+      'create_appointment_with_products',
+      params: {
+        ...AppointmentModel.toCreateRpcParams(draft),
+        'p_customer_id': _requireCurrentUserId(),
+      },
     );
 
-    if (draft.products.isNotEmpty && appointment.id.isNotEmpty) {
-      await client
-          .from('appointment_products')
-          .insert(
-            AppointmentModel.productLinesToInsertMaps(
-              appointmentId: appointment.id,
-              products: draft.products,
-            ),
-          );
+    final appointmentId = _appointmentIdFromRpcResponse(response);
 
-      return _getAppointmentById(appointment.id);
+    if (appointmentId.isEmpty) {
+      throw StateError('create_appointment_with_products returned empty id');
     }
 
-    return appointment;
+    return _getAppointmentById(appointmentId);
   }
 
   @override
   Future<List<AppointmentModel>> getAppointmentsByWorkshop(
     String workshopId,
   ) async {
+    final customerId = _currentUserId();
+    if (customerId == null || customerId.isEmpty) {
+      return const [];
+    }
+
     final response = await client
         .from('appointments')
         .select(_appointmentSelect)
         .eq('workshop_id', workshopId)
+        .eq('customer_id', customerId)
         .order('scheduled_at');
 
     return response
@@ -72,12 +70,41 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
   }
 
   Future<AppointmentModel> _getAppointmentById(String id) async {
+    final customerId = _requireCurrentUserId();
     final response = await client
         .from('appointments')
         .select(_appointmentSelect)
         .eq('id', id)
+        .eq('customer_id', customerId)
         .single();
 
     return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
+  }
+
+  String _appointmentIdFromRpcResponse(Object? response) {
+    if (response is String) {
+      return response;
+    }
+
+    if (response is Map) {
+      return response['id']?.toString() ??
+          response['appointment_id']?.toString() ??
+          '';
+    }
+
+    return response?.toString() ?? '';
+  }
+
+  String? _currentUserId() {
+    return client.auth.currentUser?.id;
+  }
+
+  String _requireCurrentUserId() {
+    final userId = _currentUserId();
+    if (userId == null || userId.isEmpty) {
+      throw StateError('Authenticated user is required for appointments');
+    }
+
+    return userId;
   }
 }

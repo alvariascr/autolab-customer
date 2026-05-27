@@ -129,6 +129,7 @@ void _registerFeatureDependencies() {
       remoteDataSource: sl<AppointmentRemoteDataSource>(),
       errorHandler: sl<GlobalErrorHandler>(),
       featureLogger: sl<FeatureLogger>(),
+      currentUserIdProvider: () => sl<SupabaseClient>().auth.currentUser?.id,
     ),
   );
   sl.registerLazySingleton<GetSchedulableServicesByWorkshop>(

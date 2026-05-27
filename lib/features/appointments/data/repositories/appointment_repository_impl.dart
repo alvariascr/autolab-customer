@@ -16,11 +16,13 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required this.remoteDataSource,
     required this.errorHandler,
     required this.featureLogger,
+    required this.currentUserIdProvider,
   });
 
   final AppointmentRemoteDataSource remoteDataSource;
   final GlobalErrorHandler errorHandler;
   final FeatureLogger featureLogger;
+  final String? Function() currentUserIdProvider;
 
   @override
   Future<Either<Failure, Appointment>> createAppointment(
@@ -40,7 +42,20 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     return _guard(
       action: 'get_appointments_by_workshop',
       context: {'workshopId': workshopId},
-      loader: () => remoteDataSource.getAppointmentsByWorkshop(workshopId),
+      loader: () async {
+        final customerId = currentUserIdProvider();
+        if (customerId == null || customerId.isEmpty) {
+          return const <Appointment>[];
+        }
+
+        final appointments = await remoteDataSource.getAppointmentsByWorkshop(
+          workshopId,
+        );
+
+        return appointments
+            .where((appointment) => appointment.customerId == customerId)
+            .toList();
+      },
     );
   }
 
@@ -94,7 +109,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       return Left(failure);
     } on PostgrestException catch (error, stackTrace) {
       final failure = ServerFailure.fromErrorItem(
-        CustomerErrorCatalog.workshopLoadFailed,
+        _serverErrorItemFor(action),
         cause: error,
         stackTrace: stackTrace,
       );
@@ -119,5 +134,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       );
       return Left(failure);
     }
+  }
+
+  ErrorItem _serverErrorItemFor(String action) {
+    return switch (action) {
+      'create_appointment' => CustomerErrorCatalog.createAppointmentFailed,
+      _ => CustomerErrorCatalog.workshopLoadFailed,
+    };
   }
 }

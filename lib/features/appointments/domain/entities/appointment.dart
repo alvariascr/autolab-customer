@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class Appointment extends Equatable {
   const Appointment({
     required this.id,
+    this.customerId = '',
     required this.workshopId,
     required this.serviceId,
     required this.customerName,
@@ -19,6 +20,7 @@ class Appointment extends Equatable {
   });
 
   final String id;
+  final String customerId;
   final String workshopId;
   final String serviceId;
   final String customerName;
@@ -36,6 +38,7 @@ class Appointment extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    customerId,
     workshopId,
     serviceId,
     customerName,
@@ -100,7 +103,12 @@ class AppointmentProductLine extends Equatable {
     required this.productId,
     required this.quantity,
     this.unitPrice,
-  });
+  }) : assert(productId != '', 'productId must not be empty'),
+       assert(quantity > 0, 'quantity must be greater than zero'),
+       assert(
+         unitPrice == null || unitPrice >= 0,
+         'unitPrice must be positive',
+       );
 
   final String productId;
   final int quantity;
