@@ -3,6 +3,11 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/appointments/data/datasources/appointment_remote_data_source.dart';
+import '../../features/appointments/data/datasources/appointment_remote_data_source_impl.dart';
+import '../../features/appointments/data/repositories/appointment_repository_impl.dart';
+import '../../features/appointments/domain/repositories/appointment_repository.dart';
+import '../../features/appointments/presentation/cubit/create_appointment_cubit.dart';
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
@@ -116,6 +121,17 @@ void _registerFeatureDependencies() {
       featureLogger: sl<FeatureLogger>(),
     ),
   );
+  sl.registerLazySingleton<AppointmentRemoteDataSource>(
+    () => AppointmentRemoteDataSourceImpl(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<AppointmentRepository>(
+    () => AppointmentRepositoryImpl(
+      remoteDataSource: sl<AppointmentRemoteDataSource>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+      featureLogger: sl<FeatureLogger>(),
+      currentUserIdProvider: () => sl<SupabaseClient>().auth.currentUser?.id,
+    ),
+  );
   sl.registerLazySingleton<GetSchedulableServicesByWorkshop>(
     () => GetSchedulableServicesByWorkshop(sl<ProductRepository>()),
   );
@@ -154,6 +170,9 @@ void _registerFeatureDependencies() {
       getBookedAppointmentSlots: sl<GetBookedAppointmentSlots>(),
       bookServiceAppointment: sl<BookServiceAppointment>(),
     ),
+  );
+  sl.registerFactory<CreateAppointmentCubit>(
+    () => CreateAppointmentCubit(sl<AppointmentRepository>()),
   );
   sl.registerFactory<MapCubit>(
     () => MapCubit(
