@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../domain/entities/appointment.dart';
 import '../models/appointment_model.dart';
 import 'appointment_remote_data_source.dart';
 
@@ -28,33 +27,31 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
   ''';
 
   @override
-  Future<AppointmentModel> createAppointment(AppointmentDraft draft) async {
+  Future<AppointmentModel> createAppointment({
+    required Map<String, dynamic> rpcParams,
+    required String customerId,
+  }) async {
     final response = await client.rpc(
       'create_appointment_with_products',
-      params: {
-        ...AppointmentModel.toCreateRpcParams(draft),
-        'p_customer_id': _requireCurrentUserId(),
-      },
+      params: {...rpcParams, 'p_customer_id': customerId},
     );
 
     final appointmentId = _appointmentIdFromRpcResponse(response);
 
     if (appointmentId.isEmpty) {
-      throw StateError('create_appointment_with_products returned empty id');
+      throw const FormatException(
+        'create_appointment_with_products returned an invalid or empty ID',
+      );
     }
 
-    return _getAppointmentById(appointmentId);
+    return _getAppointmentById(appointmentId, customerId: customerId);
   }
 
   @override
-  Future<List<AppointmentModel>> getAppointmentsByWorkshop(
-    String workshopId,
-  ) async {
-    final customerId = _currentUserId();
-    if (customerId == null || customerId.isEmpty) {
-      return const [];
-    }
-
+  Future<List<AppointmentModel>> getAppointmentsByWorkshop({
+    required String workshopId,
+    required String customerId,
+  }) async {
     final response = await client
         .from('appointments')
         .select(_appointmentSelect)
@@ -69,8 +66,10 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
         .toList();
   }
 
-  Future<AppointmentModel> _getAppointmentById(String id) async {
-    final customerId = _requireCurrentUserId();
+  Future<AppointmentModel> _getAppointmentById(
+    String id, {
+    required String customerId,
+  }) async {
     final response = await client
         .from('appointments')
         .select(_appointmentSelect)
@@ -93,18 +92,5 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     }
 
     return response?.toString() ?? '';
-  }
-
-  String? _currentUserId() {
-    return client.auth.currentUser?.id;
-  }
-
-  String _requireCurrentUserId() {
-    final userId = _currentUserId();
-    if (userId == null || userId.isEmpty) {
-      throw StateError('Authenticated user is required for appointments');
-    }
-
-    return userId;
   }
 }

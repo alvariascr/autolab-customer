@@ -1,8 +1,13 @@
-import '../../domain/entities/appointment.dart';
 import '../models/appointment_model.dart';
 
 abstract class AppointmentRemoteDataSource {
-  Future<AppointmentModel> createAppointment(AppointmentDraft draft);
+  Future<AppointmentModel> createAppointment({
+    required Map<String, dynamic> rpcParams,
+    required String customerId,
+  });
 
-  Future<List<AppointmentModel>> getAppointmentsByWorkshop(String workshopId);
+  Future<List<AppointmentModel>> getAppointmentsByWorkshop({
+    required String workshopId,
+    required String customerId,
+  });
 }

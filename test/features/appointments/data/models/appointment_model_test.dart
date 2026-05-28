@@ -44,35 +44,6 @@ void main() {
       expect(model.products.first.unitPrice, 5000);
     });
 
-    test('convierte draft a payload de insercion', () {
-      final draft = AppointmentDraft(
-        workshopId: 'workshop-1',
-        serviceId: 'service-1',
-        customerName: 'Cliente Autolab',
-        customerPhone: '8888-8888',
-        customerEmail: 'cliente@autolab.app',
-        vehicleType: 'AUTOMOVIL',
-        scheduledAt: DateTime.utc(2026, 5, 28, 6, 15),
-        paymentMethod: 'tarjeta',
-        totalAmount: 30000,
-        products: const [
-          AppointmentProductLine(productId: 'product-1', quantity: 1),
-        ],
-      );
-
-      final map = AppointmentModel.toInsertMap(draft);
-
-      expect(map['workshop_id'], 'workshop-1');
-      expect(map['service_id'], 'service-1');
-      expect(map['customer_name'], 'Cliente Autolab');
-      expect(map['scheduled_at'], '2026-05-28T06:15:00.000Z');
-      expect(map['status'], 'pending');
-      expect(map['payment_method'], 'tarjeta');
-      expect(map['total_amount'], 30000);
-      expect(map.containsKey('products'), isFalse);
-      expect(map.containsKey('appointment_products'), isFalse);
-    });
-
     test('convierte draft a parametros de RPC atomica', () {
       final draft = AppointmentDraft(
         workshopId: 'workshop-1',
@@ -107,6 +78,22 @@ void main() {
       expect(firstProduct['product_id'], 'product-1');
       expect(firstProduct['quantity'], 2);
       expect(firstProduct['unit_price'], 5000);
+    });
+
+    test('usa null cuando la cita no trae customer_id', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'customer_name': 'Cliente Autolab',
+        'customer_phone': '8888-8888',
+        'customer_email': 'cliente@autolab.app',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'pending',
+      });
+
+      expect(model.customerId, isNull);
     });
 
     test('lanza FormatException cuando scheduled_at es invalido', () {

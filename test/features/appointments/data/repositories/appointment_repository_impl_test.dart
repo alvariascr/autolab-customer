@@ -27,6 +27,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_draft());
+    registerFallbackValue(<String, dynamic>{});
     registerFallbackValue(StackTrace.current);
   });
 
@@ -44,26 +45,40 @@ void main() {
 
   test('createAppointment retorna Right cuando datasource responde', () async {
     when(
-      () => remoteDataSource.createAppointment(any()),
+      () => remoteDataSource.createAppointment(
+        rpcParams: any(named: 'rpcParams'),
+        customerId: any(named: 'customerId'),
+      ),
     ).thenAnswer((_) async => _appointment());
 
     final result = await repository.createAppointment(_draft());
+    final verification = verify(
+      () => remoteDataSource.createAppointment(
+        rpcParams: captureAny(named: 'rpcParams'),
+        customerId: captureAny(named: 'customerId'),
+      ),
+    );
+    final payload = verification.captured.first as Map<String, dynamic>;
+    final customerId = verification.captured.last as String;
 
     expect(result.isRight(), isTrue);
     expect(result.getOrElse(() => throw StateError('missing')).id, 'appt-1');
-    verify(() => remoteDataSource.createAppointment(any())).called(1);
+    expect(payload['p_workshop_id'], 'workshop-1');
+    expect(payload['p_service_id'], 'service-1');
+    expect(payload['p_scheduled_at'], '2026-05-28T06:15:00.000Z');
+    expect(customerId, 'user-1');
   });
 
   test(
-    'getAppointmentsByWorkshop retorna solo citas del usuario actual',
+    'getAppointmentsByWorkshop delega filtro por usuario al datasource',
     () async {
       when(
-        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+        () => remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: 'workshop-1',
+          customerId: 'user-1',
+        ),
       ).thenAnswer(
-        (_) async => [
-          _appointment(id: 'appt-1', customerId: 'user-1'),
-          _appointment(id: 'appt-2', customerId: 'other-user'),
-        ],
+        (_) async => [_appointment(id: 'appt-1', customerId: 'user-1')],
       );
 
       final result = await repository.getAppointmentsByWorkshop('workshop-1');
@@ -74,14 +89,20 @@ void main() {
       expect(appointments.first.id, 'appt-1');
       expect(appointments.first.customerId, 'user-1');
       verify(
-        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+        () => remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: 'workshop-1',
+          customerId: 'user-1',
+        ),
       ).called(1);
     },
   );
 
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(
-      () => remoteDataSource.createAppointment(any()),
+      () => remoteDataSource.createAppointment(
+        rpcParams: any(named: 'rpcParams'),
+        customerId: any(named: 'customerId'),
+      ),
     ).thenThrow(TimeoutException('timeout'));
 
     final result = await repository.createAppointment(_draft());
@@ -91,7 +112,10 @@ void main() {
 
   test('createAppointment mapea error de red a Failure controlado', () async {
     when(
-      () => remoteDataSource.createAppointment(any()),
+      () => remoteDataSource.createAppointment(
+        rpcParams: any(named: 'rpcParams'),
+        customerId: any(named: 'customerId'),
+      ),
     ).thenThrow(const SocketException('sin conexion'));
 
     final result = await repository.createAppointment(_draft());
@@ -100,20 +124,24 @@ void main() {
   });
 
   test(
-    'createAppointment usa error item especifico para PostgrestException',
+    'createAppointment delega PostgrestException al error handler',
     () async {
+      final failure = ServerFailure.fromErrorItem(
+        CustomerErrorCatalog.createAppointmentFailed,
+      );
       when(
-        () => remoteDataSource.createAppointment(any()),
+        () => remoteDataSource.createAppointment(
+          rpcParams: any(named: 'rpcParams'),
+          customerId: any(named: 'customerId'),
+        ),
       ).thenThrow(const PostgrestException(message: 'server error'));
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
 
       final result = await repository.createAppointment(_draft());
 
-      final failure = result.swap().getOrElse(
-        () => throw StateError('expected failure'),
-      );
-
-      expect(failure.code, CustomerErrorCatalog.createAppointmentFailed.code);
-      expect(failure.uiKey, CustomerErrorCatalog.createAppointmentFailed.uiKey);
+      expect(result.isLeft(), isTrue);
+      expect(result.swap().getOrElse(() => failure), failure);
+      verify(() => errorHandler.handle(any(), any())).called(1);
     },
   );
 
@@ -122,7 +150,10 @@ void main() {
     () async {
       final failure = const ValidationFailure(message: 'payload invalido');
       when(
-        () => remoteDataSource.createAppointment(any()),
+        () => remoteDataSource.createAppointment(
+          rpcParams: any(named: 'rpcParams'),
+          customerId: any(named: 'customerId'),
+        ),
       ).thenThrow(const FormatException('payload invalido'));
       when(() => errorHandler.handle(any(), any())).thenReturn(failure);
 
@@ -137,7 +168,10 @@ void main() {
   test('createAppointment reporta error cuando datasource falla', () async {
     final failure = const UnknownFailure(message: 'missing appointment id');
     when(
-      () => remoteDataSource.createAppointment(any()),
+      () => remoteDataSource.createAppointment(
+        rpcParams: any(named: 'rpcParams'),
+        customerId: any(named: 'customerId'),
+      ),
     ).thenThrow(StateError('missing appointment id'));
     when(() => errorHandler.handle(any(), any())).thenReturn(failure);
 
@@ -152,7 +186,10 @@ void main() {
     'getAppointmentsByWorkshop mapea timeout a Failure controlado',
     () async {
       when(
-        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+        () => remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: 'workshop-1',
+          customerId: 'user-1',
+        ),
       ).thenThrow(TimeoutException('timeout'));
 
       final result = await repository.getAppointmentsByWorkshop('workshop-1');
@@ -165,7 +202,10 @@ void main() {
     'getAppointmentsByWorkshop mapea error de red a Failure controlado',
     () async {
       when(
-        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+        () => remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: 'workshop-1',
+          customerId: 'user-1',
+        ),
       ).thenThrow(const SocketException('sin conexion'));
 
       final result = await repository.getAppointmentsByWorkshop('workshop-1');
@@ -177,13 +217,20 @@ void main() {
   test(
     'getAppointmentsByWorkshop mapea error de servidor a Failure controlado',
     () async {
+      final failure = const ServerFailure(message: 'server error');
       when(
-        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+        () => remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: 'workshop-1',
+          customerId: 'user-1',
+        ),
       ).thenThrow(const PostgrestException(message: 'server error'));
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
 
       final result = await repository.getAppointmentsByWorkshop('workshop-1');
 
       expect(result.isLeft(), isTrue);
+      expect(result.swap().getOrElse(() => failure), failure);
+      verify(() => errorHandler.handle(any(), any())).called(1);
     },
   );
 
@@ -192,7 +239,10 @@ void main() {
     () async {
       final failure = const ValidationFailure(message: 'payload invalido');
       when(
-        () => remoteDataSource.getAppointmentsByWorkshop('workshop-1'),
+        () => remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: 'workshop-1',
+          customerId: 'user-1',
+        ),
       ).thenThrow(const FormatException('payload invalido'));
       when(() => errorHandler.handle(any(), any())).thenReturn(failure);
 

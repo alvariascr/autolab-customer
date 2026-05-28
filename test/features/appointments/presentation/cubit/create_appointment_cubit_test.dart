@@ -5,6 +5,7 @@ import 'package:autolab_customer/features/appointments/domain/entities/appointme
 import 'package:autolab_customer/features/appointments/domain/repositories/appointment_repository.dart';
 import 'package:autolab_customer/features/appointments/presentation/cubit/create_appointment_cubit.dart';
 import 'package:autolab_customer/features/appointments/presentation/cubit/create_appointment_state.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,7 +14,6 @@ class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 
 void main() {
   late MockAppointmentRepository repository;
-  late CreateAppointmentCubit cubit;
 
   setUpAll(() {
     registerFallbackValue(_draft());
@@ -21,23 +21,56 @@ void main() {
 
   setUp(() {
     repository = MockAppointmentRepository();
-    cubit = CreateAppointmentCubit(repository);
   });
 
-  tearDown(() => cubit.close());
+  blocTest<CreateAppointmentCubit, CreateAppointmentState>(
+    'create emite submitting y success cuando repository responde',
+    build: () {
+      when(
+        () => repository.createAppointment(any()),
+      ).thenAnswer((_) async => Right(_appointment()));
 
-  test('create emite success cuando repository responde', () async {
-    when(
-      () => repository.createAppointment(any()),
-    ).thenAnswer((_) async => Right(_appointment()));
+      return CreateAppointmentCubit(repository);
+    },
+    act: (cubit) => cubit.create(_draft()),
+    expect: () => [
+      const CreateAppointmentState(status: CreateAppointmentStatus.submitting),
+      CreateAppointmentState(
+        status: CreateAppointmentStatus.success,
+        appointment: _appointment(),
+      ),
+    ],
+  );
 
-    await cubit.create(_draft());
+  blocTest<CreateAppointmentCubit, CreateAppointmentState>(
+    'create emite submitting y error cuando repository falla',
+    build: () {
+      when(() => repository.createAppointment(any())).thenAnswer(
+        (_) async => const Left(
+          ServerFailure(
+            message: 'No se pudo crear la cita',
+            code: 'CUS_APT_001',
+            uiKey: 'appointmentCreateFailed',
+          ),
+        ),
+      );
 
-    expect(cubit.state.status, CreateAppointmentStatus.success);
-    expect(cubit.state.appointment?.id, 'appointment-1');
-  });
+      return CreateAppointmentCubit(repository);
+    },
+    act: (cubit) => cubit.create(_draft()),
+    expect: () => const [
+      CreateAppointmentState(status: CreateAppointmentStatus.submitting),
+      CreateAppointmentState(
+        status: CreateAppointmentStatus.error,
+        message: 'No se pudo crear la cita',
+        code: 'CUS_APT_001',
+        uiKey: 'appointmentCreateFailed',
+      ),
+    ],
+  );
 
   test('create ignora reenvios mientras esta submitting', () async {
+    final cubit = CreateAppointmentCubit(repository);
     final completer = Completer<Either<Failure, Appointment>>();
     when(
       () => repository.createAppointment(any()),
@@ -52,6 +85,7 @@ void main() {
 
     verify(() => repository.createAppointment(any())).called(1);
     expect(cubit.state.status, CreateAppointmentStatus.success);
+    await cubit.close();
   });
 }
 

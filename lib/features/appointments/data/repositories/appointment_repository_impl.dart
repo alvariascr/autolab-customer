@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/customer_error_catalog.dart';
 import '../../../../core/logging/feature_logger.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../datasources/appointment_remote_data_source.dart';
+import '../models/appointment_model.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   const AppointmentRepositoryImpl({
@@ -31,7 +31,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     return _guard(
       action: 'create_appointment',
       context: {'workshopId': draft.workshopId, 'serviceId': draft.serviceId},
-      loader: () => remoteDataSource.createAppointment(draft),
+      loader: () async {
+        final customerId = _currentCustomerId();
+
+        return remoteDataSource.createAppointment(
+          rpcParams: AppointmentModel.toCreateRpcParams(draft),
+          customerId: customerId,
+        );
+      },
     );
   }
 
@@ -48,13 +55,10 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           return const <Appointment>[];
         }
 
-        final appointments = await remoteDataSource.getAppointmentsByWorkshop(
-          workshopId,
+        return remoteDataSource.getAppointmentsByWorkshop(
+          workshopId: workshopId,
+          customerId: customerId,
         );
-
-        return appointments
-            .where((appointment) => appointment.customerId == customerId)
-            .toList();
       },
     );
   }
@@ -107,21 +111,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         stackTrace: stackTrace,
       );
       return Left(failure);
-    } on PostgrestException catch (error, stackTrace) {
-      final failure = ServerFailure.fromErrorItem(
-        _serverErrorItemFor(action),
-        cause: error,
-        stackTrace: stackTrace,
-      );
-      featureLogger.warn(
-        feature: 'appointments',
-        action: '${action}_server_failed',
-        code: failure.code,
-        context: context,
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return Left(failure);
     } catch (error, stackTrace) {
       final failure = errorHandler.handle(error, stackTrace);
       featureLogger.error(
@@ -136,10 +125,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     }
   }
 
-  ErrorItem _serverErrorItemFor(String action) {
-    return switch (action) {
-      'create_appointment' => CustomerErrorCatalog.createAppointmentFailed,
-      _ => CustomerErrorCatalog.workshopLoadFailed,
-    };
+  String _currentCustomerId() {
+    final customerId = currentUserIdProvider();
+    if (customerId == null || customerId.isEmpty) {
+      throw StateError('Authenticated user is required for appointments');
+    }
+
+    return customerId;
   }
 }

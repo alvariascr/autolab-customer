@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 class Appointment extends Equatable {
   const Appointment({
     required this.id,
-    this.customerId = '',
+    this.customerId,
     required this.workshopId,
     required this.serviceId,
     required this.customerName,
@@ -20,7 +20,7 @@ class Appointment extends Equatable {
   });
 
   final String id;
-  final String customerId;
+  final String? customerId;
   final String workshopId;
   final String serviceId;
   final String customerName;

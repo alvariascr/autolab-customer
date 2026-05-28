@@ -39,22 +39,6 @@ class AppointmentModel extends Appointment {
     );
   }
 
-  static Map<String, dynamic> toInsertMap(AppointmentDraft draft) {
-    return {
-      'workshop_id': draft.workshopId,
-      'service_id': draft.serviceId,
-      'customer_name': draft.customerName,
-      'customer_phone': draft.customerPhone,
-      'customer_email': draft.customerEmail,
-      'vehicle_type': draft.vehicleType,
-      'scheduled_at': draft.scheduledAt.toUtc().toIso8601String(),
-      'status': 'pending',
-      'payment_method': draft.paymentMethod,
-      'notes': draft.notes,
-      'total_amount': draft.totalAmount,
-    };
-  }
-
   static Map<String, dynamic> toCreateRpcParams(AppointmentDraft draft) {
     return {
       'p_workshop_id': draft.workshopId,
@@ -107,26 +91,9 @@ class AppointmentModel extends Appointment {
     };
   }
 
-  static List<Map<String, dynamic>> productLinesToInsertMaps({
-    required String appointmentId,
-    required List<AppointmentProductLine> products,
-  }) {
-    return products
-        .map(
-          (product) => {
-            'appointment_id': appointmentId,
-            'product_id': product.productId,
-            'quantity': product.quantity,
-            'unit_price': product.unitPrice,
-          },
-        )
-        .toList();
-  }
-
-  static String _customerIdFromMap(Map<String, dynamic> map) {
+  static String? _customerIdFromMap(Map<String, dynamic> map) {
     return _nullableString(map['customer_id']) ??
-        _nullableString(map['customer_user_id']) ??
-        '';
+        _nullableString(map['customer_user_id']);
   }
 
   static List<AppointmentProductLine> _productsFromMap(
