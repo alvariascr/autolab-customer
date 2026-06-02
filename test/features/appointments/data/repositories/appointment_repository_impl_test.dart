@@ -97,6 +97,46 @@ void main() {
     },
   );
 
+  test(
+    'getCustomerAppointments delega filtro por usuario al datasource',
+    () async {
+      when(
+        () => remoteDataSource.getCustomerAppointments(customerId: 'user-1'),
+      ).thenAnswer(
+        (_) async => [_appointment(id: 'appt-1', customerId: 'user-1')],
+      );
+
+      final result = await repository.getCustomerAppointments();
+      final appointments = result.getOrElse(() => const []);
+
+      expect(result.isRight(), isTrue);
+      expect(appointments, hasLength(1));
+      expect(appointments.first.customerId, 'user-1');
+      verify(
+        () => remoteDataSource.getCustomerAppointments(customerId: 'user-1'),
+      ).called(1);
+    },
+  );
+
+  test('getCustomerAppointments retorna lista vacia sin usuario', () async {
+    repository = AppointmentRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      errorHandler: errorHandler,
+      featureLogger: featureLogger,
+      currentUserIdProvider: () => null,
+    );
+
+    final result = await repository.getCustomerAppointments();
+
+    expect(result.isRight(), isTrue);
+    expect(result.getOrElse(() => [_appointment()]), isEmpty);
+    verifyNever(
+      () => remoteDataSource.getCustomerAppointments(
+        customerId: any(named: 'customerId'),
+      ),
+    );
+  });
+
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(
       () => remoteDataSource.createAppointment(

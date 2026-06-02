@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/appointments/presentation/pages/my_appointments_page.dart';
 import '../../features/auth/application/auth_session_cubit.dart';
 import '../../features/auth/application/auth_session_state.dart';
 import '../../features/auth/ui/forgot_password_page.dart';
@@ -42,6 +43,10 @@ class AppRouter {
       GoRoute(
         path: '/home-customer',
         builder: (context, state) => const HomeCustomerPage(),
+      ),
+      GoRoute(
+        path: '/appointments',
+        builder: (context, state) => const MyAppointmentsPage(),
       ),
       GoRoute(
         path: '/workshops/:id',

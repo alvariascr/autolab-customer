@@ -44,6 +44,27 @@ void main() {
       expect(model.products.first.unitPrice, 5000);
     });
 
+    test('parsea nombres de taller y servicio desde relaciones', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'customer_id': 'user-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'customer_name': 'Cliente Autolab',
+        'customer_phone': '8888-8888',
+        'customer_email': 'cliente@autolab.app',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'confirmed',
+        'workshops': {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
+        'products': {'name': 'Cambio de aceite'},
+      });
+
+      expect(model.workshopName, 'AutoFix San Jose');
+      expect(model.workshopAvatarUrl, 'avatar.png');
+      expect(model.serviceName, 'Cambio de aceite');
+    });
+
     test('convierte draft a parametros de RPC atomica', () {
       final draft = AppointmentDraft(
         workshopId: 'workshop-1',
@@ -113,16 +134,49 @@ void main() {
       );
     });
 
-    test('lanza FormatException cuando falta un campo requerido', () {
+    test('parsea cita con el esquema actual de appointments', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'order_service_id': 'order-service-1',
+        'appointment_status': 'scheduled',
+        'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+        'note': 'Revisar frenos',
+        'vehicle_id': 'vehicle-1',
+      });
+
+      expect(model.id, 'appointment-1');
+      expect(model.serviceId, 'order-service-1');
+      expect(model.status, 'scheduled');
+      expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      expect(model.notes, 'Revisar frenos');
+    });
+
+    test('parsea taller y servicio desde order_services', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'order_service_id': 'order-service-1',
+        'appointment_status': 'scheduled',
+        'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+        'order_services': {
+          'inventory_items': {'name': 'Cambio de aceite'},
+          'orders': {
+            'workshops': {
+              'name': 'AutoFix San Jose',
+              'avatar_url': 'avatar.png',
+            },
+          },
+        },
+      });
+
+      expect(model.workshopName, 'AutoFix San Jose');
+      expect(model.workshopAvatarUrl, 'avatar.png');
+      expect(model.serviceName, 'Cambio de aceite');
+    });
+
+    test('lanza FormatException cuando falta fecha requerida', () {
       expect(
         () => AppointmentModel.fromMap({
           'id': 'appointment-1',
-          'service_id': 'service-1',
-          'customer_name': 'Cliente Autolab',
-          'customer_phone': '8888-8888',
-          'customer_email': 'cliente@autolab.app',
-          'vehicle_type': 'AUTOMOVIL',
-          'scheduled_at': '2026-05-28T06:15:00.000Z',
           'status': 'pending',
         }),
         throwsA(isA<FormatException>()),

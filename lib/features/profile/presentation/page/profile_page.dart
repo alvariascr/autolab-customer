@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../appointments/presentation/pages/my_appointments_page.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
@@ -101,6 +102,64 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 20),
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MyAppointmentsPage(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFF0B5CFF)),
+                    ),
+                    child: const Row(
+                      children: [
+                        _ProfileActionIcon(),
+                        SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Mis citas',
+                                style: TextStyle(
+                                  color: Color(0xFF181411),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Consulta tus citas proximas, pasadas y canceladas',
+                                style: TextStyle(
+                                  color: Color(0xFF6B5F57),
+                                  fontSize: 12,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: Color(0xFF0B5CFF),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
@@ -159,6 +218,23 @@ class _ProfilePageState extends State<ProfilePage> {
         currentIndex: _currentIndex,
         onTap: _handleBottomNavigation,
       ),
+    );
+  }
+}
+
+class _ProfileActionIcon extends StatelessWidget {
+  const _ProfileActionIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9F0FF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(Icons.calendar_month_rounded, color: Color(0xFF0B5CFF)),
     );
   }
 }

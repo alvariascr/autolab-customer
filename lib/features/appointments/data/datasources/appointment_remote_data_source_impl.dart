@@ -23,7 +23,42 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     notes,
     total_amount,
     created_at,
+    workshops(name, avatar_url),
+    inventory_items(name),
     appointment_products(product_id, quantity, unit_price)
+  ''';
+
+  static const _appointmentBaseSelect = '''
+    id,
+    order_service_id,
+    appointment_status,
+    scheduled_datetime,
+    note,
+    vehicle_id,
+    employee_id,
+    updated_at,
+    updated_by
+  ''';
+
+  static const _customerAppointmentSelect = '''
+    id,
+    order_service_id,
+    appointment_status,
+    scheduled_datetime,
+    note,
+    vehicle_id,
+    employee_id,
+    updated_at,
+    updated_by,
+    order_services(
+      id,
+      inventory_item_id,
+      inventory_items(name),
+      orders(
+        id,
+        workshops(name, avatar_url)
+      )
+    )
   ''';
 
   @override
@@ -52,13 +87,86 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     required String workshopId,
     required String customerId,
   }) async {
-    final response = await client
-        .from('appointments')
-        .select(_appointmentSelect)
-        .eq('workshop_id', workshopId)
-        .eq('customer_id', customerId)
-        .order('scheduled_at');
+    return _getAppointments(
+      select: _appointmentSelect,
+      fallbackSelect: _appointmentBaseSelect,
+      filters: (query) => query
+          .eq('workshop_id', workshopId)
+          .eq('customer_id', customerId)
+          .order('scheduled_at'),
+    );
+  }
 
+  @override
+  Future<List<AppointmentModel>> getCustomerAppointments({
+    required String customerId,
+  }) async {
+    return _getAppointments(
+      select: _customerAppointmentSelect,
+      fallbackSelect: _appointmentBaseSelect,
+      filters: (query) => query.order('scheduled_datetime'),
+    );
+  }
+
+  Future<AppointmentModel> _getAppointmentById(
+    String id, {
+    required String customerId,
+  }) async {
+    try {
+      final response = await client
+          .from('appointments')
+          .select(_appointmentSelect)
+          .eq('id', id)
+          .eq('customer_id', customerId)
+          .single();
+
+      return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
+    } on PostgrestException catch (error) {
+      if (!_isRelationshipError(error)) {
+        rethrow;
+      }
+
+      final response = await client
+          .from('appointments')
+          .select(_appointmentBaseSelect)
+          .eq('id', id)
+          .eq('customer_id', customerId)
+          .single();
+
+      return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
+    }
+  }
+
+  Future<List<AppointmentModel>> _getAppointments({
+    required String select,
+    required String fallbackSelect,
+    required PostgrestTransformBuilder<List<Map<String, dynamic>>> Function(
+      PostgrestFilterBuilder<List<Map<String, dynamic>>> query,
+    )
+    filters,
+  }) async {
+    try {
+      return _modelsFromResponse(await filters(_selectAppointments(select)));
+    } on PostgrestException catch (error) {
+      if (!_isRelationshipError(error)) {
+        rethrow;
+      }
+
+      return _modelsFromResponse(
+        await filters(_selectAppointments(fallbackSelect)),
+      );
+    }
+  }
+
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> _selectAppointments(
+    String select,
+  ) {
+    return client.from('appointments').select(select);
+  }
+
+  List<AppointmentModel> _modelsFromResponse(
+    List<Map<String, dynamic>> response,
+  ) {
     return response
         .map(
           (item) => AppointmentModel.fromMap(Map<String, dynamic>.from(item)),
@@ -66,18 +174,11 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
         .toList();
   }
 
-  Future<AppointmentModel> _getAppointmentById(
-    String id, {
-    required String customerId,
-  }) async {
-    final response = await client
-        .from('appointments')
-        .select(_appointmentSelect)
-        .eq('id', id)
-        .eq('customer_id', customerId)
-        .single();
-
-    return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
+  bool _isRelationshipError(PostgrestException error) {
+    final message = error.message.toLowerCase();
+    return error.code == 'PGRST200' ||
+        message.contains('relationship') ||
+        message.contains('schema cache');
   }
 
   String _appointmentIdFromRpcResponse(Object? response) {

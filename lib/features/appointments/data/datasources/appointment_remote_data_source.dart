@@ -10,4 +10,8 @@ abstract class AppointmentRemoteDataSource {
     required String workshopId,
     required String customerId,
   });
+
+  Future<List<AppointmentModel>> getCustomerAppointments({
+    required String customerId,
+  });
 }

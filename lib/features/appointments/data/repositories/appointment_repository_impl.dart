@@ -63,6 +63,21 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     );
   }
 
+  @override
+  Future<Either<Failure, List<Appointment>>> getCustomerAppointments() {
+    return _guard(
+      action: 'get_customer_appointments',
+      loader: () async {
+        final customerId = currentUserIdProvider();
+        if (customerId == null || customerId.isEmpty) {
+          return const <Appointment>[];
+        }
+
+        return remoteDataSource.getCustomerAppointments(customerId: customerId);
+      },
+    );
+  }
+
   Future<Either<Failure, T>> _guard<T>({
     required String action,
     required Future<T> Function() loader,

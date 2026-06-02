@@ -12,6 +12,9 @@ class Appointment extends Equatable {
     required this.vehicleType,
     required this.scheduledAt,
     required this.status,
+    this.workshopName,
+    this.serviceName,
+    this.workshopAvatarUrl,
     this.paymentMethod,
     this.notes,
     this.totalAmount,
@@ -29,6 +32,9 @@ class Appointment extends Equatable {
   final String vehicleType;
   final DateTime scheduledAt;
   final String status;
+  final String? workshopName;
+  final String? serviceName;
+  final String? workshopAvatarUrl;
   final String? paymentMethod;
   final String? notes;
   final double? totalAmount;
@@ -47,6 +53,9 @@ class Appointment extends Equatable {
     vehicleType,
     scheduledAt,
     status,
+    workshopName,
+    serviceName,
+    workshopAvatarUrl,
     paymentMethod,
     notes,
     totalAmount,
