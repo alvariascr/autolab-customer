@@ -5,6 +5,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import 'garage_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -48,111 +49,156 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x12000000),
-                      blurRadius: 22,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundColor: Color(0xFF181411),
-                      child: Icon(
-                        Icons.person_outline_rounded,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      l10n.profileAccountTitle,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.profileAccountSubtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF6B5F57),
-                        fontSize: 14,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ),
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x12000000),
+                    blurRadius: 22,
+                    offset: Offset(0, 10),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE9DDD2)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Color(0xFF181411),
+                    child: Icon(
+                      Icons.person_outline_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    l10n.profileAccountTitle,
+                    style: const TextStyle(
+                      color: Color(0xFF181411),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.profileAccountSubtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B5F57),
+                      fontSize: 14,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE9DDD2)),
+              ),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE9E7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.garage_outlined,
+                    color: Color(0xFFE32119),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.profileSessionTitle,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
+                title: Text(
+                  l10n.garageTitle,
+                  style: const TextStyle(
+                    color: Color(0xFF181411),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                subtitle: Text(
+                  l10n.garageProfileSubtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF6B5F57),
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GaragePage()),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE9DDD2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.profileSessionTitle,
+                    style: const TextStyle(
+                      color: Color(0xFF181411),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.profileSessionSubtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF6B5F57),
-                        fontSize: 13,
-                        height: 1.45,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.profileSessionSubtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B5F57),
+                      fontSize: 13,
+                      height: 1.45,
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF181411),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF181411),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        onPressed: () {
-                          context.read<AuthSessionCubit>().logout();
-                        },
-                        icon: const Icon(Icons.logout_rounded),
-                        label: Text(l10n.profileLogout),
                       ),
+                      onPressed: () {
+                        context.read<AuthSessionCubit>().logout();
+                      },
+                      icon: const Icon(Icons.logout_rounded),
+                      label: Text(l10n.profileLogout),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: CustomBottomNavbar(

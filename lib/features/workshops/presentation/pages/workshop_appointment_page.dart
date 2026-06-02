@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
+import '../../../profile/presentation/page/garage_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
@@ -121,7 +122,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           isPaymentEntryStep: state.currentStep == steps.length - 2,
           isSubmitting:
               state.submitStatus == AppointmentSubmitStatus.submitting,
-          onBack: () => context.read<AppointmentCubit>().goBack(),
+          onBack: () => _handleBack(context, state),
           onNext: () => _goNextStep(context, state, steps.length),
         ),
       ],
@@ -152,9 +153,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           onExistingVehicleSelected: context
               .read<AppointmentCubit>()
               .selectExistingVehicle,
-          onNewVehicleSelected: context
-              .read<AppointmentCubit>()
-              .startNewVehicle,
+          onNewVehicleSelected: () => _openGarage(context),
           onLicensePlateChanged: context
               .read<AppointmentCubit>()
               .updateVehicleLicensePlate,
@@ -220,9 +219,11 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           child: _DateTimeMock(
             selectedDate: state.selectedDate,
             selectedTime: state.selectedTime,
-            focusedDate: state.focusedDate ?? DateTime.utc(2026, 5, 1),
+            focusedDate: state.focusedDate ?? DateTime.now(),
             unavailableDates: state.unavailableDates,
             unavailableTimesByDate: state.unavailableTimesByDate,
+            availableTimesByDate: state.availableTimesByDate,
+            availabilityStatus: state.availabilityStatus,
             onDaySelected: context.read<AppointmentCubit>().selectDate,
             onFocusedDateChanged: context.read<AppointmentCubit>().focusDate,
             onSelected: context.read<AppointmentCubit>().selectTime,
@@ -278,6 +279,19 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
   String _workshopAvatarUrl(AppointmentState state) {
     return state.workshop?.avatarUrl.trim() ?? '';
+  }
+
+  Future<void> _openGarage(BuildContext context) async {
+    final cubit = context.read<AppointmentCubit>();
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const GaragePage()));
+
+    if (!mounted) {
+      return;
+    }
+
+    await cubit.refreshVehicles();
   }
 
   void _handleBack(BuildContext context, AppointmentState state) {
@@ -502,6 +516,8 @@ String _appointmentSubmitErrorMessage(
     AppointmentSubmitError.vehicleNotOwned => l10n.appointmentVehicleNotOwned,
     AppointmentSubmitError.vehiclePlateRequiredForBooking =>
       l10n.appointmentVehiclePlateRequiredForBooking,
+    AppointmentSubmitError.bookingConfigurationFailed =>
+      l10n.appointmentBookingConfigurationFailed,
     AppointmentSubmitError.bookingFailed => l10n.appointmentCreateFailed,
     null => state.submitErrorMessage ?? l10n.appointmentCreateFailed,
   };
@@ -766,15 +782,6 @@ class _VehicleStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: _appointmentPrimary(context),
-            fontSize: 28,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 24),
         _VehiclePickerStrip(
           vehicles: vehicles,
           status: vehiclesStatus,
@@ -1128,15 +1135,9 @@ class _VehiclePickerStrip extends StatelessWidget {
                 ),
               ),
             ),
-            TextButton(
-              onPressed: onNewVehicle,
-              child: Text(
-                l10n.appointmentNewVehicleAction,
-                style: TextStyle(
-                  color: _appointmentPrimary(context),
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+            _AddVehiclePill(
+              label: l10n.garageAddAction.replaceFirst('Agregar ', ''),
+              onTap: onNewVehicle,
             ),
           ],
         ),
@@ -1159,26 +1160,70 @@ class _VehiclePickerStrip extends StatelessWidget {
           )
         else
           SizedBox(
-            height: 140,
+            height: 178,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: vehicles.length + 1,
+              itemCount: vehicles.length,
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
-                if (index == vehicles.length) {
-                  return _NewVehicleCard(onTap: onNewVehicle);
-                }
-
                 final vehicle = vehicles[index];
-                return _ExistingVehicleCard(
-                  vehicle: vehicle,
-                  selected: selectedVehicleId == vehicle.id,
-                  onTap: () => onSelected(vehicle),
+                return SizedBox(
+                  width: 152,
+                  child: _ExistingVehicleCard(
+                    vehicle: vehicle,
+                    selected: selectedVehicleId == vehicle.id,
+                    onTap: () => onSelected(vehicle),
+                  ),
                 );
               },
             ),
           ),
       ],
+    );
+  }
+}
+
+class _AddVehiclePill extends StatelessWidget {
+  const _AddVehiclePill({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.appointmentSelectedBackground,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: _appointmentPrimary(context)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.add_rounded,
+                color: _appointmentPrimary(context),
+                size: 18,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: _appointmentPrimary(context),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1205,95 +1250,90 @@ class _ExistingVehicleCard extends StatelessWidget {
       if (vehicle.year != null) vehicle.year.toString(),
     ].join(' ');
 
-    return SizedBox(
-      width: 132,
-      child: Material(
-        color: selected
-            ? AppColors.appointmentSelectedBackground
-            : Colors.white,
-        elevation: 1.5,
-        shadowColor: Colors.black26,
-        child: InkWell(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: selected
-                    ? _appointmentPrimary(context)
-                    : AppColors.border,
-                width: selected ? 2 : 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Icon(
-                    selected
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    color: selected
-                        ? _appointmentPrimary(context)
-                        : AppColors.muted,
-                    size: 20,
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.directions_car_filled_outlined,
-                  color: _appointmentPrimary(context),
-                  size: 28,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  title.isEmpty ? vehicle.licensePlate : title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _WorkshopAppointmentPageState.ink,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _WorkshopAppointmentPageState.muted,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+    final typeLabel = vehicle.vehicleType?.trim();
+
+    return Material(
+      color: Colors.white,
+      elevation: 1.5,
+      shadowColor: Colors.black26,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          height: 178,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: selected ? _appointmentPrimary(context) : AppColors.border,
+              width: selected ? 2 : 1,
             ),
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 92,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppColors.appointmentSelectedBackground
+                      : const Color(0xFFF6F6F6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        Icons.directions_car_filled_outlined,
+                        color: _appointmentPrimary(context),
+                        size: 42,
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Icon(
+                        selected
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color: selected
+                            ? _appointmentPrimary(context)
+                            : AppColors.muted,
+                        size: 22,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title.isEmpty ? vehicle.licensePlate : title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _WorkshopAppointmentPageState.ink,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                [
+                  subtitle,
+                  if (typeLabel != null && typeLabel.isNotEmpty) typeLabel,
+                ].join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _WorkshopAppointmentPageState.muted,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  height: 1.1,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class _NewVehicleCard extends StatelessWidget {
-  const _NewVehicleCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 92,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: _appointmentPrimary(context),
-          side: BorderSide(color: _appointmentPrimary(context)),
-          shape: const RoundedRectangleBorder(),
-        ),
-        child: const Icon(Icons.add, size: 34),
       ),
     );
   }
@@ -2239,6 +2279,8 @@ class _DateTimeMock extends StatelessWidget {
     required this.focusedDate,
     required this.unavailableDates,
     required this.unavailableTimesByDate,
+    required this.availableTimesByDate,
+    required this.availabilityStatus,
     required this.onDaySelected,
     required this.onFocusedDateChanged,
     required this.onSelected,
@@ -2249,26 +2291,14 @@ class _DateTimeMock extends StatelessWidget {
   final DateTime focusedDate;
   final List<DateTime> unavailableDates;
   final Map<DateTime, Set<String>> unavailableTimesByDate;
+  final Map<DateTime, List<String>> availableTimesByDate;
+  final AppointmentLoadStatus availabilityStatus;
   final ValueChanged<DateTime> onDaySelected;
   final ValueChanged<DateTime> onFocusedDateChanged;
   final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    const times = [
-      '07:00',
-      '08:00',
-      '09:00',
-      '10:00',
-      '11:00',
-      '12:00',
-      '13:00',
-      '14:00',
-      '15:00',
-      '16:00',
-      '17:00',
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2276,13 +2306,15 @@ class _DateTimeMock extends StatelessWidget {
           selectedDate: selectedDate,
           focusedDate: focusedDate,
           unavailableDates: unavailableDates,
+          shouldBlockUnavailableDates:
+              availabilityStatus == AppointmentLoadStatus.success,
           onDaySelected: onDaySelected,
           onFocusedDateChanged: onFocusedDateChanged,
         ),
         if (selectedDate != null) ...[
           const SizedBox(height: 24),
           _AvailableHoursPanel(
-            times: times,
+            times: _availableTimesForSelectedDate(),
             selectedTime: selectedTime,
             unavailableTimes: _unavailableTimesForSelectedDate(),
             onSelected: onSelected,
@@ -2306,6 +2338,21 @@ class _DateTimeMock extends StatelessWidget {
 
     return const {};
   }
+
+  List<String> _availableTimesForSelectedDate() {
+    final date = selectedDate;
+    if (date == null) {
+      return const [];
+    }
+
+    for (final entry in availableTimesByDate.entries) {
+      if (isSameDay(entry.key, date)) {
+        return entry.value;
+      }
+    }
+
+    return const [];
+  }
 }
 
 class _AppointmentCalendar extends StatelessWidget {
@@ -2313,6 +2360,7 @@ class _AppointmentCalendar extends StatelessWidget {
     required this.selectedDate,
     required this.focusedDate,
     required this.unavailableDates,
+    required this.shouldBlockUnavailableDates,
     required this.onDaySelected,
     required this.onFocusedDateChanged,
   });
@@ -2320,6 +2368,7 @@ class _AppointmentCalendar extends StatelessWidget {
   final DateTime? selectedDate;
   final DateTime focusedDate;
   final List<DateTime> unavailableDates;
+  final bool shouldBlockUnavailableDates;
   final ValueChanged<DateTime> onDaySelected;
   final ValueChanged<DateTime> onFocusedDateChanged;
 
@@ -2329,6 +2378,9 @@ class _AppointmentCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2343,6 +2395,19 @@ class _AppointmentCalendar extends StatelessWidget {
           daysOfWeekHeight: 34,
           rowHeight: 78,
           enabledDayPredicate: (day) {
+            final calendarDay = DateTime(day.year, day.month, day.day);
+            if (calendarDay.isBefore(today)) {
+              return false;
+            }
+
+            if (!shouldBlockUnavailableDates) {
+              return true;
+            }
+
+            if (isSameDay(day, today)) {
+              return true;
+            }
+
             return !unavailableDates.any(
               (unavailableDate) => isSameDay(unavailableDate, day),
             );
@@ -2442,7 +2507,7 @@ class _TableCalendarDay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final backgroundColor = disabled
-        ? const Color(0xFFFFF3F3)
+        ? const Color(0xFFFFE5E5)
         : selected
         ? _appointmentPrimary(context)
         : Colors.white;
@@ -2461,7 +2526,10 @@ class _TableCalendarDay extends StatelessWidget {
       padding: const EdgeInsets.only(top: 12, right: 14),
       decoration: BoxDecoration(
         color: backgroundColor,
-        border: Border.all(color: AppColors.calendarBorder, width: 0.7),
+        border: Border.all(
+          color: disabled ? const Color(0xFFF2C6C6) : AppColors.calendarBorder,
+          width: 0.7,
+        ),
       ),
       child: Text(
         '${day.day}',
@@ -2469,7 +2537,6 @@ class _TableCalendarDay extends StatelessWidget {
           color: textColor,
           fontSize: 20,
           fontWeight: selected ? FontWeight.w900 : FontWeight.w500,
-          decoration: disabled ? TextDecoration.lineThrough : null,
         ),
       ),
     );
@@ -2562,50 +2629,56 @@ class _AvailableHoursPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            children: times.map((time) {
-              final selected = selectedTime == time;
-              final unavailable = unavailableTimes.contains(time);
+          if (times.isEmpty)
+            Text(
+              l10n.appointmentAvailableHoursEmpty,
+              style: TextStyle(color: AppColors.muted, fontSize: 15),
+            )
+          else
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: times.map((time) {
+                final selected = selectedTime == time;
+                final unavailable = unavailableTimes.contains(time);
 
-              return SizedBox(
-                width: 60,
-                height: 40,
-                child: OutlinedButton(
-                  onPressed: unavailable ? null : () => onSelected(time),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: unavailable
-                        ? const Color(0xFFF1F1F1)
-                        : selected
-                        ? _appointmentPrimary(context)
-                        : Colors.white,
-                    foregroundColor: unavailable
-                        ? AppColors.disabledIcon
-                        : selected
-                        ? Colors.white
-                        : const Color(0xFF344050),
-                    side: BorderSide(
-                      color: unavailable
-                          ? AppColors.disabledBorder
+                return SizedBox(
+                  width: 60,
+                  height: 40,
+                  child: OutlinedButton(
+                    onPressed: unavailable ? null : () => onSelected(time),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: unavailable
+                          ? const Color(0xFFF1F1F1)
                           : selected
                           ? _appointmentPrimary(context)
-                          : const Color(0xFF555555),
+                          : Colors.white,
+                      foregroundColor: unavailable
+                          ? AppColors.disabledIcon
+                          : selected
+                          ? Colors.white
+                          : const Color(0xFF344050),
+                      side: BorderSide(
+                        color: unavailable
+                            ? AppColors.disabledBorder
+                            : selected
+                            ? _appointmentPrimary(context)
+                            : const Color(0xFF555555),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    textStyle: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    child: Text(time),
                   ),
-                  child: Text(time),
-                ),
-              );
-            }).toList(),
-          ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );

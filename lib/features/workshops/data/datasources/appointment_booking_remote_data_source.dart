@@ -29,6 +29,7 @@ abstract class AppointmentBookingRemoteDataSource {
     required DateTime scheduledDateTime,
     String? note,
     String? vehicleId,
+    String? garageVehicleId,
     String? licensePlate,
     String? vehicleType,
     String? vehicleBrand,
@@ -55,8 +56,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     year,
     color,
     fuel_type,
-    transmission_type,
-    customers!inner(user_id, workshop_id)
+    transmission_type
   ''';
 
   @override
@@ -69,11 +69,10 @@ class SupabaseAppointmentBookingRemoteDataSource
     }
 
     final response = await client
-        .from('vehicles')
+        .from('garage_vehicles')
         .select(_vehicleSelect)
         .eq('is_active', true)
-        .eq('customers.user_id', userId)
-        .eq('customers.workshop_id', workshopId)
+        .eq('user_id', userId)
         .order('updated_at', ascending: false);
 
     return response.map((item) => _appointmentVehicleFromMap(item)).toList();
@@ -90,12 +89,11 @@ class SupabaseAppointmentBookingRemoteDataSource
     }
 
     final response = await client
-        .from('vehicles')
+        .from('garage_vehicles')
         .select(_vehicleSelect)
         .eq('license_plate', licensePlate.trim().toUpperCase())
         .eq('is_active', true)
-        .eq('customers.user_id', userId)
-        .eq('customers.workshop_id', workshopId)
+        .eq('user_id', userId)
         .maybeSingle();
 
     if (response == null) {
@@ -150,6 +148,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     required DateTime scheduledDateTime,
     String? note,
     String? vehicleId,
+    String? garageVehicleId,
     String? licensePlate,
     String? vehicleType,
     String? vehicleBrand,
@@ -167,6 +166,7 @@ class SupabaseAppointmentBookingRemoteDataSource
         'p_scheduled_datetime': scheduledDateTime.toUtc().toIso8601String(),
         'p_note': note,
         'p_vehicle_id': vehicleId,
+        'p_garage_vehicle_id': garageVehicleId,
         'p_license_plate': licensePlate,
         'p_vehicle_type': vehicleType,
         'p_vehicle_brand': vehicleBrand,

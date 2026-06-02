@@ -832,6 +832,216 @@ abstract class AppLocalizations {
   /// **'Cerrar sesión'**
   String get profileLogout;
 
+  /// No description provided for @garageTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi garaje'**
+  String get garageTitle;
+
+  /// No description provided for @garageProfileSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Administra los vehículos que usas para reservar citas.'**
+  String get garageProfileSubtitle;
+
+  /// No description provided for @garageSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.'**
+  String get garageSubtitle;
+
+  /// No description provided for @garageAddAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar vehículo'**
+  String get garageAddAction;
+
+  /// No description provided for @garageEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes vehículos en tu garaje.'**
+  String get garageEmpty;
+
+  /// No description provided for @garageLoadFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tu garaje. Intenta nuevamente.'**
+  String get garageLoadFailed;
+
+  /// No description provided for @garageFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar vehículo'**
+  String get garageFormTitle;
+
+  /// No description provided for @garagePlateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Placa'**
+  String get garagePlateLabel;
+
+  /// No description provided for @garagePlateRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa la placa del vehículo.'**
+  String get garagePlateRequired;
+
+  /// No description provided for @garageTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de vehículo'**
+  String get garageTypeLabel;
+
+  /// No description provided for @garageTypeCar.
+  ///
+  /// In es, this message translates to:
+  /// **'Automóvil'**
+  String get garageTypeCar;
+
+  /// No description provided for @garageTypeMotorcycle.
+  ///
+  /// In es, this message translates to:
+  /// **'Motocicleta'**
+  String get garageTypeMotorcycle;
+
+  /// No description provided for @garageTypePickup.
+  ///
+  /// In es, this message translates to:
+  /// **'Pickup'**
+  String get garageTypePickup;
+
+  /// No description provided for @garageTypeSuv.
+  ///
+  /// In es, this message translates to:
+  /// **'SUV'**
+  String get garageTypeSuv;
+
+  /// No description provided for @garageTypeTruck.
+  ///
+  /// In es, this message translates to:
+  /// **'Camión'**
+  String get garageTypeTruck;
+
+  /// No description provided for @garageBrandLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get garageBrandLabel;
+
+  /// No description provided for @garageModelLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo'**
+  String get garageModelLabel;
+
+  /// No description provided for @garageYearLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Año'**
+  String get garageYearLabel;
+
+  /// No description provided for @garageColorLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Color'**
+  String get garageColorLabel;
+
+  /// No description provided for @garageFuelLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Combustible'**
+  String get garageFuelLabel;
+
+  /// No description provided for @garageFuelGasoline.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasolina'**
+  String get garageFuelGasoline;
+
+  /// No description provided for @garageFuelDiesel.
+  ///
+  /// In es, this message translates to:
+  /// **'Diésel'**
+  String get garageFuelDiesel;
+
+  /// No description provided for @garageFuelElectric.
+  ///
+  /// In es, this message translates to:
+  /// **'Eléctrico'**
+  String get garageFuelElectric;
+
+  /// No description provided for @garageFuelHybrid.
+  ///
+  /// In es, this message translates to:
+  /// **'Híbrido'**
+  String get garageFuelHybrid;
+
+  /// No description provided for @garageTransmissionLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Transmisión'**
+  String get garageTransmissionLabel;
+
+  /// No description provided for @garageTransmissionManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Manual'**
+  String get garageTransmissionManual;
+
+  /// No description provided for @garageTransmissionAutomatic.
+  ///
+  /// In es, this message translates to:
+  /// **'Automática'**
+  String get garageTransmissionAutomatic;
+
+  /// No description provided for @garageSaveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar vehículo'**
+  String get garageSaveAction;
+
+  /// No description provided for @garageSaveFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.'**
+  String get garageSaveFailed;
+
+  /// No description provided for @garagePlateAlreadyExists.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta placa ya está registrada en tu garaje. Selecciona ese vehículo de la lista o elimina el registro anterior.'**
+  String get garagePlateAlreadyExists;
+
+  /// No description provided for @garageDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar vehículo'**
+  String get garageDeleteTitle;
+
+  /// No description provided for @garageDeleteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres eliminar el vehículo {plate} de tu garaje?'**
+  String garageDeleteMessage(String plate);
+
+  /// No description provided for @garageCancelAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get garageCancelAction;
+
+  /// No description provided for @garageDeleteAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get garageDeleteAction;
+
+  /// No description provided for @garageDeleteFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos eliminar el vehículo. Intenta nuevamente.'**
+  String get garageDeleteFailed;
+
   /// No description provided for @locationHeaderEyebrowDeliverNow.
   ///
   /// In es, this message translates to:
@@ -1855,7 +2065,7 @@ abstract class AppLocalizations {
   /// No description provided for @appointmentVehiclePlateRequired.
   ///
   /// In es, this message translates to:
-  /// **'Ingresa la placa del vehículo para continuar.'**
+  /// **'Selecciona un vehículo para continuar.'**
   String get appointmentVehiclePlateRequired;
 
   /// No description provided for @appointmentVehiclePlateConflict.
@@ -1917,6 +2127,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ingresa la placa del vehículo para reservar.'**
   String get appointmentVehiclePlateRequiredForBooking;
+
+  /// No description provided for @appointmentBookingConfigurationFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'La reserva no está configurada correctamente. Contacta al equipo de soporte.'**
+  String get appointmentBookingConfigurationFailed;
 
   /// No description provided for @appointmentStepVehicleInfo.
   ///
@@ -2077,7 +2293,7 @@ abstract class AppLocalizations {
   /// No description provided for @appointmentNoVehiclesForWorkshop.
   ///
   /// In es, this message translates to:
-  /// **'Aún no tienes vehículos registrados para este taller.'**
+  /// **'Aún no tienes vehículos en tu garaje.'**
   String get appointmentNoVehiclesForWorkshop;
 
   /// No description provided for @appointmentNoSchedulableServices.
@@ -2151,6 +2367,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Horas disponibles'**
   String get appointmentAvailableHoursTitle;
+
+  /// No description provided for @appointmentAvailableHoursEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay horarios disponibles para este día.'**
+  String get appointmentAvailableHoursEmpty;
 
   /// No description provided for @appointmentPendingDate.
   ///

@@ -27,6 +27,7 @@ abstract class AppointmentBookingRepository {
     required DateTime scheduledDateTime,
     String? note,
     String? vehicleId,
+    String? garageVehicleId,
     String? licensePlate,
     String? vehicleType,
     String? vehicleBrand,

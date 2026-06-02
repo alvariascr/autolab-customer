@@ -420,6 +420,119 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileLogout => 'Cerrar sesión';
 
   @override
+  String get garageTitle => 'Mi garaje';
+
+  @override
+  String get garageProfileSubtitle =>
+      'Administra los vehículos que usas para reservar citas.';
+
+  @override
+  String get garageSubtitle =>
+      'Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.';
+
+  @override
+  String get garageAddAction => 'Agregar vehículo';
+
+  @override
+  String get garageEmpty => 'Aún no tienes vehículos en tu garaje.';
+
+  @override
+  String get garageLoadFailed =>
+      'No pudimos cargar tu garaje. Intenta nuevamente.';
+
+  @override
+  String get garageFormTitle => 'Agregar vehículo';
+
+  @override
+  String get garagePlateLabel => 'Placa';
+
+  @override
+  String get garagePlateRequired => 'Ingresa la placa del vehículo.';
+
+  @override
+  String get garageTypeLabel => 'Tipo de vehículo';
+
+  @override
+  String get garageTypeCar => 'Automóvil';
+
+  @override
+  String get garageTypeMotorcycle => 'Motocicleta';
+
+  @override
+  String get garageTypePickup => 'Pickup';
+
+  @override
+  String get garageTypeSuv => 'SUV';
+
+  @override
+  String get garageTypeTruck => 'Camión';
+
+  @override
+  String get garageBrandLabel => 'Marca';
+
+  @override
+  String get garageModelLabel => 'Modelo';
+
+  @override
+  String get garageYearLabel => 'Año';
+
+  @override
+  String get garageColorLabel => 'Color';
+
+  @override
+  String get garageFuelLabel => 'Combustible';
+
+  @override
+  String get garageFuelGasoline => 'Gasolina';
+
+  @override
+  String get garageFuelDiesel => 'Diésel';
+
+  @override
+  String get garageFuelElectric => 'Eléctrico';
+
+  @override
+  String get garageFuelHybrid => 'Híbrido';
+
+  @override
+  String get garageTransmissionLabel => 'Transmisión';
+
+  @override
+  String get garageTransmissionManual => 'Manual';
+
+  @override
+  String get garageTransmissionAutomatic => 'Automática';
+
+  @override
+  String get garageSaveAction => 'Guardar vehículo';
+
+  @override
+  String get garageSaveFailed =>
+      'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.';
+
+  @override
+  String get garagePlateAlreadyExists =>
+      'Esta placa ya está registrada en tu garaje. Selecciona ese vehículo de la lista o elimina el registro anterior.';
+
+  @override
+  String get garageDeleteTitle => 'Eliminar vehículo';
+
+  @override
+  String garageDeleteMessage(String plate) {
+    return '¿Quieres eliminar el vehículo $plate de tu garaje?';
+  }
+
+  @override
+  String get garageCancelAction => 'Cancelar';
+
+  @override
+  String get garageDeleteAction => 'Eliminar';
+
+  @override
+  String get garageDeleteFailed =>
+      'No pudimos eliminar el vehículo. Intenta nuevamente.';
+
+  @override
   String get locationHeaderEyebrowDeliverNow => 'Entregar ahora';
 
   @override
@@ -1015,7 +1128,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentVehiclePlateRequired =>
-      'Ingresa la placa del vehículo para continuar.';
+      'Selecciona un vehículo para continuar.';
 
   @override
   String get appointmentVehiclePlateConflict =>
@@ -1056,6 +1169,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get appointmentVehiclePlateRequiredForBooking =>
       'Ingresa la placa del vehículo para reservar.';
+
+  @override
+  String get appointmentBookingConfigurationFailed =>
+      'La reserva no está configurada correctamente. Contacta al equipo de soporte.';
 
   @override
   String get appointmentStepVehicleInfo => 'Información del vehículo';
@@ -1138,7 +1255,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentNoVehiclesForWorkshop =>
-      'Aún no tienes vehículos registrados para este taller.';
+      'Aún no tienes vehículos en tu garaje.';
 
   @override
   String get appointmentNoSchedulableServices =>
@@ -1176,6 +1293,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentAvailableHoursTitle => 'Horas disponibles';
+
+  @override
+  String get appointmentAvailableHoursEmpty =>
+      'No hay horarios disponibles para este día.';
 
   @override
   String get appointmentPendingDate => 'fecha pendiente';
