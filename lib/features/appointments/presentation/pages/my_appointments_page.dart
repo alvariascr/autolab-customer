@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../domain/entities/appointment.dart';
@@ -28,6 +29,8 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocProvider(
       create: (_) => sl<MyAppointmentsCubit>()..load(),
       child: Scaffold(
@@ -37,13 +40,13 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
-            'Mis citas',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          title: Text(
+            l10n.myAppointmentsTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800),
           ),
           actions: [
             IconButton(
-              tooltip: 'Notificaciones',
+              tooltip: l10n.myAppointmentsNotificationsTooltip,
               onPressed: () {},
               icon: const Icon(Icons.notifications_none_rounded),
             ),
@@ -55,9 +58,9 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
               return Column(
                 children: [
                   const SizedBox(height: 18),
-                  const Text(
-                    'Consulta tus reservas de servicios',
-                    style: TextStyle(
+                  Text(
+                    l10n.myAppointmentsSubtitle,
+                    style: const TextStyle(
                       color: Color(0xFF1D2A44),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -69,6 +72,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
                     child: _AppointmentTabs(
                       selectedTab: _selectedTab,
                       onChanged: (tab) => setState(() => _selectedTab = tab),
+                      l10n: l10n,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -87,6 +91,8 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
   }
 
   Widget _buildContent(BuildContext context, MyAppointmentsState state) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (state.status == MyAppointmentsStatus.loading ||
         state.status == MyAppointmentsStatus.initial) {
       return const Center(child: CircularProgressIndicator());
@@ -95,9 +101,9 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     if (state.status == MyAppointmentsStatus.error) {
       return _MessageState(
         icon: Icons.cloud_off_rounded,
-        title: 'No pudimos cargar tus citas',
-        message: state.message ?? 'Intenta nuevamente en unos segundos.',
-        actionLabel: 'Reintentar',
+        title: l10n.myAppointmentsLoadErrorTitle,
+        message: state.message ?? l10n.myAppointmentsRetryMessage,
+        actionLabel: l10n.myAppointmentsRetryAction,
         onAction: () => context.read<MyAppointmentsCubit>().load(),
       );
     }
@@ -107,9 +113,9 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     if (appointments.isEmpty) {
       return _MessageState(
         icon: Icons.calendar_month_rounded,
-        title: _emptyTitle,
-        message: _emptyMessage,
-        actionLabel: 'Buscar talleres',
+        title: _emptyTitle(l10n),
+        message: _emptyMessage(l10n),
+        actionLabel: l10n.myAppointmentsSearchWorkshopsAction,
         onAction: () => NavigationHandler.handle(context, 2),
       );
     }
@@ -152,50 +158,52 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     }).toList();
   }
 
-  String get _emptyTitle {
+  String _emptyTitle(AppLocalizations l10n) {
     return switch (_selectedTab) {
-      _AppointmentTab.upcoming => 'No tienes citas proximas',
-      _AppointmentTab.past => 'No tienes citas pasadas',
-      _AppointmentTab.canceled => 'No tienes citas canceladas',
+      _AppointmentTab.upcoming => l10n.myAppointmentsUpcomingEmptyTitle,
+      _AppointmentTab.past => l10n.myAppointmentsPastEmptyTitle,
+      _AppointmentTab.canceled => l10n.myAppointmentsCanceledEmptyTitle,
     };
   }
 
-  String get _emptyMessage {
+  String _emptyMessage(AppLocalizations l10n) {
     return switch (_selectedTab) {
-      _AppointmentTab.upcoming =>
-        'Cuando reserves un servicio en un taller, aparecera aqui.',
-      _AppointmentTab.past =>
-        'Tus servicios completados o vencidos apareceran aqui.',
-      _AppointmentTab.canceled =>
-        'Las reservas canceladas apareceran en este apartado.',
+      _AppointmentTab.upcoming => l10n.myAppointmentsUpcomingEmptyMessage,
+      _AppointmentTab.past => l10n.myAppointmentsPastEmptyMessage,
+      _AppointmentTab.canceled => l10n.myAppointmentsCanceledEmptyMessage,
     };
   }
 }
 
 class _AppointmentTabs extends StatelessWidget {
-  const _AppointmentTabs({required this.selectedTab, required this.onChanged});
+  const _AppointmentTabs({
+    required this.selectedTab,
+    required this.onChanged,
+    required this.l10n,
+  });
 
   final _AppointmentTab selectedTab;
   final ValueChanged<_AppointmentTab> onChanged;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         _TabButton(
-          label: 'Proximas',
+          label: l10n.myAppointmentsUpcomingTab,
           selected: selectedTab == _AppointmentTab.upcoming,
           onTap: () => onChanged(_AppointmentTab.upcoming),
         ),
         const SizedBox(width: 8),
         _TabButton(
-          label: 'Pasadas',
+          label: l10n.myAppointmentsPastTab,
           selected: selectedTab == _AppointmentTab.past,
           onTap: () => onChanged(_AppointmentTab.past),
         ),
         const SizedBox(width: 8),
         _TabButton(
-          label: 'Canceladas',
+          label: l10n.myAppointmentsCanceledTab,
           selected: selectedTab == _AppointmentTab.canceled,
           onTap: () => onChanged(_AppointmentTab.canceled),
           danger: selectedTab == _AppointmentTab.canceled,
@@ -260,7 +268,8 @@ class _AppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = _AppointmentStatusVisual.from(appointment);
+    final l10n = AppLocalizations.of(context)!;
+    final status = _AppointmentStatusVisual.from(appointment, l10n);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -300,7 +309,10 @@ class _AppointmentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _textOrFallback(appointment.workshopName, 'Taller'),
+                      _textOrFallback(
+                        appointment.workshopName,
+                        l10n.appointmentWorkshopLabel,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -311,7 +323,10 @@ class _AppointmentCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      _textOrFallback(appointment.serviceName, 'Servicio'),
+                      _textOrFallback(
+                        appointment.serviceName,
+                        l10n.appointmentServiceLabel,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -417,6 +432,8 @@ class _ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Material(
       color: const Color(0xFFF1F5FB),
       borderRadius: BorderRadius.circular(14),
@@ -440,18 +457,18 @@ class _ScheduleCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Necesitas agendar una nueva cita?',
-                  style: TextStyle(
+                  l10n.myAppointmentsNewAppointmentPrompt,
+                  style: const TextStyle(
                     color: Color(0xFF101B35),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const Text(
-                'Buscar talleres',
-                style: TextStyle(
+              Text(
+                l10n.myAppointmentsSearchWorkshopsAction,
+                style: const TextStyle(
                   color: Color(0xFF0B5CFF),
                   fontWeight: FontWeight.w900,
                 ),
@@ -555,79 +572,91 @@ class _AppointmentStatusVisual {
   final Color background;
   final Color foreground;
 
-  factory _AppointmentStatusVisual.from(Appointment appointment) {
+  factory _AppointmentStatusVisual.from(
+    Appointment appointment,
+    AppLocalizations l10n,
+  ) {
     final normalized = appointment.status.trim().toLowerCase();
 
     if (_isCanceled(normalized)) {
       return const _AppointmentStatusVisual(
-        label: 'Cancelada',
+        label: '',
         accent: Color(0xFFE3364A),
         background: Color(0xFFFFE4E8),
         foreground: Color(0xFFD82135),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusCanceled);
     }
 
     if (normalized.contains('no_show')) {
       return const _AppointmentStatusVisual(
-        label: 'No asistio',
+        label: '',
         accent: Color(0xFFE3364A),
         background: Color(0xFFFFE4E8),
         foreground: Color(0xFFD82135),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusNoShow);
     }
 
     if (normalized.contains('complete') || normalized.contains('complet')) {
       return const _AppointmentStatusVisual(
-        label: 'Completada',
+        label: '',
         accent: Color(0xFF16A34A),
         background: Color(0xFFDFF7E8),
         foreground: Color(0xFF148A45),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusCompleted);
     }
 
     if (normalized.contains('checked_in')) {
       return const _AppointmentStatusVisual(
-        label: 'Registrada',
+        label: '',
         accent: Color(0xFF0B5CFF),
         background: Color(0xFFE4EEFF),
         foreground: Color(0xFF0B5CFF),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusCheckedIn);
     }
 
     if (normalized.contains('in_progress')) {
       return const _AppointmentStatusVisual(
-        label: 'En proceso',
+        label: '',
         accent: Color(0xFF0B5CFF),
         background: Color(0xFFE4EEFF),
         foreground: Color(0xFF0B5CFF),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusInProgress);
     }
 
     if (appointment.scheduledAt.isBefore(DateTime.now())) {
       return const _AppointmentStatusVisual(
-        label: 'Expirada',
+        label: '',
         accent: Color(0xFFE3364A),
         background: Color(0xFFFFE4E8),
         foreground: Color(0xFFD82135),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusExpired);
     }
 
     if (normalized.contains('confirm') ||
         normalized.contains('scheduled') ||
         normalized.contains('pending')) {
       return const _AppointmentStatusVisual(
-        label: 'Confirmada',
+        label: '',
         accent: Color(0xFF0B5CFF),
         background: Color(0xFFDFF7E8),
         foreground: Color(0xFF148A45),
-      );
+      ).copyWith(label: l10n.myAppointmentsStatusConfirmed);
     }
 
     return const _AppointmentStatusVisual(
-      label: 'Confirmada',
+      label: '',
       accent: Color(0xFF0B5CFF),
       background: Color(0xFFDFF7E8),
       foreground: Color(0xFF148A45),
+    ).copyWith(label: l10n.myAppointmentsStatusConfirmed);
+  }
+
+  _AppointmentStatusVisual copyWith({required String label}) {
+    return _AppointmentStatusVisual(
+      label: label,
+      accent: accent,
+      background: background,
+      foreground: foreground,
     );
   }
 }

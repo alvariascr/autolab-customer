@@ -107,8 +107,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 backgroundColor: Color(0xFFE9F0FF),
                 foregroundColor: Color(0xFF0B5CFF),
               ),
-              title: 'Mis citas',
-              subtitle: 'Consulta tus citas proximas, pasadas y canceladas',
+              title: l10n.profileAppointmentsTitle,
+              subtitle: l10n.profileAppointmentsSubtitle,
               borderColor: const Color(0xFF0B5CFF),
               trailingColor: const Color(0xFF0B5CFF),
               onTap: () {

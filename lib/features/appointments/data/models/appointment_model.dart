@@ -30,7 +30,11 @@ class AppointmentModel extends Appointment {
         map['workshop_id'],
         _nestedValue(map, ['order_services', 'orders', 'workshop_id']),
       ]),
-      serviceId: _firstString([map['service_id'], map['order_service_id']]),
+      serviceId: _firstString([
+        map['service_id'],
+        _nestedValue(map, ['order_services', 'inventory_item_id']),
+        map['order_service_id'],
+      ]),
       customerName: _nullableString(map['customer_name']) ?? '',
       customerPhone: _nullableString(map['customer_phone']) ?? '',
       customerEmail: _nullableString(map['customer_email']) ?? '',

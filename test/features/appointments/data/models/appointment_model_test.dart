@@ -142,10 +142,11 @@ void main() {
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'note': 'Revisar frenos',
         'vehicle_id': 'vehicle-1',
+        'order_services': {'inventory_item_id': 'service-1'},
       });
 
       expect(model.id, 'appointment-1');
-      expect(model.serviceId, 'order-service-1');
+      expect(model.serviceId, 'service-1');
       expect(model.status, 'scheduled');
       expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
       expect(model.notes, 'Revisar frenos');
