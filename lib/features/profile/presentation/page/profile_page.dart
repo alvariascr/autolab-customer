@@ -6,6 +6,7 @@ import '../../../appointments/presentation/pages/my_appointments_page.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import 'garage_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -49,169 +50,143 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x12000000),
-                      blurRadius: 22,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundColor: Color(0xFF181411),
-                      child: Icon(
-                        Icons.person_outline_rounded,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      l10n.profileAccountTitle,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.profileAccountSubtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF6B5F57),
-                        fontSize: 14,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Material(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(24),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MyAppointmentsPage(),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFF0B5CFF)),
-                    ),
-                    child: const Row(
-                      children: [
-                        _ProfileActionIcon(),
-                        SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Mis citas',
-                                style: TextStyle(
-                                  color: Color(0xFF181411),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Consulta tus citas proximas, pasadas y canceladas',
-                                style: TextStyle(
-                                  color: Color(0xFF6B5F57),
-                                  fontSize: 12,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF0B5CFF),
-                        ),
-                      ],
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x12000000),
+                    blurRadius: 22,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Color(0xFF181411),
+                    child: Icon(
+                      Icons.person_outline_rounded,
+                      color: Colors.white,
+                      size: 28,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.profileAccountTitle,
+                    style: const TextStyle(
+                      color: Color(0xFF181411),
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.profileAccountSubtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B5F57),
+                      fontSize: 14,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE9DDD2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.profileSessionTitle,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
+            ),
+            const SizedBox(height: 20),
+            _ProfileMenuCard(
+              leading: const _ProfileActionIcon(
+                icon: Icons.calendar_month_rounded,
+                backgroundColor: Color(0xFFE9F0FF),
+                foregroundColor: Color(0xFF0B5CFF),
+              ),
+              title: 'Mis citas',
+              subtitle: 'Consulta tus citas proximas, pasadas y canceladas',
+              borderColor: const Color(0xFF0B5CFF),
+              trailingColor: const Color(0xFF0B5CFF),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyAppointmentsPage()),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            _ProfileMenuCard(
+              leading: const _ProfileActionIcon(
+                icon: Icons.garage_outlined,
+                backgroundColor: Color(0xFFFFE9E7),
+                foregroundColor: Color(0xFFE32119),
+              ),
+              title: l10n.garageTitle,
+              subtitle: l10n.garageProfileSubtitle,
+              borderColor: const Color(0xFFE9DDD2),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GaragePage()),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE9DDD2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.profileSessionTitle,
+                    style: const TextStyle(
+                      color: Color(0xFF181411),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.profileSessionSubtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF6B5F57),
-                        fontSize: 13,
-                        height: 1.45,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.profileSessionSubtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B5F57),
+                      fontSize: 13,
+                      height: 1.45,
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF181411),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF181411),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        onPressed: () {
-                          context.read<AuthSessionCubit>().logout();
-                        },
-                        icon: const Icon(Icons.logout_rounded),
-                        label: Text(l10n.profileLogout),
                       ),
+                      onPressed: () {
+                        context.read<AuthSessionCubit>().logout();
+                      },
+                      icon: const Icon(Icons.logout_rounded),
+                      label: Text(l10n.profileLogout),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: CustomBottomNavbar(
@@ -222,8 +197,85 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
+class _ProfileMenuCard extends StatelessWidget {
+  const _ProfileMenuCard({
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.borderColor,
+    required this.onTap,
+    this.trailingColor = const Color(0xFF6B5F57),
+  });
+
+  final Widget leading;
+  final String title;
+  final String subtitle;
+  final Color borderColor;
+  final Color trailingColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              leading,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF181411),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF6B5F57),
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: trailingColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileActionIcon extends StatelessWidget {
-  const _ProfileActionIcon();
+  const _ProfileActionIcon({
+    required this.icon,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final IconData icon;
+  final Color backgroundColor;
+  final Color foregroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -231,10 +283,10 @@ class _ProfileActionIcon extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: const Color(0xFFE9F0FF),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(Icons.calendar_month_rounded, color: Color(0xFF0B5CFF)),
+      child: Icon(icon, color: foregroundColor),
     );
   }
 }

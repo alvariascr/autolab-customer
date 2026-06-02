@@ -18,6 +18,7 @@ import '../../features/products/data/repositories/product_repository_impl.dart';
 import '../../features/products/domain/repositories/product_repository.dart';
 import '../../features/products/domain/usecases/get_additional_products_by_workshop.dart';
 import '../../features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
+import '../../features/profile/data/garage_vehicle_remote_data_source.dart';
 import '../../features/workshops/application/appointment_cubit.dart';
 import '../../features/workshops/application/workshop_discovery_query_store.dart';
 import '../../features/workshops/data/datasources/appointment_booking_remote_data_source.dart';
@@ -121,6 +122,9 @@ void _registerFeatureDependencies() {
       errorHandler: sl<GlobalErrorHandler>(),
       featureLogger: sl<FeatureLogger>(),
     ),
+  );
+  sl.registerLazySingleton<GarageVehicleRemoteDataSource>(
+    () => GarageVehicleRemoteDataSource(sl<SupabaseClient>()),
   );
   sl.registerLazySingleton<AppointmentRemoteDataSource>(
     () => AppointmentRemoteDataSourceImpl(sl<SupabaseClient>()),

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/appointment_vehicle.dart';
+import '../../domain/entities/booked_appointment_slot.dart';
 
 abstract class AppointmentBookingRemoteDataSource {
   Future<List<AppointmentVehicleRecord>> getCustomerVehicles({
@@ -17,7 +18,7 @@ abstract class AppointmentBookingRemoteDataSource {
     required DateTime scheduledDateTime,
   });
 
-  Future<List<DateTime>> getBookedAppointmentSlots({
+  Future<List<BookedAppointmentSlot>> getBookedAppointmentSlots({
     required String workshopId,
     required DateTime startDate,
     required DateTime endDate,
@@ -29,6 +30,7 @@ abstract class AppointmentBookingRemoteDataSource {
     required DateTime scheduledDateTime,
     String? note,
     String? vehicleId,
+    String? garageVehicleId,
     String? licensePlate,
     String? vehicleType,
     String? vehicleBrand,
@@ -55,8 +57,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     year,
     color,
     fuel_type,
-    transmission_type,
-    customers!inner(user_id, workshop_id)
+    transmission_type
   ''';
 
   @override
@@ -69,11 +70,10 @@ class SupabaseAppointmentBookingRemoteDataSource
     }
 
     final response = await client
-        .from('vehicles')
+        .from('garage_vehicles')
         .select(_vehicleSelect)
         .eq('is_active', true)
-        .eq('customers.user_id', userId)
-        .eq('customers.workshop_id', workshopId)
+        .eq('user_id', userId)
         .order('updated_at', ascending: false);
 
     return response.map((item) => _appointmentVehicleFromMap(item)).toList();
@@ -90,12 +90,11 @@ class SupabaseAppointmentBookingRemoteDataSource
     }
 
     final response = await client
-        .from('vehicles')
+        .from('garage_vehicles')
         .select(_vehicleSelect)
         .eq('license_plate', licensePlate.trim().toUpperCase())
         .eq('is_active', true)
-        .eq('customers.user_id', userId)
-        .eq('customers.workshop_id', workshopId)
+        .eq('user_id', userId)
         .maybeSingle();
 
     if (response == null) {
@@ -122,7 +121,7 @@ class SupabaseAppointmentBookingRemoteDataSource
   }
 
   @override
-  Future<List<DateTime>> getBookedAppointmentSlots({
+  Future<List<BookedAppointmentSlot>> getBookedAppointmentSlots({
     required String workshopId,
     required DateTime startDate,
     required DateTime endDate,
@@ -130,7 +129,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     final response = await client
         .from('appointments')
         .select(
-          'scheduled_datetime, order_services!inner(orders!inner(workshop_id))',
+          'scheduled_datetime, order_services!inner(inventory_items!inner(estimated_duration_hours), orders!inner(workshop_id))',
         )
         .gte('scheduled_datetime', startDate.toUtc().toIso8601String())
         .lt('scheduled_datetime', endDate.toUtc().toIso8601String())
@@ -138,8 +137,8 @@ class SupabaseAppointmentBookingRemoteDataSource
         .not('appointment_status', 'in', '(cancelled,no_show)');
 
     return response
-        .map((item) => DateTime.tryParse(item['scheduled_datetime'].toString()))
-        .whereType<DateTime>()
+        .map(_bookedAppointmentSlotFromMap)
+        .whereType<BookedAppointmentSlot>()
         .toList();
   }
 
@@ -150,6 +149,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     required DateTime scheduledDateTime,
     String? note,
     String? vehicleId,
+    String? garageVehicleId,
     String? licensePlate,
     String? vehicleType,
     String? vehicleBrand,
@@ -167,6 +167,7 @@ class SupabaseAppointmentBookingRemoteDataSource
         'p_scheduled_datetime': scheduledDateTime.toUtc().toIso8601String(),
         'p_note': note,
         'p_vehicle_id': vehicleId,
+        'p_garage_vehicle_id': garageVehicleId,
         'p_license_plate': licensePlate,
         'p_vehicle_type': vehicleType,
         'p_vehicle_brand': vehicleBrand,
@@ -180,6 +181,36 @@ class SupabaseAppointmentBookingRemoteDataSource
 
     return response.toString();
   }
+}
+
+BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
+  final start = DateTime.tryParse(map['scheduled_datetime'].toString());
+  if (start == null) {
+    return null;
+  }
+
+  final orderService = map['order_services'];
+  final inventoryItem = orderService is Map<String, dynamic>
+      ? orderService['inventory_items']
+      : null;
+  final durationHours = inventoryItem is Map<String, dynamic>
+      ? _parseDouble(inventoryItem['estimated_duration_hours'])
+      : null;
+
+  return BookedAppointmentSlot(
+    start: start,
+    durationMinutes: durationHours == null || durationHours <= 0
+        ? null
+        : (durationHours * Duration.minutesPerHour).ceil(),
+  );
+}
+
+double? _parseDouble(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  return double.tryParse(value?.toString() ?? '');
 }
 
 AppointmentVehicleRecord _appointmentVehicleFromMap(Map<String, dynamic> map) {

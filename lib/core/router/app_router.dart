@@ -61,7 +61,7 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/workshops/:id/appointment',
+        path: '/workshops/:id/appointments/new',
         builder: (context, state) {
           final workshopId = state.pathParameters['id'];
 

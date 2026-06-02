@@ -31,7 +31,7 @@ class _ProfileActions extends StatelessWidget {
   }
 
   static String appointmentRoute(String workshopId) {
-    return '/workshops/$workshopId/appointment';
+    return '/workshops/$workshopId/appointments/new';
   }
 
   static Future<void> launchPhone(BuildContext context, String phone) async {

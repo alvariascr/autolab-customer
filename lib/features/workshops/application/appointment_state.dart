@@ -24,6 +24,7 @@ enum AppointmentSubmitError {
   serviceNotSchedulable,
   vehicleNotOwned,
   vehiclePlateRequiredForBooking,
+  bookingConfigurationFailed,
   bookingFailed,
 }
 
@@ -40,6 +41,8 @@ class AppointmentState extends Equatable {
     this.vehiclesStatus = AppointmentLoadStatus.initial,
     this.unavailableDates = const [],
     this.unavailableTimesByDate = const {},
+    this.availableTimesByDate = const {},
+    this.availabilityStatus = AppointmentLoadStatus.initial,
     this.selectedVehicleId,
     this.currentStep = 0,
     this.vehicleLicensePlate = '',
@@ -74,6 +77,8 @@ class AppointmentState extends Equatable {
   final AppointmentLoadStatus vehiclesStatus;
   final List<DateTime> unavailableDates;
   final Map<DateTime, Set<String>> unavailableTimesByDate;
+  final Map<DateTime, List<String>> availableTimesByDate;
+  final AppointmentLoadStatus availabilityStatus;
   final String? selectedVehicleId;
   final int currentStep;
   final String vehicleLicensePlate;
@@ -109,6 +114,8 @@ class AppointmentState extends Equatable {
     AppointmentLoadStatus? vehiclesStatus,
     List<DateTime>? unavailableDates,
     Map<DateTime, Set<String>>? unavailableTimesByDate,
+    Map<DateTime, List<String>>? availableTimesByDate,
+    AppointmentLoadStatus? availabilityStatus,
     String? selectedVehicleId,
     bool clearSelectedVehicleId = false,
     int? currentStep,
@@ -153,6 +160,8 @@ class AppointmentState extends Equatable {
       unavailableDates: unavailableDates ?? this.unavailableDates,
       unavailableTimesByDate:
           unavailableTimesByDate ?? this.unavailableTimesByDate,
+      availableTimesByDate: availableTimesByDate ?? this.availableTimesByDate,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
       selectedVehicleId: clearSelectedVehicleId
           ? null
           : selectedVehicleId ?? this.selectedVehicleId,
@@ -207,6 +216,8 @@ class AppointmentState extends Equatable {
     vehiclesStatus,
     unavailableDates,
     unavailableTimesByDate,
+    availableTimesByDate,
+    availabilityStatus,
     selectedVehicleId,
     currentStep,
     vehicleLicensePlate,
