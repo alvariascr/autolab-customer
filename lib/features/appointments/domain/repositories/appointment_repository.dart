@@ -11,4 +11,6 @@ abstract class AppointmentRepository {
   Future<Either<Failure, List<Appointment>>> getAppointmentsByWorkshop(
     String workshopId,
   );
+
+  Future<Either<Failure, List<Appointment>>> getCustomerAppointments();
 }

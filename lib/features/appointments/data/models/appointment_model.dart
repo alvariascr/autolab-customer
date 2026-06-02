@@ -12,6 +12,9 @@ class AppointmentModel extends Appointment {
     required super.vehicleType,
     required super.scheduledAt,
     required super.status,
+    super.workshopName,
+    super.serviceName,
+    super.workshopAvatarUrl,
     super.paymentMethod,
     super.notes,
     super.totalAmount,
@@ -23,18 +26,49 @@ class AppointmentModel extends Appointment {
     return AppointmentModel(
       id: _requiredString(map['id'], 'id'),
       customerId: _customerIdFromMap(map),
-      workshopId: _requiredString(map['workshop_id'], 'workshop_id'),
-      serviceId: _requiredString(map['service_id'], 'service_id'),
-      customerName: _requiredString(map['customer_name'], 'customer_name'),
-      customerPhone: _requiredString(map['customer_phone'], 'customer_phone'),
-      customerEmail: _requiredString(map['customer_email'], 'customer_email'),
-      vehicleType: _requiredString(map['vehicle_type'], 'vehicle_type'),
-      scheduledAt: _requiredDateTime(map['scheduled_at'], 'scheduled_at'),
-      status: map['status']?.toString() ?? 'pending',
+      workshopId: _firstString([
+        map['workshop_id'],
+        _nestedValue(map, ['order_services', 'orders', 'workshop_id']),
+      ]),
+      serviceId: _firstString([
+        map['service_id'],
+        _nestedValue(map, ['order_services', 'inventory_item_id']),
+        map['order_service_id'],
+      ]),
+      customerName: _nullableString(map['customer_name']) ?? '',
+      customerPhone: _nullableString(map['customer_phone']) ?? '',
+      customerEmail: _nullableString(map['customer_email']) ?? '',
+      vehicleType: _firstString([
+        map['vehicle_type'],
+        _nestedValue(map, ['vehicles', 'vehicle_type']),
+      ]),
+      scheduledAt: _requiredDateTime(
+        map['scheduled_at'] ?? map['scheduled_datetime'],
+        'scheduled_at',
+      ),
+      status:
+          map['status']?.toString() ??
+          map['appointment_status']?.toString() ??
+          'pending',
+      workshopName:
+          _relationValue(map['workshops'], 'name') ??
+          _nestedString(map, ['order_services', 'orders', 'workshops', 'name']),
+      serviceName:
+          _relationValue(map['inventory_items'], 'name') ??
+          _nestedString(map, ['order_services', 'inventory_items', 'name']) ??
+          _relationValue(map['products'], 'name'),
+      workshopAvatarUrl:
+          _relationValue(map['workshops'], 'avatar_url') ??
+          _nestedString(map, [
+            'order_services',
+            'orders',
+            'workshops',
+            'avatar_url',
+          ]),
       paymentMethod: _nullableString(map['payment_method']),
-      notes: _nullableString(map['notes']),
+      notes: _nullableString(map['notes']) ?? _nullableString(map['note']),
       totalAmount: _nullableMoney(map['total_amount'], 'total_amount'),
-      createdAt: _nullableDateTime(map['created_at']),
+      createdAt: _nullableDateTime(map['created_at'] ?? map['updated_at']),
       products: _productsFromMap(map),
     );
   }
@@ -75,6 +109,8 @@ class AppointmentModel extends Appointment {
       'vehicle_type': vehicleType,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
       'status': status,
+      'workshops': {'name': workshopName, 'avatar_url': workshopAvatarUrl},
+      'inventory_items': {'name': serviceName},
       'payment_method': paymentMethod,
       'notes': notes,
       'total_amount': totalAmount,
@@ -94,6 +130,57 @@ class AppointmentModel extends Appointment {
   static String? _customerIdFromMap(Map<String, dynamic> map) {
     return _nullableString(map['customer_id']) ??
         _nullableString(map['customer_user_id']);
+  }
+
+  static String _firstString(List<dynamic> values) {
+    for (final value in values) {
+      final text = _nullableString(value);
+      if (text != null) {
+        return text;
+      }
+    }
+
+    return '';
+  }
+
+  static String? _nestedString(Map<String, dynamic> map, List<String> path) {
+    return _nullableString(_nestedValue(map, path));
+  }
+
+  static Object? _nestedValue(Map<String, dynamic> map, List<String> path) {
+    Object? current = map;
+
+    for (final key in path) {
+      if (current is Map<String, dynamic>) {
+        current = current[key];
+        continue;
+      }
+
+      if (current is Map) {
+        current = current[key];
+        continue;
+      }
+
+      return null;
+    }
+
+    return current;
+  }
+
+  static String? _relationValue(dynamic relation, String key) {
+    if (relation is Map<String, dynamic>) {
+      return _nullableString(relation[key]);
+    }
+
+    if (relation is Map) {
+      return _nullableString(relation[key]);
+    }
+
+    if (relation is List && relation.isNotEmpty) {
+      return _relationValue(relation.first, key);
+    }
+
+    return null;
   }
 
   static List<AppointmentProductLine> _productsFromMap(

@@ -6,6 +6,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/customer_error_catalog.dart';
 import '../../../../core/logging/feature_logger.dart';
+import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../datasources/appointment_remote_data_source.dart';
@@ -50,15 +51,24 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       action: 'get_appointments_by_workshop',
       context: {'workshopId': workshopId},
       loader: () async {
-        final customerId = currentUserIdProvider();
-        if (customerId == null || customerId.isEmpty) {
-          return const <Appointment>[];
-        }
+        final customerId = _currentCustomerId();
 
         return remoteDataSource.getAppointmentsByWorkshop(
           workshopId: workshopId,
           customerId: customerId,
         );
+      },
+    );
+  }
+
+  @override
+  Future<Either<Failure, List<Appointment>>> getCustomerAppointments() {
+    return _guard(
+      action: 'get_customer_appointments',
+      loader: () async {
+        final customerId = _currentCustomerId();
+
+        return remoteDataSource.getCustomerAppointments(customerId: customerId);
       },
     );
   }
@@ -111,6 +121,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         stackTrace: stackTrace,
       );
       return Left(failure);
+    } on Failure catch (failure) {
+      featureLogger.warn(
+        feature: 'appointments',
+        action: '${action}_domain_failed',
+        code: failure.code,
+        context: context,
+      );
+      return Left(failure);
     } catch (error, stackTrace) {
       final failure = errorHandler.handle(error, stackTrace);
       featureLogger.error(
@@ -128,7 +146,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   String _currentCustomerId() {
     final customerId = currentUserIdProvider();
     if (customerId == null || customerId.isEmpty) {
-      throw StateError('Authenticated user is required for appointments');
+      throw AuthFailure.fromErrorItem(AuthErrorCatalog.sessionExpired);
     }
 
     return customerId;
