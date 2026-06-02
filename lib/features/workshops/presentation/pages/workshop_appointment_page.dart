@@ -296,7 +296,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
   void _handleBack(BuildContext context, AppointmentState state) {
     if (state.currentStep == 0) {
-      context.pop();
+      context.go('/workshops/${widget.workshopId}');
       return;
     }
 
@@ -325,7 +325,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           message: l10n.appointmentCreatedSuccess,
           type: _AppointmentMessageType.success,
         );
-        context.pop();
+        context.go('/workshops/${widget.workshopId}');
       } else {
         _showAppointmentMessage(
           context,
