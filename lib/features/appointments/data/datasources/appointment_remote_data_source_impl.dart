@@ -28,6 +28,23 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     appointment_products(product_id, quantity, unit_price)
   ''';
 
+  static const _legacyAppointmentBaseSelect = '''
+    id,
+    customer_id,
+    workshop_id,
+    service_id,
+    customer_name,
+    customer_phone,
+    customer_email,
+    vehicle_type,
+    scheduled_at,
+    status,
+    payment_method,
+    notes,
+    total_amount,
+    created_at
+  ''';
+
   static const _appointmentBaseSelect = '''
     id,
     order_service_id,
@@ -37,7 +54,12 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     vehicle_id,
     employee_id,
     updated_at,
-    updated_by
+    updated_by,
+    order_services!inner(
+      orders!inner(
+        customers!inner(user_id)
+      )
+    )
   ''';
 
   static const _customerAppointmentSelect = '''
@@ -50,13 +72,14 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
-    order_services(
+    order_services!inner(
       id,
       inventory_item_id,
       inventory_items(name),
-      orders(
+      orders!inner(
         id,
-        workshops(name, avatar_url)
+        workshops(name, avatar_url),
+        customers!inner(user_id)
       )
     )
   ''';
@@ -89,7 +112,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
   }) async {
     return _getAppointments(
       select: _appointmentSelect,
-      fallbackSelect: _appointmentBaseSelect,
+      fallbackSelect: _legacyAppointmentBaseSelect,
       filters: (query) => query
           .eq('workshop_id', workshopId)
           .eq('customer_id', customerId)
@@ -104,7 +127,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     return _getAppointments(
       select: _customerAppointmentSelect,
       fallbackSelect: _appointmentBaseSelect,
-      filters: (query) => query.order('scheduled_datetime'),
+      filters: (query) => query
+          .eq('order_services.orders.customers.user_id', customerId)
+          .order('scheduled_datetime'),
     );
   }
 
@@ -130,7 +155,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
           .from('appointments')
           .select(_appointmentBaseSelect)
           .eq('id', id)
-          .eq('customer_id', customerId)
+          .eq('order_services.orders.customers.user_id', customerId)
           .single();
 
       return AppointmentModel.fromMap(Map<String, dynamic>.from(response));

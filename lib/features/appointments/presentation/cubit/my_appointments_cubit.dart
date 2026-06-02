@@ -25,10 +25,18 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
     );
 
     final result = await _repository.getCustomerAppointments();
+    if (isClosed) {
+      return;
+    }
+
     result.fold(_emitFailure, _emitSuccess);
   }
 
   void _emitFailure(Failure failure) {
+    if (isClosed) {
+      return;
+    }
+
     emit(
       state.copyWith(
         status: MyAppointmentsStatus.error,
@@ -39,6 +47,10 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
   }
 
   void _emitSuccess(List<Appointment> appointments) {
+    if (isClosed) {
+      return;
+    }
+
     final ordered = [...appointments]
       ..sort((left, right) => left.scheduledAt.compareTo(right.scheduledAt));
 

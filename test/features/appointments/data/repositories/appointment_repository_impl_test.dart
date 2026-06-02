@@ -8,6 +8,7 @@ import 'package:autolab_customer/features/appointments/data/datasources/appointm
 import 'package:autolab_customer/features/appointments/data/models/appointment_model.dart';
 import 'package:autolab_customer/features/appointments/data/repositories/appointment_repository_impl.dart';
 import 'package:autolab_customer/features/appointments/domain/entities/appointment.dart';
+import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -118,7 +119,7 @@ void main() {
     },
   );
 
-  test('getCustomerAppointments retorna lista vacia sin usuario', () async {
+  test('getCustomerAppointments retorna fallo de auth sin usuario', () async {
     repository = AppointmentRepositoryImpl(
       remoteDataSource: remoteDataSource,
       errorHandler: errorHandler,
@@ -128,8 +129,11 @@ void main() {
 
     final result = await repository.getCustomerAppointments();
 
-    expect(result.isRight(), isTrue);
-    expect(result.getOrElse(() => [_appointment()]), isEmpty);
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected auth failure'),
+    );
     verifyNever(
       () => remoteDataSource.getCustomerAppointments(
         customerId: any(named: 'customerId'),
