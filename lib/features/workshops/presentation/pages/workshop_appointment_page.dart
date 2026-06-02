@@ -1136,7 +1136,7 @@ class _VehiclePickerStrip extends StatelessWidget {
               ),
             ),
             _AddVehiclePill(
-              label: l10n.garageAddAction.replaceFirst('Agregar ', ''),
+              label: l10n.appointmentAddVehicleShortAction,
               onTap: onNewVehicle,
             ),
           ],
@@ -1250,7 +1250,7 @@ class _ExistingVehicleCard extends StatelessWidget {
       if (vehicle.year != null) vehicle.year.toString(),
     ].join(' ');
 
-    final typeLabel = vehicle.vehicleType?.trim();
+    final typeLabel = _localizedVehicleTypeLabel(context, vehicle.vehicleType);
 
     return Material(
       color: Colors.white,
@@ -1337,6 +1337,26 @@ class _ExistingVehicleCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String? _localizedVehicleTypeLabel(BuildContext context, String? vehicleType) {
+  final normalizedType = vehicleType?.trim();
+  if (normalizedType == null || normalizedType.isEmpty) {
+    return null;
+  }
+
+  final l10n = AppLocalizations.of(context)!;
+  return switch (normalizedType) {
+    'car' => l10n.appointmentVehicleTypeCar,
+    'motorcycle' => l10n.appointmentVehicleTypeMotorcycle,
+    'pickup' => l10n.appointmentVehicleTypePickup,
+    'suv' => l10n.appointmentVehicleTypeSuv,
+    'truck' => l10n.appointmentVehicleTypeTruck,
+    'bus' => l10n.appointmentVehicleTypeBus,
+    'trailer' => l10n.appointmentVehicleTypeTrailer,
+    'special_equipment' => l10n.appointmentVehicleTypeSpecialEquipment,
+    _ => null,
+  };
 }
 
 class _ServiceSelectionStep extends StatefulWidget {
@@ -2317,6 +2337,7 @@ class _DateTimeMock extends StatelessWidget {
             times: _availableTimesForSelectedDate(),
             selectedTime: selectedTime,
             unavailableTimes: _unavailableTimesForSelectedDate(),
+            availabilityStatus: availabilityStatus,
             onSelected: onSelected,
           ),
         ],
@@ -2404,10 +2425,6 @@ class _AppointmentCalendar extends StatelessWidget {
               return true;
             }
 
-            if (isSameDay(day, today)) {
-              return true;
-            }
-
             return !unavailableDates.any(
               (unavailableDate) => isSameDay(unavailableDate, day),
             );
@@ -2480,10 +2497,11 @@ class _AppointmentCalendar extends StatelessWidget {
               color: Color(0xFFD9DDE2),
               label: l10n.appointmentAvailableDayLegend,
             ),
-            _CalendarLegend(
-              color: Color(0xFFF2C6C6),
-              label: l10n.appointmentOccupiedDayLegend,
-            ),
+            if (shouldBlockUnavailableDates)
+              _CalendarLegend(
+                color: Color(0xFFF2C6C6),
+                label: l10n.appointmentOccupiedDayLegend,
+              ),
           ],
         ),
       ],
@@ -2573,12 +2591,14 @@ class _AvailableHoursPanel extends StatelessWidget {
     required this.times,
     required this.selectedTime,
     required this.unavailableTimes,
+    required this.availabilityStatus,
     required this.onSelected,
   });
 
   final List<String> times;
   final String? selectedTime;
   final Set<String> unavailableTimes;
+  final AppointmentLoadStatus availabilityStatus;
   final ValueChanged<String> onSelected;
 
   @override
@@ -2629,10 +2649,21 @@ class _AvailableHoursPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          if (times.isEmpty)
-            Text(
-              l10n.appointmentAvailableHoursEmpty,
-              style: TextStyle(color: AppColors.muted, fontSize: 15),
+          if (availabilityStatus == AppointmentLoadStatus.loading)
+            _AvailabilityPanelMessage(
+              icon: Icons.schedule_outlined,
+              message: l10n.appointmentAvailableHoursLoading,
+            )
+          else if (availabilityStatus == AppointmentLoadStatus.failure)
+            _AvailabilityPanelMessage(
+              icon: Icons.error_outline,
+              message: l10n.appointmentAvailableHoursFailed,
+              color: _appointmentPrimary(context),
+            )
+          else if (times.isEmpty)
+            _AvailabilityPanelMessage(
+              icon: Icons.info_outline,
+              message: l10n.appointmentAvailableHoursEmpty,
             )
           else
             Wrap(
@@ -2681,6 +2712,37 @@ class _AvailableHoursPanel extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _AvailabilityPanelMessage extends StatelessWidget {
+  const _AvailabilityPanelMessage({
+    required this.icon,
+    required this.message,
+    this.color,
+  });
+
+  final IconData icon;
+  final String message;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = color ?? AppColors.muted;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: effectiveColor, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            message,
+            style: TextStyle(color: effectiveColor, fontSize: 15),
+          ),
+        ),
+      ],
     );
   }
 }

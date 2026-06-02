@@ -1251,6 +1251,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentMyVehiclesTitle => 'Mis vehículos';
 
   @override
+  String get appointmentAddVehicleShortAction => 'Vehículo';
+
+  @override
   String get appointmentNewVehicleAction => '+ Nuevo';
 
   @override
@@ -1293,6 +1296,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentAvailableHoursTitle => 'Horas disponibles';
+
+  @override
+  String get appointmentAvailableHoursLoading =>
+      'Estamos consultando los horarios disponibles.';
+
+  @override
+  String get appointmentAvailableHoursFailed =>
+      'No pudimos cargar la disponibilidad. Inténtalo nuevamente.';
 
   @override
   String get appointmentAvailableHoursEmpty =>

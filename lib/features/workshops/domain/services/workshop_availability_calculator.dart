@@ -1,3 +1,4 @@
+import '../entities/booked_appointment_slot.dart';
 import '../entities/workshop.dart';
 
 class WorkshopAvailabilityResult {
@@ -13,10 +14,26 @@ class WorkshopAvailabilityResult {
 }
 
 class WorkshopAvailabilityCalculator {
-  const WorkshopAvailabilityCalculator({
+  WorkshopAvailabilityCalculator({
     this.slotIntervalMinutes = 30,
     this.defaultServiceDurationMinutes = 60,
-  });
+  }) {
+    if (slotIntervalMinutes <= 0) {
+      throw ArgumentError.value(
+        slotIntervalMinutes,
+        'slotIntervalMinutes',
+        'must be greater than zero',
+      );
+    }
+
+    if (defaultServiceDurationMinutes <= 0) {
+      throw ArgumentError.value(
+        defaultServiceDurationMinutes,
+        'defaultServiceDurationMinutes',
+        'must be greater than zero',
+      );
+    }
+  }
 
   final int slotIntervalMinutes;
   final int defaultServiceDurationMinutes;
@@ -24,13 +41,14 @@ class WorkshopAvailabilityCalculator {
   WorkshopAvailabilityResult calculateMonth({
     required Workshop workshop,
     required DateTime month,
-    required List<DateTime> bookedSlots,
+    required List<BookedAppointmentSlot> bookedSlots,
     double? serviceDurationHours,
     DateTime? now,
   }) {
     final startDate = DateTime(month.year, month.month);
     final endDate = DateTime(month.year, month.month + 1);
     final bookedByDate = _bookedTimesByDate(bookedSlots);
+    final bookedIntervalsByDate = _bookedIntervalsByDate(bookedSlots);
     final availableByDate = <DateTime, List<String>>{};
     final unavailableDates = <DateTime>[];
 
@@ -44,6 +62,7 @@ class WorkshopAvailabilityCalculator {
         workshop: workshop,
         date: dateKey,
         bookedTimes: bookedByDate[dateKey] ?? const {},
+        bookedIntervals: bookedIntervalsByDate[dateKey] ?? const [],
         serviceDurationHours: serviceDurationHours,
         now: now,
       );
@@ -66,6 +85,7 @@ class WorkshopAvailabilityCalculator {
     required Workshop workshop,
     required DateTime date,
     required Set<String> bookedTimes,
+    List<BookedAppointmentSlot> bookedIntervals = const [],
     double? serviceDurationHours,
     DateTime? now,
   }) {
@@ -87,11 +107,28 @@ class WorkshopAvailabilityCalculator {
       minutes: _serviceDurationMinutes(serviceDurationHours),
     );
     final slotInterval = Duration(minutes: slotIntervalMinutes);
-    final bookedIntervals = bookedTimes
-        .map((time) => _timeOnDate(date, time))
-        .whereType<DateTime>()
-        .map((start) => _TimeInterval(start, start.add(slotInterval)))
+    final blockedIntervals = bookedIntervals
+        .map(
+          (slot) => _TimeInterval(
+            slot.start.toLocal(),
+            slot.start.toLocal().add(
+              Duration(
+                minutes: _serviceDurationMinutesFromMinutes(
+                  slot.durationMinutes,
+                ),
+              ),
+            ),
+          ),
+        )
         .toList();
+
+    blockedIntervals.addAll(
+      bookedTimes
+          .map((time) => _timeOnDate(date, time))
+          .whereType<DateTime>()
+          .map((start) => _TimeInterval(start, start.add(slotInterval)))
+          .toList(),
+    );
 
     final availableTimes = <String>[];
     for (
@@ -101,7 +138,7 @@ class WorkshopAvailabilityCalculator {
     ) {
       final slotEnd = slotStart.add(serviceDuration);
       final isPast = !slotStart.isAfter(currentTime);
-      final overlapsBooked = bookedIntervals.any((interval) {
+      final overlapsBooked = blockedIntervals.any((interval) {
         return slotStart.isBefore(interval.end) &&
             slotEnd.isAfter(interval.start);
       });
@@ -114,15 +151,39 @@ class WorkshopAvailabilityCalculator {
     return availableTimes;
   }
 
-  Map<DateTime, Set<String>> _bookedTimesByDate(List<DateTime> bookedSlots) {
+  Map<DateTime, Set<String>> _bookedTimesByDate(
+    List<BookedAppointmentSlot> bookedSlots,
+  ) {
     final bookedByDate = <DateTime, Set<String>>{};
 
     for (final slot in bookedSlots) {
-      final localSlot = slot.toLocal();
+      final localSlot = slot.start.toLocal();
       final dateKey = DateTime(localSlot.year, localSlot.month, localSlot.day);
       final timeKey = _formatTime(localSlot);
 
       bookedByDate.putIfAbsent(dateKey, () => <String>{}).add(timeKey);
+    }
+
+    return bookedByDate;
+  }
+
+  Map<DateTime, List<BookedAppointmentSlot>> _bookedIntervalsByDate(
+    List<BookedAppointmentSlot> bookedSlots,
+  ) {
+    final bookedByDate = <DateTime, List<BookedAppointmentSlot>>{};
+
+    for (final slot in bookedSlots) {
+      final localSlot = slot.start.toLocal();
+      final dateKey = DateTime(localSlot.year, localSlot.month, localSlot.day);
+
+      bookedByDate
+          .putIfAbsent(dateKey, () => <BookedAppointmentSlot>[])
+          .add(
+            BookedAppointmentSlot(
+              start: localSlot,
+              durationMinutes: slot.durationMinutes,
+            ),
+          );
     }
 
     return bookedByDate;
@@ -151,7 +212,12 @@ class WorkshopAvailabilityCalculator {
 
     final hour = int.tryParse(parts[0]);
     final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) {
+    if (hour == null ||
+        minute == null ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59) {
       return null;
     }
 
@@ -169,6 +235,14 @@ class WorkshopAvailabilityCalculator {
     }
 
     return (durationHours * Duration.minutesPerHour).ceil();
+  }
+
+  int _serviceDurationMinutesFromMinutes(int? durationMinutes) {
+    if (durationMinutes == null || durationMinutes <= 0) {
+      return defaultServiceDurationMinutes;
+    }
+
+    return durationMinutes;
   }
 }
 

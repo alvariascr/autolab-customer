@@ -2284,6 +2284,12 @@ abstract class AppLocalizations {
   /// **'Mis vehículos'**
   String get appointmentMyVehiclesTitle;
 
+  /// No description provided for @appointmentAddVehicleShortAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Vehículo'**
+  String get appointmentAddVehicleShortAction;
+
   /// No description provided for @appointmentNewVehicleAction.
   ///
   /// In es, this message translates to:
@@ -2367,6 +2373,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Horas disponibles'**
   String get appointmentAvailableHoursTitle;
+
+  /// No description provided for @appointmentAvailableHoursLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos consultando los horarios disponibles.'**
+  String get appointmentAvailableHoursLoading;
+
+  /// No description provided for @appointmentAvailableHoursFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar la disponibilidad. Inténtalo nuevamente.'**
+  String get appointmentAvailableHoursFailed;
 
   /// No description provided for @appointmentAvailableHoursEmpty.
   ///

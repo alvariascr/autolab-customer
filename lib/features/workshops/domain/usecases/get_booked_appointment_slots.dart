@@ -1,3 +1,4 @@
+import '../entities/booked_appointment_slot.dart';
 import '../repositories/appointment_booking_repository.dart';
 
 class GetBookedAppointmentSlots {
@@ -5,7 +6,7 @@ class GetBookedAppointmentSlots {
 
   final AppointmentBookingRepository _repository;
 
-  Future<List<DateTime>> call({
+  Future<List<BookedAppointmentSlot>> call({
     required String workshopId,
     required DateTime startDate,
     required DateTime endDate,

@@ -90,13 +90,19 @@ class GarageVehicleRemoteDataSource {
   }
 
   Future<void> deleteVehicle(String id) async {
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Authenticated user is required');
+    }
+
     await client
         .from('garage_vehicles')
         .update({
           'is_active': false,
           'updated_at': DateTime.now().toIso8601String(),
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', userId);
   }
 }
 

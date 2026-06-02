@@ -1,9 +1,24 @@
+import 'package:autolab_customer/features/workshops/domain/entities/booked_appointment_slot.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
 import 'package:autolab_customer/features/workshops/domain/services/workshop_availability_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const calculator = WorkshopAvailabilityCalculator();
+  final calculator = WorkshopAvailabilityCalculator();
+
+  test('rejects non-positive slot interval', () {
+    expect(
+      () => WorkshopAvailabilityCalculator(slotIntervalMinutes: 0),
+      throwsArgumentError,
+    );
+  });
+
+  test('rejects non-positive default service duration', () {
+    expect(
+      () => WorkshopAvailabilityCalculator(defaultServiceDurationMinutes: 0),
+      throwsArgumentError,
+    );
+  });
 
   test('generates 30 minute slots inside workshop business hours', () {
     final times = calculator.availableTimesForDate(
@@ -67,6 +82,26 @@ void main() {
     expect(times, isEmpty);
   });
 
+  test('returns empty slots when business hours contain invalid times', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '24:00:00',
+            closeTime: '25:00:00',
+            isClosed: false,
+          ),
+        ],
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, isEmpty);
+  });
+
   test('excludes past slots and booked slots', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
@@ -86,6 +121,33 @@ void main() {
     );
 
     expect(times, ['08:00', '09:00', '09:30']);
+  });
+
+  test('blocks the full duration of existing appointments', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '09:00:00',
+            closeTime: '12:00:00',
+            isClosed: false,
+          ),
+        ],
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 90,
+        ),
+      ],
+      serviceDurationHours: 0.5,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, ['10:30', '11:00', '11:30']);
   });
 
   test('keeps future slots available for the current day', () {

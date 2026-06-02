@@ -43,7 +43,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   final IsAppointmentSlotAvailable _isAppointmentSlotAvailable;
   final GetBookedAppointmentSlots _getBookedAppointmentSlots;
   final BookServiceAppointment _bookServiceAppointment;
-  static const _availabilityCalculator = WorkshopAvailabilityCalculator();
+  static final _availabilityCalculator = WorkshopAvailabilityCalculator();
 
   Future<void> load(String workshopId) async {
     emit(
@@ -136,6 +136,12 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     emit(state.copyWith(vehiclesStatus: AppointmentLoadStatus.loading));
     await _loadVehicles(workshopId);
+
+    final selectedVehicleId = state.selectedVehicleId;
+    if (selectedVehicleId != null &&
+        !state.vehicles.any((vehicle) => vehicle.id == selectedVehicleId)) {
+      startNewVehicle();
+    }
   }
 
   void goBack() {
