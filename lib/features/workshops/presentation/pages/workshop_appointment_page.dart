@@ -296,11 +296,21 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
   void _handleBack(BuildContext context, AppointmentState state) {
     if (state.currentStep == 0) {
-      context.go('/workshops/${widget.workshopId}');
+      _goToWorkshopProfileOrHome(context);
       return;
     }
 
     context.read<AppointmentCubit>().goBack();
+  }
+
+  void _goToWorkshopProfileOrHome(BuildContext context) {
+    final workshopId = widget.workshopId.trim();
+    if (workshopId.isEmpty) {
+      context.go('/home-customer');
+      return;
+    }
+
+    context.go('/workshops/$workshopId');
   }
 
   Future<void> _goNextStep(
@@ -325,7 +335,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           message: l10n.appointmentCreatedSuccess,
           type: _AppointmentMessageType.success,
         );
-        context.go('/workshops/${widget.workshopId}');
+        _goToWorkshopProfileOrHome(context);
       } else {
         _showAppointmentMessage(
           context,
