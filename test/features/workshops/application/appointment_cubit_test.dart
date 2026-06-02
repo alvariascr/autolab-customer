@@ -3,6 +3,7 @@ import 'package:autolab_customer/features/products/domain/repositories/product_r
 import 'package:autolab_customer/features/products/domain/usecases/get_additional_products_by_workshop.dart';
 import 'package:autolab_customer/features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import 'package:autolab_customer/features/workshops/application/appointment_cubit.dart';
+import 'package:autolab_customer/features/workshops/domain/entities/appointment_vehicle.dart';
 import 'package:autolab_customer/features/workshops/domain/repositories/workshop_repository.dart';
 import 'package:autolab_customer/features/workshops/domain/usecases/book_service_appointment.dart';
 import 'package:autolab_customer/features/workshops/domain/usecases/get_booked_appointment_slots.dart';
@@ -82,7 +83,7 @@ void main() {
     'submitBooking calls backend transaction with selected service slot',
     () async {
       final service = _product(id: 'service-1', itemType: 'service');
-      final selectedDate = DateTime(2026, 5, 28);
+      final selectedDate = DateTime(2026, 6, 28);
 
       when(
         () => bookServiceAppointment(
@@ -91,6 +92,7 @@ void main() {
           scheduledDateTime: any(named: 'scheduledDateTime'),
           note: any(named: 'note'),
           vehicleId: any(named: 'vehicleId'),
+          garageVehicleId: any(named: 'garageVehicleId'),
           licensePlate: any(named: 'licensePlate'),
           vehicleType: any(named: 'vehicleType'),
           vehicleBrand: any(named: 'vehicleBrand'),
@@ -124,9 +126,10 @@ void main() {
         () => bookServiceAppointment(
           workshopId: 'workshop-1',
           inventoryItemId: 'service-1',
-          scheduledDateTime: DateTime(2026, 5, 28, 6, 15),
+          scheduledDateTime: DateTime(2026, 6, 28, 6, 15),
           note: any(named: 'note'),
-          vehicleId: any(named: 'vehicleId'),
+          vehicleId: null,
+          garageVehicleId: null,
           licensePlate: 'ABC123',
           vehicleType: 'Sedan',
           vehicleBrand: 'Toyota',
@@ -139,6 +142,70 @@ void main() {
       ).called(1);
     },
   );
+
+  test('submitBooking sends selected garage vehicle id', () async {
+    final service = _product(id: 'service-1', itemType: 'service');
+
+    when(
+      () => bookServiceAppointment(
+        workshopId: 'workshop-1',
+        inventoryItemId: 'service-1',
+        scheduledDateTime: any(named: 'scheduledDateTime'),
+        note: any(named: 'note'),
+        vehicleId: any(named: 'vehicleId'),
+        garageVehicleId: any(named: 'garageVehicleId'),
+        licensePlate: any(named: 'licensePlate'),
+        vehicleType: any(named: 'vehicleType'),
+        vehicleBrand: any(named: 'vehicleBrand'),
+        vehicleModel: any(named: 'vehicleModel'),
+        vehicleYear: any(named: 'vehicleYear'),
+        vehicleColor: any(named: 'vehicleColor'),
+        fuelType: any(named: 'fuelType'),
+        transmissionType: any(named: 'transmissionType'),
+      ),
+    ).thenAnswer((_) async => 'appointment-1');
+
+    cubit
+      ..selectExistingVehicle(
+        const AppointmentVehicleRecord(
+          id: 'garage-vehicle-1',
+          licensePlate: 'ABC123',
+          vehicleType: 'Sedan',
+          brand: 'Toyota',
+          model: 'Yaris',
+          year: 2019,
+          color: 'Negro',
+          fuelType: 'gasoline',
+          transmissionType: 'manual',
+        ),
+      )
+      ..selectService(service)
+      ..selectDate(DateTime(2026, 6, 28))
+      ..selectTime('06:15');
+
+    final appointmentId = await cubit.submitBooking();
+
+    expect(appointmentId, 'appointment-1');
+
+    verify(
+      () => bookServiceAppointment(
+        workshopId: 'workshop-1',
+        inventoryItemId: 'service-1',
+        scheduledDateTime: DateTime(2026, 6, 28, 6, 15),
+        note: any(named: 'note'),
+        vehicleId: null,
+        garageVehicleId: 'garage-vehicle-1',
+        licensePlate: null,
+        vehicleType: null,
+        vehicleBrand: null,
+        vehicleModel: null,
+        vehicleYear: null,
+        vehicleColor: null,
+        fuelType: null,
+        transmissionType: null,
+      ),
+    ).called(1);
+  });
 }
 
 Product _product({required String id, required String itemType}) {
