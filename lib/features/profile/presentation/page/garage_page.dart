@@ -129,6 +129,7 @@ class _GaragePageState extends State<GaragePage> {
         child: RefreshIndicator(
           onRefresh: _loadVehicles,
           child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             children: [
               Text(
