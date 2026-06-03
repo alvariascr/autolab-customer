@@ -198,13 +198,23 @@ class SupabaseAppointmentBookingRemoteDataSource
         .eq('day_of_week', dayOfWeek)
         .maybeSingle();
 
-    final value = response?['slot_capacity'];
+    if (response == null) {
+      throw StateError(
+        'Missing business_hours configuration for workshop $workshopId '
+        'and day_of_week $dayOfWeek',
+      );
+    }
+
+    final value = response['slot_capacity'];
     final capacity = value is int
         ? value
         : int.tryParse(value?.toString() ?? '');
 
     if (capacity == null || capacity <= 0) {
-      return 1;
+      throw StateError(
+        'Invalid slot_capacity "$value" for workshop $workshopId '
+        'and day_of_week $dayOfWeek',
+      );
     }
 
     return capacity;
