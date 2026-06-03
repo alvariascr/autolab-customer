@@ -2254,18 +2254,6 @@ abstract class AppLocalizations {
   /// **'Selecciona una fecha y hora disponible más adelante.'**
   String get appointmentDateTimeInPast;
 
-  /// No description provided for @appointmentCustomerNameRequired.
-  ///
-  /// In es, this message translates to:
-  /// **'Completa tu nombre en el perfil antes de reservar.'**
-  String get appointmentCustomerNameRequired;
-
-  /// No description provided for @appointmentCustomerPhoneRequired.
-  ///
-  /// In es, this message translates to:
-  /// **'Completa tu teléfono en el perfil antes de reservar.'**
-  String get appointmentCustomerPhoneRequired;
-
   /// No description provided for @appointmentServiceNotSchedulable.
   ///
   /// In es, this message translates to:
@@ -2488,6 +2476,12 @@ abstract class AppLocalizations {
   /// **'CREANDO'**
   String get appointmentCreatingAction;
 
+  /// No description provided for @appointmentConfirmAction.
+  ///
+  /// In es, this message translates to:
+  /// **'CONFIRMAR CITA'**
+  String get appointmentConfirmAction;
+
   /// No description provided for @appointmentFinishAction.
   ///
   /// In es, this message translates to:
@@ -2620,6 +2614,60 @@ abstract class AppLocalizations {
   /// **'Taller'**
   String get appointmentWorkshopLabel;
 
+  /// No description provided for @appointmentDurationLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Duración'**
+  String get appointmentDurationLabel;
+
+  /// No description provided for @appointmentPaymentMethodLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago'**
+  String get appointmentPaymentMethodLabel;
+
+  /// No description provided for @appointmentCustomerNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre completo'**
+  String get appointmentCustomerNameLabel;
+
+  /// No description provided for @appointmentCustomerPhoneLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono de contacto'**
+  String get appointmentCustomerPhoneLabel;
+
+  /// No description provided for @appointmentCustomerEmailLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Correo para la cita'**
+  String get appointmentCustomerEmailLabel;
+
+  /// No description provided for @appointmentCustomerIdentificationLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cédula'**
+  String get appointmentCustomerIdentificationLabel;
+
+  /// No description provided for @appointmentCustomerFiscalIdTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de identificación'**
+  String get appointmentCustomerFiscalIdTypeLabel;
+
+  /// No description provided for @appointmentOptionalNoteLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota opcional'**
+  String get appointmentOptionalNoteLabel;
+
+  /// No description provided for @appointmentOptionalNoteHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega detalles importantes para el taller.'**
+  String get appointmentOptionalNoteHint;
+
   /// No description provided for @appointmentProductsLabel.
   ///
   /// In es, this message translates to:
@@ -2643,6 +2691,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Por confirmar'**
   String get appointmentPriceToConfirm;
+
+  /// No description provided for @appointmentDurationMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{minutes} min'**
+  String appointmentDurationMinutes(Object minutes);
+
+  /// No description provided for @appointmentDurationHours.
+  ///
+  /// In es, this message translates to:
+  /// **'{hours} h'**
+  String appointmentDurationHours(Object hours);
+
+  /// No description provided for @appointmentDurationHoursMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String appointmentDurationHoursMinutes(Object hours, Object minutes);
 }
 
 class _AppLocalizationsDelegate

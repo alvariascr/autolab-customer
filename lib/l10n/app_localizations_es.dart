@@ -1235,14 +1235,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Selecciona una fecha y hora disponible más adelante.';
 
   @override
-  String get appointmentCustomerNameRequired =>
-      'Completa tu nombre en el perfil antes de reservar.';
-
-  @override
-  String get appointmentCustomerPhoneRequired =>
-      'Completa tu teléfono en el perfil antes de reservar.';
-
-  @override
   String get appointmentServiceNotSchedulable =>
       'Este servicio ya no está disponible para agendar.';
 
@@ -1361,6 +1353,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentCreatingAction => 'CREANDO';
 
   @override
+  String get appointmentConfirmAction => 'CONFIRMAR CITA';
+
+  @override
   String get appointmentFinishAction => 'FINALIZAR';
 
   @override
@@ -1433,6 +1428,34 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentWorkshopLabel => 'Taller';
 
   @override
+  String get appointmentDurationLabel => 'Duración';
+
+  @override
+  String get appointmentPaymentMethodLabel => 'Pago';
+
+  @override
+  String get appointmentCustomerNameLabel => 'Nombre completo';
+
+  @override
+  String get appointmentCustomerPhoneLabel => 'Teléfono de contacto';
+
+  @override
+  String get appointmentCustomerEmailLabel => 'Correo para la cita';
+
+  @override
+  String get appointmentCustomerIdentificationLabel => 'Cédula';
+
+  @override
+  String get appointmentCustomerFiscalIdTypeLabel => 'Tipo de identificación';
+
+  @override
+  String get appointmentOptionalNoteLabel => 'Nota opcional';
+
+  @override
+  String get appointmentOptionalNoteHint =>
+      'Agrega detalles importantes para el taller.';
+
+  @override
   String get appointmentProductsLabel => 'Productos';
 
   @override
@@ -1443,4 +1466,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentPriceToConfirm => 'Por confirmar';
+
+  @override
+  String appointmentDurationMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String appointmentDurationHours(Object hours) {
+    return '$hours h';
+  }
+
+  @override
+  String appointmentDurationHoursMinutes(Object hours, Object minutes) {
+    return '$hours h $minutes min';
+  }
 }

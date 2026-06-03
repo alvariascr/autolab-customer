@@ -26,7 +26,6 @@ class WorkshopAppointmentPage extends StatefulWidget {
 class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   static const ink = AppColors.ink;
   static const muted = AppColors.muted;
-  final _customerFormKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +118,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         _FooterActions(
           canGoBack: state.currentStep > 0,
           isLastStep: state.currentStep == steps.length - 1,
-          isPaymentEntryStep: state.currentStep == steps.length - 2,
           isSubmitting:
               state.submitStatus == AppointmentSubmitStatus.submitting,
           onBack: () => _handleBack(context, state),
@@ -174,17 +172,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         );
       case 1:
         return _MockStepPanel(
-          icon: Icons.storefront_outlined,
-          title: steps[state.currentStep].title,
-          child: _WorkshopSelectedCard(
-            workshopName: _workshopName(state),
-            workshopAddress: _workshopAddress(state),
-            workshopPhone: _workshopPhone(state),
-            workshopAvatarUrl: _workshopAvatarUrl(state),
-          ),
-        );
-      case 2:
-        return _MockStepPanel(
           icon: Icons.build_circle_outlined,
           title: steps[state.currentStep].title,
           child: _ServiceSelectionStep(
@@ -194,7 +181,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             onSelected: context.read<AppointmentCubit>().selectService,
           ),
         );
-      case 3:
+      case 2:
         return _MockStepPanel(
           icon: Icons.inventory_2_outlined,
           title: steps[state.currentStep].title,
@@ -212,7 +199,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                 .changeProductQuantity,
           ),
         );
-      case 4:
+      case 3:
         return _MockStepPanel(
           icon: Icons.event_outlined,
           title: steps[state.currentStep].title,
@@ -229,56 +216,29 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             onSelected: context.read<AppointmentCubit>().selectTime,
           ),
         );
-      case 5:
-        return _MockStepPanel(
-          icon: Icons.person_outline,
-          title: steps[state.currentStep].title,
-          child: _CustomerInfoMock(formKey: _customerFormKey),
-        );
-      case 6:
-        return _MockStepPanel(
-          icon: Icons.check_circle_outline,
-          title: steps[state.currentStep].title,
-          child: _ConfirmationMock(
-            workshopName: _workshopName(state),
-            service: state.selectedService,
-            licensePlate: state.vehicleLicensePlate,
-            products: state.selectedProducts,
-            date: state.selectedDate,
-            time: state.selectedTime ?? '9:00 AM',
-          ),
+      case 4:
+        return _ConfirmationMock(
+          workshopName: _workshopName(state),
+          service: state.selectedService,
+          licensePlate: state.vehicleLicensePlate,
+          products: state.selectedProducts,
+          date: state.selectedDate,
+          time: state.selectedTime ?? '9:00 AM',
+          paymentMethod: state.selectedPaymentMethod,
+          onPaymentMethodSelected: context
+              .read<AppointmentCubit>()
+              .selectPaymentMethod,
+          onNoteChanged: context.read<AppointmentCubit>().updateCustomerNote,
+          note: state.customerNote,
         );
       default:
-        return _MockStepPanel(
-          icon: Icons.credit_card_outlined,
-          title: steps[state.currentStep].title,
-          child: _PaymentMethodStep(
-            selectedMethod: state.selectedPaymentMethod,
-            onSelected: context.read<AppointmentCubit>().selectPaymentMethod,
-          ),
-        );
+        return const SizedBox.shrink();
     }
   }
 
   String _workshopName(AppointmentState state) {
     final name = state.workshop?.name.trim();
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
-  }
-
-  String _workshopAddress(AppointmentState state) {
-    final address = state.workshop?.locationAddress.trim();
-    return address == null || address.isEmpty
-        ? 'Direccion no registrada'
-        : address;
-  }
-
-  String _workshopPhone(AppointmentState state) {
-    final phone = state.workshop?.phone.trim();
-    return phone == null || phone.isEmpty ? 'Telefono no registrado' : phone;
-  }
-
-  String _workshopAvatarUrl(AppointmentState state) {
-    return state.workshop?.avatarUrl.trim() ?? '';
   }
 
   Future<void> _openGarage(BuildContext context) async {
@@ -364,7 +324,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       }
     }
 
-    if (state.currentStep == 2 && state.selectedService == null) {
+    if (state.currentStep == 1 && state.selectedService == null) {
       _showAppointmentMessage(
         context,
         message: l10n.appointmentSelectServiceRequired,
@@ -373,7 +333,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       return;
     }
 
-    if (state.currentStep == 4) {
+    if (state.currentStep == 3) {
       if (state.selectedDate == null || state.selectedTime == null) {
         _showAppointmentMessage(
           context,
@@ -399,11 +359,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         );
         return;
       }
-    }
-
-    if (state.currentStep == 5 &&
-        !(_customerFormKey.currentState?.validate() ?? false)) {
-      return;
     }
 
     context.read<AppointmentCubit>().goNext();
@@ -484,16 +439,13 @@ enum _AppointmentMessageType { success, warning, error }
 List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   return [
     _AppointmentStep(l10n.appointmentStepVehicleInfo, Icons.directions_car),
-    _AppointmentStep(l10n.appointmentStepWorkshop, Icons.storefront_outlined),
     _AppointmentStep(l10n.appointmentStepService, Icons.build_circle_outlined),
     _AppointmentStep(l10n.appointmentStepProducts, Icons.inventory_2_outlined),
     _AppointmentStep(l10n.appointmentStepDateTime, Icons.event_outlined),
-    _AppointmentStep(l10n.appointmentStepCustomerInfo, Icons.person_outline),
     _AppointmentStep(
       l10n.appointmentStepConfirmation,
       Icons.check_circle_outline,
     ),
-    _AppointmentStep(l10n.appointmentStepPayment, Icons.credit_card_outlined),
   ];
 }
 
@@ -517,10 +469,6 @@ String _appointmentSubmitErrorMessage(
       l10n.appointmentBookingIncomplete,
     AppointmentSubmitError.authRequired => l10n.appointmentAuthRequired,
     AppointmentSubmitError.dateTimeInPast => l10n.appointmentDateTimeInPast,
-    AppointmentSubmitError.customerNameRequired =>
-      l10n.appointmentCustomerNameRequired,
-    AppointmentSubmitError.customerPhoneRequired =>
-      l10n.appointmentCustomerPhoneRequired,
     AppointmentSubmitError.serviceNotSchedulable =>
       l10n.appointmentServiceNotSchedulable,
     AppointmentSubmitError.vehicleNotOwned => l10n.appointmentVehicleNotOwned,
@@ -675,7 +623,7 @@ class _DesktopStepItem extends StatelessWidget {
   }
 }
 
-class _MobileHeader extends StatelessWidget {
+class _MobileHeader extends StatefulWidget {
   const _MobileHeader({
     required this.steps,
     required this.currentStep,
@@ -687,6 +635,72 @@ class _MobileHeader extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
+  State<_MobileHeader> createState() => _MobileHeaderState();
+}
+
+class _MobileHeaderState extends State<_MobileHeader> {
+  final _scrollController = ScrollController();
+  late List<GlobalKey> _stepKeys;
+
+  @override
+  void initState() {
+    super.initState();
+    _stepKeys = List.generate(widget.steps.length, (_) => GlobalKey());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _centerCurrentStep());
+  }
+
+  @override
+  void didUpdateWidget(_MobileHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.steps.length != widget.steps.length) {
+      _stepKeys = List.generate(widget.steps.length, (_) => GlobalKey());
+    }
+
+    if (oldWidget.currentStep != widget.currentStep ||
+        oldWidget.steps.length != widget.steps.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _centerCurrentStep());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _centerCurrentStep() {
+    if (!mounted || widget.currentStep >= _stepKeys.length) {
+      return;
+    }
+
+    final itemContext = _stepKeys[widget.currentStep].currentContext;
+    if (itemContext == null || !_scrollController.hasClients) {
+      return;
+    }
+
+    final itemBox = itemContext.findRenderObject() as RenderBox?;
+    final listBox = context.findRenderObject() as RenderBox?;
+    if (itemBox == null || listBox == null) {
+      return;
+    }
+
+    final itemOffset = itemBox.localToGlobal(Offset.zero, ancestor: listBox);
+    final itemCenter = itemOffset.dx + itemBox.size.width / 2;
+    final viewportCenter = listBox.size.width / 2;
+    final rawOffset = _scrollController.offset + itemCenter - viewportCenter;
+    final targetOffset = rawOffset.clamp(
+      _scrollController.position.minScrollExtent,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    _scrollController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(color: Colors.white),
@@ -695,14 +709,16 @@ class _MobileHeader extends StatelessWidget {
         color: const Color(0xFFF6F6F6),
         alignment: Alignment.centerLeft,
         child: ListView.separated(
+          controller: _scrollController,
           padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 18),
           scrollDirection: Axis.horizontal,
-          itemCount: steps.length,
+          itemCount: widget.steps.length,
           separatorBuilder: (_, _) => const SizedBox(width: 10),
           itemBuilder: (context, index) {
-            final active = index == currentStep;
+            final active = index == widget.currentStep;
 
             return AnimatedContainer(
+              key: _stepKeys[index],
               duration: const Duration(milliseconds: 180),
               padding: EdgeInsets.symmetric(
                 horizontal: active ? 20 : 18,
@@ -718,15 +734,28 @@ class _MobileHeader extends StatelessWidget {
                   width: active ? 2 : 1,
                 ),
               ),
-              child: Text(
-                active ? '${index + 1} ${steps[index].title}' : '${index + 1}',
-                style: TextStyle(
-                  color: active
-                      ? _appointmentPrimary(context)
-                      : _WorkshopAppointmentPageState.ink,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    widget.steps[index].icon,
+                    size: active ? 20 : 22,
+                    color: active
+                        ? _appointmentPrimary(context)
+                        : _WorkshopAppointmentPageState.ink,
+                  ),
+                  if (active) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.steps[index].title,
+                      style: TextStyle(
+                        color: _appointmentPrimary(context),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             );
           },
@@ -2029,7 +2058,6 @@ class _FooterActions extends StatelessWidget {
   const _FooterActions({
     required this.canGoBack,
     required this.isLastStep,
-    required this.isPaymentEntryStep,
     required this.isSubmitting,
     required this.onBack,
     required this.onNext,
@@ -2037,7 +2065,6 @@ class _FooterActions extends StatelessWidget {
 
   final bool canGoBack;
   final bool isLastStep;
-  final bool isPaymentEntryStep;
   final bool isSubmitting;
   final VoidCallback onBack;
   final VoidCallback onNext;
@@ -2075,9 +2102,7 @@ class _FooterActions extends StatelessWidget {
                     label: isSubmitting
                         ? l10n.appointmentCreatingAction
                         : isLastStep
-                        ? l10n.appointmentFinishAction
-                        : isPaymentEntryStep
-                        ? l10n.appointmentPayAction
+                        ? l10n.appointmentConfirmAction
                         : l10n.appointmentNextAction,
                     onPressed: isSubmitting ? null : onNext,
                     isLoading: isSubmitting,
@@ -2191,113 +2216,6 @@ class _MockStepPanel extends StatelessWidget {
         const SizedBox(height: 24),
         child,
       ],
-    );
-  }
-}
-
-class _WorkshopSelectedCard extends StatelessWidget {
-  const _WorkshopSelectedCard({
-    required this.workshopName,
-    required this.workshopAddress,
-    required this.workshopPhone,
-    required this.workshopAvatarUrl,
-  });
-
-  final String workshopName;
-  final String workshopAddress;
-  final String workshopPhone;
-  final String workshopAvatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x15000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _WorkshopAvatar(imageUrl: workshopAvatarUrl),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  workshopName,
-                  style: TextStyle(
-                    color: _WorkshopAppointmentPageState.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  workshopAddress,
-                  style: TextStyle(
-                    color: _WorkshopAppointmentPageState.muted,
-                    fontSize: 16,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.phone_outlined,
-                      color: _appointmentPrimary(context),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        workshopPhone,
-                        style: TextStyle(
-                          color: _WorkshopAppointmentPageState.ink,
-                          fontSize: 16,
-                          height: 1.25,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WorkshopAvatar extends StatelessWidget {
-  const _WorkshopAvatar({required this.imageUrl});
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 29,
-      backgroundColor: AppColors.appointmentSoftRedBackground,
-      backgroundImage: imageUrl.isEmpty ? null : NetworkImage(imageUrl),
-      child: imageUrl.isEmpty
-          ? Icon(
-              Icons.storefront_outlined,
-              color: _appointmentPrimary(context),
-              size: 30,
-            )
-          : null,
     );
   }
 }
@@ -2757,63 +2675,49 @@ class _AvailabilityPanelMessage extends StatelessWidget {
   }
 }
 
-class _CustomerInfoMock extends StatelessWidget {
-  const _CustomerInfoMock({required this.formKey});
+class _ContactInput extends StatelessWidget {
+  const _ContactInput({
+    required this.initialValue,
+    required this.label,
+    required this.icon,
+    required this.onChanged,
+    this.minLines = 1,
+    this.maxLines = 1,
+    this.maxLength,
+  });
 
-  final GlobalKey<FormState> formKey;
+  final String initialValue;
+  final String label;
+  final IconData icon;
+  final ValueChanged<String> onChanged;
+  final int minLines;
+  final int maxLines;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.zero,
+      borderSide: BorderSide(color: AppColors.border),
+    );
 
-    return Form(
-      key: formKey,
-      child: Column(
-        children: [
-          _MockInput(
-            label: 'Nombre completo',
-            validator: (value) {
-              final text = value?.trim() ?? '';
-              if (text.isEmpty) {
-                return l10n.validationNameRequired;
-              }
-              if (text.length < 3) {
-                return l10n.validationNameTooShort;
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 14),
-          _MockInput(
-            label: 'Telefono',
-            keyboardType: TextInputType.phone,
-            validator: (value) {
-              final text = value?.trim() ?? '';
-              if (text.isEmpty) {
-                return l10n.validationPhoneRequired;
-              }
-              if (text.replaceAll(RegExp(r'\D'), '').length < 8) {
-                return l10n.validationPhoneInvalid;
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 14),
-          _MockInput(
-            label: 'Correo electronico',
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              final text = value?.trim() ?? '';
-              if (text.isEmpty) {
-                return l10n.validationEmailRequired;
-              }
-              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)) {
-                return l10n.validationEmailInvalid;
-              }
-              return null;
-            },
-          ),
-        ],
+    return TextFormField(
+      key: ValueKey(label),
+      initialValue: initialValue,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      minLines: minLines,
+      maxLines: maxLines,
+      maxLength: maxLength,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: border,
+        enabledBorder: border,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: _appointmentPrimary(context), width: 2),
+        ),
       ),
     );
   }
@@ -2827,6 +2731,10 @@ class _ConfirmationMock extends StatelessWidget {
     required this.products,
     required this.date,
     required this.time,
+    required this.paymentMethod,
+    required this.onPaymentMethodSelected,
+    required this.onNoteChanged,
+    required this.note,
   });
 
   final String workshopName;
@@ -2835,6 +2743,10 @@ class _ConfirmationMock extends StatelessWidget {
   final List<AppointmentSelectedProduct> products;
   final DateTime? date;
   final String time;
+  final String paymentMethod;
+  final ValueChanged<String> onPaymentMethodSelected;
+  final ValueChanged<String> onNoteChanged;
+  final String note;
 
   @override
   Widget build(BuildContext context) {
@@ -2920,6 +2832,47 @@ class _ConfirmationMock extends StatelessWidget {
                 label: l10n.appointmentDateLabel,
                 value: '$dayLabel, $time',
               ),
+              _SummaryRow(
+                label: l10n.appointmentDurationLabel,
+                value: _durationLabel(l10n, service?.estimatedDurationHours),
+              ),
+              _SummaryRow(
+                label: l10n.appointmentPaymentMethodLabel,
+                value: paymentMethod,
+              ),
+              const Divider(height: 28, color: AppColors.border),
+              Text(
+                l10n.appointmentStepPayment,
+                style: const TextStyle(
+                  color: _WorkshopAppointmentPageState.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _PaymentMethodStep(
+                selectedMethod: paymentMethod,
+                onSelected: onPaymentMethodSelected,
+              ),
+              const Divider(height: 28, color: AppColors.border),
+              Text(
+                l10n.appointmentOptionalNoteLabel,
+                style: const TextStyle(
+                  color: _WorkshopAppointmentPageState.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _ContactInput(
+                initialValue: note,
+                label: l10n.appointmentOptionalNoteLabel,
+                icon: Icons.notes_outlined,
+                minLines: 3,
+                maxLines: 5,
+                maxLength: 280,
+                onChanged: onNoteChanged,
+              ),
               const Divider(height: 28, color: AppColors.border),
               Text(
                 l10n.appointmentProductsLabel,
@@ -2982,6 +2935,23 @@ class _ConfirmationMock extends StatelessWidget {
     ];
 
     return names[month - 1];
+  }
+
+  String _durationLabel(AppLocalizations l10n, double? hours) {
+    final durationHours = hours ?? 1;
+    final minutes = (durationHours * 60).round();
+
+    if (minutes < 60) {
+      return l10n.appointmentDurationMinutes(minutes);
+    }
+
+    final wholeHours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    if (remainingMinutes == 0) {
+      return l10n.appointmentDurationHours(wholeHours);
+    }
+
+    return l10n.appointmentDurationHoursMinutes(wholeHours, remainingMinutes);
   }
 }
 
@@ -3087,44 +3057,6 @@ class _ProductSummaryRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MockInput extends StatelessWidget {
-  const _MockInput({required this.label, this.keyboardType, this.validator});
-
-  final String label;
-  final TextInputType? keyboardType;
-  final FormFieldValidator<String>? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      keyboardType: keyboardType,
-      validator: validator,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      style: TextStyle(
-        color: _WorkshopAppointmentPageState.ink,
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: _WorkshopAppointmentPageState.ink),
-        floatingLabelStyle: TextStyle(color: _WorkshopAppointmentPageState.ink),
-        filled: true,
-        fillColor: Colors.white,
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: _appointmentPrimary(context),
-            width: 1.4,
-          ),
-        ),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.border),
-        ),
       ),
     );
   }

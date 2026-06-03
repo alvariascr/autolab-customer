@@ -429,8 +429,6 @@
   "appointmentBookingIncomplete": "Revisa que el vehículo, servicio, fecha y hora estén completos.",
   "appointmentAuthRequired": "Inicia sesión para poder reservar tu cita.",
   "appointmentDateTimeInPast": "Selecciona una fecha y hora disponible más adelante.",
-  "appointmentCustomerNameRequired": "Completa tu nombre en el perfil antes de reservar.",
-  "appointmentCustomerPhoneRequired": "Completa tu teléfono en el perfil antes de reservar.",
   "appointmentServiceNotSchedulable": "Este servicio ya no está disponible para agendar.",
   "appointmentVehicleNotOwned": "No pudimos usar ese vehículo con tu usuario.",
   "appointmentVehiclePlateRequiredForBooking": "Ingresa la placa del vehículo para reservar.",
@@ -468,6 +466,7 @@
   "appointmentExitAction": "SALIR",
   "appointmentNewServiceAction": "NUEVO SERVICIO",
   "appointmentCreatingAction": "CREANDO",
+  "appointmentConfirmAction": "CONFIRMAR CITA",
   "appointmentFinishAction": "FINALIZAR",
   "appointmentPayAction": "PAGAR",
   "appointmentNextAction": "SIGUIENTE",
@@ -490,8 +489,36 @@
   "appointmentPaymentSinpeSubtitle": "Recibirás las instrucciones para completar el pago.",
   "appointmentConfirmationDeliveryMessage": "Recibirás los detalles por correo o WhatsApp.",
   "appointmentWorkshopLabel": "Taller",
+  "appointmentDurationLabel": "Duración",
+  "appointmentPaymentMethodLabel": "Pago",
+  "appointmentCustomerNameLabel": "Nombre completo",
+  "appointmentCustomerPhoneLabel": "Teléfono de contacto",
+  "appointmentCustomerEmailLabel": "Correo para la cita",
+  "appointmentCustomerIdentificationLabel": "Cédula",
+  "appointmentCustomerFiscalIdTypeLabel": "Tipo de identificación",
+  "appointmentOptionalNoteLabel": "Nota opcional",
+  "appointmentOptionalNoteHint": "Agrega detalles importantes para el taller.",
   "appointmentProductsLabel": "Productos",
   "appointmentNoAdditionalProducts": "Sin productos adicionales.",
   "appointmentTotalToPayLabel": "Total a pagar",
-  "appointmentPriceToConfirm": "Por confirmar"
+  "appointmentPriceToConfirm": "Por confirmar",
+  "appointmentDurationMinutes": "{minutes} min",
+  "@appointmentDurationMinutes": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "appointmentDurationHours": "{hours} h",
+  "@appointmentDurationHours": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "appointmentDurationHoursMinutes": "{hours} h {minutes} min",
+  "@appointmentDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {},
+      "minutes": {}
+    }
+  }
 }

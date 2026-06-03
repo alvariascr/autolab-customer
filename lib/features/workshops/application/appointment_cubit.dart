@@ -339,6 +339,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     emit(state.copyWith(selectedPaymentMethod: method));
   }
 
+  void updateCustomerNote(String note) {
+    emit(state.copyWith(customerNote: note));
+  }
+
   Future<bool> validateSelectedScheduleForBooking() async {
     final selectedService = state.selectedService;
     final selectedDate = state.selectedDate;
@@ -643,6 +647,11 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       'Metodo de pago: ${state.selectedPaymentMethod}',
     ];
 
+    final customerNote = state.customerNote.trim();
+    if (customerNote.isNotEmpty) {
+      lines.add('Nota del cliente: $customerNote');
+    }
+
     if (state.includeProducts && state.selectedProducts.isNotEmpty) {
       final products = state.selectedProducts
           .map((selected) => '${selected.product.name} x${selected.quantity}')
@@ -693,8 +702,6 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     return switch (_bookingErrorCode(error)) {
       AppointmentSubmitError.authRequired => 'auth_required',
       AppointmentSubmitError.dateTimeInPast => 'datetime_in_past',
-      AppointmentSubmitError.customerNameRequired => 'customer_name_required',
-      AppointmentSubmitError.customerPhoneRequired => 'customer_phone_required',
       AppointmentSubmitError.serviceNotSchedulable => 'service_not_schedulable',
       AppointmentSubmitError.slotUnavailable => 'slot_unavailable',
       AppointmentSubmitError.vehicleNotOwned => 'vehicle_not_owned',
@@ -725,14 +732,6 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     if (rawMessage.contains('appointment_datetime_in_past')) {
       return AppointmentSubmitError.dateTimeInPast;
-    }
-
-    if (rawMessage.contains('appointment_customer_name_required')) {
-      return AppointmentSubmitError.customerNameRequired;
-    }
-
-    if (rawMessage.contains('appointment_customer_phone_required')) {
-      return AppointmentSubmitError.customerPhoneRequired;
     }
 
     if (rawMessage.contains('appointment_service_not_schedulable')) {

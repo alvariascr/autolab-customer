@@ -19,8 +19,6 @@ enum AppointmentSubmitError {
   bookingIncomplete,
   authRequired,
   dateTimeInPast,
-  customerNameRequired,
-  customerPhoneRequired,
   serviceNotSchedulable,
   vehicleNotOwned,
   vehiclePlateRequiredForBooking,
@@ -60,6 +58,7 @@ class AppointmentState extends Equatable {
     this.selectedTime,
     this.focusedDate,
     this.selectedPaymentMethod = 'Tarjeta',
+    this.customerNote = '',
     this.submitStatus = AppointmentSubmitStatus.initial,
     this.submitError,
     this.createdAppointmentId,
@@ -96,6 +95,7 @@ class AppointmentState extends Equatable {
   final String? selectedTime;
   final DateTime? focusedDate;
   final String selectedPaymentMethod;
+  final String customerNote;
   final AppointmentSubmitStatus submitStatus;
   final AppointmentSubmitError? submitError;
   final String? createdAppointmentId;
@@ -139,6 +139,7 @@ class AppointmentState extends Equatable {
     bool clearSelectedTime = false,
     DateTime? focusedDate,
     String? selectedPaymentMethod,
+    String? customerNote,
     AppointmentSubmitStatus? submitStatus,
     AppointmentSubmitError? submitError,
     bool clearSubmitError = false,
@@ -192,6 +193,7 @@ class AppointmentState extends Equatable {
       focusedDate: focusedDate ?? this.focusedDate,
       selectedPaymentMethod:
           selectedPaymentMethod ?? this.selectedPaymentMethod,
+      customerNote: customerNote ?? this.customerNote,
       submitStatus: submitStatus ?? this.submitStatus,
       submitError: clearSubmitError ? null : submitError ?? this.submitError,
       createdAppointmentId: clearCreatedAppointmentId
@@ -235,6 +237,7 @@ class AppointmentState extends Equatable {
     selectedTime,
     focusedDate,
     selectedPaymentMethod,
+    customerNote,
     submitStatus,
     submitError,
     createdAppointmentId,
