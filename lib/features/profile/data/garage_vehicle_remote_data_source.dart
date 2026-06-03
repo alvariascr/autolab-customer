@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../workshops/domain/entities/appointment_vehicle.dart';
+import 'models/garage_vehicle_model.dart';
 
 class GarageVehicleAlreadyExistsException implements Exception {
   const GarageVehicleAlreadyExistsException();
@@ -23,7 +23,7 @@ class GarageVehicleRemoteDataSource {
     transmission_type
   ''';
 
-  Future<List<AppointmentVehicleRecord>> getVehicles() async {
+  Future<List<GarageVehicleModel>> getVehicles() async {
     final userId = client.auth.currentUser?.id;
     if (userId == null) {
       return const [];
@@ -36,7 +36,7 @@ class GarageVehicleRemoteDataSource {
         .eq('is_active', true)
         .order('updated_at', ascending: false);
 
-    return response.map((item) => _fromMap(item)).toList();
+    return response.map((item) => GarageVehicleModel.fromMap(item)).toList();
   }
 
   Future<void> createVehicle({
@@ -54,7 +54,7 @@ class GarageVehicleRemoteDataSource {
       throw StateError('Authenticated user is required');
     }
 
-    final normalizedPlate = licensePlate.trim().toUpperCase();
+    final normalizedPlate = _normalizeLicensePlate(licensePlate);
     final existingVehicle = await client
         .from('garage_vehicles')
         .select('id')
@@ -89,6 +89,61 @@ class GarageVehicleRemoteDataSource {
     }
   }
 
+  Future<void> updateVehicle({
+    required String id,
+    required String licensePlate,
+    String? vehicleType,
+    String? brand,
+    String? model,
+    int? year,
+    String? color,
+    String? fuelType,
+    String? transmissionType,
+  }) async {
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Authenticated user is required');
+    }
+
+    final normalizedPlate = _normalizeLicensePlate(licensePlate);
+    final existingVehicle = await client
+        .from('garage_vehicles')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('license_plate', normalizedPlate)
+        .eq('is_active', true)
+        .neq('id', id)
+        .maybeSingle();
+
+    if (existingVehicle != null) {
+      throw const GarageVehicleAlreadyExistsException();
+    }
+
+    try {
+      await client
+          .from('garage_vehicles')
+          .update({
+            'license_plate': normalizedPlate,
+            'vehicle_type': _trimOrNull(vehicleType),
+            'brand': _trimOrNull(brand),
+            'model': _trimOrNull(model),
+            'year': year,
+            'color': _trimOrNull(color),
+            'fuel_type': fuelType,
+            'transmission_type': transmissionType,
+          })
+          .eq('id', id)
+          .eq('user_id', userId)
+          .eq('is_active', true);
+    } on PostgrestException catch (error) {
+      if (error.code == '23505') {
+        throw const GarageVehicleAlreadyExistsException();
+      }
+
+      rethrow;
+    }
+  }
+
   Future<void> deleteVehicle(String id) async {
     final userId = client.auth.currentUser?.id;
     if (userId == null) {
@@ -97,27 +152,10 @@ class GarageVehicleRemoteDataSource {
 
     await client
         .from('garage_vehicles')
-        .update({
-          'is_active': false,
-          'updated_at': DateTime.now().toIso8601String(),
-        })
+        .update({'is_active': false})
         .eq('id', id)
         .eq('user_id', userId);
   }
-}
-
-AppointmentVehicleRecord _fromMap(Map<String, dynamic> map) {
-  return AppointmentVehicleRecord(
-    id: map['id']?.toString() ?? '',
-    licensePlate: map['license_plate']?.toString() ?? '',
-    vehicleType: map['vehicle_type']?.toString(),
-    brand: map['brand']?.toString(),
-    model: map['model']?.toString(),
-    year: map['year'] is int ? map['year'] as int : null,
-    color: map['color']?.toString(),
-    fuelType: map['fuel_type']?.toString(),
-    transmissionType: map['transmission_type']?.toString(),
-  );
 }
 
 String? _trimOrNull(String? value) {
@@ -127,4 +165,13 @@ String? _trimOrNull(String? value) {
   }
 
   return trimmed;
+}
+
+String _normalizeLicensePlate(String value) {
+  final normalized = value.trim().toUpperCase();
+  if (normalized.isEmpty) {
+    throw ArgumentError.value(value, 'licensePlate', 'is required');
+  }
+
+  return normalized;
 }

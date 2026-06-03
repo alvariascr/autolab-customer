@@ -150,6 +150,161 @@ void main() {
     expect(times, ['10:30', '11:00', '11:30']);
   });
 
+  test('keeps overlapping slots available while capacity remains', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '09:00:00',
+            closeTime: '11:00:00',
+            isClosed: false,
+            slotCapacity: 2,
+          ),
+        ],
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 60,
+        ),
+      ],
+      serviceDurationHours: 0.5,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, ['09:00', '09:30', '10:00', '10:30']);
+  });
+
+  test('blocks overlapping slots when configured capacity is reached', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '09:00:00',
+            closeTime: '11:00:00',
+            isClosed: false,
+            slotCapacity: 2,
+          ),
+        ],
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 90,
+        ),
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 90,
+        ),
+      ],
+      serviceDurationHours: 0.5,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, ['10:30']);
+  });
+
+  test('treats consecutive appointments as half-open intervals', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '09:00:00',
+            closeTime: '11:00:00',
+            isClosed: false,
+            slotCapacity: 2,
+          ),
+        ],
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 60,
+        ),
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 10),
+          durationMinutes: 60,
+        ),
+      ],
+      serviceDurationHours: 1,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, ['09:00', '09:30', '10:00']);
+
+    final unavailableTimes = calculator.unavailableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '09:00:00',
+            closeTime: '11:00:00',
+            isClosed: false,
+            slotCapacity: 2,
+          ),
+        ],
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 60,
+        ),
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 10),
+          durationMinutes: 60,
+        ),
+      ],
+      serviceDurationHours: 1,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(unavailableTimes, isEmpty);
+  });
+
+  test('returns full slots as unavailable times for visual blocking', () {
+    final result = calculator.calculateMonth(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '09:00:00',
+            closeTime: '11:00:00',
+            isClosed: false,
+            slotCapacity: 2,
+          ),
+        ],
+      ),
+      month: DateTime(2026, 6),
+      bookedSlots: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 90,
+        ),
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 9),
+          durationMinutes: 90,
+        ),
+      ],
+      serviceDurationHours: 0.5,
+      now: DateTime(2026, 5, 31),
+    );
+
+    final date = DateTime(2026, 6, 1);
+    expect(result.availableTimesByDate[date], ['10:30']);
+    expect(result.unavailableTimesByDate[date], {'09:00', '09:30', '10:00'});
+  });
+
   test('keeps future slots available for the current day', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(

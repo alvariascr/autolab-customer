@@ -52,7 +52,8 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
             day_of_week,
             open_time,
             close_time,
-            is_closed
+            is_closed,
+            slot_capacity
           ),
           workshop_service_categories (
             workshop_categories (
