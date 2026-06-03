@@ -109,15 +109,19 @@ class SupabaseAppointmentBookingRemoteDataSource
     required String workshopId,
     required DateTime scheduledDateTime,
   }) async {
+    final slotCapacity = await _slotCapacityFor(
+      workshopId: workshopId,
+      scheduledDateTime: scheduledDateTime,
+    );
     final response = await client
         .from('appointments')
         .select('id, order_services!inner(orders!inner(workshop_id))')
         .eq('scheduled_datetime', scheduledDateTime.toUtc().toIso8601String())
         .eq('order_services.orders.workshop_id', workshopId)
         .not('appointment_status', 'in', '(cancelled,no_show)')
-        .limit(1);
+        .limit(slotCapacity);
 
-    return response.isEmpty;
+    return response.length < slotCapacity;
   }
 
   @override
@@ -180,6 +184,30 @@ class SupabaseAppointmentBookingRemoteDataSource
     );
 
     return response.toString();
+  }
+
+  Future<int> _slotCapacityFor({
+    required String workshopId,
+    required DateTime scheduledDateTime,
+  }) async {
+    final dayOfWeek = scheduledDateTime.weekday - 1;
+    final response = await client
+        .from('business_hours')
+        .select('slot_capacity')
+        .eq('workshop_id', workshopId)
+        .eq('day_of_week', dayOfWeek)
+        .maybeSingle();
+
+    final value = response?['slot_capacity'];
+    final capacity = value is int
+        ? value
+        : int.tryParse(value?.toString() ?? '');
+
+    if (capacity == null || capacity <= 0) {
+      return 1;
+    }
+
+    return capacity;
   }
 }
 

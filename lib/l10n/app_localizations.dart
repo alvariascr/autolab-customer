@@ -835,7 +835,7 @@ abstract class AppLocalizations {
   /// No description provided for @garageTitle.
   ///
   /// In es, this message translates to:
-  /// **'Mi garaje'**
+  /// **'Mis vehículos'**
   String get garageTitle;
 
   /// No description provided for @garageProfileSubtitle.
@@ -856,16 +856,22 @@ abstract class AppLocalizations {
   /// **'Agregar vehículo'**
   String get garageAddAction;
 
+  /// No description provided for @garageEditAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar vehículo'**
+  String get garageEditAction;
+
   /// No description provided for @garageEmpty.
   ///
   /// In es, this message translates to:
-  /// **'Aún no tienes vehículos en tu garaje.'**
+  /// **'Aún no tienes vehículos guardados.'**
   String get garageEmpty;
 
   /// No description provided for @garageLoadFailed.
   ///
   /// In es, this message translates to:
-  /// **'No pudimos cargar tu garaje. Intenta nuevamente.'**
+  /// **'No pudimos cargar tus vehículos. Intenta nuevamente.'**
   String get garageLoadFailed;
 
   /// No description provided for @garageFormTitle.
@@ -873,6 +879,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Agregar vehículo'**
   String get garageFormTitle;
+
+  /// No description provided for @garageEditFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar vehículo'**
+  String get garageEditFormTitle;
 
   /// No description provided for @garagePlateLabel.
   ///
@@ -1009,7 +1021,7 @@ abstract class AppLocalizations {
   /// No description provided for @garagePlateAlreadyExists.
   ///
   /// In es, this message translates to:
-  /// **'Esta placa ya está registrada en tu garaje. Selecciona ese vehículo de la lista o elimina el registro anterior.'**
+  /// **'Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.'**
   String get garagePlateAlreadyExists;
 
   /// No description provided for @garageDeleteTitle.
@@ -1021,7 +1033,7 @@ abstract class AppLocalizations {
   /// No description provided for @garageDeleteMessage.
   ///
   /// In es, this message translates to:
-  /// **'¿Quieres eliminar el vehículo {plate} de tu garaje?'**
+  /// **'¿Quieres eliminar el vehículo {plate} de tus vehículos?'**
   String garageDeleteMessage(String plate);
 
   /// No description provided for @garageCancelAction.
@@ -2299,7 +2311,7 @@ abstract class AppLocalizations {
   /// No description provided for @appointmentNoVehiclesForWorkshop.
   ///
   /// In es, this message translates to:
-  /// **'Aún no tienes vehículos en tu garaje.'**
+  /// **'Aún no tienes vehículos guardados.'**
   String get appointmentNoVehiclesForWorkshop;
 
   /// No description provided for @appointmentNoSchedulableServices.

@@ -22,6 +22,7 @@ void main() {
             'open_time': '08:00:00',
             'close_time': '17:00:00',
             'is_closed': false,
+            'slot_capacity': 3,
           },
           {
             'day_of_week': 1,
@@ -56,6 +57,8 @@ void main() {
       expect(model.offersHomeService, isTrue);
       expect(model.businessHours.map((hour) => hour.dayOfWeek), [1, 2]);
       expect(model.businessHours.first.isClosed, isTrue);
+      expect(model.businessHours.first.slotCapacity, 1);
+      expect(model.businessHours.last.slotCapacity, 3);
       expect(model.serviceCategories, ['Frenos', 'Mantenimiento']);
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
     });

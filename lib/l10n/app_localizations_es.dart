@@ -420,7 +420,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileLogout => 'Cerrar sesión';
 
   @override
-  String get garageTitle => 'Mi garaje';
+  String get garageTitle => 'Mis vehículos';
 
   @override
   String get garageProfileSubtitle =>
@@ -434,14 +434,20 @@ class AppLocalizationsEs extends AppLocalizations {
   String get garageAddAction => 'Agregar vehículo';
 
   @override
-  String get garageEmpty => 'Aún no tienes vehículos en tu garaje.';
+  String get garageEditAction => 'Editar vehículo';
+
+  @override
+  String get garageEmpty => 'Aún no tienes vehículos guardados.';
 
   @override
   String get garageLoadFailed =>
-      'No pudimos cargar tu garaje. Intenta nuevamente.';
+      'No pudimos cargar tus vehículos. Intenta nuevamente.';
 
   @override
   String get garageFormTitle => 'Agregar vehículo';
+
+  @override
+  String get garageEditFormTitle => 'Editar vehículo';
 
   @override
   String get garagePlateLabel => 'Placa';
@@ -512,14 +518,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get garagePlateAlreadyExists =>
-      'Esta placa ya está registrada en tu garaje. Selecciona ese vehículo de la lista o elimina el registro anterior.';
+      'Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.';
 
   @override
   String get garageDeleteTitle => 'Eliminar vehículo';
 
   @override
   String garageDeleteMessage(String plate) {
-    return '¿Quieres eliminar el vehículo $plate de tu garaje?';
+    return '¿Quieres eliminar el vehículo $plate de tus vehículos?';
   }
 
   @override
@@ -1258,7 +1264,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentNoVehiclesForWorkshop =>
-      'Aún no tienes vehículos en tu garaje.';
+      'Aún no tienes vehículos guardados.';
 
   @override
   String get appointmentNoSchedulableServices =>

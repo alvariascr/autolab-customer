@@ -89,6 +89,62 @@ class GarageVehicleRemoteDataSource {
     }
   }
 
+  Future<void> updateVehicle({
+    required String id,
+    required String licensePlate,
+    String? vehicleType,
+    String? brand,
+    String? model,
+    int? year,
+    String? color,
+    String? fuelType,
+    String? transmissionType,
+  }) async {
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Authenticated user is required');
+    }
+
+    final normalizedPlate = licensePlate.trim().toUpperCase();
+    final existingVehicle = await client
+        .from('garage_vehicles')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('license_plate', normalizedPlate)
+        .eq('is_active', true)
+        .neq('id', id)
+        .maybeSingle();
+
+    if (existingVehicle != null) {
+      throw const GarageVehicleAlreadyExistsException();
+    }
+
+    try {
+      await client
+          .from('garage_vehicles')
+          .update({
+            'license_plate': normalizedPlate,
+            'vehicle_type': _trimOrNull(vehicleType),
+            'brand': _trimOrNull(brand),
+            'model': _trimOrNull(model),
+            'year': year,
+            'color': _trimOrNull(color),
+            'fuel_type': fuelType,
+            'transmission_type': transmissionType,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id)
+          .eq('user_id', userId)
+          .eq('is_active', true);
+    } on PostgrestException catch (error) {
+      if (error.code == '23505') {
+        throw const GarageVehicleAlreadyExistsException();
+      }
+
+      rethrow;
+    }
+  }
+
   Future<void> deleteVehicle(String id) async {
     final userId = client.auth.currentUser?.id;
     if (userId == null) {

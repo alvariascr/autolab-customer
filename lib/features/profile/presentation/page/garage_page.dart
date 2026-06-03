@@ -46,13 +46,14 @@ class _GaragePageState extends State<GaragePage> {
     }
   }
 
-  Future<void> _openVehicleForm() async {
+  Future<void> _openVehicleForm({AppointmentVehicleRecord? vehicle}) async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _GarageVehicleForm(dataSource: _dataSource),
+      builder: (_) =>
+          _GarageVehicleForm(dataSource: _dataSource, initialVehicle: vehicle),
     );
 
     if (saved == true) {
@@ -152,6 +153,7 @@ class _GaragePageState extends State<GaragePage> {
                 ..._vehicles.map(
                   (vehicle) => _GarageVehicleTile(
                     vehicle: vehicle,
+                    onEdit: () => _openVehicleForm(vehicle: vehicle),
                     onDelete: () => _deleteVehicle(vehicle),
                   ),
                 ),
@@ -205,9 +207,14 @@ class _GarageMessage extends StatelessWidget {
 }
 
 class _GarageVehicleTile extends StatelessWidget {
-  const _GarageVehicleTile({required this.vehicle, required this.onDelete});
+  const _GarageVehicleTile({
+    required this.vehicle,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final AppointmentVehicleRecord vehicle;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -270,6 +277,12 @@ class _GarageVehicleTile extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: AppLocalizations.of(context)!.garageEditAction,
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: AppLocalizations.of(context)!.garageDeleteAction,
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline_rounded),
           ),
@@ -280,9 +293,10 @@ class _GarageVehicleTile extends StatelessWidget {
 }
 
 class _GarageVehicleForm extends StatefulWidget {
-  const _GarageVehicleForm({required this.dataSource});
+  const _GarageVehicleForm({required this.dataSource, this.initialVehicle});
 
   final GarageVehicleRemoteDataSource dataSource;
+  final AppointmentVehicleRecord? initialVehicle;
 
   @override
   State<_GarageVehicleForm> createState() => _GarageVehicleFormState();
@@ -300,6 +314,27 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
   String? _transmissionType;
   String? _errorMessage;
   var _saving = false;
+
+  bool get _isEditing => widget.initialVehicle != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final vehicle = widget.initialVehicle;
+    if (vehicle == null) {
+      return;
+    }
+
+    _plateController.text = vehicle.licensePlate;
+    _brandController.text = vehicle.brand ?? '';
+    _modelController.text = vehicle.model ?? '';
+    _yearController.text = vehicle.year?.toString() ?? '';
+    _colorController.text = vehicle.color ?? '';
+    _vehicleType = vehicle.vehicleType;
+    _fuelType = vehicle.fuelType;
+    _transmissionType = vehicle.transmissionType;
+  }
 
   @override
   void dispose() {
@@ -323,16 +358,31 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
     });
 
     try {
-      await widget.dataSource.createVehicle(
-        licensePlate: _plateController.text,
-        vehicleType: _vehicleType,
-        brand: _brandController.text,
-        model: _modelController.text,
-        year: int.tryParse(_yearController.text.trim()),
-        color: _colorController.text,
-        fuelType: _fuelType,
-        transmissionType: _transmissionType,
-      );
+      final vehicle = widget.initialVehicle;
+      if (vehicle == null) {
+        await widget.dataSource.createVehicle(
+          licensePlate: _plateController.text,
+          vehicleType: _vehicleType,
+          brand: _brandController.text,
+          model: _modelController.text,
+          year: int.tryParse(_yearController.text.trim()),
+          color: _colorController.text,
+          fuelType: _fuelType,
+          transmissionType: _transmissionType,
+        );
+      } else {
+        await widget.dataSource.updateVehicle(
+          id: vehicle.id,
+          licensePlate: _plateController.text,
+          vehicleType: _vehicleType,
+          brand: _brandController.text,
+          model: _modelController.text,
+          year: int.tryParse(_yearController.text.trim()),
+          color: _colorController.text,
+          fuelType: _fuelType,
+          transmissionType: _transmissionType,
+        );
+      }
 
       if (!mounted) {
         return;
@@ -379,7 +429,7 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                l10n.garageFormTitle,
+                _isEditing ? l10n.garageEditFormTitle : l10n.garageFormTitle,
                 style: const TextStyle(
                   color: Color(0xFF181411),
                   fontSize: 22,

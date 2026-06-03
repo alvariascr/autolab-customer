@@ -2334,7 +2334,7 @@ class _DateTimeMock extends StatelessWidget {
         if (selectedDate != null) ...[
           const SizedBox(height: 24),
           _AvailableHoursPanel(
-            times: _availableTimesForSelectedDate(),
+            times: _timesForSelectedDate(),
             selectedTime: selectedTime,
             unavailableTimes: _unavailableTimesForSelectedDate(),
             availabilityStatus: availabilityStatus,
@@ -2343,6 +2343,21 @@ class _DateTimeMock extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  List<String> _availableTimesForSelectedDate() {
+    final date = selectedDate;
+    if (date == null) {
+      return const [];
+    }
+
+    for (final entry in availableTimesByDate.entries) {
+      if (isSameDay(entry.key, date)) {
+        return entry.value;
+      }
+    }
+
+    return const [];
   }
 
   Set<String> _unavailableTimesForSelectedDate() {
@@ -2360,19 +2375,14 @@ class _DateTimeMock extends StatelessWidget {
     return const {};
   }
 
-  List<String> _availableTimesForSelectedDate() {
-    final date = selectedDate;
-    if (date == null) {
-      return const [];
-    }
+  List<String> _timesForSelectedDate() {
+    final times = {
+      ..._availableTimesForSelectedDate(),
+      ..._unavailableTimesForSelectedDate(),
+    }.toList();
 
-    for (final entry in availableTimesByDate.entries) {
-      if (isSameDay(entry.key, date)) {
-        return entry.value;
-      }
-    }
-
-    return const [];
+    times.sort();
+    return times;
   }
 }
 

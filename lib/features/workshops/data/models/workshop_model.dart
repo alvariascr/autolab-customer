@@ -66,6 +66,7 @@ class WorkshopModel extends Workshop {
             openTime: item['open_time']?.toString() ?? '',
             closeTime: item['close_time']?.toString() ?? '',
             isClosed: item['is_closed'] == true,
+            slotCapacity: _toPositiveInt(item['slot_capacity']),
           ),
         )
         .toList();
@@ -89,6 +90,15 @@ class WorkshopModel extends Workshop {
         .map((category) => category['name']?.toString() ?? '')
         .where((name) => name.isNotEmpty)
         .toList();
+  }
+
+  static int _toPositiveInt(dynamic value) {
+    final parsed = value is int ? value : int.tryParse(value?.toString() ?? '');
+    if (parsed == null || parsed <= 0) {
+      return 1;
+    }
+
+    return parsed;
   }
 
   static List<String> _paymentMethodsFromMap(Map<String, dynamic> map) {
