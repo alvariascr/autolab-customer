@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../workshops/domain/entities/appointment_vehicle.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
+import '../../domain/entities/garage_vehicle.dart';
 
 class GaragePage extends StatefulWidget {
   const GaragePage({super.key});
@@ -15,7 +15,7 @@ class GaragePage extends StatefulWidget {
 class _GaragePageState extends State<GaragePage> {
   late final GarageVehicleRemoteDataSource _dataSource;
   var _status = _GarageStatus.loading;
-  var _vehicles = <AppointmentVehicleRecord>[];
+  var _vehicles = <GarageVehicle>[];
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _GaragePageState extends State<GaragePage> {
     }
   }
 
-  Future<void> _openVehicleForm({AppointmentVehicleRecord? vehicle}) async {
+  Future<void> _openVehicleForm({GarageVehicle? vehicle}) async {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -65,7 +65,7 @@ class _GaragePageState extends State<GaragePage> {
     }
   }
 
-  Future<void> _deleteVehicle(AppointmentVehicleRecord vehicle) async {
+  Future<void> _deleteVehicle(GarageVehicle vehicle) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -222,7 +222,7 @@ class _GarageVehicleTile extends StatelessWidget {
     required this.onDelete,
   });
 
-  final AppointmentVehicleRecord vehicle;
+  final GarageVehicle vehicle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -305,7 +305,7 @@ class _GarageVehicleForm extends StatefulWidget {
   const _GarageVehicleForm({required this.dataSource, this.initialVehicle});
 
   final GarageVehicleRemoteDataSource dataSource;
-  final AppointmentVehicleRecord? initialVehicle;
+  final GarageVehicle? initialVehicle;
 
   @override
   State<_GarageVehicleForm> createState() => _GarageVehicleFormState();

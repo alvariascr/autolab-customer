@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../workshops/domain/entities/appointment_vehicle.dart';
+import 'models/garage_vehicle_model.dart';
 
 class GarageVehicleAlreadyExistsException implements Exception {
   const GarageVehicleAlreadyExistsException();
@@ -23,7 +23,7 @@ class GarageVehicleRemoteDataSource {
     transmission_type
   ''';
 
-  Future<List<AppointmentVehicleRecord>> getVehicles() async {
+  Future<List<GarageVehicleModel>> getVehicles() async {
     final userId = client.auth.currentUser?.id;
     if (userId == null) {
       return const [];
@@ -36,7 +36,7 @@ class GarageVehicleRemoteDataSource {
         .eq('is_active', true)
         .order('updated_at', ascending: false);
 
-    return response.map((item) => _fromMap(item)).toList();
+    return response.map((item) => GarageVehicleModel.fromMap(item)).toList();
   }
 
   Future<void> createVehicle({
@@ -160,20 +160,6 @@ class GarageVehicleRemoteDataSource {
         .eq('id', id)
         .eq('user_id', userId);
   }
-}
-
-AppointmentVehicleRecord _fromMap(Map<String, dynamic> map) {
-  return AppointmentVehicleRecord(
-    id: map['id']?.toString() ?? '',
-    licensePlate: map['license_plate']?.toString() ?? '',
-    vehicleType: map['vehicle_type']?.toString(),
-    brand: map['brand']?.toString(),
-    model: map['model']?.toString(),
-    year: map['year'] is int ? map['year'] as int : null,
-    color: map['color']?.toString(),
-    fuelType: map['fuel_type']?.toString(),
-    transmissionType: map['transmission_type']?.toString(),
-  );
 }
 
 String? _trimOrNull(String? value) {
