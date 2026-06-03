@@ -832,6 +832,228 @@ abstract class AppLocalizations {
   /// **'Cerrar sesión'**
   String get profileLogout;
 
+  /// No description provided for @vehiclesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis vehículos'**
+  String get vehiclesTitle;
+
+  /// No description provided for @vehiclesProfileSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Administra los vehículos que usas para reservar citas.'**
+  String get vehiclesProfileSubtitle;
+
+  /// No description provided for @vehiclesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.'**
+  String get vehiclesSubtitle;
+
+  /// No description provided for @vehiclesAddAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar vehículo'**
+  String get vehiclesAddAction;
+
+  /// No description provided for @vehiclesEditAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar vehículo'**
+  String get vehiclesEditAction;
+
+  /// No description provided for @vehiclesEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes vehículos guardados.'**
+  String get vehiclesEmpty;
+
+  /// No description provided for @vehiclesLoadFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus vehículos. Intenta nuevamente.'**
+  String get vehiclesLoadFailed;
+
+  /// No description provided for @vehiclesFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar vehículo'**
+  String get vehiclesFormTitle;
+
+  /// No description provided for @vehiclesEditFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar vehículo'**
+  String get vehiclesEditFormTitle;
+
+  /// No description provided for @vehiclesPlateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Placa'**
+  String get vehiclesPlateLabel;
+
+  /// No description provided for @vehiclesPlateRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa la placa del vehículo.'**
+  String get vehiclesPlateRequired;
+
+  /// No description provided for @vehiclesTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de vehículo'**
+  String get vehiclesTypeLabel;
+
+  /// No description provided for @vehiclesTypeCar.
+  ///
+  /// In es, this message translates to:
+  /// **'Automóvil'**
+  String get vehiclesTypeCar;
+
+  /// No description provided for @vehiclesTypeMotorcycle.
+  ///
+  /// In es, this message translates to:
+  /// **'Motocicleta'**
+  String get vehiclesTypeMotorcycle;
+
+  /// No description provided for @vehiclesTypePickup.
+  ///
+  /// In es, this message translates to:
+  /// **'Pickup'**
+  String get vehiclesTypePickup;
+
+  /// No description provided for @vehiclesTypeSuv.
+  ///
+  /// In es, this message translates to:
+  /// **'SUV'**
+  String get vehiclesTypeSuv;
+
+  /// No description provided for @vehiclesTypeTruck.
+  ///
+  /// In es, this message translates to:
+  /// **'Camión'**
+  String get vehiclesTypeTruck;
+
+  /// No description provided for @vehiclesBrandLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get vehiclesBrandLabel;
+
+  /// No description provided for @vehiclesModelLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Modelo'**
+  String get vehiclesModelLabel;
+
+  /// No description provided for @vehiclesYearLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Año'**
+  String get vehiclesYearLabel;
+
+  /// No description provided for @vehiclesColorLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Color'**
+  String get vehiclesColorLabel;
+
+  /// No description provided for @vehiclesFuelLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Combustible'**
+  String get vehiclesFuelLabel;
+
+  /// No description provided for @vehiclesFuelGasoline.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasolina'**
+  String get vehiclesFuelGasoline;
+
+  /// No description provided for @vehiclesFuelDiesel.
+  ///
+  /// In es, this message translates to:
+  /// **'Diésel'**
+  String get vehiclesFuelDiesel;
+
+  /// No description provided for @vehiclesFuelElectric.
+  ///
+  /// In es, this message translates to:
+  /// **'Eléctrico'**
+  String get vehiclesFuelElectric;
+
+  /// No description provided for @vehiclesFuelHybrid.
+  ///
+  /// In es, this message translates to:
+  /// **'Híbrido'**
+  String get vehiclesFuelHybrid;
+
+  /// No description provided for @vehiclesTransmissionLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Transmisión'**
+  String get vehiclesTransmissionLabel;
+
+  /// No description provided for @vehiclesTransmissionManual.
+  ///
+  /// In es, this message translates to:
+  /// **'Manual'**
+  String get vehiclesTransmissionManual;
+
+  /// No description provided for @vehiclesTransmissionAutomatic.
+  ///
+  /// In es, this message translates to:
+  /// **'Automática'**
+  String get vehiclesTransmissionAutomatic;
+
+  /// No description provided for @vehiclesSaveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar vehículo'**
+  String get vehiclesSaveAction;
+
+  /// No description provided for @vehiclesSaveFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.'**
+  String get vehiclesSaveFailed;
+
+  /// No description provided for @vehiclesPlateAlreadyExists.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.'**
+  String get vehiclesPlateAlreadyExists;
+
+  /// No description provided for @vehiclesDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar vehículo'**
+  String get vehiclesDeleteTitle;
+
+  /// No description provided for @vehiclesDeleteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres eliminar el vehículo {plate} de tus vehículos?'**
+  String vehiclesDeleteMessage(String plate);
+
+  /// No description provided for @vehiclesCancelAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get vehiclesCancelAction;
+
+  /// No description provided for @vehiclesDeleteAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get vehiclesDeleteAction;
+
+  /// No description provided for @vehiclesDeleteFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos eliminar el vehículo. Intenta nuevamente.'**
+  String get vehiclesDeleteFailed;
+
   /// No description provided for @locationHeaderEyebrowDeliverNow.
   ///
   /// In es, this message translates to:
@@ -1855,7 +2077,7 @@ abstract class AppLocalizations {
   /// No description provided for @appointmentVehiclePlateRequired.
   ///
   /// In es, this message translates to:
-  /// **'Ingresa la placa del vehículo para continuar.'**
+  /// **'Selecciona un vehículo para continuar.'**
   String get appointmentVehiclePlateRequired;
 
   /// No description provided for @appointmentVehiclePlateConflict.
@@ -1917,6 +2139,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ingresa la placa del vehículo para reservar.'**
   String get appointmentVehiclePlateRequiredForBooking;
+
+  /// No description provided for @appointmentBookingConfigurationFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'La reserva no está configurada correctamente. Contacta al equipo de soporte.'**
+  String get appointmentBookingConfigurationFailed;
 
   /// No description provided for @appointmentStepVehicleInfo.
   ///
@@ -2068,6 +2296,12 @@ abstract class AppLocalizations {
   /// **'Mis vehículos'**
   String get appointmentMyVehiclesTitle;
 
+  /// No description provided for @appointmentAddVehicleShortAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Vehículo'**
+  String get appointmentAddVehicleShortAction;
+
   /// No description provided for @appointmentNewVehicleAction.
   ///
   /// In es, this message translates to:
@@ -2077,7 +2311,7 @@ abstract class AppLocalizations {
   /// No description provided for @appointmentNoVehiclesForWorkshop.
   ///
   /// In es, this message translates to:
-  /// **'Aún no tienes vehículos registrados para este taller.'**
+  /// **'Aún no tienes vehículos guardados.'**
   String get appointmentNoVehiclesForWorkshop;
 
   /// No description provided for @appointmentNoSchedulableServices.
@@ -2151,6 +2385,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Horas disponibles'**
   String get appointmentAvailableHoursTitle;
+
+  /// No description provided for @appointmentAvailableHoursLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos consultando los horarios disponibles.'**
+  String get appointmentAvailableHoursLoading;
+
+  /// No description provided for @appointmentAvailableHoursFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar la disponibilidad. Inténtalo nuevamente.'**
+  String get appointmentAvailableHoursFailed;
+
+  /// No description provided for @appointmentAvailableHoursEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay horarios disponibles para este día.'**
+  String get appointmentAvailableHoursEmpty;
 
   /// No description provided for @appointmentPendingDate.
   ///

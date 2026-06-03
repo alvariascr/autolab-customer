@@ -7,6 +7,7 @@ import '../../products/domain/usecases/get_additional_products_by_workshop.dart'
 import '../../products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import '../domain/entities/appointment_vehicle.dart';
 import '../domain/repositories/workshop_repository.dart';
+import '../domain/services/workshop_availability_calculator.dart';
 import '../domain/usecases/book_service_appointment.dart';
 import '../domain/usecases/get_booked_appointment_slots.dart';
 import '../domain/usecases/get_customer_vehicle_by_plate.dart';
@@ -42,28 +43,18 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   final IsAppointmentSlotAvailable _isAppointmentSlotAvailable;
   final GetBookedAppointmentSlots _getBookedAppointmentSlots;
   final BookServiceAppointment _bookServiceAppointment;
-  static const _bookingTimes = [
-    '07:00',
-    '08:00',
-    '09:00',
-    '10:00',
-    '11:00',
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-  ];
+  static final _availabilityCalculator = WorkshopAvailabilityCalculator();
 
   Future<void> load(String workshopId) async {
     emit(
       state.copyWith(
         workshopId: workshopId,
+        focusedDate: DateTime.now(),
         workshopStatus: AppointmentLoadStatus.loading,
         servicesStatus: AppointmentLoadStatus.loading,
         productsStatus: AppointmentLoadStatus.loading,
         vehiclesStatus: AppointmentLoadStatus.loading,
+        availabilityStatus: AppointmentLoadStatus.loading,
       ),
     );
 
@@ -89,6 +80,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         ),
       ),
     );
+    _refreshAvailabilityForFocusedMonth();
   }
 
   Future<void> _loadServices(String workshopId) async {
@@ -133,6 +125,25 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       );
     } catch (_) {
       emit(state.copyWith(vehiclesStatus: AppointmentLoadStatus.failure));
+    }
+  }
+
+  Future<void> refreshVehicles() async {
+    final workshopId = state.workshopId;
+    if (workshopId.isEmpty) {
+      return;
+    }
+
+    emit(state.copyWith(vehiclesStatus: AppointmentLoadStatus.loading));
+    await _loadVehicles(workshopId);
+
+    final currentState = state;
+    final selectedVehicleId = currentState.selectedVehicleId;
+    if (selectedVehicleId != null &&
+        !currentState.vehicles.any(
+          (vehicle) => vehicle.id == selectedVehicleId,
+        )) {
+      startNewVehicle();
     }
   }
 
@@ -222,6 +233,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         clearSelectedTime: true,
       ),
     );
+    _refreshAvailabilityForFocusedMonth();
   }
 
   void setIncludeProducts(bool value) {
@@ -277,6 +289,19 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   }
 
   void selectDate(DateTime date) {
+    if (_isPastDate(date)) {
+      emit(
+        state.copyWith(
+          clearSelectedDate: true,
+          clearSelectedTime: true,
+          submitStatus: AppointmentSubmitStatus.failure,
+          submitError: AppointmentSubmitError.dateUnavailable,
+          submitErrorMessage: 'date_unavailable',
+        ),
+      );
+      return;
+    }
+
     if (_isUnavailableDate(date)) {
       emit(
         state.copyWith(
@@ -468,7 +493,8 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         inventoryItemId: selectedService.id,
         scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
         note: _buildBookingNote(),
-        vehicleId: state.selectedVehicleId,
+        vehicleId: null,
+        garageVehicleId: state.selectedVehicleId,
         licensePlate: state.selectedVehicleId == null
             ? state.vehicleLicensePlate.trim().toUpperCase()
             : null,
@@ -530,6 +556,13 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     DateTime focusedDate,
   ) async {
     try {
+      final workshop = state.workshop;
+      if (workshop == null) {
+        return;
+      }
+
+      emit(state.copyWith(availabilityStatus: AppointmentLoadStatus.loading));
+
       final startDate = DateTime(focusedDate.year, focusedDate.month);
       final endDate = DateTime(focusedDate.year, focusedDate.month + 1);
       final bookedSlots = await _getBookedAppointmentSlots(
@@ -537,32 +570,19 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         startDate: startDate,
         endDate: endDate,
       );
-      final bookedByDate = <DateTime, Set<String>>{};
-
-      for (final slot in bookedSlots) {
-        final localSlot = slot.toLocal();
-        final dateKey = DateTime(
-          localSlot.year,
-          localSlot.month,
-          localSlot.day,
-        );
-        final timeKey =
-            '${localSlot.hour.toString().padLeft(2, '0')}:${localSlot.minute.toString().padLeft(2, '0')}';
-
-        if (_bookingTimes.contains(timeKey)) {
-          bookedByDate.putIfAbsent(dateKey, () => <String>{}).add(timeKey);
-        }
-      }
-
-      final unavailableDates = bookedByDate.entries
-          .where((entry) => entry.value.length >= _bookingTimes.length)
-          .map((entry) => entry.key)
-          .toList();
+      final availability = _availabilityCalculator.calculateMonth(
+        workshop: workshop,
+        month: focusedDate,
+        bookedSlots: bookedSlots,
+        serviceDurationHours: state.selectedService?.estimatedDurationHours,
+      );
 
       emit(
         state.copyWith(
-          unavailableDates: unavailableDates,
-          unavailableTimesByDate: bookedByDate,
+          unavailableDates: availability.unavailableDates,
+          unavailableTimesByDate: availability.unavailableTimesByDate,
+          availableTimesByDate: availability.availableTimesByDate,
+          availabilityStatus: AppointmentLoadStatus.success,
         ),
       );
     } catch (_) {
@@ -570,15 +590,41 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         state.copyWith(
           unavailableDates: const [],
           unavailableTimesByDate: const {},
+          availableTimesByDate: const {},
+          availabilityStatus: AppointmentLoadStatus.failure,
         ),
       );
     }
   }
 
+  void _refreshAvailabilityForFocusedMonth() {
+    final workshopId = state.workshopId;
+    if (workshopId.isEmpty) {
+      return;
+    }
+
+    _loadUnavailableDatesForMonth(
+      workshopId,
+      state.focusedDate ?? DateTime.now(),
+    );
+  }
+
   bool _isUnavailableDate(DateTime date) {
+    if (isSameDay(date, DateTime.now())) {
+      return false;
+    }
+
     return state.unavailableDates.any((unavailableDate) {
       return isSameDay(unavailableDate, date);
     });
+  }
+
+  bool _isPastDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDate = DateTime(date.year, date.month, date.day);
+
+    return selectedDate.isBefore(today);
   }
 
   String _buildBookingNote() {
@@ -658,6 +704,8 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       AppointmentSubmitError.vehiclePlateRequiredForBooking =>
         'vehicle_plate_required',
       AppointmentSubmitError.vehiclePlateConflict => 'vehicle_plate_conflict',
+      AppointmentSubmitError.bookingConfigurationFailed =>
+        'booking_configuration_failed',
       _ => 'booking_failed',
     };
   }
@@ -666,6 +714,12 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     final rawMessage = error is PostgrestException
         ? error.message
         : error.toString();
+
+    if (rawMessage.contains('Could not find the function') ||
+        rawMessage.contains('PGRST202') ||
+        rawMessage.contains('p_garage_vehicle_id')) {
+      return AppointmentSubmitError.bookingConfigurationFailed;
+    }
 
     if (rawMessage.contains('appointment_auth_required') ||
         rawMessage.contains('authenticated')) {

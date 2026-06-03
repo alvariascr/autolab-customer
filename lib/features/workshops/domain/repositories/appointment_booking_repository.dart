@@ -1,4 +1,5 @@
 import '../entities/appointment_vehicle.dart';
+import '../entities/booked_appointment_slot.dart';
 
 abstract class AppointmentBookingRepository {
   Future<List<AppointmentVehicleRecord>> getCustomerVehicles({
@@ -15,7 +16,7 @@ abstract class AppointmentBookingRepository {
     required DateTime scheduledDateTime,
   });
 
-  Future<List<DateTime>> getBookedAppointmentSlots({
+  Future<List<BookedAppointmentSlot>> getBookedAppointmentSlots({
     required String workshopId,
     required DateTime startDate,
     required DateTime endDate,
@@ -27,6 +28,7 @@ abstract class AppointmentBookingRepository {
     required DateTime scheduledDateTime,
     String? note,
     String? vehicleId,
+    String? garageVehicleId,
     String? licensePlate,
     String? vehicleType,
     String? vehicleBrand,

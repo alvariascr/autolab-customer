@@ -420,6 +420,125 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileLogout => 'Cerrar sesión';
 
   @override
+  String get vehiclesTitle => 'Mis vehículos';
+
+  @override
+  String get vehiclesProfileSubtitle =>
+      'Administra los vehículos que usas para reservar citas.';
+
+  @override
+  String get vehiclesSubtitle =>
+      'Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.';
+
+  @override
+  String get vehiclesAddAction => 'Agregar vehículo';
+
+  @override
+  String get vehiclesEditAction => 'Editar vehículo';
+
+  @override
+  String get vehiclesEmpty => 'Aún no tienes vehículos guardados.';
+
+  @override
+  String get vehiclesLoadFailed =>
+      'No pudimos cargar tus vehículos. Intenta nuevamente.';
+
+  @override
+  String get vehiclesFormTitle => 'Agregar vehículo';
+
+  @override
+  String get vehiclesEditFormTitle => 'Editar vehículo';
+
+  @override
+  String get vehiclesPlateLabel => 'Placa';
+
+  @override
+  String get vehiclesPlateRequired => 'Ingresa la placa del vehículo.';
+
+  @override
+  String get vehiclesTypeLabel => 'Tipo de vehículo';
+
+  @override
+  String get vehiclesTypeCar => 'Automóvil';
+
+  @override
+  String get vehiclesTypeMotorcycle => 'Motocicleta';
+
+  @override
+  String get vehiclesTypePickup => 'Pickup';
+
+  @override
+  String get vehiclesTypeSuv => 'SUV';
+
+  @override
+  String get vehiclesTypeTruck => 'Camión';
+
+  @override
+  String get vehiclesBrandLabel => 'Marca';
+
+  @override
+  String get vehiclesModelLabel => 'Modelo';
+
+  @override
+  String get vehiclesYearLabel => 'Año';
+
+  @override
+  String get vehiclesColorLabel => 'Color';
+
+  @override
+  String get vehiclesFuelLabel => 'Combustible';
+
+  @override
+  String get vehiclesFuelGasoline => 'Gasolina';
+
+  @override
+  String get vehiclesFuelDiesel => 'Diésel';
+
+  @override
+  String get vehiclesFuelElectric => 'Eléctrico';
+
+  @override
+  String get vehiclesFuelHybrid => 'Híbrido';
+
+  @override
+  String get vehiclesTransmissionLabel => 'Transmisión';
+
+  @override
+  String get vehiclesTransmissionManual => 'Manual';
+
+  @override
+  String get vehiclesTransmissionAutomatic => 'Automática';
+
+  @override
+  String get vehiclesSaveAction => 'Guardar vehículo';
+
+  @override
+  String get vehiclesSaveFailed =>
+      'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.';
+
+  @override
+  String get vehiclesPlateAlreadyExists =>
+      'Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.';
+
+  @override
+  String get vehiclesDeleteTitle => 'Eliminar vehículo';
+
+  @override
+  String vehiclesDeleteMessage(String plate) {
+    return '¿Quieres eliminar el vehículo $plate de tus vehículos?';
+  }
+
+  @override
+  String get vehiclesCancelAction => 'Cancelar';
+
+  @override
+  String get vehiclesDeleteAction => 'Eliminar';
+
+  @override
+  String get vehiclesDeleteFailed =>
+      'No pudimos eliminar el vehículo. Intenta nuevamente.';
+
+  @override
   String get locationHeaderEyebrowDeliverNow => 'Entregar ahora';
 
   @override
@@ -1015,7 +1134,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentVehiclePlateRequired =>
-      'Ingresa la placa del vehículo para continuar.';
+      'Selecciona un vehículo para continuar.';
 
   @override
   String get appointmentVehiclePlateConflict =>
@@ -1056,6 +1175,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get appointmentVehiclePlateRequiredForBooking =>
       'Ingresa la placa del vehículo para reservar.';
+
+  @override
+  String get appointmentBookingConfigurationFailed =>
+      'La reserva no está configurada correctamente. Contacta al equipo de soporte.';
 
   @override
   String get appointmentStepVehicleInfo => 'Información del vehículo';
@@ -1134,11 +1257,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentMyVehiclesTitle => 'Mis vehículos';
 
   @override
+  String get appointmentAddVehicleShortAction => 'Vehículo';
+
+  @override
   String get appointmentNewVehicleAction => '+ Nuevo';
 
   @override
   String get appointmentNoVehiclesForWorkshop =>
-      'Aún no tienes vehículos registrados para este taller.';
+      'Aún no tienes vehículos guardados.';
 
   @override
   String get appointmentNoSchedulableServices =>
@@ -1176,6 +1302,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentAvailableHoursTitle => 'Horas disponibles';
+
+  @override
+  String get appointmentAvailableHoursLoading =>
+      'Estamos consultando los horarios disponibles.';
+
+  @override
+  String get appointmentAvailableHoursFailed =>
+      'No pudimos cargar la disponibilidad. Inténtalo nuevamente.';
+
+  @override
+  String get appointmentAvailableHoursEmpty =>
+      'No hay horarios disponibles para este día.';
 
   @override
   String get appointmentPendingDate => 'fecha pendiente';
