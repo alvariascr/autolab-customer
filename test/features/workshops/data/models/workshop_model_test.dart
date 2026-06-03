@@ -58,6 +58,7 @@ void main() {
       expect(model.offersHomeService, isTrue);
       expect(model.businessHours.first.isClosed, isTrue);
       expect(model.businessHours.first.slotCapacity, 1);
+      expect(model.businessHours.last.openTime, '08:00:00');
       expect(model.businessHours.last.slotCapacity, 3);
       expect(model.serviceCategories, ['Frenos', 'Mantenimiento']);
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
@@ -113,6 +114,23 @@ void main() {
       });
 
       expect(model.businessHours.map((hour) => hour.dayOfWeek), [1, 2]);
+    });
+
+    test('soporta relaciones vacias, nulas o ausentes sin fallar', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-2',
+        'name': 'Autolab San Pedro',
+        'business_hours': [],
+        'workshop_service_categories': null,
+        'workshop_payment_methods': [],
+      });
+
+      expect(model.businessHours, isEmpty);
+      expect(model.serviceCategories, isEmpty);
+      expect(model.paymentMethods, isEmpty);
+      expect(model.latitude, 0);
+      expect(model.longitude, 0);
+      expect(model.deliveryRadiusKm, 0);
     });
   });
 }
