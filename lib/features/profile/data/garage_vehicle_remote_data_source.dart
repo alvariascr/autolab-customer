@@ -131,7 +131,6 @@ class GarageVehicleRemoteDataSource {
             'color': _trimOrNull(color),
             'fuel_type': fuelType,
             'transmission_type': transmissionType,
-            'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', id)
           .eq('user_id', userId)
@@ -153,10 +152,7 @@ class GarageVehicleRemoteDataSource {
 
     await client
         .from('garage_vehicles')
-        .update({
-          'is_active': false,
-          'updated_at': DateTime.now().toIso8601String(),
-        })
+        .update({'is_active': false})
         .eq('id', id)
         .eq('user_id', userId);
   }
