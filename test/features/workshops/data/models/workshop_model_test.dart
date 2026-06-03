@@ -56,7 +56,6 @@ void main() {
       expect(model.longitude, -84.08);
       expect(model.deliveryRadiusKm, 8);
       expect(model.offersHomeService, isTrue);
-      expect(model.businessHours.map((hour) => hour.dayOfWeek), [1, 2]);
       expect(model.businessHours.first.isClosed, isTrue);
       expect(model.businessHours.first.slotCapacity, 1);
       expect(model.businessHours.last.slotCapacity, 3);
@@ -85,6 +84,35 @@ void main() {
         }),
         throwsFormatException,
       );
+    });
+
+    test('ordena horarios por dia de semana ascendente', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-1',
+        'name': 'Autolab Escazu',
+        'description': 'Mantenimiento general',
+        'location_address': 'Escazu Centro',
+        'avatar_url': '',
+        'cover_url': '',
+        'business_hours': [
+          {
+            'day_of_week': 2,
+            'open_time': '08:00:00',
+            'close_time': '17:00:00',
+            'is_closed': false,
+            'slot_capacity': 1,
+          },
+          {
+            'day_of_week': 1,
+            'open_time': '08:00:00',
+            'close_time': '17:00:00',
+            'is_closed': false,
+            'slot_capacity': 1,
+          },
+        ],
+      });
+
+      expect(model.businessHours.map((hour) => hour.dayOfWeek), [1, 2]);
     });
   });
 }
