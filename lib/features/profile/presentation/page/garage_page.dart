@@ -25,6 +25,10 @@ class _GaragePageState extends State<GaragePage> {
   }
 
   Future<void> _loadVehicles() async {
+    if (!mounted) {
+      return;
+    }
+
     setState(() => _status = _GarageStatus.loading);
 
     try {
@@ -56,7 +60,7 @@ class _GaragePageState extends State<GaragePage> {
           _GarageVehicleForm(dataSource: _dataSource, initialVehicle: vehicle),
     );
 
-    if (saved == true) {
+    if (saved == true && mounted) {
       await _loadVehicles();
     }
   }
@@ -87,6 +91,10 @@ class _GaragePageState extends State<GaragePage> {
 
     try {
       await _dataSource.deleteVehicle(vehicle.id);
+      if (!mounted) {
+        return;
+      }
+
       await _loadVehicles();
     } catch (_) {
       if (!mounted) {
