@@ -95,7 +95,7 @@ class WorkshopModel extends Workshop {
   static int _toPositiveInt(dynamic value) {
     final parsed = value is int ? value : int.tryParse(value?.toString() ?? '');
     if (parsed == null || parsed <= 0) {
-      return 1;
+      throw FormatException('Invalid positive integer value', value);
     }
 
     return parsed;
