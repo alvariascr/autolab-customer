@@ -54,7 +54,7 @@ class GarageVehicleRemoteDataSource {
       throw StateError('Authenticated user is required');
     }
 
-    final normalizedPlate = licensePlate.trim().toUpperCase();
+    final normalizedPlate = _normalizeLicensePlate(licensePlate);
     final existingVehicle = await client
         .from('garage_vehicles')
         .select('id')
@@ -105,7 +105,7 @@ class GarageVehicleRemoteDataSource {
       throw StateError('Authenticated user is required');
     }
 
-    final normalizedPlate = licensePlate.trim().toUpperCase();
+    final normalizedPlate = _normalizeLicensePlate(licensePlate);
     final existingVehicle = await client
         .from('garage_vehicles')
         .select('id')
@@ -183,4 +183,13 @@ String? _trimOrNull(String? value) {
   }
 
   return trimmed;
+}
+
+String _normalizeLicensePlate(String value) {
+  final normalized = value.trim().toUpperCase();
+  if (normalized.isEmpty) {
+    throw ArgumentError.value(value, 'licensePlate', 'is required');
+  }
+
+  return normalized;
 }
