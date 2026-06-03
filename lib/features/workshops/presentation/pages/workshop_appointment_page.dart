@@ -8,7 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
-import '../../../profile/presentation/page/garage_page.dart';
+import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
@@ -245,7 +245,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     final cubit = context.read<AppointmentCubit>();
     await Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const GaragePage()));
+    ).push(MaterialPageRoute(builder: (_) => const VehiclesPage()));
 
     if (!mounted) {
       return;
@@ -2262,7 +2262,7 @@ class _DateTimeMock extends StatelessWidget {
         if (selectedDate != null) ...[
           const SizedBox(height: 24),
           _AvailableHoursPanel(
-            times: _availableTimesForSelectedDate(),
+            times: _timesForSelectedDate(),
             selectedTime: selectedTime,
             unavailableTimes: _unavailableTimesForSelectedDate(),
             availabilityStatus: availabilityStatus,
@@ -2271,6 +2271,21 @@ class _DateTimeMock extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  List<String> _availableTimesForSelectedDate() {
+    final date = selectedDate;
+    if (date == null) {
+      return const [];
+    }
+
+    for (final entry in availableTimesByDate.entries) {
+      if (isSameDay(entry.key, date)) {
+        return entry.value;
+      }
+    }
+
+    return const [];
   }
 
   Set<String> _unavailableTimesForSelectedDate() {
@@ -2288,19 +2303,14 @@ class _DateTimeMock extends StatelessWidget {
     return const {};
   }
 
-  List<String> _availableTimesForSelectedDate() {
-    final date = selectedDate;
-    if (date == null) {
-      return const [];
-    }
+  List<String> _timesForSelectedDate() {
+    final times = {
+      ..._availableTimesForSelectedDate(),
+      ..._unavailableTimesForSelectedDate(),
+    }.toList();
 
-    for (final entry in availableTimesByDate.entries) {
-      if (isSameDay(entry.key, date)) {
-        return entry.value;
-      }
-    }
-
-    return const [];
+    times.sort();
+    return times;
   }
 }
 
