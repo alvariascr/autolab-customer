@@ -5,7 +5,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import 'garage_page.dart';
+import 'vehicles_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -118,12 +118,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
-                    Icons.garage_outlined,
+                    Icons.directions_car_filled_outlined,
                     color: Color(0xFFE32119),
                   ),
                 ),
                 title: Text(
-                  l10n.garageTitle,
+                  l10n.vehiclesTitle,
                   style: const TextStyle(
                     color: Color(0xFF181411),
                     fontSize: 18,
@@ -131,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 subtitle: Text(
-                  l10n.garageProfileSubtitle,
+                  l10n.vehiclesProfileSubtitle,
                   style: const TextStyle(
                     color: Color(0xFF6B5F57),
                     fontSize: 13,
@@ -142,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const GaragePage()),
+                    MaterialPageRoute(builder: (_) => const VehiclesPage()),
                   );
                 },
               ),

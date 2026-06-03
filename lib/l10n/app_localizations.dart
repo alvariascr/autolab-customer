@@ -832,227 +832,227 @@ abstract class AppLocalizations {
   /// **'Cerrar sesión'**
   String get profileLogout;
 
-  /// No description provided for @garageTitle.
+  /// No description provided for @vehiclesTitle.
   ///
   /// In es, this message translates to:
   /// **'Mis vehículos'**
-  String get garageTitle;
+  String get vehiclesTitle;
 
-  /// No description provided for @garageProfileSubtitle.
+  /// No description provided for @vehiclesProfileSubtitle.
   ///
   /// In es, this message translates to:
   /// **'Administra los vehículos que usas para reservar citas.'**
-  String get garageProfileSubtitle;
+  String get vehiclesProfileSubtitle;
 
-  /// No description provided for @garageSubtitle.
+  /// No description provided for @vehiclesSubtitle.
   ///
   /// In es, this message translates to:
   /// **'Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.'**
-  String get garageSubtitle;
+  String get vehiclesSubtitle;
 
-  /// No description provided for @garageAddAction.
+  /// No description provided for @vehiclesAddAction.
   ///
   /// In es, this message translates to:
   /// **'Agregar vehículo'**
-  String get garageAddAction;
+  String get vehiclesAddAction;
 
-  /// No description provided for @garageEditAction.
+  /// No description provided for @vehiclesEditAction.
   ///
   /// In es, this message translates to:
   /// **'Editar vehículo'**
-  String get garageEditAction;
+  String get vehiclesEditAction;
 
-  /// No description provided for @garageEmpty.
+  /// No description provided for @vehiclesEmpty.
   ///
   /// In es, this message translates to:
   /// **'Aún no tienes vehículos guardados.'**
-  String get garageEmpty;
+  String get vehiclesEmpty;
 
-  /// No description provided for @garageLoadFailed.
+  /// No description provided for @vehiclesLoadFailed.
   ///
   /// In es, this message translates to:
   /// **'No pudimos cargar tus vehículos. Intenta nuevamente.'**
-  String get garageLoadFailed;
+  String get vehiclesLoadFailed;
 
-  /// No description provided for @garageFormTitle.
+  /// No description provided for @vehiclesFormTitle.
   ///
   /// In es, this message translates to:
   /// **'Agregar vehículo'**
-  String get garageFormTitle;
+  String get vehiclesFormTitle;
 
-  /// No description provided for @garageEditFormTitle.
+  /// No description provided for @vehiclesEditFormTitle.
   ///
   /// In es, this message translates to:
   /// **'Editar vehículo'**
-  String get garageEditFormTitle;
+  String get vehiclesEditFormTitle;
 
-  /// No description provided for @garagePlateLabel.
+  /// No description provided for @vehiclesPlateLabel.
   ///
   /// In es, this message translates to:
   /// **'Placa'**
-  String get garagePlateLabel;
+  String get vehiclesPlateLabel;
 
-  /// No description provided for @garagePlateRequired.
+  /// No description provided for @vehiclesPlateRequired.
   ///
   /// In es, this message translates to:
   /// **'Ingresa la placa del vehículo.'**
-  String get garagePlateRequired;
+  String get vehiclesPlateRequired;
 
-  /// No description provided for @garageTypeLabel.
+  /// No description provided for @vehiclesTypeLabel.
   ///
   /// In es, this message translates to:
   /// **'Tipo de vehículo'**
-  String get garageTypeLabel;
+  String get vehiclesTypeLabel;
 
-  /// No description provided for @garageTypeCar.
+  /// No description provided for @vehiclesTypeCar.
   ///
   /// In es, this message translates to:
   /// **'Automóvil'**
-  String get garageTypeCar;
+  String get vehiclesTypeCar;
 
-  /// No description provided for @garageTypeMotorcycle.
+  /// No description provided for @vehiclesTypeMotorcycle.
   ///
   /// In es, this message translates to:
   /// **'Motocicleta'**
-  String get garageTypeMotorcycle;
+  String get vehiclesTypeMotorcycle;
 
-  /// No description provided for @garageTypePickup.
+  /// No description provided for @vehiclesTypePickup.
   ///
   /// In es, this message translates to:
   /// **'Pickup'**
-  String get garageTypePickup;
+  String get vehiclesTypePickup;
 
-  /// No description provided for @garageTypeSuv.
+  /// No description provided for @vehiclesTypeSuv.
   ///
   /// In es, this message translates to:
   /// **'SUV'**
-  String get garageTypeSuv;
+  String get vehiclesTypeSuv;
 
-  /// No description provided for @garageTypeTruck.
+  /// No description provided for @vehiclesTypeTruck.
   ///
   /// In es, this message translates to:
   /// **'Camión'**
-  String get garageTypeTruck;
+  String get vehiclesTypeTruck;
 
-  /// No description provided for @garageBrandLabel.
+  /// No description provided for @vehiclesBrandLabel.
   ///
   /// In es, this message translates to:
   /// **'Marca'**
-  String get garageBrandLabel;
+  String get vehiclesBrandLabel;
 
-  /// No description provided for @garageModelLabel.
+  /// No description provided for @vehiclesModelLabel.
   ///
   /// In es, this message translates to:
   /// **'Modelo'**
-  String get garageModelLabel;
+  String get vehiclesModelLabel;
 
-  /// No description provided for @garageYearLabel.
+  /// No description provided for @vehiclesYearLabel.
   ///
   /// In es, this message translates to:
   /// **'Año'**
-  String get garageYearLabel;
+  String get vehiclesYearLabel;
 
-  /// No description provided for @garageColorLabel.
+  /// No description provided for @vehiclesColorLabel.
   ///
   /// In es, this message translates to:
   /// **'Color'**
-  String get garageColorLabel;
+  String get vehiclesColorLabel;
 
-  /// No description provided for @garageFuelLabel.
+  /// No description provided for @vehiclesFuelLabel.
   ///
   /// In es, this message translates to:
   /// **'Combustible'**
-  String get garageFuelLabel;
+  String get vehiclesFuelLabel;
 
-  /// No description provided for @garageFuelGasoline.
+  /// No description provided for @vehiclesFuelGasoline.
   ///
   /// In es, this message translates to:
   /// **'Gasolina'**
-  String get garageFuelGasoline;
+  String get vehiclesFuelGasoline;
 
-  /// No description provided for @garageFuelDiesel.
+  /// No description provided for @vehiclesFuelDiesel.
   ///
   /// In es, this message translates to:
   /// **'Diésel'**
-  String get garageFuelDiesel;
+  String get vehiclesFuelDiesel;
 
-  /// No description provided for @garageFuelElectric.
+  /// No description provided for @vehiclesFuelElectric.
   ///
   /// In es, this message translates to:
   /// **'Eléctrico'**
-  String get garageFuelElectric;
+  String get vehiclesFuelElectric;
 
-  /// No description provided for @garageFuelHybrid.
+  /// No description provided for @vehiclesFuelHybrid.
   ///
   /// In es, this message translates to:
   /// **'Híbrido'**
-  String get garageFuelHybrid;
+  String get vehiclesFuelHybrid;
 
-  /// No description provided for @garageTransmissionLabel.
+  /// No description provided for @vehiclesTransmissionLabel.
   ///
   /// In es, this message translates to:
   /// **'Transmisión'**
-  String get garageTransmissionLabel;
+  String get vehiclesTransmissionLabel;
 
-  /// No description provided for @garageTransmissionManual.
+  /// No description provided for @vehiclesTransmissionManual.
   ///
   /// In es, this message translates to:
   /// **'Manual'**
-  String get garageTransmissionManual;
+  String get vehiclesTransmissionManual;
 
-  /// No description provided for @garageTransmissionAutomatic.
+  /// No description provided for @vehiclesTransmissionAutomatic.
   ///
   /// In es, this message translates to:
   /// **'Automática'**
-  String get garageTransmissionAutomatic;
+  String get vehiclesTransmissionAutomatic;
 
-  /// No description provided for @garageSaveAction.
+  /// No description provided for @vehiclesSaveAction.
   ///
   /// In es, this message translates to:
   /// **'Guardar vehículo'**
-  String get garageSaveAction;
+  String get vehiclesSaveAction;
 
-  /// No description provided for @garageSaveFailed.
+  /// No description provided for @vehiclesSaveFailed.
   ///
   /// In es, this message translates to:
   /// **'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.'**
-  String get garageSaveFailed;
+  String get vehiclesSaveFailed;
 
-  /// No description provided for @garagePlateAlreadyExists.
+  /// No description provided for @vehiclesPlateAlreadyExists.
   ///
   /// In es, this message translates to:
   /// **'Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.'**
-  String get garagePlateAlreadyExists;
+  String get vehiclesPlateAlreadyExists;
 
-  /// No description provided for @garageDeleteTitle.
+  /// No description provided for @vehiclesDeleteTitle.
   ///
   /// In es, this message translates to:
   /// **'Eliminar vehículo'**
-  String get garageDeleteTitle;
+  String get vehiclesDeleteTitle;
 
-  /// No description provided for @garageDeleteMessage.
+  /// No description provided for @vehiclesDeleteMessage.
   ///
   /// In es, this message translates to:
   /// **'¿Quieres eliminar el vehículo {plate} de tus vehículos?'**
-  String garageDeleteMessage(String plate);
+  String vehiclesDeleteMessage(String plate);
 
-  /// No description provided for @garageCancelAction.
+  /// No description provided for @vehiclesCancelAction.
   ///
   /// In es, this message translates to:
   /// **'Cancelar'**
-  String get garageCancelAction;
+  String get vehiclesCancelAction;
 
-  /// No description provided for @garageDeleteAction.
+  /// No description provided for @vehiclesDeleteAction.
   ///
   /// In es, this message translates to:
   /// **'Eliminar'**
-  String get garageDeleteAction;
+  String get vehiclesDeleteAction;
 
-  /// No description provided for @garageDeleteFailed.
+  /// No description provided for @vehiclesDeleteFailed.
   ///
   /// In es, this message translates to:
   /// **'No pudimos eliminar el vehículo. Intenta nuevamente.'**
-  String get garageDeleteFailed;
+  String get vehiclesDeleteFailed;
 
   /// No description provided for @locationHeaderEyebrowDeliverNow.
   ///

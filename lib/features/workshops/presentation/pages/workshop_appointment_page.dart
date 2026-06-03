@@ -8,7 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
-import '../../../profile/presentation/page/garage_page.dart';
+import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
@@ -285,7 +285,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     final cubit = context.read<AppointmentCubit>();
     await Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const GaragePage()));
+    ).push(MaterialPageRoute(builder: (_) => const VehiclesPage()));
 
     if (!mounted) {
       return;

@@ -5,16 +5,16 @@ import '../../../../l10n/app_localizations.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
 
-class GaragePage extends StatefulWidget {
-  const GaragePage({super.key});
+class VehiclesPage extends StatefulWidget {
+  const VehiclesPage({super.key});
 
   @override
-  State<GaragePage> createState() => _GaragePageState();
+  State<VehiclesPage> createState() => _VehiclesPageState();
 }
 
-class _GaragePageState extends State<GaragePage> {
+class _VehiclesPageState extends State<VehiclesPage> {
   late final GarageVehicleRemoteDataSource _dataSource;
-  var _status = _GarageStatus.loading;
+  var _status = _VehiclesStatus.loading;
   var _vehicles = <GarageVehicle>[];
 
   @override
@@ -29,7 +29,7 @@ class _GaragePageState extends State<GaragePage> {
       return;
     }
 
-    setState(() => _status = _GarageStatus.loading);
+    setState(() => _status = _VehiclesStatus.loading);
 
     try {
       final vehicles = await _dataSource.getVehicles();
@@ -39,14 +39,14 @@ class _GaragePageState extends State<GaragePage> {
 
       setState(() {
         _vehicles = vehicles;
-        _status = _GarageStatus.success;
+        _status = _VehiclesStatus.success;
       });
     } catch (_) {
       if (!mounted) {
         return;
       }
 
-      setState(() => _status = _GarageStatus.failure);
+      setState(() => _status = _VehiclesStatus.failure);
     }
   }
 
@@ -57,7 +57,7 @@ class _GaragePageState extends State<GaragePage> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) =>
-          _GarageVehicleForm(dataSource: _dataSource, initialVehicle: vehicle),
+          _VehicleForm(dataSource: _dataSource, initialVehicle: vehicle),
     );
 
     if (saved == true && mounted) {
@@ -70,16 +70,16 @@ class _GaragePageState extends State<GaragePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.garageDeleteTitle),
-        content: Text(l10n.garageDeleteMessage(vehicle.licensePlate)),
+        title: Text(l10n.vehiclesDeleteTitle),
+        content: Text(l10n.vehiclesDeleteMessage(vehicle.licensePlate)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.garageCancelAction),
+            child: Text(l10n.vehiclesCancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.garageDeleteAction),
+            child: Text(l10n.vehiclesDeleteAction),
           ),
         ],
       ),
@@ -103,7 +103,7 @@ class _GaragePageState extends State<GaragePage> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.garageDeleteFailed)));
+      ).showSnackBar(SnackBar(content: Text(l10n.vehiclesDeleteFailed)));
     }
   }
 
@@ -116,10 +116,10 @@ class _GaragePageState extends State<GaragePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F4EF),
         surfaceTintColor: Colors.transparent,
-        title: Text(l10n.garageTitle),
+        title: Text(l10n.vehiclesTitle),
         actions: [
           IconButton(
-            tooltip: l10n.garageAddAction,
+            tooltip: l10n.vehiclesAddAction,
             onPressed: _openVehicleForm,
             icon: const Icon(Icons.add_rounded),
           ),
@@ -133,7 +133,7 @@ class _GaragePageState extends State<GaragePage> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             children: [
               Text(
-                l10n.garageSubtitle,
+                l10n.vehiclesSubtitle,
                 style: const TextStyle(
                   color: Color(0xFF6B5F57),
                   fontSize: 14,
@@ -141,26 +141,26 @@ class _GaragePageState extends State<GaragePage> {
                 ),
               ),
               const SizedBox(height: 18),
-              if (_status == _GarageStatus.loading)
+              if (_status == _VehiclesStatus.loading)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32),
                     child: CircularProgressIndicator(),
                   ),
                 )
-              else if (_status == _GarageStatus.failure)
-                _GarageMessage(
+              else if (_status == _VehiclesStatus.failure)
+                _VehiclesMessage(
                   icon: Icons.error_outline_rounded,
-                  message: l10n.garageLoadFailed,
+                  message: l10n.vehiclesLoadFailed,
                 )
               else if (_vehicles.isEmpty)
-                _GarageMessage(
+                _VehiclesMessage(
                   icon: Icons.directions_car_filled_outlined,
-                  message: l10n.garageEmpty,
+                  message: l10n.vehiclesEmpty,
                 )
               else
                 ..._vehicles.map(
-                  (vehicle) => _GarageVehicleTile(
+                  (vehicle) => _VehicleTile(
                     vehicle: vehicle,
                     onEdit: () => _openVehicleForm(vehicle: vehicle),
                     onDelete: () => _deleteVehicle(vehicle),
@@ -173,16 +173,16 @@ class _GaragePageState extends State<GaragePage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openVehicleForm,
         icon: const Icon(Icons.add_rounded),
-        label: Text(l10n.garageAddAction),
+        label: Text(l10n.vehiclesAddAction),
       ),
     );
   }
 }
 
-enum _GarageStatus { loading, success, failure }
+enum _VehiclesStatus { loading, success, failure }
 
-class _GarageMessage extends StatelessWidget {
-  const _GarageMessage({required this.icon, required this.message});
+class _VehiclesMessage extends StatelessWidget {
+  const _VehiclesMessage({required this.icon, required this.message});
 
   final IconData icon;
   final String message;
@@ -215,8 +215,8 @@ class _GarageMessage extends StatelessWidget {
   }
 }
 
-class _GarageVehicleTile extends StatelessWidget {
-  const _GarageVehicleTile({
+class _VehicleTile extends StatelessWidget {
+  const _VehicleTile({
     required this.vehicle,
     required this.onEdit,
     required this.onDelete,
@@ -286,12 +286,12 @@ class _GarageVehicleTile extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: AppLocalizations.of(context)!.garageEditAction,
+            tooltip: AppLocalizations.of(context)!.vehiclesEditAction,
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
-            tooltip: AppLocalizations.of(context)!.garageDeleteAction,
+            tooltip: AppLocalizations.of(context)!.vehiclesDeleteAction,
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline_rounded),
           ),
@@ -301,17 +301,17 @@ class _GarageVehicleTile extends StatelessWidget {
   }
 }
 
-class _GarageVehicleForm extends StatefulWidget {
-  const _GarageVehicleForm({required this.dataSource, this.initialVehicle});
+class _VehicleForm extends StatefulWidget {
+  const _VehicleForm({required this.dataSource, this.initialVehicle});
 
   final GarageVehicleRemoteDataSource dataSource;
   final GarageVehicle? initialVehicle;
 
   @override
-  State<_GarageVehicleForm> createState() => _GarageVehicleFormState();
+  State<_VehicleForm> createState() => _VehicleFormState();
 }
 
-class _GarageVehicleFormState extends State<_GarageVehicleForm> {
+class _VehicleFormState extends State<_VehicleForm> {
   final _formKey = GlobalKey<FormState>();
   final _plateController = TextEditingController();
   final _brandController = TextEditingController();
@@ -405,7 +405,7 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
 
       setState(() {
         _saving = false;
-        _errorMessage = l10n.garagePlateAlreadyExists;
+        _errorMessage = l10n.vehiclesPlateAlreadyExists;
       });
     } catch (_) {
       if (!mounted) {
@@ -414,7 +414,7 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
 
       setState(() {
         _saving = false;
-        _errorMessage = l10n.garageSaveFailed;
+        _errorMessage = l10n.vehiclesSaveFailed;
       });
     }
   }
@@ -438,7 +438,9 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _isEditing ? l10n.garageEditFormTitle : l10n.garageFormTitle,
+                _isEditing
+                    ? l10n.vehiclesEditFormTitle
+                    : l10n.vehiclesFormTitle,
                 style: const TextStyle(
                   color: Color(0xFF181411),
                   fontSize: 22,
@@ -449,35 +451,35 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
               TextFormField(
                 controller: _plateController,
                 textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(labelText: l10n.garagePlateLabel),
+                decoration: InputDecoration(labelText: l10n.vehiclesPlateLabel),
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? l10n.garagePlateRequired
+                    ? l10n.vehiclesPlateRequired
                     : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _vehicleType,
-                decoration: InputDecoration(labelText: l10n.garageTypeLabel),
+                decoration: InputDecoration(labelText: l10n.vehiclesTypeLabel),
                 items: [
                   DropdownMenuItem(
                     value: 'car',
-                    child: Text(l10n.garageTypeCar),
+                    child: Text(l10n.vehiclesTypeCar),
                   ),
                   DropdownMenuItem(
                     value: 'motorcycle',
-                    child: Text(l10n.garageTypeMotorcycle),
+                    child: Text(l10n.vehiclesTypeMotorcycle),
                   ),
                   DropdownMenuItem(
                     value: 'pickup',
-                    child: Text(l10n.garageTypePickup),
+                    child: Text(l10n.vehiclesTypePickup),
                   ),
                   DropdownMenuItem(
                     value: 'suv',
-                    child: Text(l10n.garageTypeSuv),
+                    child: Text(l10n.vehiclesTypeSuv),
                   ),
                   DropdownMenuItem(
                     value: 'truck',
-                    child: Text(l10n.garageTypeTruck),
+                    child: Text(l10n.vehiclesTypeTruck),
                   ),
                 ],
                 onChanged: (value) => setState(() => _vehicleType = value),
@@ -485,12 +487,12 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _brandController,
-                decoration: InputDecoration(labelText: l10n.garageBrandLabel),
+                decoration: InputDecoration(labelText: l10n.vehiclesBrandLabel),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _modelController,
-                decoration: InputDecoration(labelText: l10n.garageModelLabel),
+                decoration: InputDecoration(labelText: l10n.vehiclesModelLabel),
               ),
               const SizedBox(height: 12),
               Row(
@@ -500,7 +502,7 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
                       controller: _yearController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: l10n.garageYearLabel,
+                        labelText: l10n.vehiclesYearLabel,
                       ),
                     ),
                   ),
@@ -509,7 +511,7 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
                     child: TextFormField(
                       controller: _colorController,
                       decoration: InputDecoration(
-                        labelText: l10n.garageColorLabel,
+                        labelText: l10n.vehiclesColorLabel,
                       ),
                     ),
                   ),
@@ -518,23 +520,23 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _fuelType,
-                decoration: InputDecoration(labelText: l10n.garageFuelLabel),
+                decoration: InputDecoration(labelText: l10n.vehiclesFuelLabel),
                 items: [
                   DropdownMenuItem(
                     value: 'gasoline',
-                    child: Text(l10n.garageFuelGasoline),
+                    child: Text(l10n.vehiclesFuelGasoline),
                   ),
                   DropdownMenuItem(
                     value: 'diesel',
-                    child: Text(l10n.garageFuelDiesel),
+                    child: Text(l10n.vehiclesFuelDiesel),
                   ),
                   DropdownMenuItem(
                     value: 'electric',
-                    child: Text(l10n.garageFuelElectric),
+                    child: Text(l10n.vehiclesFuelElectric),
                   ),
                   DropdownMenuItem(
                     value: 'hybrid',
-                    child: Text(l10n.garageFuelHybrid),
+                    child: Text(l10n.vehiclesFuelHybrid),
                   ),
                 ],
                 onChanged: (value) => setState(() => _fuelType = value),
@@ -543,16 +545,16 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
               DropdownButtonFormField<String>(
                 initialValue: _transmissionType,
                 decoration: InputDecoration(
-                  labelText: l10n.garageTransmissionLabel,
+                  labelText: l10n.vehiclesTransmissionLabel,
                 ),
                 items: [
                   DropdownMenuItem(
                     value: 'manual',
-                    child: Text(l10n.garageTransmissionManual),
+                    child: Text(l10n.vehiclesTransmissionManual),
                   ),
                   DropdownMenuItem(
                     value: 'automatic',
-                    child: Text(l10n.garageTransmissionAutomatic),
+                    child: Text(l10n.vehiclesTransmissionAutomatic),
                   ),
                 ],
                 onChanged: (value) => setState(() => _transmissionType = value),
@@ -600,7 +602,7 @@ class _GarageVehicleFormState extends State<_GarageVehicleForm> {
                           dimension: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(l10n.garageSaveAction),
+                      : Text(l10n.vehiclesSaveAction),
                 ),
               ),
             ],
