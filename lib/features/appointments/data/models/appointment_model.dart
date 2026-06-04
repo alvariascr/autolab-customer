@@ -55,8 +55,7 @@ class AppointmentModel extends Appointment {
           _nestedString(map, ['order_services', 'orders', 'workshops', 'name']),
       serviceName:
           _nestedString(map, ['inventory_items', 'name']) ??
-          _nestedString(map, ['order_services', 'inventory_items', 'name']) ??
-          _nestedString(map, ['products', 'name']),
+          _nestedString(map, ['order_services', 'inventory_items', 'name']),
       workshopAvatarUrl:
           _nestedString(map, ['workshops', 'avatar_url']) ??
           _nestedString(map, [

@@ -44,7 +44,7 @@ void main() {
       expect(model.products.first.unitPrice, 5000);
     });
 
-    test('parsea nombres de taller y servicio desde relaciones', () {
+    test('parsea nombres de taller y servicio desde relaciones legacy', () {
       final model = AppointmentModel.fromMap({
         'id': 'appointment-1',
         'customer_id': 'user-1',
@@ -57,7 +57,7 @@ void main() {
         'scheduled_at': '2026-05-28T06:15:00.000Z',
         'status': 'confirmed',
         'workshops': {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
-        'products': {'name': 'Cambio de aceite'},
+        'inventory_items': {'name': 'Cambio de aceite'},
       });
 
       expect(model.workshopName, 'AutoFix San Jose');
