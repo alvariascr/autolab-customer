@@ -154,7 +154,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
   List<Appointment> _filterAppointments(List<Appointment> appointments) {
     final now = DateTime.now();
 
-    return appointments.where((appointment) {
+    final filtered = appointments.where((appointment) {
       final canceled = _isCanceled(appointment.status);
       final completed = _isCompleted(appointment.status);
       final noShow = _isNoShow(appointment.status);
@@ -166,6 +166,13 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
         _AppointmentTab.canceled => canceled,
       };
     }).toList();
+
+    return filtered..sort((left, right) {
+      final comparison = left.scheduledAt.compareTo(right.scheduledAt);
+      return _selectedTab == _AppointmentTab.upcoming
+          ? comparison
+          : -comparison;
+    });
   }
 
   String _emptyTitle(AppLocalizations l10n) {
