@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/di/app_injection.dart';
@@ -42,6 +43,18 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+                return;
+              }
+
+              context.go('/profile');
+            },
+          ),
           title: Text(
             l10n.myAppointmentsTitle,
             style: const TextStyle(fontWeight: FontWeight.w800),

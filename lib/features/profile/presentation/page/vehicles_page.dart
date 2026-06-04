@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -116,6 +117,18 @@ class _VehiclesPageState extends State<VehiclesPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F4EF),
         surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+              return;
+            }
+
+            context.go('/profile');
+          },
+        ),
         title: Text(l10n.vehiclesTitle),
         actions: [
           IconButton(
