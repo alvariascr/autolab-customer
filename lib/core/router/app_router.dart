@@ -61,7 +61,7 @@ class AppRouter {
       GoRoute(
         path: '/workshops/:id',
         builder: (context, state) {
-          final workshopId = state.pathParameters['id'];
+          final workshopId = state.pathParameters['id']?.trim();
 
           if (workshopId == null || workshopId.isEmpty) {
             return const _InvalidRoutePage();
@@ -73,7 +73,7 @@ class AppRouter {
       GoRoute(
         path: '/workshops/:id/appointments/new',
         builder: (context, state) {
-          final workshopId = state.pathParameters['id'];
+          final workshopId = state.pathParameters['id']?.trim();
 
           if (workshopId == null || workshopId.isEmpty) {
             return const _InvalidRoutePage();
@@ -85,7 +85,7 @@ class AppRouter {
       GoRoute(
         path: '/search/workshops/:id/products',
         builder: (context, state) {
-          final workshopId = state.pathParameters['id'];
+          final workshopId = state.pathParameters['id']?.trim();
 
           if (workshopId == null || workshopId.isEmpty) {
             return const _InvalidRoutePage();

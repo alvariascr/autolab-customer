@@ -313,13 +313,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }
 
   void _goToWorkshopProfileOrHome(BuildContext context) {
-    final workshopId = widget.workshopId.trim();
-    if (workshopId.isEmpty) {
-      context.go('/home-customer');
-      return;
-    }
-
-    context.go('/workshops/$workshopId');
+    context.go('/workshops/${widget.workshopId}');
   }
 
   Future<void> _goNextStep(
