@@ -51,14 +51,14 @@ class AppointmentModel extends Appointment {
           map['appointment_status']?.toString() ??
           'pending',
       workshopName:
-          _relationValue(map['workshops'], 'name') ??
+          _nestedString(map, ['workshops', 'name']) ??
           _nestedString(map, ['order_services', 'orders', 'workshops', 'name']),
       serviceName:
-          _relationValue(map['inventory_items'], 'name') ??
+          _nestedString(map, ['inventory_items', 'name']) ??
           _nestedString(map, ['order_services', 'inventory_items', 'name']) ??
-          _relationValue(map['products'], 'name'),
+          _nestedString(map, ['products', 'name']),
       workshopAvatarUrl:
-          _relationValue(map['workshops'], 'avatar_url') ??
+          _nestedString(map, ['workshops', 'avatar_url']) ??
           _nestedString(map, [
             'order_services',
             'orders',
@@ -178,22 +178,6 @@ class AppointmentModel extends Appointment {
     }
 
     return current;
-  }
-
-  static String? _relationValue(dynamic relation, String key) {
-    if (relation is Map<String, dynamic>) {
-      return _nullableString(relation[key]);
-    }
-
-    if (relation is Map) {
-      return _nullableString(relation[key]);
-    }
-
-    if (relation is List && relation.isNotEmpty) {
-      return _relationValue(relation.first, key);
-    }
-
-    return null;
   }
 
   static List<AppointmentProductLine> _productsFromMap(
