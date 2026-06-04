@@ -51,11 +51,13 @@ class WorkshopBusinessHour {
   final String openTime;
   final String closeTime;
   final bool isClosed;
+  final int slotCapacity;
 
   const WorkshopBusinessHour({
     required this.dayOfWeek,
     required this.openTime,
     required this.closeTime,
     required this.isClosed,
-  });
+    this.slotCapacity = 1,
+  }) : assert(slotCapacity > 0, 'slotCapacity must be greater than 0');
 }

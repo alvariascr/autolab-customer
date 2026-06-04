@@ -22,12 +22,14 @@ void main() {
             'open_time': '08:00:00',
             'close_time': '17:00:00',
             'is_closed': false,
+            'slot_capacity': 3,
           },
           {
             'day_of_week': 1,
             'open_time': null,
             'close_time': null,
             'is_closed': true,
+            'slot_capacity': 1,
           },
         ],
         'workshop_service_categories': [
@@ -54,10 +56,81 @@ void main() {
       expect(model.longitude, -84.08);
       expect(model.deliveryRadiusKm, 8);
       expect(model.offersHomeService, isTrue);
-      expect(model.businessHours.map((hour) => hour.dayOfWeek), [1, 2]);
       expect(model.businessHours.first.isClosed, isTrue);
+      expect(model.businessHours.first.slotCapacity, 1);
+      expect(model.businessHours.last.openTime, '08:00:00');
+      expect(model.businessHours.last.slotCapacity, 3);
       expect(model.serviceCategories, ['Frenos', 'Mantenimiento']);
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
+    });
+
+    test('rechaza slot_capacity invalido del backend', () {
+      expect(
+        () => WorkshopModel.fromMap({
+          'id': 'workshop-1',
+          'name': 'Autolab Escazu',
+          'description': 'Mantenimiento general',
+          'location_address': 'Escazu Centro',
+          'avatar_url': '',
+          'cover_url': '',
+          'business_hours': [
+            {
+              'day_of_week': 0,
+              'open_time': '08:00:00',
+              'close_time': '17:00:00',
+              'is_closed': false,
+              'slot_capacity': 0,
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('ordena horarios por dia de semana ascendente', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-1',
+        'name': 'Autolab Escazu',
+        'description': 'Mantenimiento general',
+        'location_address': 'Escazu Centro',
+        'avatar_url': '',
+        'cover_url': '',
+        'business_hours': [
+          {
+            'day_of_week': 2,
+            'open_time': '08:00:00',
+            'close_time': '17:00:00',
+            'is_closed': false,
+            'slot_capacity': 1,
+          },
+          {
+            'day_of_week': 1,
+            'open_time': '08:00:00',
+            'close_time': '17:00:00',
+            'is_closed': false,
+            'slot_capacity': 1,
+          },
+        ],
+      });
+
+      expect(model.businessHours.map((hour) => hour.dayOfWeek), [1, 2]);
+    });
+
+    test('soporta relaciones vacias, nulas o ausentes sin fallar', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-2',
+        'name': 'Autolab San Pedro',
+        'business_hours': [],
+        'workshop_service_categories': null,
+        'workshop_payment_methods': [],
+      });
+
+      expect(model.businessHours, isEmpty);
+      expect(model.serviceCategories, isEmpty);
+      expect(model.paymentMethods, isEmpty);
+      expect(model.latitude, 0);
+      expect(model.longitude, 0);
+      expect(model.deliveryRadiusKm, 0);
     });
   });
 }

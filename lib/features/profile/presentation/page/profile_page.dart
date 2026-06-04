@@ -6,7 +6,7 @@ import '../../../appointments/presentation/pages/my_appointments_page.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import 'garage_page.dart';
+import 'vehicles_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -121,17 +121,17 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 20),
             _ProfileMenuCard(
               leading: const _ProfileActionIcon(
-                icon: Icons.garage_outlined,
+                icon: Icons.directions_car_filled_outlined,
                 backgroundColor: Color(0xFFFFE9E7),
                 foregroundColor: Color(0xFFE32119),
               ),
-              title: l10n.garageTitle,
-              subtitle: l10n.garageProfileSubtitle,
+              title: l10n.vehiclesTitle,
+              subtitle: l10n.vehiclesProfileSubtitle,
               borderColor: const Color(0xFFE9DDD2),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const GaragePage()),
+                  MaterialPageRoute(builder: (_) => const VehiclesPage()),
                 );
               },
             ),

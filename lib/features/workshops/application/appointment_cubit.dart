@@ -137,9 +137,12 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     emit(state.copyWith(vehiclesStatus: AppointmentLoadStatus.loading));
     await _loadVehicles(workshopId);
 
-    final selectedVehicleId = state.selectedVehicleId;
+    final currentState = state;
+    final selectedVehicleId = currentState.selectedVehicleId;
     if (selectedVehicleId != null &&
-        !state.vehicles.any((vehicle) => vehicle.id == selectedVehicleId)) {
+        !currentState.vehicles.any(
+          (vehicle) => vehicle.id == selectedVehicleId,
+        )) {
       startNewVehicle();
     }
   }

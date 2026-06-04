@@ -504,116 +504,122 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myAppointmentsStatusConfirmed => 'Confirmada';
 
   @override
-  String get garageTitle => 'Mi garaje';
+  String get vehiclesTitle => 'Mis vehículos';
 
   @override
-  String get garageProfileSubtitle =>
+  String get vehiclesProfileSubtitle =>
       'Administra los vehículos que usas para reservar citas.';
 
   @override
-  String get garageSubtitle =>
+  String get vehiclesSubtitle =>
       'Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.';
 
   @override
-  String get garageAddAction => 'Agregar vehículo';
+  String get vehiclesAddAction => 'Agregar vehículo';
 
   @override
-  String get garageEmpty => 'Aún no tienes vehículos en tu garaje.';
+  String get vehiclesEditAction => 'Editar vehículo';
 
   @override
-  String get garageLoadFailed =>
-      'No pudimos cargar tu garaje. Intenta nuevamente.';
+  String get vehiclesEmpty => 'Aún no tienes vehículos guardados.';
 
   @override
-  String get garageFormTitle => 'Agregar vehículo';
+  String get vehiclesLoadFailed =>
+      'No pudimos cargar tus vehículos. Intenta nuevamente.';
 
   @override
-  String get garagePlateLabel => 'Placa';
+  String get vehiclesFormTitle => 'Agregar vehículo';
 
   @override
-  String get garagePlateRequired => 'Ingresa la placa del vehículo.';
+  String get vehiclesEditFormTitle => 'Editar vehículo';
 
   @override
-  String get garageTypeLabel => 'Tipo de vehículo';
+  String get vehiclesPlateLabel => 'Placa';
 
   @override
-  String get garageTypeCar => 'Automóvil';
+  String get vehiclesPlateRequired => 'Ingresa la placa del vehículo.';
 
   @override
-  String get garageTypeMotorcycle => 'Motocicleta';
+  String get vehiclesTypeLabel => 'Tipo de vehículo';
 
   @override
-  String get garageTypePickup => 'Pickup';
+  String get vehiclesTypeCar => 'Automóvil';
 
   @override
-  String get garageTypeSuv => 'SUV';
+  String get vehiclesTypeMotorcycle => 'Motocicleta';
 
   @override
-  String get garageTypeTruck => 'Camión';
+  String get vehiclesTypePickup => 'Pickup';
 
   @override
-  String get garageBrandLabel => 'Marca';
+  String get vehiclesTypeSuv => 'SUV';
 
   @override
-  String get garageModelLabel => 'Modelo';
+  String get vehiclesTypeTruck => 'Camión';
 
   @override
-  String get garageYearLabel => 'Año';
+  String get vehiclesBrandLabel => 'Marca';
 
   @override
-  String get garageColorLabel => 'Color';
+  String get vehiclesModelLabel => 'Modelo';
 
   @override
-  String get garageFuelLabel => 'Combustible';
+  String get vehiclesYearLabel => 'Año';
 
   @override
-  String get garageFuelGasoline => 'Gasolina';
+  String get vehiclesColorLabel => 'Color';
 
   @override
-  String get garageFuelDiesel => 'Diésel';
+  String get vehiclesFuelLabel => 'Combustible';
 
   @override
-  String get garageFuelElectric => 'Eléctrico';
+  String get vehiclesFuelGasoline => 'Gasolina';
 
   @override
-  String get garageFuelHybrid => 'Híbrido';
+  String get vehiclesFuelDiesel => 'Diésel';
 
   @override
-  String get garageTransmissionLabel => 'Transmisión';
+  String get vehiclesFuelElectric => 'Eléctrico';
 
   @override
-  String get garageTransmissionManual => 'Manual';
+  String get vehiclesFuelHybrid => 'Híbrido';
 
   @override
-  String get garageTransmissionAutomatic => 'Automática';
+  String get vehiclesTransmissionLabel => 'Transmisión';
 
   @override
-  String get garageSaveAction => 'Guardar vehículo';
+  String get vehiclesTransmissionManual => 'Manual';
 
   @override
-  String get garageSaveFailed =>
+  String get vehiclesTransmissionAutomatic => 'Automática';
+
+  @override
+  String get vehiclesSaveAction => 'Guardar vehículo';
+
+  @override
+  String get vehiclesSaveFailed =>
       'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.';
 
   @override
-  String get garagePlateAlreadyExists =>
-      'Esta placa ya está registrada en tu garaje. Selecciona ese vehículo de la lista o elimina el registro anterior.';
+  String get vehiclesPlateAlreadyExists =>
+      'Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.';
 
   @override
-  String get garageDeleteTitle => 'Eliminar vehículo';
+  String get vehiclesDeleteTitle => 'Eliminar vehículo';
 
   @override
-  String garageDeleteMessage(String plate) {
-    return '¿Quieres eliminar el vehículo $plate de tu garaje?';
+  String vehiclesDeleteMessage(String plate) {
+    return '¿Quieres eliminar el vehículo $plate de tus vehículos?';
   }
 
   @override
-  String get garageCancelAction => 'Cancelar';
+  String get vehiclesCancelAction => 'Cancelar';
 
   @override
-  String get garageDeleteAction => 'Eliminar';
+  String get vehiclesDeleteAction => 'Eliminar';
 
   @override
-  String get garageDeleteFailed =>
+  String get vehiclesDeleteFailed =>
       'No pudimos eliminar el vehículo. Intenta nuevamente.';
 
   @override
@@ -1342,7 +1348,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentNoVehiclesForWorkshop =>
-      'Aún no tienes vehículos en tu garaje.';
+      'Aún no tienes vehículos guardados.';
 
   @override
   String get appointmentNoSchedulableServices =>
