@@ -97,6 +97,8 @@ class AppointmentModel extends Appointment {
     };
   }
 
+  /// Serializes only flat appointment columns. Joined display data such as
+  /// workshopName, serviceName and products is read-only query payload.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -109,21 +111,10 @@ class AppointmentModel extends Appointment {
       'vehicle_type': vehicleType,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
       'status': status,
-      'workshops': {'name': workshopName, 'avatar_url': workshopAvatarUrl},
-      'inventory_items': {'name': serviceName},
       'payment_method': paymentMethod,
       'notes': notes,
       'total_amount': totalAmount,
       'created_at': createdAt?.toUtc().toIso8601String(),
-      'appointment_products': products
-          .map(
-            (product) => {
-              'product_id': product.productId,
-              'quantity': product.quantity,
-              'unit_price': product.unitPrice,
-            },
-          )
-          .toList(),
     };
   }
 
