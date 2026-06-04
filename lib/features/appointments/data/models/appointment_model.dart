@@ -129,7 +129,13 @@ class AppointmentModel extends Appointment {
 
   static String? _customerIdFromMap(Map<String, dynamic> map) {
     return _nullableString(map['customer_id']) ??
-        _nullableString(map['customer_user_id']);
+        _nullableString(map['customer_user_id']) ??
+        _nestedString(map, [
+          'order_services',
+          'orders',
+          'customers',
+          'user_id',
+        ]);
   }
 
   static String _requiredFirstString(List<dynamic> values, String fieldName) {

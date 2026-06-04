@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/application/auth_session_cubit.dart';
+import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../domain/entities/appointment.dart';
@@ -99,12 +101,20 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     }
 
     if (state.status == MyAppointmentsStatus.error) {
+      final sessionExpired = state.code == AuthErrorCatalog.sessionExpired.code;
+
       return _MessageState(
         icon: Icons.cloud_off_rounded,
-        title: l10n.myAppointmentsLoadErrorTitle,
+        title: sessionExpired
+            ? l10n.authErrorSessionExpired
+            : l10n.myAppointmentsLoadErrorTitle,
         message: state.message ?? l10n.myAppointmentsRetryMessage,
-        actionLabel: l10n.myAppointmentsRetryAction,
-        onAction: () => context.read<MyAppointmentsCubit>().load(),
+        actionLabel: sessionExpired
+            ? l10n.authLoginSubmit
+            : l10n.myAppointmentsRetryAction,
+        onAction: sessionExpired
+            ? () => context.read<AuthSessionCubit>().logout()
+            : () => context.read<MyAppointmentsCubit>().load(),
       );
     }
 

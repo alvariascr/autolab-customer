@@ -145,11 +145,15 @@ void main() {
         'vehicles': {'vehicle_type': 'AUTOMOVIL'},
         'order_services': {
           'inventory_item_id': 'service-1',
-          'orders': {'workshop_id': 'workshop-1'},
+          'orders': {
+            'workshop_id': 'workshop-1',
+            'customers': {'user_id': 'user-1'},
+          },
         },
       });
 
       expect(model.id, 'appointment-1');
+      expect(model.customerId, 'user-1');
       expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
       expect(model.vehicleType, 'AUTOMOVIL');
@@ -170,6 +174,7 @@ void main() {
           'inventory_items': {'name': 'Cambio de aceite'},
           'orders': {
             'workshop_id': 'workshop-1',
+            'customers': {'user_id': 'user-1'},
             'workshops': {
               'name': 'AutoFix San Jose',
               'avatar_url': 'avatar.png',
