@@ -144,7 +144,7 @@
   "myAppointmentsPastEmptyMessage": "Tus servicios completados o vencidos aparecerán aquí.",
   "myAppointmentsCanceledEmptyMessage": "Las reservas canceladas aparecerán en este apartado.",
   "myAppointmentsUpcomingTab": "Próximas",
-  "myAppointmentsPastTab": "Completada",
+  "myAppointmentsPastTab": "Finalizadas",
   "myAppointmentsCanceledTab": "Canceladas",
   "myAppointmentsNewAppointmentPrompt": "¿Necesitas agendar una nueva cita?",
   "myAppointmentsStatusCanceled": "Cancelada",

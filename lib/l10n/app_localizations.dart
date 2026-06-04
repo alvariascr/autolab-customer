@@ -931,7 +931,7 @@ abstract class AppLocalizations {
   /// No description provided for @myAppointmentsPastTab.
   ///
   /// In es, this message translates to:
-  /// **'Completada'**
+  /// **'Finalizadas'**
   String get myAppointmentsPastTab;
 
   /// No description provided for @myAppointmentsCanceledTab.
