@@ -10,6 +10,7 @@ import '../../features/auth/ui/reset_password_page.dart';
 import '../../features/home/home_customer_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
+import '../../features/profile/presentation/page/vehicles_page.dart';
 import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../features/workshops/presentation/pages/workshop_profile_page.dart';
 import 'app_redirect_guard.dart';
@@ -47,6 +48,10 @@ class AppRouter {
       GoRoute(
         path: '/appointments',
         builder: (context, state) => const MyAppointmentsPage(),
+      ),
+      GoRoute(
+        path: '/vehicles',
+        builder: (context, state) => const VehiclesPage(),
       ),
       GoRoute(
         path: '/workshops/:id',
