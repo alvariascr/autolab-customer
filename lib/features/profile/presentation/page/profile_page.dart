@@ -110,7 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
               subtitle: l10n.profileAppointmentsSubtitle,
               borderColor: const Color(0xFF0B5CFF),
               trailingColor: const Color(0xFF0B5CFF),
-              onTap: () => context.push('/appointments'),
+              onTap: () => context.go('/appointments'),
             ),
             const SizedBox(height: 20),
             _ProfileMenuCard(
@@ -122,7 +122,7 @@ class _ProfilePageState extends State<ProfilePage> {
               title: l10n.vehiclesTitle,
               subtitle: l10n.vehiclesProfileSubtitle,
               borderColor: const Color(0xFFE9DDD2),
-              onTap: () => context.push('/vehicles'),
+              onTap: () => context.go('/vehicles'),
             ),
             const SizedBox(height: 20),
             Container(
