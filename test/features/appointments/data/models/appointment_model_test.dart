@@ -117,6 +117,67 @@ void main() {
       expect(model.customerId, isNull);
     });
 
+    test('usa pending cuando status viene nulo', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': null,
+      });
+
+      expect(model.status, 'pending');
+    });
+
+    test(
+      'parsea fecha desde scheduled_datetime cuando no viene scheduled_at',
+      () {
+        final model = AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+          'status': 'scheduled',
+        });
+
+        expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      },
+    );
+
+    test('usa campos legacy cuando order_services viene nulo', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+        'order_services': null,
+      });
+
+      expect(model.workshopId, 'workshop-1');
+      expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
+    });
+
+    test('usa campos legacy cuando order_services viene vacio', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+        'order_services': const [],
+      });
+
+      expect(model.workshopId, 'workshop-1');
+      expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
+    });
+
     test('lanza FormatException cuando scheduled_at es invalido', () {
       expect(
         () => AppointmentModel.fromMap({
