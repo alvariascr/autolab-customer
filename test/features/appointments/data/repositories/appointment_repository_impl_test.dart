@@ -120,14 +120,14 @@ void main() {
   );
 
   test('getCustomerAppointments retorna fallo de auth sin usuario', () async {
-    repository = AppointmentRepositoryImpl(
+    final unauthenticatedRepository = AppointmentRepositoryImpl(
       remoteDataSource: remoteDataSource,
       errorHandler: errorHandler,
       featureLogger: featureLogger,
       currentUserIdProvider: () => null,
     );
 
-    final result = await repository.getCustomerAppointments();
+    final result = await unauthenticatedRepository.getCustomerAppointments();
 
     expect(result.isLeft(), isTrue);
     result.fold(
