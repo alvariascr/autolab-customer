@@ -188,6 +188,45 @@ void main() {
       expect(model.serviceName, 'Cambio de aceite');
     });
 
+    test('parsea relaciones del esquema actual cuando vienen como listas', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'order_service_id': 'order-service-1',
+        'appointment_status': 'scheduled',
+        'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+        'vehicles': [
+          {'vehicle_type': 'AUTOMOVIL'},
+        ],
+        'order_services': [
+          {
+            'inventory_item_id': 'service-1',
+            'inventory_items': [
+              {'name': 'Cambio de aceite'},
+            ],
+            'orders': [
+              {
+                'workshop_id': 'workshop-1',
+                'customers': [
+                  {'user_id': 'user-1'},
+                ],
+                'workshops': [
+                  {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(model.customerId, 'user-1');
+      expect(model.workshopId, 'workshop-1');
+      expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
+      expect(model.workshopName, 'AutoFix San Jose');
+      expect(model.workshopAvatarUrl, 'avatar.png');
+      expect(model.serviceName, 'Cambio de aceite');
+    });
+
     test('lanza FormatException cuando falta fecha requerida', () {
       expect(
         () => AppointmentModel.fromMap({

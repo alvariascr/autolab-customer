@@ -169,6 +169,10 @@ class AppointmentModel extends Appointment {
     Object? current = map;
 
     for (final key in path) {
+      if (current is List && current.isNotEmpty) {
+        current = current.first;
+      }
+
       if (current is Map<String, dynamic>) {
         current = current[key];
         continue;
