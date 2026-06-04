@@ -38,7 +38,13 @@ void main() {
             'status',
             MyAppointmentsStatus.success,
           )
-          .having((state) => state.appointments.first.id, 'first id', 'first'),
+          .having(
+            (state) => state.appointments.map((appointment) {
+              return appointment.id;
+            }).toList(),
+            'IDs ordenados cronologicamente',
+            ['first', 'later'],
+          ),
     ],
   );
 
