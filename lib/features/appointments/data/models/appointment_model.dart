@@ -26,22 +26,22 @@ class AppointmentModel extends Appointment {
     return AppointmentModel(
       id: _requiredString(map['id'], 'id'),
       customerId: _customerIdFromMap(map),
-      workshopId: _firstString([
+      workshopId: _requiredFirstString([
         map['workshop_id'],
         _nestedValue(map, ['order_services', 'orders', 'workshop_id']),
-      ]),
-      serviceId: _firstString([
+      ], 'workshop_id'),
+      serviceId: _requiredFirstString([
         map['service_id'],
         _nestedValue(map, ['order_services', 'inventory_item_id']),
         map['order_service_id'],
-      ]),
+      ], 'service_id'),
       customerName: _nullableString(map['customer_name']) ?? '',
       customerPhone: _nullableString(map['customer_phone']) ?? '',
       customerEmail: _nullableString(map['customer_email']) ?? '',
-      vehicleType: _firstString([
+      vehicleType: _requiredFirstString([
         map['vehicle_type'],
         _nestedValue(map, ['vehicles', 'vehicle_type']),
-      ]),
+      ], 'vehicle_type'),
       scheduledAt: _requiredDateTime(
         map['scheduled_at'] ?? map['scheduled_datetime'],
         'scheduled_at',
@@ -132,7 +132,19 @@ class AppointmentModel extends Appointment {
         _nullableString(map['customer_user_id']);
   }
 
-  static String _firstString(List<dynamic> values) {
+  static String _requiredFirstString(List<dynamic> values, String fieldName) {
+    final text = _firstString(values);
+    if (text == null) {
+      throw FormatException(
+        'Missing required appointment field $fieldName',
+        values,
+      );
+    }
+
+    return text;
+  }
+
+  static String? _firstString(List<dynamic> values) {
     for (final value in values) {
       final text = _nullableString(value);
       if (text != null) {
@@ -140,7 +152,7 @@ class AppointmentModel extends Appointment {
       }
     }
 
-    return '';
+    return null;
   }
 
   static String? _nestedString(Map<String, dynamic> map, List<String> path) {

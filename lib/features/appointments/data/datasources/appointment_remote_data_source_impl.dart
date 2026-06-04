@@ -38,6 +38,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
+    vehicles(vehicle_type),
     order_services!inner(
       inventory_item_id,
       orders!inner(
@@ -57,6 +58,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
+    vehicles(vehicle_type),
     order_services!inner(
       id,
       inventory_item_id,

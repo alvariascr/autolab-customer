@@ -142,11 +142,17 @@ void main() {
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'note': 'Revisar frenos',
         'vehicle_id': 'vehicle-1',
-        'order_services': {'inventory_item_id': 'service-1'},
+        'vehicles': {'vehicle_type': 'AUTOMOVIL'},
+        'order_services': {
+          'inventory_item_id': 'service-1',
+          'orders': {'workshop_id': 'workshop-1'},
+        },
       });
 
       expect(model.id, 'appointment-1');
+      expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
       expect(model.status, 'scheduled');
       expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
       expect(model.notes, 'Revisar frenos');
@@ -158,9 +164,12 @@ void main() {
         'order_service_id': 'order-service-1',
         'appointment_status': 'scheduled',
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+        'vehicles': {'vehicle_type': 'AUTOMOVIL'},
         'order_services': {
+          'inventory_item_id': 'service-1',
           'inventory_items': {'name': 'Cambio de aceite'},
           'orders': {
+            'workshop_id': 'workshop-1',
             'workshops': {
               'name': 'AutoFix San Jose',
               'avatar_url': 'avatar.png',
@@ -178,6 +187,48 @@ void main() {
       expect(
         () => AppointmentModel.fromMap({
           'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta taller requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'service_id': 'service-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta servicio requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta vehiculo requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
           'status': 'pending',
         }),
         throwsA(isA<FormatException>()),
