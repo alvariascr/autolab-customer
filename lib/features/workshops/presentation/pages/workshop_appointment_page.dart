@@ -281,21 +281,24 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
   void _handleBack(BuildContext context, AppointmentState state) {
     if (state.currentStep == 0) {
-      _goToWorkshopProfileOrHome(context);
+      _closeAppointmentFlow(context);
       return;
     }
 
     context.read<AppointmentCubit>().goBack();
   }
 
-  void _goToWorkshopProfileOrHome(BuildContext context) {
-    final workshopId = widget.workshopId.trim();
-    if (workshopId.isEmpty) {
-      context.go('/home-customer');
+  void _closeAppointmentFlow(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
       return;
     }
 
-    context.go('/workshops/$workshopId');
+    _goToWorkshopProfileOrHome(context);
+  }
+
+  void _goToWorkshopProfileOrHome(BuildContext context) {
+    context.go('/workshops/${widget.workshopId}');
   }
 
   Future<void> _goNextStep(

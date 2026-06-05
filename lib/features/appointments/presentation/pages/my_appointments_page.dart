@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/application/auth_session_cubit.dart';
+import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../domain/entities/appointment.dart';
@@ -40,6 +43,18 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
+          leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+                return;
+              }
+
+              context.go('/profile');
+            },
+          ),
           title: Text(
             l10n.myAppointmentsTitle,
             style: const TextStyle(fontWeight: FontWeight.w800),
@@ -99,12 +114,20 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     }
 
     if (state.status == MyAppointmentsStatus.error) {
+      final sessionExpired = state.code == AuthErrorCatalog.sessionExpired.code;
+
       return _MessageState(
         icon: Icons.cloud_off_rounded,
-        title: l10n.myAppointmentsLoadErrorTitle,
+        title: sessionExpired
+            ? l10n.authErrorSessionExpired
+            : l10n.myAppointmentsLoadErrorTitle,
         message: state.message ?? l10n.myAppointmentsRetryMessage,
-        actionLabel: l10n.myAppointmentsRetryAction,
-        onAction: () => context.read<MyAppointmentsCubit>().load(),
+        actionLabel: sessionExpired
+            ? l10n.authLoginSubmit
+            : l10n.myAppointmentsRetryAction,
+        onAction: sessionExpired
+            ? () => context.read<AuthSessionCubit>().logout()
+            : () => context.read<MyAppointmentsCubit>().load(),
       );
     }
 
@@ -144,7 +167,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
   List<Appointment> _filterAppointments(List<Appointment> appointments) {
     final now = DateTime.now();
 
-    return appointments.where((appointment) {
+    final filtered = appointments.where((appointment) {
       final canceled = _isCanceled(appointment.status);
       final completed = _isCompleted(appointment.status);
       final noShow = _isNoShow(appointment.status);
@@ -156,6 +179,13 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
         _AppointmentTab.canceled => canceled,
       };
     }).toList();
+
+    return filtered..sort((left, right) {
+      final comparison = left.scheduledAt.compareTo(right.scheduledAt);
+      return _selectedTab == _AppointmentTab.upcoming
+          ? comparison
+          : -comparison;
+    });
   }
 
   String _emptyTitle(AppLocalizations l10n) {

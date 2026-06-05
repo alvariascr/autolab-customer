@@ -44,7 +44,7 @@ void main() {
       expect(model.products.first.unitPrice, 5000);
     });
 
-    test('parsea nombres de taller y servicio desde relaciones', () {
+    test('parsea nombres de taller y servicio desde relaciones legacy', () {
       final model = AppointmentModel.fromMap({
         'id': 'appointment-1',
         'customer_id': 'user-1',
@@ -57,7 +57,7 @@ void main() {
         'scheduled_at': '2026-05-28T06:15:00.000Z',
         'status': 'confirmed',
         'workshops': {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
-        'products': {'name': 'Cambio de aceite'},
+        'inventory_items': {'name': 'Cambio de aceite'},
       });
 
       expect(model.workshopName, 'AutoFix San Jose');
@@ -117,6 +117,67 @@ void main() {
       expect(model.customerId, isNull);
     });
 
+    test('usa pending cuando status viene nulo', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': null,
+      });
+
+      expect(model.status, 'pending');
+    });
+
+    test(
+      'parsea fecha desde scheduled_datetime cuando no viene scheduled_at',
+      () {
+        final model = AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+          'status': 'scheduled',
+        });
+
+        expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      },
+    );
+
+    test('usa campos legacy cuando order_services viene nulo', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+        'order_services': null,
+      });
+
+      expect(model.workshopId, 'workshop-1');
+      expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
+    });
+
+    test('usa campos legacy cuando order_services viene vacio', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+        'order_services': const [],
+      });
+
+      expect(model.workshopId, 'workshop-1');
+      expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
+    });
+
     test('lanza FormatException cuando scheduled_at es invalido', () {
       expect(
         () => AppointmentModel.fromMap({
@@ -142,11 +203,21 @@ void main() {
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'note': 'Revisar frenos',
         'vehicle_id': 'vehicle-1',
-        'order_services': {'inventory_item_id': 'service-1'},
+        'vehicles': {'vehicle_type': 'AUTOMOVIL'},
+        'order_services': {
+          'inventory_item_id': 'service-1',
+          'orders': {
+            'workshop_id': 'workshop-1',
+            'customers': {'user_id': 'user-1'},
+          },
+        },
       });
 
       expect(model.id, 'appointment-1');
+      expect(model.customerId, 'user-1');
+      expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
       expect(model.status, 'scheduled');
       expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
       expect(model.notes, 'Revisar frenos');
@@ -158,9 +229,13 @@ void main() {
         'order_service_id': 'order-service-1',
         'appointment_status': 'scheduled',
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+        'vehicles': {'vehicle_type': 'AUTOMOVIL'},
         'order_services': {
+          'inventory_item_id': 'service-1',
           'inventory_items': {'name': 'Cambio de aceite'},
           'orders': {
+            'workshop_id': 'workshop-1',
+            'customers': {'user_id': 'user-1'},
             'workshops': {
               'name': 'AutoFix San Jose',
               'avatar_url': 'avatar.png',
@@ -174,10 +249,91 @@ void main() {
       expect(model.serviceName, 'Cambio de aceite');
     });
 
+    test('parsea relaciones del esquema actual cuando vienen como listas', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'order_service_id': 'order-service-1',
+        'appointment_status': 'scheduled',
+        'scheduled_datetime': '2026-05-28T06:15:00.000Z',
+        'vehicles': [
+          {'vehicle_type': 'AUTOMOVIL'},
+        ],
+        'order_services': [
+          {
+            'inventory_item_id': 'service-1',
+            'inventory_items': [
+              {'name': 'Cambio de aceite'},
+            ],
+            'orders': [
+              {
+                'workshop_id': 'workshop-1',
+                'customers': [
+                  {'user_id': 'user-1'},
+                ],
+                'workshops': [
+                  {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(model.customerId, 'user-1');
+      expect(model.workshopId, 'workshop-1');
+      expect(model.serviceId, 'service-1');
+      expect(model.vehicleType, 'AUTOMOVIL');
+      expect(model.workshopName, 'AutoFix San Jose');
+      expect(model.workshopAvatarUrl, 'avatar.png');
+      expect(model.serviceName, 'Cambio de aceite');
+    });
+
     test('lanza FormatException cuando falta fecha requerida', () {
       expect(
         () => AppointmentModel.fromMap({
           'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta taller requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'service_id': 'service-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta servicio requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'vehicle_type': 'AUTOMOVIL',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
+          'status': 'pending',
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('lanza FormatException cuando falta vehiculo requerido', () {
+      expect(
+        () => AppointmentModel.fromMap({
+          'id': 'appointment-1',
+          'workshop_id': 'workshop-1',
+          'service_id': 'service-1',
+          'scheduled_at': '2026-05-28T06:15:00.000Z',
           'status': 'pending',
         }),
         throwsA(isA<FormatException>()),

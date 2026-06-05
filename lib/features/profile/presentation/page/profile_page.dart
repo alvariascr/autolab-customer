@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../../appointments/presentation/pages/my_appointments_page.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import 'vehicles_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -111,12 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
               subtitle: l10n.profileAppointmentsSubtitle,
               borderColor: const Color(0xFF0B5CFF),
               trailingColor: const Color(0xFF0B5CFF),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyAppointmentsPage()),
-                );
-              },
+              onTap: () => context.go('/appointments'),
             ),
             const SizedBox(height: 20),
             _ProfileMenuCard(
@@ -128,12 +122,7 @@ class _ProfilePageState extends State<ProfilePage> {
               title: l10n.vehiclesTitle,
               subtitle: l10n.vehiclesProfileSubtitle,
               borderColor: const Color(0xFFE9DDD2),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const VehiclesPage()),
-                );
-              },
+              onTap: () => context.go('/vehicles'),
             ),
             const SizedBox(height: 20),
             Container(

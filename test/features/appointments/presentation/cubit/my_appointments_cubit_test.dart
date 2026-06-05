@@ -31,14 +31,24 @@ void main() {
     },
     act: (cubit) => cubit.load(),
     expect: () => [
-      const MyAppointmentsState(status: MyAppointmentsStatus.loading),
+      isA<MyAppointmentsState>().having(
+        (state) => state.status,
+        'status',
+        MyAppointmentsStatus.loading,
+      ),
       isA<MyAppointmentsState>()
           .having(
             (state) => state.status,
             'status',
             MyAppointmentsStatus.success,
           )
-          .having((state) => state.appointments.first.id, 'first id', 'first'),
+          .having(
+            (state) => state.appointments.map((appointment) {
+              return appointment.id;
+            }).toList(),
+            'IDs ordenados cronologicamente',
+            ['first', 'later'],
+          ),
     ],
   );
 
@@ -52,12 +62,15 @@ void main() {
       return MyAppointmentsCubit(repository);
     },
     act: (cubit) => cubit.load(),
-    expect: () => const [
-      MyAppointmentsState(status: MyAppointmentsStatus.loading),
-      MyAppointmentsState(
-        status: MyAppointmentsStatus.error,
-        message: 'No se pudo cargar',
+    expect: () => [
+      isA<MyAppointmentsState>().having(
+        (state) => state.status,
+        'status',
+        MyAppointmentsStatus.loading,
       ),
+      isA<MyAppointmentsState>()
+          .having((state) => state.status, 'status', MyAppointmentsStatus.error)
+          .having((state) => state.message, 'message', 'No se pudo cargar'),
     ],
   );
 }

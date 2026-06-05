@@ -473,7 +473,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myAppointmentsUpcomingTab => 'Próximas';
 
   @override
-  String get myAppointmentsPastTab => 'Pasadas';
+  String get myAppointmentsPastTab => 'Finalizadas';
 
   @override
   String get myAppointmentsCanceledTab => 'Canceladas';
@@ -501,7 +501,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myAppointmentsStatusExpired => 'Expirada';
 
   @override
-  String get myAppointmentsStatusConfirmed => 'Confirmada';
+  String get myAppointmentsStatusConfirmed => 'Programada';
 
   @override
   String get vehiclesTitle => 'Mis vehículos';
