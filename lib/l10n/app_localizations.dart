@@ -832,6 +832,162 @@ abstract class AppLocalizations {
   /// **'Cerrar sesión'**
   String get profileLogout;
 
+  /// No description provided for @profileAppointmentsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis citas'**
+  String get profileAppointmentsTitle;
+
+  /// No description provided for @profileAppointmentsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta tus citas próximas, pasadas y canceladas.'**
+  String get profileAppointmentsSubtitle;
+
+  /// No description provided for @myAppointmentsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis citas'**
+  String get myAppointmentsTitle;
+
+  /// No description provided for @myAppointmentsNotificationsTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones'**
+  String get myAppointmentsNotificationsTooltip;
+
+  /// No description provided for @myAppointmentsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta tus reservas de servicios'**
+  String get myAppointmentsSubtitle;
+
+  /// No description provided for @myAppointmentsLoadErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus citas'**
+  String get myAppointmentsLoadErrorTitle;
+
+  /// No description provided for @myAppointmentsRetryMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Intenta nuevamente en unos segundos.'**
+  String get myAppointmentsRetryMessage;
+
+  /// No description provided for @myAppointmentsRetryAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get myAppointmentsRetryAction;
+
+  /// No description provided for @myAppointmentsSearchWorkshopsAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar talleres'**
+  String get myAppointmentsSearchWorkshopsAction;
+
+  /// No description provided for @myAppointmentsUpcomingEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes citas próximas'**
+  String get myAppointmentsUpcomingEmptyTitle;
+
+  /// No description provided for @myAppointmentsPastEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes citas pasadas'**
+  String get myAppointmentsPastEmptyTitle;
+
+  /// No description provided for @myAppointmentsCanceledEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes citas canceladas'**
+  String get myAppointmentsCanceledEmptyTitle;
+
+  /// No description provided for @myAppointmentsUpcomingEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando reserves un servicio en un taller, aparecerá aquí.'**
+  String get myAppointmentsUpcomingEmptyMessage;
+
+  /// No description provided for @myAppointmentsPastEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus servicios completados o vencidos aparecerán aquí.'**
+  String get myAppointmentsPastEmptyMessage;
+
+  /// No description provided for @myAppointmentsCanceledEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Las reservas canceladas aparecerán en este apartado.'**
+  String get myAppointmentsCanceledEmptyMessage;
+
+  /// No description provided for @myAppointmentsUpcomingTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximas'**
+  String get myAppointmentsUpcomingTab;
+
+  /// No description provided for @myAppointmentsPastTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizadas'**
+  String get myAppointmentsPastTab;
+
+  /// No description provided for @myAppointmentsCanceledTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Canceladas'**
+  String get myAppointmentsCanceledTab;
+
+  /// No description provided for @myAppointmentsNewAppointmentPrompt.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Necesitas agendar una nueva cita?'**
+  String get myAppointmentsNewAppointmentPrompt;
+
+  /// No description provided for @myAppointmentsStatusCanceled.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelada'**
+  String get myAppointmentsStatusCanceled;
+
+  /// No description provided for @myAppointmentsStatusNoShow.
+  ///
+  /// In es, this message translates to:
+  /// **'No asistió'**
+  String get myAppointmentsStatusNoShow;
+
+  /// No description provided for @myAppointmentsStatusCompleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Completada'**
+  String get myAppointmentsStatusCompleted;
+
+  /// No description provided for @myAppointmentsStatusCheckedIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrada'**
+  String get myAppointmentsStatusCheckedIn;
+
+  /// No description provided for @myAppointmentsStatusInProgress.
+  ///
+  /// In es, this message translates to:
+  /// **'En proceso'**
+  String get myAppointmentsStatusInProgress;
+
+  /// No description provided for @myAppointmentsStatusExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'Expirada'**
+  String get myAppointmentsStatusExpired;
+
+  /// No description provided for @myAppointmentsStatusConfirmed.
+  ///
+  /// In es, this message translates to:
+  /// **'Programada'**
+  String get myAppointmentsStatusConfirmed;
+
   /// No description provided for @vehiclesTitle.
   ///
   /// In es, this message translates to:

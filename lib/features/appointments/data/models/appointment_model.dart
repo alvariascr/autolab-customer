@@ -12,6 +12,9 @@ class AppointmentModel extends Appointment {
     required super.vehicleType,
     required super.scheduledAt,
     required super.status,
+    super.workshopName,
+    super.serviceName,
+    super.workshopAvatarUrl,
     super.paymentMethod,
     super.notes,
     super.totalAmount,
@@ -23,18 +26,48 @@ class AppointmentModel extends Appointment {
     return AppointmentModel(
       id: _requiredString(map['id'], 'id'),
       customerId: _customerIdFromMap(map),
-      workshopId: _requiredString(map['workshop_id'], 'workshop_id'),
-      serviceId: _requiredString(map['service_id'], 'service_id'),
-      customerName: _requiredString(map['customer_name'], 'customer_name'),
-      customerPhone: _requiredString(map['customer_phone'], 'customer_phone'),
-      customerEmail: _requiredString(map['customer_email'], 'customer_email'),
-      vehicleType: _requiredString(map['vehicle_type'], 'vehicle_type'),
-      scheduledAt: _requiredDateTime(map['scheduled_at'], 'scheduled_at'),
-      status: map['status']?.toString() ?? 'pending',
+      workshopId: _requiredFirstString([
+        map['workshop_id'],
+        _nestedValue(map, ['order_services', 'orders', 'workshop_id']),
+      ], 'workshop_id'),
+      serviceId: _requiredFirstString([
+        map['service_id'],
+        _nestedValue(map, ['order_services', 'inventory_item_id']),
+        map['order_service_id'],
+      ], 'service_id'),
+      customerName: _nullableString(map['customer_name']) ?? '',
+      customerPhone: _nullableString(map['customer_phone']) ?? '',
+      customerEmail: _nullableString(map['customer_email']) ?? '',
+      vehicleType: _requiredFirstString([
+        map['vehicle_type'],
+        _nestedValue(map, ['vehicles', 'vehicle_type']),
+      ], 'vehicle_type'),
+      scheduledAt: _requiredDateTime(
+        map['scheduled_at'] ?? map['scheduled_datetime'],
+        'scheduled_at',
+      ),
+      status:
+          map['status']?.toString() ??
+          map['appointment_status']?.toString() ??
+          'pending',
+      workshopName:
+          _nestedString(map, ['workshops', 'name']) ??
+          _nestedString(map, ['order_services', 'orders', 'workshops', 'name']),
+      serviceName:
+          _nestedString(map, ['inventory_items', 'name']) ??
+          _nestedString(map, ['order_services', 'inventory_items', 'name']),
+      workshopAvatarUrl:
+          _nestedString(map, ['workshops', 'avatar_url']) ??
+          _nestedString(map, [
+            'order_services',
+            'orders',
+            'workshops',
+            'avatar_url',
+          ]),
       paymentMethod: _nullableString(map['payment_method']),
-      notes: _nullableString(map['notes']),
+      notes: _nullableString(map['notes']) ?? _nullableString(map['note']),
       totalAmount: _nullableMoney(map['total_amount'], 'total_amount'),
-      createdAt: _nullableDateTime(map['created_at']),
+      createdAt: _nullableDateTime(map['created_at'] ?? map['updated_at']),
       products: _productsFromMap(map),
     );
   }
@@ -63,6 +96,8 @@ class AppointmentModel extends Appointment {
     };
   }
 
+  /// Serializes only flat appointment columns. Joined display data such as
+  /// workshopName, serviceName and products is read-only query payload.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -79,21 +114,69 @@ class AppointmentModel extends Appointment {
       'notes': notes,
       'total_amount': totalAmount,
       'created_at': createdAt?.toUtc().toIso8601String(),
-      'appointment_products': products
-          .map(
-            (product) => {
-              'product_id': product.productId,
-              'quantity': product.quantity,
-              'unit_price': product.unitPrice,
-            },
-          )
-          .toList(),
     };
   }
 
   static String? _customerIdFromMap(Map<String, dynamic> map) {
     return _nullableString(map['customer_id']) ??
-        _nullableString(map['customer_user_id']);
+        _nullableString(map['customer_user_id']) ??
+        _nestedString(map, [
+          'order_services',
+          'orders',
+          'customers',
+          'user_id',
+        ]);
+  }
+
+  static String _requiredFirstString(List<dynamic> values, String fieldName) {
+    final text = _firstString(values);
+    if (text == null) {
+      throw FormatException(
+        'Missing required appointment field $fieldName',
+        values,
+      );
+    }
+
+    return text;
+  }
+
+  static String? _firstString(List<dynamic> values) {
+    for (final value in values) {
+      final text = _nullableString(value);
+      if (text != null) {
+        return text;
+      }
+    }
+
+    return null;
+  }
+
+  static String? _nestedString(Map<String, dynamic> map, List<String> path) {
+    return _nullableString(_nestedValue(map, path));
+  }
+
+  static Object? _nestedValue(Map<String, dynamic> map, List<String> path) {
+    Object? current = map;
+
+    for (final key in path) {
+      if (current is List && current.isNotEmpty) {
+        current = current.first;
+      }
+
+      if (current is Map<String, dynamic>) {
+        current = current[key];
+        continue;
+      }
+
+      if (current is Map) {
+        current = current[key];
+        continue;
+      }
+
+      return null;
+    }
+
+    return current;
   }
 
   static List<AppointmentProductLine> _productsFromMap(

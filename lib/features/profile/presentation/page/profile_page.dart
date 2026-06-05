@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import 'vehicles_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -78,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       size: 28,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     l10n.profileAccountTitle,
                     style: const TextStyle(
@@ -100,52 +100,29 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE9DDD2)),
+            _ProfileMenuCard(
+              leading: const _ProfileActionIcon(
+                icon: Icons.calendar_month_rounded,
+                backgroundColor: Color(0xFFE9F0FF),
+                foregroundColor: Color(0xFF0B5CFF),
               ),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFE9E7),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.directions_car_filled_outlined,
-                    color: Color(0xFFE32119),
-                  ),
-                ),
-                title: Text(
-                  l10n.vehiclesTitle,
-                  style: const TextStyle(
-                    color: Color(0xFF181411),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                subtitle: Text(
-                  l10n.vehiclesProfileSubtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6B5F57),
-                    fontSize: 13,
-                    height: 1.35,
-                  ),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const VehiclesPage()),
-                  );
-                },
+              title: l10n.profileAppointmentsTitle,
+              subtitle: l10n.profileAppointmentsSubtitle,
+              borderColor: const Color(0xFF0B5CFF),
+              trailingColor: const Color(0xFF0B5CFF),
+              onTap: () => context.go('/appointments'),
+            ),
+            const SizedBox(height: 20),
+            _ProfileMenuCard(
+              leading: const _ProfileActionIcon(
+                icon: Icons.directions_car_filled_outlined,
+                backgroundColor: Color(0xFFFFE9E7),
+                foregroundColor: Color(0xFFE32119),
               ),
+              title: l10n.vehiclesTitle,
+              subtitle: l10n.vehiclesProfileSubtitle,
+              borderColor: const Color(0xFFE9DDD2),
+              onTap: () => context.go('/vehicles'),
             ),
             const SizedBox(height: 20),
             Container(
@@ -205,6 +182,100 @@ class _ProfilePageState extends State<ProfilePage> {
         currentIndex: _currentIndex,
         onTap: _handleBottomNavigation,
       ),
+    );
+  }
+}
+
+class _ProfileMenuCard extends StatelessWidget {
+  const _ProfileMenuCard({
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.borderColor,
+    required this.onTap,
+    this.trailingColor = const Color(0xFF6B5F57),
+  });
+
+  final Widget leading;
+  final String title;
+  final String subtitle;
+  final Color borderColor;
+  final Color trailingColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              leading,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF181411),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Color(0xFF6B5F57),
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: trailingColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileActionIcon extends StatelessWidget {
+  const _ProfileActionIcon({
+    required this.icon,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final IconData icon;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: foregroundColor),
     );
   }
 }

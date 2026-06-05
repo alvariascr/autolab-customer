@@ -8,9 +8,12 @@ import 'package:autolab_customer/features/appointments/data/datasources/appointm
 import 'package:autolab_customer/features/appointments/data/models/appointment_model.dart';
 import 'package:autolab_customer/features/appointments/data/repositories/appointment_repository_impl.dart';
 import 'package:autolab_customer/features/appointments/domain/entities/appointment.dart';
+import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+const _currentUserId = 'user-1';
 
 class MockAppointmentRemoteDataSource extends Mock
     implements AppointmentRemoteDataSource {}
@@ -39,7 +42,7 @@ void main() {
       remoteDataSource: remoteDataSource,
       errorHandler: errorHandler,
       featureLogger: featureLogger,
-      currentUserIdProvider: () => 'user-1',
+      currentUserIdProvider: () => _currentUserId,
     );
   });
 
@@ -66,7 +69,7 @@ void main() {
     expect(payload['p_workshop_id'], 'workshop-1');
     expect(payload['p_service_id'], 'service-1');
     expect(payload['p_scheduled_at'], '2026-05-28T06:15:00.000Z');
-    expect(customerId, 'user-1');
+    expect(customerId, _currentUserId);
   });
 
   test(
@@ -75,10 +78,10 @@ void main() {
       when(
         () => remoteDataSource.getAppointmentsByWorkshop(
           workshopId: 'workshop-1',
-          customerId: 'user-1',
+          customerId: _currentUserId,
         ),
       ).thenAnswer(
-        (_) async => [_appointment(id: 'appt-1', customerId: 'user-1')],
+        (_) async => [_appointment(id: 'appt-1', customerId: _currentUserId)],
       );
 
       final result = await repository.getAppointmentsByWorkshop('workshop-1');
@@ -87,15 +90,62 @@ void main() {
       expect(result.isRight(), isTrue);
       expect(appointments, hasLength(1));
       expect(appointments.first.id, 'appt-1');
-      expect(appointments.first.customerId, 'user-1');
+      expect(appointments.first.customerId, _currentUserId);
       verify(
         () => remoteDataSource.getAppointmentsByWorkshop(
           workshopId: 'workshop-1',
-          customerId: 'user-1',
+          customerId: _currentUserId,
         ),
       ).called(1);
     },
   );
+
+  test(
+    'getCustomerAppointments delega filtro por usuario al datasource',
+    () async {
+      when(
+        () => remoteDataSource.getCustomerAppointments(
+          customerId: _currentUserId,
+        ),
+      ).thenAnswer(
+        (_) async => [_appointment(id: 'appt-1', customerId: _currentUserId)],
+      );
+
+      final result = await repository.getCustomerAppointments();
+      final appointments = result.getOrElse(() => const []);
+
+      expect(result.isRight(), isTrue);
+      expect(appointments, hasLength(1));
+      expect(appointments.first.customerId, _currentUserId);
+      verify(
+        () => remoteDataSource.getCustomerAppointments(
+          customerId: _currentUserId,
+        ),
+      ).called(1);
+    },
+  );
+
+  test('getCustomerAppointments retorna fallo de auth sin usuario', () async {
+    final unauthenticatedRepository = AppointmentRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      errorHandler: errorHandler,
+      featureLogger: featureLogger,
+      currentUserIdProvider: () => null,
+    );
+
+    final result = await unauthenticatedRepository.getCustomerAppointments();
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected auth failure'),
+    );
+    verifyNever(
+      () => remoteDataSource.getCustomerAppointments(
+        customerId: any(named: 'customerId'),
+      ),
+    );
+  });
 
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(

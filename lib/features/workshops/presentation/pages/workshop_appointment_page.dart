@@ -296,11 +296,24 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
   void _handleBack(BuildContext context, AppointmentState state) {
     if (state.currentStep == 0) {
-      context.pop();
+      _closeAppointmentFlow(context);
       return;
     }
 
     context.read<AppointmentCubit>().goBack();
+  }
+
+  void _closeAppointmentFlow(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    _goToWorkshopProfileOrHome(context);
+  }
+
+  void _goToWorkshopProfileOrHome(BuildContext context) {
+    context.go('/workshops/${widget.workshopId}');
   }
 
   Future<void> _goNextStep(
@@ -325,7 +338,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           message: l10n.appointmentCreatedSuccess,
           type: _AppointmentMessageType.success,
         );
-        context.pop();
+        _goToWorkshopProfileOrHome(context);
       } else {
         _showAppointmentMessage(
           context,

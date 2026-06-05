@@ -8,6 +8,7 @@ import '../../features/appointments/data/datasources/appointment_remote_data_sou
 import '../../features/appointments/data/repositories/appointment_repository_impl.dart';
 import '../../features/appointments/domain/repositories/appointment_repository.dart';
 import '../../features/appointments/presentation/cubit/create_appointment_cubit.dart';
+import '../../features/appointments/presentation/cubit/my_appointments_cubit.dart';
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
@@ -177,6 +178,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerFactory<CreateAppointmentCubit>(
     () => CreateAppointmentCubit(sl<AppointmentRepository>()),
+  );
+  sl.registerFactory<MyAppointmentsCubit>(
+    () => MyAppointmentsCubit(sl<AppointmentRepository>()),
   );
   sl.registerFactory<MapCubit>(
     () => MapCubit(

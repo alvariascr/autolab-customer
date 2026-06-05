@@ -420,6 +420,90 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileLogout => 'Cerrar sesión';
 
   @override
+  String get profileAppointmentsTitle => 'Mis citas';
+
+  @override
+  String get profileAppointmentsSubtitle =>
+      'Consulta tus citas próximas, pasadas y canceladas.';
+
+  @override
+  String get myAppointmentsTitle => 'Mis citas';
+
+  @override
+  String get myAppointmentsNotificationsTooltip => 'Notificaciones';
+
+  @override
+  String get myAppointmentsSubtitle => 'Consulta tus reservas de servicios';
+
+  @override
+  String get myAppointmentsLoadErrorTitle => 'No pudimos cargar tus citas';
+
+  @override
+  String get myAppointmentsRetryMessage =>
+      'Intenta nuevamente en unos segundos.';
+
+  @override
+  String get myAppointmentsRetryAction => 'Reintentar';
+
+  @override
+  String get myAppointmentsSearchWorkshopsAction => 'Buscar talleres';
+
+  @override
+  String get myAppointmentsUpcomingEmptyTitle => 'No tienes citas próximas';
+
+  @override
+  String get myAppointmentsPastEmptyTitle => 'No tienes citas pasadas';
+
+  @override
+  String get myAppointmentsCanceledEmptyTitle => 'No tienes citas canceladas';
+
+  @override
+  String get myAppointmentsUpcomingEmptyMessage =>
+      'Cuando reserves un servicio en un taller, aparecerá aquí.';
+
+  @override
+  String get myAppointmentsPastEmptyMessage =>
+      'Tus servicios completados o vencidos aparecerán aquí.';
+
+  @override
+  String get myAppointmentsCanceledEmptyMessage =>
+      'Las reservas canceladas aparecerán en este apartado.';
+
+  @override
+  String get myAppointmentsUpcomingTab => 'Próximas';
+
+  @override
+  String get myAppointmentsPastTab => 'Finalizadas';
+
+  @override
+  String get myAppointmentsCanceledTab => 'Canceladas';
+
+  @override
+  String get myAppointmentsNewAppointmentPrompt =>
+      '¿Necesitas agendar una nueva cita?';
+
+  @override
+  String get myAppointmentsStatusCanceled => 'Cancelada';
+
+  @override
+  String get myAppointmentsStatusNoShow => 'No asistió';
+
+  @override
+  String get myAppointmentsStatusCompleted => 'Completada';
+
+  @override
+  String get myAppointmentsStatusCheckedIn => 'Registrada';
+
+  @override
+  String get myAppointmentsStatusInProgress => 'En proceso';
+
+  @override
+  String get myAppointmentsStatusExpired => 'Expirada';
+
+  @override
+  String get myAppointmentsStatusConfirmed => 'Programada';
+
+  @override
   String get vehiclesTitle => 'Mis vehículos';
 
   @override
