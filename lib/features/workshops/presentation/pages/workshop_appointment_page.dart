@@ -12,6 +12,7 @@ import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
+import 'mock_card_payment_page.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({super.key, required this.workshopId});
@@ -217,19 +218,22 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           ),
         );
       case 4:
-        return _ConfirmationMock(
+        return _BookingReviewStep(
           workshopName: _workshopName(state),
           service: state.selectedService,
           licensePlate: state.vehicleLicensePlate,
           products: state.selectedProducts,
           date: state.selectedDate,
           time: state.selectedTime ?? '9:00 AM',
-          paymentMethod: state.selectedPaymentMethod,
-          onPaymentMethodSelected: context
-              .read<AppointmentCubit>()
-              .selectPaymentMethod,
           onNoteChanged: context.read<AppointmentCubit>().updateCustomerNote,
           note: state.customerNote,
+        );
+      case 5:
+        return _PaymentStep(
+          service: state.selectedService,
+          products: state.selectedProducts,
+          selectedMethod: state.selectedPaymentMethod,
+          onSelected: context.read<AppointmentCubit>().selectPaymentMethod,
         );
       default:
         return const SizedBox.shrink();
@@ -239,6 +243,27 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   String _workshopName(AppointmentState state) {
     final name = state.workshop?.name.trim();
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
+  }
+
+  String _appointmentTotalLabel(
+    AppointmentState state,
+    AppLocalizations l10n,
+  ) {
+    final servicePrice = state.selectedService?.sellingPrice ?? 0;
+    final productsTotal = state.selectedProducts.fold<double>(
+      0,
+      (total, item) =>
+          total + ((item.product.sellingPrice ?? 0) * item.quantity),
+    );
+    final hasPricelessItems =
+        state.selectedService?.sellingPrice == null ||
+        state.selectedProducts.any(
+          (item) => item.product.sellingPrice == null,
+        );
+
+    return hasPricelessItems
+        ? l10n.appointmentPriceToConfirm
+        : formatProductPrice(servicePrice + productsTotal);
   }
 
   Future<void> _openGarage(BuildContext context) async {
@@ -290,12 +315,25 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
       final submitState = cubit.state;
       if (appointmentId != null) {
-        _showAppointmentMessage(
-          context,
-          message: l10n.appointmentCreatedSuccess,
-          type: _AppointmentMessageType.success,
-        );
-        _goToWorkshopProfileOrHome(context);
+        if (submitState.selectedPaymentMethod == l10n.appointmentPaymentCard) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MockCardPaymentPage(
+                appointmentId: appointmentId,
+                amountLabel: _appointmentTotalLabel(submitState, l10n),
+                workshopName: _workshopName(submitState),
+                onClose: () => _goToWorkshopProfileOrHome(context),
+              ),
+            ),
+          );
+        } else {
+          _showAppointmentMessage(
+            context,
+            message: l10n.appointmentCreatedSuccess,
+            type: _AppointmentMessageType.success,
+          );
+          _goToWorkshopProfileOrHome(context);
+        }
       } else {
         _showAppointmentMessage(
           context,
@@ -446,6 +484,7 @@ List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
       l10n.appointmentStepConfirmation,
       Icons.check_circle_outline,
     ),
+    _AppointmentStep(l10n.appointmentStepPayment, Icons.credit_card_outlined),
   ];
 }
 
@@ -1937,11 +1976,6 @@ class _PaymentMethodStep extends StatelessWidget {
         subtitle: l10n.appointmentPaymentCardSubtitle,
         icon: Icons.credit_card_outlined,
       ),
-      _PaymentMethodOption(
-        title: l10n.appointmentPaymentSinpe,
-        subtitle: l10n.appointmentPaymentSinpeSubtitle,
-        icon: Icons.phone_android_outlined,
-      ),
     ];
 
     return Column(
@@ -2733,16 +2767,14 @@ class _ContactInput extends StatelessWidget {
   }
 }
 
-class _ConfirmationMock extends StatelessWidget {
-  const _ConfirmationMock({
+class _BookingReviewStep extends StatelessWidget {
+  const _BookingReviewStep({
     required this.workshopName,
     required this.service,
     required this.licensePlate,
     required this.products,
     required this.date,
     required this.time,
-    required this.paymentMethod,
-    required this.onPaymentMethodSelected,
     required this.onNoteChanged,
     required this.note,
   });
@@ -2753,8 +2785,6 @@ class _ConfirmationMock extends StatelessWidget {
   final List<AppointmentSelectedProduct> products;
   final DateTime? date;
   final String time;
-  final String paymentMethod;
-  final ValueChanged<String> onPaymentMethodSelected;
   final ValueChanged<String> onNoteChanged;
   final String note;
 
@@ -2845,24 +2875,6 @@ class _ConfirmationMock extends StatelessWidget {
               _SummaryRow(
                 label: l10n.appointmentDurationLabel,
                 value: _durationLabel(l10n, service?.estimatedDurationHours),
-              ),
-              _SummaryRow(
-                label: l10n.appointmentPaymentMethodLabel,
-                value: paymentMethod,
-              ),
-              const Divider(height: 28, color: AppColors.border),
-              Text(
-                l10n.appointmentStepPayment,
-                style: const TextStyle(
-                  color: _WorkshopAppointmentPageState.ink,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _PaymentMethodStep(
-                selectedMethod: paymentMethod,
-                onSelected: onPaymentMethodSelected,
               ),
               const Divider(height: 28, color: AppColors.border),
               Text(
@@ -2962,6 +2974,116 @@ class _ConfirmationMock extends StatelessWidget {
     }
 
     return l10n.appointmentDurationHoursMinutes(wholeHours, remainingMinutes);
+  }
+}
+
+class _PaymentStep extends StatelessWidget {
+  const _PaymentStep({
+    required this.service,
+    required this.products,
+    required this.selectedMethod,
+    required this.onSelected,
+  });
+
+  final Product? service;
+  final List<AppointmentSelectedProduct> products;
+  final String selectedMethod;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final servicePrice = service?.sellingPrice ?? 0;
+    final productsTotal = products.fold<double>(
+      0,
+      (total, item) =>
+          total + ((item.product.sellingPrice ?? 0) * item.quantity),
+    );
+    final total = servicePrice + productsTotal;
+    final hasPricelessItems =
+        service?.sellingPrice == null ||
+        products.any((item) => item.product.sellingPrice == null);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x15000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: _appointmentPrimary(context),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.credit_card_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  l10n.appointmentStepPayment,
+                  style: const TextStyle(
+                    color: _WorkshopAppointmentPageState.ink,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          _SummaryRow(
+            label: l10n.appointmentTotalToPayLabel,
+            value: hasPricelessItems
+                ? l10n.appointmentPriceToConfirm
+                : formatProductPrice(total),
+            emphasize: true,
+          ),
+          const Divider(height: 30, color: AppColors.border),
+          _PaymentMethodStep(
+            selectedMethod: selectedMethod,
+            onSelected: onSelected,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.appointmentPaymentCardSubtitle,
+            style: const TextStyle(
+              color: _WorkshopAppointmentPageState.muted,
+              fontSize: 15,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            l10n.appointmentConfirmationDeliveryMessage,
+            style: const TextStyle(
+              color: _WorkshopAppointmentPageState.muted,
+              fontSize: 15,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

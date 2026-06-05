@@ -2614,6 +2614,96 @@ abstract class AppLocalizations {
   /// **'Recibirás las instrucciones para completar el pago.'**
   String get appointmentPaymentSinpeSubtitle;
 
+  /// No description provided for @appointmentMockPaymentBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'Ambiente de prueba'**
+  String get appointmentMockPaymentBadge;
+
+  /// No description provided for @appointmentMockPaymentTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago con tarjeta'**
+  String get appointmentMockPaymentTitle;
+
+  /// No description provided for @appointmentMockPaymentSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta pantalla simula la redirección al proveedor de pago. No se procesará ningún cobro real.'**
+  String get appointmentMockPaymentSubtitle;
+
+  /// No description provided for @appointmentMockPaymentApprovedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago simulado aprobado'**
+  String get appointmentMockPaymentApprovedTitle;
+
+  /// No description provided for @appointmentMockPaymentApprovedSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'La cita fue creada correctamente. En producción, este estado llegará desde la confirmación segura del proveedor de pago.'**
+  String get appointmentMockPaymentApprovedSubtitle;
+
+  /// No description provided for @appointmentMockPaymentAmountLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto'**
+  String get appointmentMockPaymentAmountLabel;
+
+  /// No description provided for @appointmentMockPaymentReferenceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Referencia'**
+  String get appointmentMockPaymentReferenceLabel;
+
+  /// No description provided for @appointmentMockPaymentMerchantLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Comercio'**
+  String get appointmentMockPaymentMerchantLabel;
+
+  /// No description provided for @appointmentMockPaymentApproveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Simular pago aprobado'**
+  String get appointmentMockPaymentApproveAction;
+
+  /// No description provided for @appointmentMockPaymentApprovedAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizar'**
+  String get appointmentMockPaymentApprovedAction;
+
+  /// No description provided for @appointmentMockPaymentBackAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver al taller'**
+  String get appointmentMockPaymentBackAction;
+
+  /// No description provided for @appointmentMockPaymentTimeRemaining.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiempo para completar el pago'**
+  String get appointmentMockPaymentTimeRemaining;
+
+  /// No description provided for @appointmentMockPaymentExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'El tiempo para completar este pago venció. Vuelve al taller y genera una nueva reserva.'**
+  String get appointmentMockPaymentExpired;
+
+  /// No description provided for @appointmentMockPaymentApprovedNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Este pago es una simulación visual. La orden permanece pendiente hasta integrar la confirmación real del proveedor.'**
+  String get appointmentMockPaymentApprovedNotice;
+
+  /// No description provided for @appointmentMockPaymentNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando LaroPay esté integrado, este paso abrirá el navegador seguro y el pago se confirmará por callback.'**
+  String get appointmentMockPaymentNotice;
+
   /// No description provided for @appointmentConfirmationDeliveryMessage.
   ///
   /// In es, this message translates to:

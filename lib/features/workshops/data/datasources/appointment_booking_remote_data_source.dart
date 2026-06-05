@@ -116,7 +116,10 @@ class SupabaseAppointmentBookingRemoteDataSource
     final response = await client
         .from('appointments')
         .select('id, order_services!inner(orders!inner(workshop_id))')
-        .eq('scheduled_datetime', scheduledDateTime.toUtc().toIso8601String())
+        .eq(
+          'scheduled_datetime',
+          _costaRicaLocalTimeToUtc(scheduledDateTime).toIso8601String(),
+        )
         .eq('order_services.orders.workshop_id', workshopId)
         .not('appointment_status', 'in', '(cancelled,no_show)')
         .limit(slotCapacity);
@@ -168,7 +171,8 @@ class SupabaseAppointmentBookingRemoteDataSource
       params: {
         'p_workshop_id': workshopId,
         'p_inventory_item_id': inventoryItemId,
-        'p_scheduled_datetime': scheduledDateTime.toUtc().toIso8601String(),
+        'p_scheduled_date': _formatDate(scheduledDateTime),
+        'p_scheduled_time': _formatTime(scheduledDateTime),
         'p_note': note,
         'p_vehicle_id': vehicleId,
         'p_garage_vehicle_id': garageVehicleId,
@@ -184,6 +188,17 @@ class SupabaseAppointmentBookingRemoteDataSource
     );
 
     return response.toString();
+  }
+
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.year.toString().padLeft(4, '0')}-'
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}:00';
   }
 
   Future<int> _slotCapacityFor({
@@ -222,8 +237,10 @@ class SupabaseAppointmentBookingRemoteDataSource
 }
 
 BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
-  final start = DateTime.tryParse(map['scheduled_datetime'].toString());
-  if (start == null) {
+  final scheduledDateTime = DateTime.tryParse(
+    map['scheduled_datetime'].toString(),
+  );
+  if (scheduledDateTime == null) {
     return null;
   }
 
@@ -236,10 +253,37 @@ BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
       : null;
 
   return BookedAppointmentSlot(
-    start: start,
+    start: _toCostaRicaLocalTime(scheduledDateTime),
     durationMinutes: durationHours == null || durationHours <= 0
         ? null
         : (durationHours * Duration.minutesPerHour).ceil(),
+  );
+}
+
+DateTime _toCostaRicaLocalTime(DateTime dateTime) {
+  final costaRicaTime = dateTime.toUtc().subtract(const Duration(hours: 6));
+  return DateTime(
+    costaRicaTime.year,
+    costaRicaTime.month,
+    costaRicaTime.day,
+    costaRicaTime.hour,
+    costaRicaTime.minute,
+    costaRicaTime.second,
+    costaRicaTime.millisecond,
+    costaRicaTime.microsecond,
+  );
+}
+
+DateTime _costaRicaLocalTimeToUtc(DateTime dateTime) {
+  return DateTime.utc(
+    dateTime.year,
+    dateTime.month,
+    dateTime.day,
+    dateTime.hour + 6,
+    dateTime.minute,
+    dateTime.second,
+    dateTime.millisecond,
+    dateTime.microsecond,
   );
 }
 

@@ -151,8 +151,8 @@ class WorkshopAvailabilityCalculator {
     final bookedServiceIntervals = bookedIntervals
         .map(
           (slot) => _TimeInterval(
-            slot.start.toLocal(),
-            slot.start.toLocal().add(
+            slot.start,
+            slot.start.add(
               Duration(
                 minutes: _serviceDurationMinutesFromMinutes(
                   slot.durationMinutes,
@@ -210,9 +210,12 @@ class WorkshopAvailabilityCalculator {
     final bookedByDate = <DateTime, Set<String>>{};
 
     for (final slot in bookedSlots) {
-      final localSlot = slot.start.toLocal();
-      final dateKey = DateTime(localSlot.year, localSlot.month, localSlot.day);
-      final timeKey = _formatTime(localSlot);
+      final dateKey = DateTime(
+        slot.start.year,
+        slot.start.month,
+        slot.start.day,
+      );
+      final timeKey = _formatTime(slot.start);
 
       bookedByDate.putIfAbsent(dateKey, () => <String>{}).add(timeKey);
     }
@@ -226,14 +229,17 @@ class WorkshopAvailabilityCalculator {
     final bookedByDate = <DateTime, List<BookedAppointmentSlot>>{};
 
     for (final slot in bookedSlots) {
-      final localSlot = slot.start.toLocal();
-      final dateKey = DateTime(localSlot.year, localSlot.month, localSlot.day);
+      final dateKey = DateTime(
+        slot.start.year,
+        slot.start.month,
+        slot.start.day,
+      );
 
       bookedByDate
           .putIfAbsent(dateKey, () => <BookedAppointmentSlot>[])
           .add(
             BookedAppointmentSlot(
-              start: localSlot,
+              start: slot.start,
               durationMinutes: slot.durationMinutes,
             ),
           );
