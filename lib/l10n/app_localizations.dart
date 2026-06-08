@@ -2608,23 +2608,11 @@ abstract class AppLocalizations {
   /// **'Tarjeta'**
   String get appointmentPaymentCard;
 
-  /// No description provided for @appointmentPaymentSinpe.
-  ///
-  /// In es, this message translates to:
-  /// **'SINPE Móvil'**
-  String get appointmentPaymentSinpe;
-
   /// No description provided for @appointmentPaymentCardSubtitle.
   ///
   /// In es, this message translates to:
   /// **'Pago con tarjeta de crédito o débito.'**
   String get appointmentPaymentCardSubtitle;
-
-  /// No description provided for @appointmentPaymentSinpeSubtitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Recibirás las instrucciones para completar el pago.'**
-  String get appointmentPaymentSinpeSubtitle;
 
   /// No description provided for @appointmentMockPaymentBadge.
   ///

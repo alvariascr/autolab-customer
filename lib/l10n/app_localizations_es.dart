@@ -1423,15 +1423,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPaymentCard => 'Tarjeta';
 
   @override
-  String get appointmentPaymentSinpe => 'SINPE Móvil';
-
-  @override
   String get appointmentPaymentCardSubtitle =>
       'Pago con tarjeta de crédito o débito.';
-
-  @override
-  String get appointmentPaymentSinpeSubtitle =>
-      'Recibirás las instrucciones para completar el pago.';
 
   @override
   String get appointmentMockPaymentBadge => 'Ambiente de prueba';
