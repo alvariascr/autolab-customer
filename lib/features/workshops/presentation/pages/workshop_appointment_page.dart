@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/di/app_injection.dart';
@@ -93,37 +94,44 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     required List<_AppointmentStep> steps,
     required bool isDesktop,
   }) {
-    return Column(
+    final isSubmitting =
+        state.submitStatus == AppointmentSubmitStatus.submitting;
+
+    return Stack(
       children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              isDesktop ? 92 : 28,
-              isDesktop ? 96 : 22,
-              isDesktop ? 92 : 28,
-              32,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1224),
-                child: _buildStepContent(
-                  context: context,
-                  state: state,
-                  steps: steps,
-                  isDesktop: isDesktop,
+        Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  isDesktop ? 92 : 28,
+                  isDesktop ? 96 : 22,
+                  isDesktop ? 92 : 28,
+                  32,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1224),
+                    child: _buildStepContent(
+                      context: context,
+                      state: state,
+                      steps: steps,
+                      isDesktop: isDesktop,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            _FooterActions(
+              canGoBack: state.currentStep > 0,
+              isLastStep: state.currentStep == steps.length - 1,
+              isSubmitting: isSubmitting,
+              onBack: () => _handleBack(context, state),
+              onNext: () => _goNextStep(context, state, steps.length),
+            ),
+          ],
         ),
-        _FooterActions(
-          canGoBack: state.currentStep > 0,
-          isLastStep: state.currentStep == steps.length - 1,
-          isSubmitting:
-              state.submitStatus == AppointmentSubmitStatus.submitting,
-          onBack: () => _handleBack(context, state),
-          onNext: () => _goNextStep(context, state, steps.length),
-        ),
+        if (isSubmitting) const _BookingSubmittingOverlay(),
       ],
     );
   }
@@ -245,10 +253,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
   }
 
-  String _appointmentTotalLabel(
-    AppointmentState state,
-    AppLocalizations l10n,
-  ) {
+  String _appointmentTotalLabel(AppointmentState state, AppLocalizations l10n) {
     final servicePrice = state.selectedService?.sellingPrice ?? 0;
     final productsTotal = state.selectedProducts.fold<double>(
       0,
@@ -257,9 +262,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     );
     final hasPricelessItems =
         state.selectedService?.sellingPrice == null ||
-        state.selectedProducts.any(
-          (item) => item.product.sellingPrice == null,
-        );
+        state.selectedProducts.any((item) => item.product.sellingPrice == null);
 
     return hasPricelessItems
         ? l10n.appointmentPriceToConfirm
@@ -298,7 +301,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }
 
   void _goToWorkshopProfileOrHome(BuildContext context) {
-    context.go('/workshops/${widget.workshopId}');
+    final workshopId = widget.workshopId.trim();
+    context.go(
+      workshopId.isEmpty ? '/home-customer' : '/workshops/$workshopId',
+    );
   }
 
   Future<void> _goNextStep(
@@ -2091,6 +2097,76 @@ class _PaymentMethodOption {
   final IconData icon;
 }
 
+class _BookingSubmittingOverlay extends StatelessWidget {
+  const _BookingSubmittingOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Positioned.fill(
+      child: AbsorbPointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+          ),
+          child: Center(
+            child: Container(
+              width: 280,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: AppColors.border),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: _appointmentPrimary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    l10n.appointmentCreatingTitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: _WorkshopAppointmentPageState.ink,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.appointmentCreatingMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: _WorkshopAppointmentPageState.muted,
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FooterActions extends StatelessWidget {
   const _FooterActions({
     required this.canGoBack,
@@ -2796,7 +2872,7 @@ class _BookingReviewStep extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final dayLabel = date == null
         ? l10n.appointmentPendingDate
-        : '${date!.day} de ${_monthName(date!.month)} ${date!.year}';
+        : '${date!.day} de ${_monthName(context, date!)} ${date!.year}';
     final servicePrice = service?.sellingPrice ?? 0;
     final productsTotal = products.fold<double>(
       0,
@@ -2943,23 +3019,10 @@ class _BookingReviewStep extends StatelessWidget {
     );
   }
 
-  String _monthName(int month) {
-    const names = [
-      'enero',
-      'febrero',
-      'marzo',
-      'abril',
-      'mayo',
-      'junio',
-      'julio',
-      'agosto',
-      'septiembre',
-      'octubre',
-      'noviembre',
-      'diciembre',
-    ];
-
-    return names[month - 1];
+  String _monthName(BuildContext context, DateTime date) {
+    return DateFormat.MMMM(
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(date);
   }
 
   String _durationLabel(AppLocalizations l10n, double? hours) {

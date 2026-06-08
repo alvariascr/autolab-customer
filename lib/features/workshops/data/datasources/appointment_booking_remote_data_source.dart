@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/utils/costa_rica_time.dart';
 import '../../domain/entities/appointment_vehicle.dart';
 import '../../domain/entities/booked_appointment_slot.dart';
 
@@ -115,16 +116,19 @@ class SupabaseAppointmentBookingRemoteDataSource
     );
     final response = await client
         .from('appointments')
-        .select('id, order_services!inner(orders!inner(workshop_id))')
+        .select(
+          'id, order_services!inner(orders!inner(workshop_id, payment_status, payment_expires_at))',
+        )
         .eq(
           'scheduled_datetime',
-          _costaRicaLocalTimeToUtc(scheduledDateTime).toIso8601String(),
+          costaRicaLocalTimeToUtc(scheduledDateTime).toIso8601String(),
         )
         .eq('order_services.orders.workshop_id', workshopId)
-        .not('appointment_status', 'in', '(cancelled,no_show)')
-        .limit(slotCapacity);
+        .not('appointment_status', 'in', '(cancelled,no_show)');
 
-    return response.length < slotCapacity;
+    final blockingAppointments = response.where(_isBlockingAppointment).length;
+
+    return blockingAppointments < slotCapacity;
   }
 
   @override
@@ -136,14 +140,21 @@ class SupabaseAppointmentBookingRemoteDataSource
     final response = await client
         .from('appointments')
         .select(
-          'scheduled_datetime, order_services!inner(inventory_items!inner(estimated_duration_hours), orders!inner(workshop_id))',
+          'scheduled_datetime, order_services!inner(inventory_items!inner(estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
         )
-        .gte('scheduled_datetime', startDate.toUtc().toIso8601String())
-        .lt('scheduled_datetime', endDate.toUtc().toIso8601String())
+        .gte(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(startDate).toIso8601String(),
+        )
+        .lt(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(endDate).toIso8601String(),
+        )
         .eq('order_services.orders.workshop_id', workshopId)
         .not('appointment_status', 'in', '(cancelled,no_show)');
 
     return response
+        .where(_isBlockingAppointment)
         .map(_bookedAppointmentSlotFromMap)
         .whereType<BookedAppointmentSlot>()
         .toList();
@@ -225,14 +236,7 @@ class SupabaseAppointmentBookingRemoteDataSource
         ? value
         : int.tryParse(value?.toString() ?? '');
 
-    if (capacity == null || capacity <= 0) {
-      throw StateError(
-        'Invalid slot_capacity "$value" for workshop $workshopId '
-        'and day_of_week $dayOfWeek',
-      );
-    }
-
-    return capacity;
+    return capacity == null || capacity <= 0 ? 1 : capacity;
   }
 }
 
@@ -253,38 +257,34 @@ BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
       : null;
 
   return BookedAppointmentSlot(
-    start: _toCostaRicaLocalTime(scheduledDateTime),
+    start: utcToCostaRicaLocalTime(scheduledDateTime),
     durationMinutes: durationHours == null || durationHours <= 0
         ? null
         : (durationHours * Duration.minutesPerHour).ceil(),
   );
 }
 
-DateTime _toCostaRicaLocalTime(DateTime dateTime) {
-  final costaRicaTime = dateTime.toUtc().subtract(const Duration(hours: 6));
-  return DateTime(
-    costaRicaTime.year,
-    costaRicaTime.month,
-    costaRicaTime.day,
-    costaRicaTime.hour,
-    costaRicaTime.minute,
-    costaRicaTime.second,
-    costaRicaTime.millisecond,
-    costaRicaTime.microsecond,
-  );
-}
+bool _isBlockingAppointment(Map<String, dynamic> map) {
+  final orderService = map['order_services'];
+  final order = orderService is Map<String, dynamic>
+      ? orderService['orders']
+      : null;
+  if (order is! Map<String, dynamic>) {
+    return true;
+  }
 
-DateTime _costaRicaLocalTimeToUtc(DateTime dateTime) {
-  return DateTime.utc(
-    dateTime.year,
-    dateTime.month,
-    dateTime.day,
-    dateTime.hour + 6,
-    dateTime.minute,
-    dateTime.second,
-    dateTime.millisecond,
-    dateTime.microsecond,
+  final paymentStatus = order['payment_status']?.toString();
+  final paymentExpiresAt = DateTime.tryParse(
+    order['payment_expires_at']?.toString() ?? '',
   );
+
+  if (paymentStatus == 'unpaid' &&
+      paymentExpiresAt != null &&
+      !paymentExpiresAt.toUtc().isAfter(DateTime.now().toUtc())) {
+    return false;
+  }
+
+  return true;
 }
 
 double? _parseDouble(Object? value) {

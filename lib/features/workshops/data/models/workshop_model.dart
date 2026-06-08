@@ -66,7 +66,7 @@ class WorkshopModel extends Workshop {
             openTime: item['open_time']?.toString() ?? '',
             closeTime: item['close_time']?.toString() ?? '',
             isClosed: item['is_closed'] == true,
-            slotCapacity: _toPositiveInt(item['slot_capacity']),
+            slotCapacity: _toPositiveIntOrDefault(item['slot_capacity']),
           ),
         )
         .toList();
@@ -92,10 +92,10 @@ class WorkshopModel extends Workshop {
         .toList();
   }
 
-  static int _toPositiveInt(dynamic value) {
+  static int _toPositiveIntOrDefault(dynamic value) {
     final parsed = value is int ? value : int.tryParse(value?.toString() ?? '');
     if (parsed == null || parsed <= 0) {
-      throw FormatException('Invalid positive integer value', value);
+      return 1;
     }
 
     return parsed;

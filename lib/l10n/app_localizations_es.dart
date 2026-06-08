@@ -1359,6 +1359,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentCreatingAction => 'CREANDO';
 
   @override
+  String get appointmentCreatingTitle => 'Creando cita';
+
+  @override
+  String get appointmentCreatingMessage =>
+      'Estamos confirmando tu reserva. No cierres esta pantalla.';
+
+  @override
   String get appointmentConfirmAction => 'CONFIRMAR CITA';
 
   @override

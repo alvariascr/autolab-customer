@@ -468,6 +468,8 @@
   "appointmentExitAction": "SALIR",
   "appointmentNewServiceAction": "NUEVO SERVICIO",
   "appointmentCreatingAction": "CREANDO",
+  "appointmentCreatingTitle": "Creando cita",
+  "appointmentCreatingMessage": "Estamos confirmando tu reserva. No cierres esta pantalla.",
   "appointmentConfirmAction": "CONFIRMAR CITA",
   "appointmentFinishAction": "FINALIZAR",
   "appointmentPayAction": "PAGAR",

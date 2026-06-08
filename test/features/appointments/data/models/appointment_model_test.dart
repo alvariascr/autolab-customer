@@ -142,7 +142,7 @@ void main() {
           'status': 'scheduled',
         });
 
-        expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+        expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       },
     );
 
@@ -219,7 +219,7 @@ void main() {
       expect(model.serviceId, 'service-1');
       expect(model.vehicleType, 'AUTOMOVIL');
       expect(model.status, 'scheduled');
-      expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       expect(model.notes, 'Revisar frenos');
     });
 

@@ -2488,6 +2488,18 @@ abstract class AppLocalizations {
   /// **'CREANDO'**
   String get appointmentCreatingAction;
 
+  /// No description provided for @appointmentCreatingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Creando cita'**
+  String get appointmentCreatingTitle;
+
+  /// No description provided for @appointmentCreatingMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos confirmando tu reserva. No cierres esta pantalla.'**
+  String get appointmentCreatingMessage;
+
   /// No description provided for @appointmentConfirmAction.
   ///
   /// In es, this message translates to:

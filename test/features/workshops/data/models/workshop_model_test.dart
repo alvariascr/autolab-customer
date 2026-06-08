@@ -64,27 +64,26 @@ void main() {
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
     });
 
-    test('rechaza slot_capacity invalido del backend', () {
-      expect(
-        () => WorkshopModel.fromMap({
-          'id': 'workshop-1',
-          'name': 'Autolab Escazu',
-          'description': 'Mantenimiento general',
-          'location_address': 'Escazu Centro',
-          'avatar_url': '',
-          'cover_url': '',
-          'business_hours': [
-            {
-              'day_of_week': 0,
-              'open_time': '08:00:00',
-              'close_time': '17:00:00',
-              'is_closed': false,
-              'slot_capacity': 0,
-            },
-          ],
-        }),
-        throwsFormatException,
-      );
+    test('usa capacidad por defecto cuando slot_capacity es invalido', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-1',
+        'name': 'Autolab Escazu',
+        'description': 'Mantenimiento general',
+        'location_address': 'Escazu Centro',
+        'avatar_url': '',
+        'cover_url': '',
+        'business_hours': [
+          {
+            'day_of_week': 0,
+            'open_time': '08:00:00',
+            'close_time': '17:00:00',
+            'is_closed': false,
+            'slot_capacity': 0,
+          },
+        ],
+      });
+
+      expect(model.businessHours.single.slotCapacity, 1);
     });
 
     test('ordena horarios por dia de semana ascendente', () {

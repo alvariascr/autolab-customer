@@ -614,10 +614,6 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   }
 
   bool _isUnavailableDate(DateTime date) {
-    if (isSameDay(date, DateTime.now())) {
-      return false;
-    }
-
     return state.unavailableDates.any((unavailableDate) {
       return isSameDay(unavailableDate, date);
     });

@@ -8,26 +8,6 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
 
   final SupabaseClient client;
 
-  static const _appointmentSelect = '''
-    id,
-    customer_id,
-    workshop_id,
-    service_id,
-    customer_name,
-    customer_phone,
-    customer_email,
-    vehicle_type,
-    scheduled_at,
-    status,
-    payment_method,
-    notes,
-    total_amount,
-    created_at,
-    workshops(name, avatar_url),
-    inventory_items(name),
-    appointment_products(product_id, quantity, unit_price)
-  ''';
-
   static const _appointmentBaseSelect = '''
     id,
     order_service_id,
@@ -128,9 +108,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     try {
       final response = await client
           .from('appointments')
-          .select(_appointmentSelect)
+          .select(_customerAppointmentSelect)
           .eq('id', id)
-          .eq('customer_id', customerId)
+          .eq('order_services.orders.customers.user_id', customerId)
           .single();
 
       return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
