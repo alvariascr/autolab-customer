@@ -2487,7 +2487,6 @@ class _AppointmentCalendar extends StatelessWidget {
           selectedDayPredicate: (day) =>
               selectedDate != null && isSameDay(day, selectedDate),
           onDaySelected: (selected, focused) {
-            onFocusedDateChanged(focused);
             onDaySelected(selected);
           },
           onPageChanged: onFocusedDateChanged,

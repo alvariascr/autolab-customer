@@ -58,177 +58,185 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
     final isExpired = _remaining == Duration.zero;
     final canApprove = !isExpired && !_isApproved;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: widget.onClose,
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          widget.onClose();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7F7F7),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: widget.onClose,
+                      icon: const Icon(Icons.close_rounded),
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFECEA),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: primary),
-                    ),
-                    child: Text(
-                      l10n.appointmentMockPaymentBadge,
-                      style: TextStyle(
-                        color: primary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 18, 28, 28),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x18000000),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
+                        color: const Color(0xFFFFECEA),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: primary),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: primary,
-                              shape: BoxShape.circle,
+                      child: Text(
+                        l10n.appointmentMockPaymentBadge,
+                        style: TextStyle(
+                          color: primary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(28, 18, 28, 28),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 520),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x18000000),
+                              blurRadius: 18,
+                              offset: Offset(0, 8),
                             ),
-                            child: const Icon(
-                              Icons.credit_card_outlined,
-                              color: Colors.white,
-                              size: 34,
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          Text(
-                            _isApproved
-                                ? l10n.appointmentMockPaymentApprovedTitle
-                                : l10n.appointmentMockPaymentTitle,
-                            style: const TextStyle(
-                              color: AppColors.ink,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _isApproved
-                                ? l10n.appointmentMockPaymentApprovedSubtitle
-                                : l10n.appointmentMockPaymentSubtitle,
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 16,
-                              height: 1.35,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Divider(height: 34, color: AppColors.border),
-                          if (_isApproved)
-                            _MockPaymentStatusCard(
-                              icon: Icons.check_circle_outline,
-                              message: l10n.appointmentCreatedSuccess,
-                              color: const Color(0xFF167A3A),
-                              background: const Color(0xFFEAF7EF),
-                            )
-                          else
-                            _MockPaymentTimer(
-                              remaining: _remaining,
-                              isExpired: isExpired,
-                            ),
-                          const SizedBox(height: 18),
-                          _MockPaymentDetailRow(
-                            label: l10n.appointmentMockPaymentAmountLabel,
-                            value: widget.amountLabel,
-                            emphasize: true,
-                          ),
-                          _MockPaymentDetailRow(
-                            label: l10n.appointmentMockPaymentMerchantLabel,
-                            value: widget.workshopName,
-                          ),
-                          _MockPaymentDetailRow(
-                            label: l10n.appointmentMockPaymentReferenceLabel,
-                            value: widget.appointmentId,
-                          ),
-                          const SizedBox(height: 22),
-                          _MockPaymentNotice(
-                            message: _isApproved
-                                ? l10n.appointmentMockPaymentApprovedNotice
-                                : isExpired
-                                ? l10n.appointmentMockPaymentExpired
-                                : l10n.appointmentMockPaymentNotice,
-                          ),
-                          const SizedBox(height: 26),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 58,
-                            child: ElevatedButton.icon(
-                              onPressed: _isApproved
-                                  ? widget.onClose
-                                  : canApprove
-                                  ? _approvePayment
-                                  : null,
-                              icon: Icon(
-                                _isApproved
-                                    ? Icons.check_circle_outline
-                                    : Icons.check_rounded,
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: primary,
+                                shape: BoxShape.circle,
                               ),
-                              label: Text(
-                                _isApproved
-                                    ? l10n.appointmentMockPaymentApprovedAction
-                                    : l10n.appointmentMockPaymentApproveAction,
+                              child: const Icon(
+                                Icons.credit_card_outlined,
+                                color: Colors.white,
+                                size: 34,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 58,
-                            child: OutlinedButton(
-                              onPressed: widget.onClose,
-                              child: Text(
-                                l10n.appointmentMockPaymentBackAction,
+                            const SizedBox(height: 22),
+                            Text(
+                              _isApproved
+                                  ? l10n.appointmentMockPaymentApprovedTitle
+                                  : l10n.appointmentMockPaymentTitle,
+                              style: const TextStyle(
+                                color: AppColors.ink,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 10),
+                            Text(
+                              _isApproved
+                                  ? l10n.appointmentMockPaymentApprovedSubtitle
+                                  : l10n.appointmentMockPaymentSubtitle,
+                              style: const TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 16,
+                                height: 1.35,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Divider(height: 34, color: AppColors.border),
+                            if (_isApproved)
+                              _MockPaymentStatusCard(
+                                icon: Icons.check_circle_outline,
+                                message: l10n.appointmentCreatedSuccess,
+                                color: const Color(0xFF167A3A),
+                                background: const Color(0xFFEAF7EF),
+                              )
+                            else
+                              _MockPaymentTimer(
+                                remaining: _remaining,
+                                isExpired: isExpired,
+                              ),
+                            const SizedBox(height: 18),
+                            _MockPaymentDetailRow(
+                              label: l10n.appointmentMockPaymentAmountLabel,
+                              value: widget.amountLabel,
+                              emphasize: true,
+                            ),
+                            _MockPaymentDetailRow(
+                              label: l10n.appointmentMockPaymentMerchantLabel,
+                              value: widget.workshopName,
+                            ),
+                            _MockPaymentDetailRow(
+                              label: l10n.appointmentMockPaymentReferenceLabel,
+                              value: widget.appointmentId,
+                            ),
+                            const SizedBox(height: 22),
+                            _MockPaymentNotice(
+                              message: _isApproved
+                                  ? l10n.appointmentMockPaymentApprovedNotice
+                                  : isExpired
+                                  ? l10n.appointmentMockPaymentExpired
+                                  : l10n.appointmentMockPaymentNotice,
+                            ),
+                            const SizedBox(height: 26),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 58,
+                              child: ElevatedButton.icon(
+                                onPressed: _isApproved
+                                    ? widget.onClose
+                                    : canApprove
+                                    ? _approvePayment
+                                    : null,
+                                icon: Icon(
+                                  _isApproved
+                                      ? Icons.check_circle_outline
+                                      : Icons.check_rounded,
+                                ),
+                                label: Text(
+                                  _isApproved
+                                      ? l10n.appointmentMockPaymentApprovedAction
+                                      : l10n.appointmentMockPaymentApproveAction,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 58,
+                              child: OutlinedButton(
+                                onPressed: widget.onClose,
+                                child: Text(
+                                  l10n.appointmentMockPaymentBackAction,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

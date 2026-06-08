@@ -466,6 +466,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       return null;
     }
 
+    if (state.createdAppointmentId != null) {
+      return state.createdAppointmentId;
+    }
+
     if (workshopId.isEmpty ||
         selectedService == null ||
         selectedDate == null ||
