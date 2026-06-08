@@ -285,10 +285,7 @@ class _MockPaymentStatusCard extends StatelessWidget {
 }
 
 class _MockPaymentTimer extends StatelessWidget {
-  const _MockPaymentTimer({
-    required this.remaining,
-    required this.isExpired,
-  });
+  const _MockPaymentTimer({required this.remaining, required this.isExpired});
 
   final Duration remaining;
   final bool isExpired;
