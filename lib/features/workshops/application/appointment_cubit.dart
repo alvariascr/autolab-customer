@@ -338,7 +338,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     emit(state.copyWith(selectedTime: time));
   }
 
-  void selectPaymentMethod(String method) {
+  void selectPaymentMethod(AppointmentPaymentMethod method) {
     emit(state.copyWith(selectedPaymentMethod: method));
   }
 
@@ -643,7 +643,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         'Combustible: ${state.vehicleFuelType}',
       if (state.vehicleTransmissionType != null)
         'Transmision: ${state.vehicleTransmissionType}',
-      'Metodo de pago: ${state.selectedPaymentMethod}',
+      'Metodo de pago: ${state.selectedPaymentMethod.noteLabel}',
     ];
 
     final customerNote = state.customerNote.trim();

@@ -324,7 +324,8 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
       final submitState = cubit.state;
       if (appointmentId != null) {
-        if (submitState.selectedPaymentMethod == l10n.appointmentPaymentCard) {
+        if (submitState.selectedPaymentMethod ==
+            AppointmentPaymentMethod.card) {
           await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => MockCardPaymentPage(
@@ -1973,14 +1974,15 @@ class _PaymentMethodStep extends StatelessWidget {
     required this.onSelected,
   });
 
-  final String selectedMethod;
-  final ValueChanged<String> onSelected;
+  final AppointmentPaymentMethod selectedMethod;
+  final ValueChanged<AppointmentPaymentMethod> onSelected;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final methods = [
       _PaymentMethodOption(
+        method: AppointmentPaymentMethod.card,
         title: l10n.appointmentPaymentCard,
         subtitle: l10n.appointmentPaymentCardSubtitle,
         icon: Icons.credit_card_outlined,
@@ -1989,14 +1991,14 @@ class _PaymentMethodStep extends StatelessWidget {
 
     return Column(
       children: methods.map((method) {
-        final selected = selectedMethod == method.title;
+        final selected = selectedMethod == method.method;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: _PaymentMethodCard(
             option: method,
             selected: selected,
-            onTap: () => onSelected(method.title),
+            onTap: () => onSelected(method.method),
           ),
         );
       }).toList(),
@@ -2087,11 +2089,13 @@ class _PaymentMethodCard extends StatelessWidget {
 
 class _PaymentMethodOption {
   const _PaymentMethodOption({
+    required this.method,
     required this.title,
     required this.subtitle,
     required this.icon,
   });
 
+  final AppointmentPaymentMethod method;
   final String title;
   final String subtitle;
   final IconData icon;
@@ -3053,8 +3057,8 @@ class _PaymentStep extends StatelessWidget {
 
   final Product? service;
   final List<AppointmentSelectedProduct> products;
-  final String selectedMethod;
-  final ValueChanged<String> onSelected;
+  final AppointmentPaymentMethod selectedMethod;
+  final ValueChanged<AppointmentPaymentMethod> onSelected;
 
   @override
   Widget build(BuildContext context) {
