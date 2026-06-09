@@ -38,12 +38,12 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
-    vehicles(vehicle_type),
+    vehicles(vehicle_type, license_plate),
     order_services!inner(
       inventory_item_id,
       orders!inner(
         workshop_id,
-        customers!inner(user_id)
+        customers!inner(id, updated_by)
       )
     )
   ''';
@@ -58,7 +58,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
-    vehicles(vehicle_type),
+    vehicles(vehicle_type, license_plate),
     order_services!inner(
       id,
       inventory_item_id,
@@ -67,7 +67,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
         id,
         workshop_id,
         workshops(name, avatar_url),
-        customers!inner(user_id)
+        customers!inner(id, updated_by)
       )
     )
   ''';
@@ -103,7 +103,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
       fallbackSelect: _appointmentBaseSelect,
       filters: (query) => query
           .eq('order_services.orders.workshop_id', workshopId)
-          .eq('order_services.orders.customers.user_id', customerId)
+          .eq('order_services.orders.customers.updated_by', customerId)
           .order('scheduled_datetime'),
     );
   }
@@ -116,9 +116,52 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
       select: _customerAppointmentSelect,
       fallbackSelect: _appointmentBaseSelect,
       filters: (query) => query
-          .eq('order_services.orders.customers.user_id', customerId)
+          .eq('order_services.orders.customers.updated_by', customerId)
           .order('scheduled_datetime'),
     );
+  }
+
+  @override
+  Future<AppointmentModel> cancelAppointment({
+    required String appointmentId,
+    required String customerId,
+    required String reason,
+    String? comments,
+  }) async {
+    await _getAppointmentById(appointmentId, customerId: customerId);
+
+    await client.rpc<void>(
+      'cancel_customer_appointment',
+      params: {
+        'p_appointment_id': appointmentId,
+        'p_reason': reason,
+        'p_comments': comments,
+      },
+    );
+
+    return _getAppointmentById(appointmentId, customerId: customerId);
+  }
+
+  @override
+  Future<AppointmentModel> rescheduleAppointment({
+    required String appointmentId,
+    required String customerId,
+    required DateTime scheduledAt,
+  }) async {
+    await _getAppointmentById(appointmentId, customerId: customerId);
+
+    await client
+        .from('appointments')
+        .update({
+          'scheduled_datetime': scheduledAt.toUtc().toIso8601String(),
+          'appointment_status': 'scheduled',
+          'updated_by': customerId,
+        })
+        .eq('id', appointmentId)
+        .select('id')
+        .single();
+
+    return _getAppointmentById(appointmentId, customerId: customerId);
   }
 
   Future<AppointmentModel> _getAppointmentById(
@@ -128,9 +171,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     try {
       final response = await client
           .from('appointments')
-          .select(_appointmentSelect)
+          .select(_customerAppointmentSelect)
           .eq('id', id)
-          .eq('customer_id', customerId)
+          .eq('order_services.orders.customers.updated_by', customerId)
           .single();
 
       return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
@@ -141,9 +184,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
 
       final response = await client
           .from('appointments')
-          .select(_appointmentBaseSelect)
+          .select(_appointmentSelect)
           .eq('id', id)
-          .eq('order_services.orders.customers.user_id', customerId)
+          .eq('customer_id', customerId)
           .single();
 
       return AppointmentModel.fromMap(Map<String, dynamic>.from(response));

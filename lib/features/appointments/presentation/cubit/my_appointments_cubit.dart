@@ -32,6 +32,102 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
     result.fold(_emitFailure, _emitSuccess);
   }
 
+  Future<bool> cancelAppointment({
+    required Appointment appointment,
+    required String reason,
+    String? comments,
+  }) async {
+    if (state.cancelingAppointmentId != null) {
+      return false;
+    }
+
+    emit(
+      state.copyWith(
+        cancelingAppointmentId: appointment.id,
+        clearMessage: true,
+        clearCode: true,
+      ),
+    );
+
+    final result = await _repository.cancelAppointment(
+      appointmentId: appointment.id,
+      reason: reason,
+      comments: comments,
+    );
+    if (isClosed) {
+      return false;
+    }
+
+    return result.fold(
+      (failure) {
+        emit(
+          state.copyWith(
+            message: failure.message,
+            code: failure.code,
+            clearCancelingAppointmentId: true,
+          ),
+        );
+        return false;
+      },
+      (updated) {
+        final appointments = state.appointments.map((current) {
+          return current.id == updated.id ? updated : current;
+        }).toList();
+
+        _emitSuccess(appointments);
+        emit(state.copyWith(clearCancelingAppointmentId: true));
+        return true;
+      },
+    );
+  }
+
+  Future<Appointment?> rescheduleAppointment({
+    required Appointment appointment,
+    required DateTime scheduledAt,
+  }) async {
+    if (state.reschedulingAppointmentId != null) {
+      return null;
+    }
+
+    emit(
+      state.copyWith(
+        reschedulingAppointmentId: appointment.id,
+        clearMessage: true,
+        clearCode: true,
+      ),
+    );
+
+    final result = await _repository.rescheduleAppointment(
+      appointmentId: appointment.id,
+      scheduledAt: scheduledAt,
+    );
+    if (isClosed) {
+      return null;
+    }
+
+    return result.fold(
+      (failure) {
+        emit(
+          state.copyWith(
+            message: failure.message,
+            code: failure.code,
+            clearReschedulingAppointmentId: true,
+          ),
+        );
+        return null;
+      },
+      (updated) {
+        final appointments = state.appointments.map((current) {
+          return current.id == updated.id ? updated : current;
+        }).toList();
+
+        _emitSuccess(appointments);
+        emit(state.copyWith(clearReschedulingAppointmentId: true));
+        return updated;
+      },
+    );
+  }
+
   void _emitFailure(Failure failure) {
     if (isClosed) {
       return;

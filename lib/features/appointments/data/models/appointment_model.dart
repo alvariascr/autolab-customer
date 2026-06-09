@@ -10,6 +10,7 @@ class AppointmentModel extends Appointment {
     required super.customerPhone,
     required super.customerEmail,
     required super.vehicleType,
+    super.vehiclePlate,
     required super.scheduledAt,
     required super.status,
     super.workshopName,
@@ -42,6 +43,9 @@ class AppointmentModel extends Appointment {
         map['vehicle_type'],
         _nestedValue(map, ['vehicles', 'vehicle_type']),
       ], 'vehicle_type'),
+      vehiclePlate:
+          _nullableString(map['vehicle_plate']) ??
+          _nestedString(map, ['vehicles', 'license_plate']),
       scheduledAt: _requiredDateTime(
         map['scheduled_at'] ?? map['scheduled_datetime'],
         'scheduled_at',
@@ -108,6 +112,7 @@ class AppointmentModel extends Appointment {
       'customer_phone': customerPhone,
       'customer_email': customerEmail,
       'vehicle_type': vehicleType,
+      'vehicle_plate': vehiclePlate,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
       'status': status,
       'payment_method': paymentMethod,
@@ -124,7 +129,7 @@ class AppointmentModel extends Appointment {
           'order_services',
           'orders',
           'customers',
-          'user_id',
+          'updated_by',
         ]);
   }
 
@@ -236,14 +241,14 @@ class AppointmentModel extends Appointment {
 
   static DateTime? _nullableDateTime(dynamic value) {
     if (value is DateTime) {
-      return value;
+      return value.toLocal();
     }
 
     if (value == null) {
       return null;
     }
 
-    return DateTime.tryParse(value.toString());
+    return DateTime.tryParse(value.toString())?.toLocal();
   }
 
   static double? _nullableMoney(dynamic value, String fieldName) {

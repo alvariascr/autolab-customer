@@ -73,6 +73,48 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     );
   }
 
+  @override
+  Future<Either<Failure, Appointment>> cancelAppointment({
+    required String appointmentId,
+    required String reason,
+    String? comments,
+  }) {
+    return _guard(
+      action: 'cancel_appointment',
+      context: {'appointmentId': appointmentId},
+      loader: () async {
+        final customerId = _currentCustomerId();
+
+        return remoteDataSource.cancelAppointment(
+          appointmentId: appointmentId,
+          customerId: customerId,
+          reason: reason,
+          comments: comments,
+        );
+      },
+    );
+  }
+
+  @override
+  Future<Either<Failure, Appointment>> rescheduleAppointment({
+    required String appointmentId,
+    required DateTime scheduledAt,
+  }) {
+    return _guard(
+      action: 'reschedule_appointment',
+      context: {'appointmentId': appointmentId},
+      loader: () async {
+        final customerId = _currentCustomerId();
+
+        return remoteDataSource.rescheduleAppointment(
+          appointmentId: appointmentId,
+          customerId: customerId,
+          scheduledAt: scheduledAt,
+        );
+      },
+    );
+  }
+
   Future<Either<Failure, T>> _guard<T>({
     required String action,
     required Future<T> Function() loader,

@@ -504,6 +504,139 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myAppointmentsStatusConfirmed => 'Programada';
 
   @override
+  String get myAppointmentDetailTitle => 'Detalle de cita';
+
+  @override
+  String get myAppointmentDetailPlate => 'Placa';
+
+  @override
+  String get myAppointmentDetailVehicle => 'Vehículo';
+
+  @override
+  String get myAppointmentDetailDate => 'Fecha';
+
+  @override
+  String get myAppointmentDetailTime => 'Hora';
+
+  @override
+  String get myAppointmentDetailTotal => 'Total a pagar';
+
+  @override
+  String get myAppointmentDetailItems => 'Productos y servicios';
+
+  @override
+  String get myAppointmentDetailPaymentMethod => 'Método de pago';
+
+  @override
+  String get myAppointmentDetailNotAvailable => 'No disponible';
+
+  @override
+  String get myAppointmentRescheduleAction => 'Reagendar';
+
+  @override
+  String get myAppointmentRescheduleSoon =>
+      'La opción de reagendar estará disponible pronto.';
+
+  @override
+  String get myAppointmentRescheduleTitle => 'Selecciona nueva fecha';
+
+  @override
+  String get myAppointmentRescheduleCalendarMonth => 'Mes';
+
+  @override
+  String get myAppointmentRescheduleAvailableHours => 'Horas disponibles';
+
+  @override
+  String get myAppointmentRescheduleConfirm => 'Confirmar nueva fecha';
+
+  @override
+  String get myAppointmentRescheduleLoading => 'Cargando horarios disponibles';
+
+  @override
+  String get myAppointmentRescheduleLoadError =>
+      'No pudimos cargar los horarios. Intenta nuevamente.';
+
+  @override
+  String get myAppointmentRescheduleNoHours =>
+      'No hay horarios disponibles para esta fecha.';
+
+  @override
+  String get myAppointmentRescheduleSelectHour =>
+      'Selecciona una hora disponible.';
+
+  @override
+  String get myAppointmentRescheduleFailure =>
+      'No pudimos reagendar la cita. Intenta nuevamente.';
+
+  @override
+  String get myAppointmentRescheduleSuccessTitle => '¡Cita reagendada!';
+
+  @override
+  String get myAppointmentRescheduleSuccessMessage =>
+      'Tu cita ha sido actualizada correctamente.';
+
+  @override
+  String get myAppointmentRescheduleSuccessAction => 'Ver mis citas';
+
+  @override
+  String get myAppointmentCancelAction => 'Cancelar cita';
+
+  @override
+  String get myAppointmentCancelTitle => 'Cancelar cita';
+
+  @override
+  String get myAppointmentCancelReasonQuestion =>
+      '¿Por qué deseas cancelar esta cita?';
+
+  @override
+  String get myAppointmentCancelReasonNoNeed => 'Ya no necesito el servicio';
+
+  @override
+  String get myAppointmentCancelReasonChangedWorkshop => 'Cambié de taller';
+
+  @override
+  String get myAppointmentCancelReasonBookingError => 'Error en la reserva';
+
+  @override
+  String get myAppointmentCancelReasonCannotAttend => 'No podré asistir';
+
+  @override
+  String get myAppointmentCancelReasonOther => 'Otro motivo';
+
+  @override
+  String get myAppointmentCancelCommentsHint => 'Comentarios (opcional)';
+
+  @override
+  String get myAppointmentCancelContinue => 'Continuar';
+
+  @override
+  String get myAppointmentCancelConfirmTitle => '¿Deseas cancelar esta cita?';
+
+  @override
+  String get myAppointmentCancelConfirmMessage =>
+      'Esta acción no se puede deshacer.';
+
+  @override
+  String get myAppointmentCancelConfirmNo => 'No, volver';
+
+  @override
+  String get myAppointmentCancelConfirmYes => 'Sí, cancelar';
+
+  @override
+  String get myAppointmentCancelSuccessTitle => '¡Cita cancelada!';
+
+  @override
+  String get myAppointmentCancelSuccessMessage =>
+      'Tu cita ha sido cancelada correctamente.';
+
+  @override
+  String get myAppointmentCancelSuccessAction => 'Volver a mis citas';
+
+  @override
+  String get myAppointmentCancelFailure =>
+      'No pudimos cancelar la cita. Intenta nuevamente.';
+
+  @override
   String get vehiclesTitle => 'Mis vehículos';
 
   @override

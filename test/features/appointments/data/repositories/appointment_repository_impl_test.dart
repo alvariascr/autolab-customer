@@ -147,6 +147,80 @@ void main() {
     );
   });
 
+  test(
+    'cancelAppointment delega cancelacion con usuario autenticado',
+    () async {
+      when(
+        () => remoteDataSource.cancelAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          reason: 'No podre asistir',
+          comments: 'Cambio de planes',
+        ),
+      ).thenAnswer(
+        (_) async => _appointment(
+          id: 'appt-1',
+          customerId: _currentUserId,
+          status: 'cancelled',
+        ),
+      );
+
+      final result = await repository.cancelAppointment(
+        appointmentId: 'appt-1',
+        reason: 'No podre asistir',
+        comments: 'Cambio de planes',
+      );
+      final appointment = result.getOrElse(() => throw StateError('missing'));
+
+      expect(result.isRight(), isTrue);
+      expect(appointment.status, 'cancelled');
+      verify(
+        () => remoteDataSource.cancelAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          reason: 'No podre asistir',
+          comments: 'Cambio de planes',
+        ),
+      ).called(1);
+    },
+  );
+
+  test(
+    'rescheduleAppointment delega nueva fecha con usuario autenticado',
+    () async {
+      final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+      when(
+        () => remoteDataSource.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      ).thenAnswer(
+        (_) async => _appointment(
+          id: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      );
+
+      final result = await repository.rescheduleAppointment(
+        appointmentId: 'appt-1',
+        scheduledAt: scheduledAt,
+      );
+      final appointment = result.getOrElse(() => throw StateError('missing'));
+
+      expect(result.isRight(), isTrue);
+      expect(appointment.scheduledAt, scheduledAt);
+      verify(
+        () => remoteDataSource.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      ).called(1);
+    },
+  );
+
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(
       () => remoteDataSource.createAppointment(
@@ -320,6 +394,8 @@ AppointmentDraft _draft() {
 AppointmentModel _appointment({
   String id = 'appt-1',
   String customerId = 'user-1',
+  String status = 'pending',
+  DateTime? scheduledAt,
 }) {
   return AppointmentModel(
     id: id,
@@ -330,7 +406,7 @@ AppointmentModel _appointment({
     customerPhone: '8888-8888',
     customerEmail: 'cliente@autolab.app',
     vehicleType: 'AUTOMOVIL',
-    scheduledAt: DateTime.utc(2026, 5, 28, 6, 15),
-    status: 'pending',
+    scheduledAt: scheduledAt ?? DateTime.utc(2026, 5, 28, 6, 15),
+    status: status,
   );
 }

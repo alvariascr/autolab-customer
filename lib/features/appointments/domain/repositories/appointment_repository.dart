@@ -13,4 +13,15 @@ abstract class AppointmentRepository {
   );
 
   Future<Either<Failure, List<Appointment>>> getCustomerAppointments();
+
+  Future<Either<Failure, Appointment>> cancelAppointment({
+    required String appointmentId,
+    required String reason,
+    String? comments,
+  });
+
+  Future<Either<Failure, Appointment>> rescheduleAppointment({
+    required String appointmentId,
+    required DateTime scheduledAt,
+  });
 }

@@ -33,7 +33,7 @@ void main() {
       expect(model.customerPhone, '8888-8888');
       expect(model.customerEmail, 'cliente@autolab.app');
       expect(model.vehicleType, 'AUTOMOVIL');
-      expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      expect(model.scheduledAt, _localDateTime('2026-05-28T06:15:00.000Z'));
       expect(model.status, 'pending');
       expect(model.paymentMethod, 'sinpe');
       expect(model.notes, 'Llegar temprano');
@@ -142,9 +142,23 @@ void main() {
           'status': 'scheduled',
         });
 
-        expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+        expect(model.scheduledAt, _localDateTime('2026-05-28T06:15:00.000Z'));
       },
     );
+
+    test('convierte scheduled_datetime UTC a hora local', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_datetime': '2026-06-18T20:30:00.000Z',
+        'status': 'scheduled',
+      });
+
+      expect(model.scheduledAt, _localDateTime('2026-06-18T20:30:00.000Z'));
+      expect(model.scheduledAt.isUtc, isFalse);
+    });
 
     test('usa campos legacy cuando order_services viene nulo', () {
       final model = AppointmentModel.fromMap({
@@ -203,12 +217,12 @@ void main() {
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'note': 'Revisar frenos',
         'vehicle_id': 'vehicle-1',
-        'vehicles': {'vehicle_type': 'AUTOMOVIL'},
+        'vehicles': {'vehicle_type': 'AUTOMOVIL', 'license_plate': 'ABC123'},
         'order_services': {
           'inventory_item_id': 'service-1',
           'orders': {
             'workshop_id': 'workshop-1',
-            'customers': {'user_id': 'user-1'},
+            'customers': {'updated_by': 'user-1'},
           },
         },
       });
@@ -218,8 +232,9 @@ void main() {
       expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
       expect(model.vehicleType, 'AUTOMOVIL');
+      expect(model.vehiclePlate, 'ABC123');
       expect(model.status, 'scheduled');
-      expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      expect(model.scheduledAt, _localDateTime('2026-05-28T06:15:00.000Z'));
       expect(model.notes, 'Revisar frenos');
     });
 
@@ -235,7 +250,7 @@ void main() {
           'inventory_items': {'name': 'Cambio de aceite'},
           'orders': {
             'workshop_id': 'workshop-1',
-            'customers': {'user_id': 'user-1'},
+            'customers': {'updated_by': 'user-1'},
             'workshops': {
               'name': 'AutoFix San Jose',
               'avatar_url': 'avatar.png',
@@ -256,7 +271,7 @@ void main() {
         'appointment_status': 'scheduled',
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'vehicles': [
-          {'vehicle_type': 'AUTOMOVIL'},
+          {'vehicle_type': 'AUTOMOVIL', 'license_plate': 'ABC123'},
         ],
         'order_services': [
           {
@@ -268,7 +283,7 @@ void main() {
               {
                 'workshop_id': 'workshop-1',
                 'customers': [
-                  {'user_id': 'user-1'},
+                  {'updated_by': 'user-1'},
                 ],
                 'workshops': [
                   {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
@@ -283,6 +298,7 @@ void main() {
       expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
       expect(model.vehicleType, 'AUTOMOVIL');
+      expect(model.vehiclePlate, 'ABC123');
       expect(model.workshopName, 'AutoFix San Jose');
       expect(model.workshopAvatarUrl, 'avatar.png');
       expect(model.serviceName, 'Cambio de aceite');
@@ -396,4 +412,8 @@ void main() {
       );
     });
   });
+}
+
+DateTime _localDateTime(String value) {
+  return DateTime.parse(value).toLocal();
 }

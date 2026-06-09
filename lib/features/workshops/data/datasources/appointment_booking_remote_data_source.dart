@@ -168,7 +168,8 @@ class SupabaseAppointmentBookingRemoteDataSource
       params: {
         'p_workshop_id': workshopId,
         'p_inventory_item_id': inventoryItemId,
-        'p_scheduled_datetime': scheduledDateTime.toUtc().toIso8601String(),
+        'p_scheduled_date': _rpcDate(scheduledDateTime),
+        'p_scheduled_time': _rpcTime(scheduledDateTime),
         'p_note': note,
         'p_vehicle_id': vehicleId,
         'p_garage_vehicle_id': garageVehicleId,
@@ -219,6 +220,18 @@ class SupabaseAppointmentBookingRemoteDataSource
 
     return capacity;
   }
+}
+
+String _rpcDate(DateTime value) {
+  final month = value.month.toString().padLeft(2, '0');
+  final day = value.day.toString().padLeft(2, '0');
+  return '${value.year}-$month-$day';
+}
+
+String _rpcTime(DateTime value) {
+  final hour = value.hour.toString().padLeft(2, '0');
+  final minute = value.minute.toString().padLeft(2, '0');
+  return '$hour:$minute:00';
 }
 
 BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {

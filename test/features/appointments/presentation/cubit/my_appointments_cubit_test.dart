@@ -73,9 +73,126 @@ void main() {
           .having((state) => state.message, 'message', 'No se pudo cargar'),
     ],
   );
+
+  blocTest<MyAppointmentsCubit, MyAppointmentsState>(
+    'cancelAppointment reemplaza la cita cancelada',
+    build: () {
+      when(
+        () => repository.cancelAppointment(
+          appointmentId: 'appt-1',
+          reason: 'No podre asistir',
+          comments: 'Cambio de planes',
+        ),
+      ).thenAnswer(
+        (_) async => Right(
+          _appointment(
+            id: 'appt-1',
+            scheduledAt: DateTime.utc(2026, 6, 1),
+            status: 'cancelled',
+          ),
+        ),
+      );
+
+      return MyAppointmentsCubit(repository);
+    },
+    seed: () => MyAppointmentsState(
+      status: MyAppointmentsStatus.success,
+      appointments: [
+        _appointment(id: 'appt-1', scheduledAt: DateTime.utc(2026, 6, 1)),
+      ],
+    ),
+    act: (cubit) => cubit.cancelAppointment(
+      appointment: cubit.state.appointments.first,
+      reason: 'No podre asistir',
+      comments: 'Cambio de planes',
+    ),
+    expect: () => [
+      isA<MyAppointmentsState>().having(
+        (state) => state.cancelingAppointmentId,
+        'canceling appointment id',
+        'appt-1',
+      ),
+      isA<MyAppointmentsState>()
+          .having(
+            (state) => state.status,
+            'status',
+            MyAppointmentsStatus.success,
+          )
+          .having(
+            (state) => state.appointments.first.status,
+            'appointment status',
+            'cancelled',
+          ),
+      isA<MyAppointmentsState>().having(
+        (state) => state.cancelingAppointmentId,
+        'canceling appointment id',
+        isNull,
+      ),
+    ],
+  );
+
+  blocTest<MyAppointmentsCubit, MyAppointmentsState>(
+    'rescheduleAppointment reemplaza la cita reagendada',
+    build: () {
+      final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+      when(
+        () => repository.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          scheduledAt: scheduledAt,
+        ),
+      ).thenAnswer(
+        (_) async => Right(
+          _appointment(
+            id: 'appt-1',
+            scheduledAt: scheduledAt,
+            status: 'scheduled',
+          ),
+        ),
+      );
+
+      return MyAppointmentsCubit(repository);
+    },
+    seed: () => MyAppointmentsState(
+      status: MyAppointmentsStatus.success,
+      appointments: [
+        _appointment(id: 'appt-1', scheduledAt: DateTime.utc(2026, 6, 1)),
+      ],
+    ),
+    act: (cubit) => cubit.rescheduleAppointment(
+      appointment: cubit.state.appointments.first,
+      scheduledAt: DateTime.utc(2026, 6, 18, 15),
+    ),
+    expect: () => [
+      isA<MyAppointmentsState>().having(
+        (state) => state.reschedulingAppointmentId,
+        'rescheduling appointment id',
+        'appt-1',
+      ),
+      isA<MyAppointmentsState>()
+          .having(
+            (state) => state.status,
+            'status',
+            MyAppointmentsStatus.success,
+          )
+          .having(
+            (state) => state.appointments.first.scheduledAt,
+            'scheduled at',
+            DateTime.utc(2026, 6, 18, 15),
+          ),
+      isA<MyAppointmentsState>().having(
+        (state) => state.reschedulingAppointmentId,
+        'rescheduling appointment id',
+        isNull,
+      ),
+    ],
+  );
 }
 
-Appointment _appointment({required String id, required DateTime scheduledAt}) {
+Appointment _appointment({
+  required String id,
+  required DateTime scheduledAt,
+  String status = 'pending',
+}) {
   return Appointment(
     id: id,
     workshopId: 'workshop-1',
@@ -85,6 +202,6 @@ Appointment _appointment({required String id, required DateTime scheduledAt}) {
     customerEmail: 'cliente@autolab.app',
     vehicleType: 'AUTOMOVIL',
     scheduledAt: scheduledAt,
-    status: 'pending',
+    status: status,
   );
 }
