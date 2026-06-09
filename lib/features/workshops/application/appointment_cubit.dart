@@ -705,6 +705,11 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     return switch (_bookingErrorCode(error)) {
       AppointmentSubmitError.authRequired => 'auth_required',
       AppointmentSubmitError.dateTimeInPast => 'datetime_in_past',
+      AppointmentSubmitError.invalidSlotInterval => 'invalid_slot_interval',
+      AppointmentSubmitError.businessHoursUnavailable =>
+        'business_hours_unavailable',
+      AppointmentSubmitError.workshopClosed => 'workshop_closed',
+      AppointmentSubmitError.outsideBusinessHours => 'outside_business_hours',
       AppointmentSubmitError.serviceNotSchedulable => 'service_not_schedulable',
       AppointmentSubmitError.slotUnavailable => 'slot_unavailable',
       AppointmentSubmitError.vehicleNotOwned => 'vehicle_not_owned',
@@ -735,6 +740,22 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     if (rawMessage.contains('appointment_datetime_in_past')) {
       return AppointmentSubmitError.dateTimeInPast;
+    }
+
+    if (rawMessage.contains('appointment_invalid_slot_interval')) {
+      return AppointmentSubmitError.invalidSlotInterval;
+    }
+
+    if (rawMessage.contains('appointment_business_hours_unavailable')) {
+      return AppointmentSubmitError.businessHoursUnavailable;
+    }
+
+    if (rawMessage.contains('appointment_workshop_closed')) {
+      return AppointmentSubmitError.workshopClosed;
+    }
+
+    if (rawMessage.contains('appointment_outside_business_hours')) {
+      return AppointmentSubmitError.outsideBusinessHours;
     }
 
     if (rawMessage.contains('appointment_service_not_schedulable')) {

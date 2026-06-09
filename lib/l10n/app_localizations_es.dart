@@ -1241,6 +1241,22 @@ class AppLocalizationsEs extends AppLocalizations {
       'Selecciona una fecha y hora disponible más adelante.';
 
   @override
+  String get appointmentInvalidSlotInterval =>
+      'Selecciona uno de los horarios disponibles.';
+
+  @override
+  String get appointmentBusinessHoursUnavailable =>
+      'Este taller aún no tiene horario configurado para ese día.';
+
+  @override
+  String get appointmentWorkshopClosed =>
+      'El taller está cerrado ese día. Selecciona otra fecha.';
+
+  @override
+  String get appointmentOutsideBusinessHours =>
+      'Ese horario está fuera del horario de atención del taller.';
+
+  @override
   String get appointmentServiceNotSchedulable =>
       'Este servicio ya no está disponible para agendar.';
 
@@ -1265,6 +1281,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentVehiclePlateLabel => 'Placa';
+
+  @override
+  String get appointmentVehiclePlateHint => 'Ej. ABC123';
 
   @override
   String get appointmentVehicleTypeLabel => 'Tipo de vehículo';
@@ -1297,13 +1316,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentVehicleBrandLabel => 'Marca';
 
   @override
+  String get appointmentVehicleBrandHint => 'Ej. Toyota';
+
+  @override
   String get appointmentVehicleModelLabel => 'Modelo';
+
+  @override
+  String get appointmentVehicleModelHint => 'Ej. Yaris';
 
   @override
   String get appointmentVehicleYearLabel => 'Año';
 
   @override
+  String get appointmentVehicleYearHint => 'Ej. 2019';
+
+  @override
   String get appointmentVehicleColorLabel => 'Color';
+
+  @override
+  String get appointmentVehicleColorHint => 'Ej. Negro';
 
   @override
   String get appointmentVehicleFuelLabel => 'Combustible';

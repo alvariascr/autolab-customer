@@ -518,6 +518,13 @@ String _appointmentSubmitErrorMessage(
       l10n.appointmentBookingIncomplete,
     AppointmentSubmitError.authRequired => l10n.appointmentAuthRequired,
     AppointmentSubmitError.dateTimeInPast => l10n.appointmentDateTimeInPast,
+    AppointmentSubmitError.invalidSlotInterval =>
+      l10n.appointmentInvalidSlotInterval,
+    AppointmentSubmitError.businessHoursUnavailable =>
+      l10n.appointmentBusinessHoursUnavailable,
+    AppointmentSubmitError.workshopClosed => l10n.appointmentWorkshopClosed,
+    AppointmentSubmitError.outsideBusinessHours =>
+      l10n.appointmentOutsideBusinessHours,
     AppointmentSubmitError.serviceNotSchedulable =>
       l10n.appointmentServiceNotSchedulable,
     AppointmentSubmitError.vehicleNotOwned => l10n.appointmentVehicleNotOwned,
@@ -988,7 +995,7 @@ class _VehicleFormCard extends StatelessWidget {
             textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(
               labelText: l10n.appointmentVehiclePlateLabel,
-              hintText: 'Ej. ABC123',
+              hintText: l10n.appointmentVehiclePlateHint,
               prefixIcon: const Icon(Icons.confirmation_number_outlined),
               border: border,
               enabledBorder: border,
@@ -1059,7 +1066,7 @@ class _VehicleFormCard extends StatelessWidget {
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               labelText: l10n.appointmentVehicleBrandLabel,
-              hintText: 'Ej. Toyota',
+              hintText: l10n.appointmentVehicleBrandHint,
               prefixIcon: const Icon(Icons.directions_car_outlined),
               border: border,
               enabledBorder: border,
@@ -1075,7 +1082,7 @@ class _VehicleFormCard extends StatelessWidget {
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               labelText: l10n.appointmentVehicleModelLabel,
-              hintText: 'Ej. Yaris',
+              hintText: l10n.appointmentVehicleModelHint,
               prefixIcon: const Icon(Icons.badge_outlined),
               border: border,
               enabledBorder: border,
@@ -1094,7 +1101,7 @@ class _VehicleFormCard extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: l10n.appointmentVehicleYearLabel,
-                    hintText: 'Ej. 2019',
+                    hintText: l10n.appointmentVehicleYearHint,
                     prefixIcon: const Icon(Icons.calendar_today_outlined),
                     border: border,
                     enabledBorder: border,
@@ -1112,7 +1119,7 @@ class _VehicleFormCard extends StatelessWidget {
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: l10n.appointmentVehicleColorLabel,
-                    hintText: 'Ej. Negro',
+                    hintText: l10n.appointmentVehicleColorHint,
                     prefixIcon: const Icon(Icons.palette_outlined),
                     border: border,
                     enabledBorder: border,

@@ -2266,6 +2266,30 @@ abstract class AppLocalizations {
   /// **'Selecciona una fecha y hora disponible más adelante.'**
   String get appointmentDateTimeInPast;
 
+  /// No description provided for @appointmentInvalidSlotInterval.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona uno de los horarios disponibles.'**
+  String get appointmentInvalidSlotInterval;
+
+  /// No description provided for @appointmentBusinessHoursUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Este taller aún no tiene horario configurado para ese día.'**
+  String get appointmentBusinessHoursUnavailable;
+
+  /// No description provided for @appointmentWorkshopClosed.
+  ///
+  /// In es, this message translates to:
+  /// **'El taller está cerrado ese día. Selecciona otra fecha.'**
+  String get appointmentWorkshopClosed;
+
+  /// No description provided for @appointmentOutsideBusinessHours.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese horario está fuera del horario de atención del taller.'**
+  String get appointmentOutsideBusinessHours;
+
   /// No description provided for @appointmentServiceNotSchedulable.
   ///
   /// In es, this message translates to:
@@ -2307,6 +2331,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Placa'**
   String get appointmentVehiclePlateLabel;
+
+  /// No description provided for @appointmentVehiclePlateHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. ABC123'**
+  String get appointmentVehiclePlateHint;
 
   /// No description provided for @appointmentVehicleTypeLabel.
   ///
@@ -2368,11 +2398,23 @@ abstract class AppLocalizations {
   /// **'Marca'**
   String get appointmentVehicleBrandLabel;
 
+  /// No description provided for @appointmentVehicleBrandHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Toyota'**
+  String get appointmentVehicleBrandHint;
+
   /// No description provided for @appointmentVehicleModelLabel.
   ///
   /// In es, this message translates to:
   /// **'Modelo'**
   String get appointmentVehicleModelLabel;
+
+  /// No description provided for @appointmentVehicleModelHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Yaris'**
+  String get appointmentVehicleModelHint;
 
   /// No description provided for @appointmentVehicleYearLabel.
   ///
@@ -2380,11 +2422,23 @@ abstract class AppLocalizations {
   /// **'Año'**
   String get appointmentVehicleYearLabel;
 
+  /// No description provided for @appointmentVehicleYearHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. 2019'**
+  String get appointmentVehicleYearHint;
+
   /// No description provided for @appointmentVehicleColorLabel.
   ///
   /// In es, this message translates to:
   /// **'Color'**
   String get appointmentVehicleColorLabel;
+
+  /// No description provided for @appointmentVehicleColorHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Negro'**
+  String get appointmentVehicleColorHint;
 
   /// No description provided for @appointmentVehicleFuelLabel.
   ///
