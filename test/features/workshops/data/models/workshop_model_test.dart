@@ -64,27 +64,39 @@ void main() {
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
     });
 
-    test('usa capacidad por defecto cuando slot_capacity es invalido', () {
-      final model = WorkshopModel.fromMap({
-        'id': 'workshop-1',
-        'name': 'Autolab Escazu',
-        'description': 'Mantenimiento general',
-        'location_address': 'Escazu Centro',
-        'avatar_url': '',
-        'cover_url': '',
-        'business_hours': [
-          {
-            'day_of_week': 0,
-            'open_time': '08:00:00',
-            'close_time': '17:00:00',
-            'is_closed': false,
-            'slot_capacity': 0,
-          },
-        ],
-      });
+    final invalidSlotCapacities = <String, dynamic>{
+      'cero': 0,
+      'numero negativo': -3,
+      'null': null,
+      'texto invalido': 'invalid_string',
+    };
 
-      expect(model.businessHours.single.slotCapacity, 1);
-    });
+    for (final entry in invalidSlotCapacities.entries) {
+      test(
+        'usa capacidad por defecto cuando slot_capacity es ${entry.key}',
+        () {
+          final model = WorkshopModel.fromMap({
+            'id': 'workshop-1',
+            'name': 'Autolab Escazu',
+            'description': 'Mantenimiento general',
+            'location_address': 'Escazu Centro',
+            'avatar_url': '',
+            'cover_url': '',
+            'business_hours': [
+              {
+                'day_of_week': 0,
+                'open_time': '08:00:00',
+                'close_time': '17:00:00',
+                'is_closed': false,
+                'slot_capacity': entry.value,
+              },
+            ],
+          });
+
+          expect(model.businessHours.single.slotCapacity, 1);
+        },
+      );
+    }
 
     test('ordena horarios por dia de semana ascendente', () {
       final model = WorkshopModel.fromMap({
