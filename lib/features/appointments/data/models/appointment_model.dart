@@ -233,14 +233,18 @@ class AppointmentModel extends Appointment {
   }
 
   static DateTime _appointmentDateTimeFromMap(Map<String, dynamic> map) {
-    final scheduledDatetime = map['scheduled_datetime'];
-    if (scheduledDatetime != null) {
-      return utcToCostaRicaLocalTime(
-        _requiredDateTime(scheduledDatetime, 'scheduled_datetime'),
+    final rawDateTime = map['scheduled_datetime'] ?? map['scheduled_at'];
+    if (rawDateTime == null) {
+      throw FormatException(
+        'Missing required appointment datetime scheduled_datetime or scheduled_at',
+        map,
       );
     }
 
-    return _requiredDateTime(map['scheduled_at'], 'scheduled_at');
+    final fieldName = map['scheduled_datetime'] != null
+        ? 'scheduled_datetime'
+        : 'scheduled_at';
+    return utcToCostaRicaLocalTime(_requiredDateTime(rawDateTime, fieldName));
   }
 
   static DateTime? _nullableDateTime(dynamic value) {

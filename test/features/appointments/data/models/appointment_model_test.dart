@@ -33,7 +33,7 @@ void main() {
       expect(model.customerPhone, '8888-8888');
       expect(model.customerEmail, 'cliente@autolab.app');
       expect(model.vehicleType, 'AUTOMOVIL');
-      expect(model.scheduledAt, DateTime.parse('2026-05-28T06:15:00.000Z'));
+      expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       expect(model.status, 'pending');
       expect(model.paymentMethod, 'sinpe');
       expect(model.notes, 'Llegar temprano');
