@@ -431,8 +431,10 @@
   "appointmentBookingIncomplete": "Revisa que el vehículo, servicio, fecha y hora estén completos.",
   "appointmentAuthRequired": "Inicia sesión para poder reservar tu cita.",
   "appointmentDateTimeInPast": "Selecciona una fecha y hora disponible más adelante.",
-  "appointmentCustomerNameRequired": "Completa tu nombre en el perfil antes de reservar.",
-  "appointmentCustomerPhoneRequired": "Completa tu teléfono en el perfil antes de reservar.",
+  "appointmentInvalidSlotInterval": "Selecciona uno de los horarios disponibles.",
+  "appointmentBusinessHoursUnavailable": "Este taller aún no tiene horario configurado para ese día.",
+  "appointmentWorkshopClosed": "El taller está cerrado ese día. Selecciona otra fecha.",
+  "appointmentOutsideBusinessHours": "Ese horario está fuera del horario de atención del taller.",
   "appointmentServiceNotSchedulable": "Este servicio ya no está disponible para agendar.",
   "appointmentVehicleNotOwned": "No pudimos usar ese vehículo con tu usuario.",
   "appointmentVehiclePlateRequiredForBooking": "Ingresa la placa del vehículo para reservar.",
@@ -440,6 +442,7 @@
   "appointmentStepVehicleInfo": "Información del vehículo",
   "appointmentWorkshopFallbackDescription": "Servicio y mantenimiento automotriz",
   "appointmentVehiclePlateLabel": "Placa",
+  "appointmentVehiclePlateHint": "Ej. ABC123",
   "appointmentVehicleTypeLabel": "Tipo de vehículo",
   "appointmentVehicleTypeCar": "Automóvil",
   "appointmentVehicleTypeMotorcycle": "Motocicleta",
@@ -450,9 +453,13 @@
   "appointmentVehicleTypeTrailer": "Remolque",
   "appointmentVehicleTypeSpecialEquipment": "Equipo especial",
   "appointmentVehicleBrandLabel": "Marca",
+  "appointmentVehicleBrandHint": "Ej. Toyota",
   "appointmentVehicleModelLabel": "Modelo",
+  "appointmentVehicleModelHint": "Ej. Yaris",
   "appointmentVehicleYearLabel": "Año",
+  "appointmentVehicleYearHint": "Ej. 2019",
   "appointmentVehicleColorLabel": "Color",
+  "appointmentVehicleColorHint": "Ej. Negro",
   "appointmentVehicleFuelLabel": "Combustible",
   "appointmentVehicleFuelGasoline": "Gasolina",
   "appointmentVehicleFuelDiesel": "Diésel",
@@ -470,6 +477,9 @@
   "appointmentExitAction": "SALIR",
   "appointmentNewServiceAction": "NUEVO SERVICIO",
   "appointmentCreatingAction": "CREANDO",
+  "appointmentCreatingTitle": "Creando cita",
+  "appointmentCreatingMessage": "Estamos confirmando tu reserva. No cierres esta pantalla.",
+  "appointmentConfirmAction": "CONFIRMAR CITA",
   "appointmentFinishAction": "FINALIZAR",
   "appointmentPayAction": "PAGAR",
   "appointmentNextAction": "SIGUIENTE",
@@ -487,13 +497,54 @@
   "appointmentPendingService": "Servicio pendiente",
   "appointmentDateLabel": "Fecha",
   "appointmentPaymentCard": "Tarjeta",
-  "appointmentPaymentSinpe": "SINPE Móvil",
   "appointmentPaymentCardSubtitle": "Pago con tarjeta de crédito o débito.",
-  "appointmentPaymentSinpeSubtitle": "Recibirás las instrucciones para completar el pago.",
+  "appointmentMockPaymentBadge": "Ambiente de prueba",
+  "appointmentMockPaymentTitle": "Pago con tarjeta",
+  "appointmentMockPaymentSubtitle": "Esta pantalla simula la redirección al proveedor de pago. No se procesará ningún cobro real.",
+  "appointmentMockPaymentApprovedTitle": "Pago simulado aprobado",
+  "appointmentMockPaymentApprovedSubtitle": "La cita fue creada correctamente. En producción, este estado llegará desde la confirmación segura del proveedor de pago.",
+  "appointmentMockPaymentAmountLabel": "Monto",
+  "appointmentMockPaymentReferenceLabel": "Referencia",
+  "appointmentMockPaymentMerchantLabel": "Comercio",
+  "appointmentMockPaymentApproveAction": "Simular pago aprobado",
+  "appointmentMockPaymentApprovedAction": "Finalizar",
+  "appointmentMockPaymentBackAction": "Volver al taller",
+  "appointmentMockPaymentTimeRemaining": "Tiempo para completar el pago",
+  "appointmentMockPaymentExpired": "El tiempo para completar este pago venció. Vuelve al taller y genera una nueva reserva.",
+  "appointmentMockPaymentApprovedNotice": "Este pago es una simulación visual. La orden permanece pendiente hasta integrar la confirmación real del proveedor.",
+  "appointmentMockPaymentNotice": "Cuando LaroPay esté integrado, este paso abrirá el navegador seguro y el pago se confirmará por callback.",
   "appointmentConfirmationDeliveryMessage": "Recibirás los detalles por correo o WhatsApp.",
   "appointmentWorkshopLabel": "Taller",
+  "appointmentDurationLabel": "Duración",
+  "appointmentPaymentMethodLabel": "Pago",
+  "appointmentCustomerNameLabel": "Nombre completo",
+  "appointmentCustomerPhoneLabel": "Teléfono de contacto",
+  "appointmentCustomerEmailLabel": "Correo para la cita",
+  "appointmentCustomerIdentificationLabel": "Cédula",
+  "appointmentCustomerFiscalIdTypeLabel": "Tipo de identificación",
+  "appointmentOptionalNoteLabel": "Nota opcional",
+  "appointmentOptionalNoteHint": "Agrega detalles importantes para el taller.",
   "appointmentProductsLabel": "Productos",
   "appointmentNoAdditionalProducts": "Sin productos adicionales.",
   "appointmentTotalToPayLabel": "Total a pagar",
-  "appointmentPriceToConfirm": "Por confirmar"
+  "appointmentPriceToConfirm": "Por confirmar",
+  "appointmentDurationMinutes": "{minutes} min",
+  "@appointmentDurationMinutes": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "appointmentDurationHours": "{hours} h",
+  "@appointmentDurationHours": {
+    "placeholders": {
+      "hours": {}
+    }
+  },
+  "appointmentDurationHoursMinutes": "{hours} h {minutes} min",
+  "@appointmentDurationHoursMinutes": {
+    "placeholders": {
+      "hours": {},
+      "minutes": {}
+    }
+  }
 }

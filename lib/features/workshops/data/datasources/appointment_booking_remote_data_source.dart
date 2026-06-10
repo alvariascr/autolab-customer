@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/utils/costa_rica_time.dart';
 import '../../domain/entities/appointment_vehicle.dart';
 import '../../domain/entities/booked_appointment_slot.dart';
 
@@ -115,13 +116,19 @@ class SupabaseAppointmentBookingRemoteDataSource
     );
     final response = await client
         .from('appointments')
-        .select('id, order_services!inner(orders!inner(workshop_id))')
-        .eq('scheduled_datetime', scheduledDateTime.toUtc().toIso8601String())
+        .select(
+          'id, order_services!inner(orders!inner(workshop_id, payment_status, payment_expires_at))',
+        )
+        .eq(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(scheduledDateTime).toIso8601String(),
+        )
         .eq('order_services.orders.workshop_id', workshopId)
-        .not('appointment_status', 'in', '(cancelled,no_show)')
-        .limit(slotCapacity);
+        .not('appointment_status', 'in', '(cancelled,no_show)');
 
-    return response.length < slotCapacity;
+    final blockingAppointments = response.where(_isBlockingAppointment).length;
+
+    return blockingAppointments < slotCapacity;
   }
 
   @override
@@ -133,14 +140,21 @@ class SupabaseAppointmentBookingRemoteDataSource
     final response = await client
         .from('appointments')
         .select(
-          'scheduled_datetime, order_services!inner(inventory_items!inner(estimated_duration_hours), orders!inner(workshop_id))',
+          'scheduled_datetime, order_services!inner(inventory_items!inner(estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
         )
-        .gte('scheduled_datetime', startDate.toUtc().toIso8601String())
-        .lt('scheduled_datetime', endDate.toUtc().toIso8601String())
+        .gte(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(startDate).toIso8601String(),
+        )
+        .lt(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(endDate).toIso8601String(),
+        )
         .eq('order_services.orders.workshop_id', workshopId)
         .not('appointment_status', 'in', '(cancelled,no_show)');
 
     return response
+        .where(_isBlockingAppointment)
         .map(_bookedAppointmentSlotFromMap)
         .whereType<BookedAppointmentSlot>()
         .toList();
@@ -168,7 +182,8 @@ class SupabaseAppointmentBookingRemoteDataSource
       params: {
         'p_workshop_id': workshopId,
         'p_inventory_item_id': inventoryItemId,
-        'p_scheduled_datetime': scheduledDateTime.toUtc().toIso8601String(),
+        'p_scheduled_date': _formatDate(scheduledDateTime),
+        'p_scheduled_time': _formatTime(scheduledDateTime),
         'p_note': note,
         'p_vehicle_id': vehicleId,
         'p_garage_vehicle_id': garageVehicleId,
@@ -184,6 +199,17 @@ class SupabaseAppointmentBookingRemoteDataSource
     );
 
     return response.toString();
+  }
+
+  String _formatDate(DateTime dateTime) {
+    return '${dateTime.year.toString().padLeft(4, '0')}-'
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}:00';
   }
 
   Future<int> _slotCapacityFor({
@@ -210,20 +236,15 @@ class SupabaseAppointmentBookingRemoteDataSource
         ? value
         : int.tryParse(value?.toString() ?? '');
 
-    if (capacity == null || capacity <= 0) {
-      throw StateError(
-        'Invalid slot_capacity "$value" for workshop $workshopId '
-        'and day_of_week $dayOfWeek',
-      );
-    }
-
-    return capacity;
+    return capacity == null || capacity <= 0 ? 1 : capacity;
   }
 }
 
 BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
-  final start = DateTime.tryParse(map['scheduled_datetime'].toString());
-  if (start == null) {
+  final scheduledDateTime = DateTime.tryParse(
+    map['scheduled_datetime'].toString(),
+  );
+  if (scheduledDateTime == null) {
     return null;
   }
 
@@ -236,11 +257,34 @@ BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
       : null;
 
   return BookedAppointmentSlot(
-    start: start,
+    start: utcToCostaRicaLocalTime(scheduledDateTime),
     durationMinutes: durationHours == null || durationHours <= 0
         ? null
         : (durationHours * Duration.minutesPerHour).ceil(),
   );
+}
+
+bool _isBlockingAppointment(Map<String, dynamic> map) {
+  final orderService = map['order_services'];
+  final order = orderService is Map<String, dynamic>
+      ? orderService['orders']
+      : null;
+  if (order is! Map<String, dynamic>) {
+    return true;
+  }
+
+  final paymentStatus = order['payment_status']?.toString();
+  final paymentExpiresAt = DateTime.tryParse(
+    order['payment_expires_at']?.toString() ?? '',
+  );
+
+  if (paymentStatus == 'unpaid' &&
+      paymentExpiresAt != null &&
+      !paymentExpiresAt.toUtc().isAfter(DateTime.now().toUtc())) {
+    return false;
+  }
+
+  return true;
 }
 
 double? _parseDouble(Object? value) {

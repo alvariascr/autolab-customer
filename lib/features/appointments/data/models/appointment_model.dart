@@ -1,3 +1,4 @@
+import '../../../../core/utils/costa_rica_time.dart';
 import '../../domain/entities/appointment.dart';
 
 class AppointmentModel extends Appointment {
@@ -42,10 +43,7 @@ class AppointmentModel extends Appointment {
         map['vehicle_type'],
         _nestedValue(map, ['vehicles', 'vehicle_type']),
       ], 'vehicle_type'),
-      scheduledAt: _requiredDateTime(
-        map['scheduled_at'] ?? map['scheduled_datetime'],
-        'scheduled_at',
-      ),
+      scheduledAt: _appointmentDateTimeFromMap(map),
       status:
           map['status']?.toString() ??
           map['appointment_status']?.toString() ??
@@ -232,6 +230,21 @@ class AppointmentModel extends Appointment {
     }
 
     return dateTime;
+  }
+
+  static DateTime _appointmentDateTimeFromMap(Map<String, dynamic> map) {
+    final rawDateTime = map['scheduled_datetime'] ?? map['scheduled_at'];
+    if (rawDateTime == null) {
+      throw FormatException(
+        'Missing required appointment datetime scheduled_datetime or scheduled_at',
+        map,
+      );
+    }
+
+    final fieldName = map['scheduled_datetime'] != null
+        ? 'scheduled_datetime'
+        : 'scheduled_at';
+    return utcToCostaRicaLocalTime(_requiredDateTime(rawDateTime, fieldName));
   }
 
   static DateTime? _nullableDateTime(dynamic value) {
