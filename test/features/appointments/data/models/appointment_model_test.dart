@@ -87,6 +87,25 @@ void main() {
       expect(model.cancellationReason, isNull);
     });
 
+    test('acepta auditoria de cancelacion explicitamente nula', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'customer_id': 'user-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+        'cancelled_at': null,
+        'cancelled_by': null,
+        'cancellation_reason': null,
+      });
+
+      expect(model.cancelledAt, isNull);
+      expect(model.cancelledBy, isNull);
+      expect(model.cancellationReason, isNull);
+    });
+
     test('convierte draft a parametros de RPC atomica', () {
       final draft = AppointmentDraft(
         workshopId: 'workshop-1',
