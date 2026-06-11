@@ -168,7 +168,7 @@ void main() {
       },
     );
 
-    test('convierte scheduled_datetime UTC a hora local', () {
+    test('convierte scheduled_datetime UTC a hora civil de Costa Rica', () {
       final model = AppointmentModel.fromMap({
         'id': 'appointment-1',
         'workshop_id': 'workshop-1',
@@ -178,7 +178,11 @@ void main() {
         'status': 'scheduled',
       });
 
-      expect(model.scheduledAt, DateTime(2026, 6, 18, 14, 30));
+      expect(model.scheduledAt.year, 2026);
+      expect(model.scheduledAt.month, 6);
+      expect(model.scheduledAt.day, 18);
+      expect(model.scheduledAt.hour, 14);
+      expect(model.scheduledAt.minute, 30);
       expect(model.scheduledAt.isUtc, isFalse);
     });
 
