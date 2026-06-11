@@ -278,6 +278,61 @@ void main() {
   );
 
   blocTest<MyAppointmentsCubit, MyAppointmentsState>(
+    'rescheduleAppointment conserva la cita y expone el error cuando falla',
+    build: () {
+      when(
+        () => repository.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          scheduledAt: DateTime.utc(2026, 6, 18, 15),
+        ),
+      ).thenAnswer(
+        (_) async => const Left(
+          ServerFailure(
+            message: 'No se pudo reagendar',
+            code: 'APPOINTMENT_NOT_RESCHEDULABLE',
+          ),
+        ),
+      );
+
+      return MyAppointmentsCubit(repository);
+    },
+    seed: () => MyAppointmentsState(
+      status: MyAppointmentsStatus.success,
+      appointments: [
+        _appointment(id: 'appt-1', scheduledAt: DateTime.utc(2026, 6, 1)),
+      ],
+    ),
+    act: (cubit) => cubit.rescheduleAppointment(
+      appointment: cubit.state.appointments.first,
+      scheduledAt: DateTime.utc(2026, 6, 18, 15),
+    ),
+    expect: () => [
+      isA<MyAppointmentsState>().having(
+        (state) => state.reschedulingAppointmentId,
+        'rescheduling appointment id',
+        'appt-1',
+      ),
+      isA<MyAppointmentsState>()
+          .having(
+            (state) => state.reschedulingAppointmentId,
+            'rescheduling appointment id',
+            isNull,
+          )
+          .having(
+            (state) => state.appointments.first.scheduledAt,
+            'scheduled at',
+            DateTime.utc(2026, 6, 1),
+          )
+          .having((state) => state.message, 'message', 'No se pudo reagendar')
+          .having(
+            (state) => state.code,
+            'code',
+            'APPOINTMENT_NOT_RESCHEDULABLE',
+          ),
+    ],
+  );
+
+  blocTest<MyAppointmentsCubit, MyAppointmentsState>(
     'rescheduleAppointment reemplaza la cita reagendada',
     build: () {
       final scheduledAt = DateTime.utc(2026, 6, 18, 15);
