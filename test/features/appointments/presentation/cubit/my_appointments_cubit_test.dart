@@ -124,12 +124,12 @@ void main() {
             (state) => state.appointments.first.status,
             'appointment status',
             'cancelled',
+          )
+          .having(
+            (state) => state.cancelingAppointmentId,
+            'canceling appointment id',
+            isNull,
           ),
-      isA<MyAppointmentsState>().having(
-        (state) => state.cancelingAppointmentId,
-        'canceling appointment id',
-        isNull,
-      ),
     ],
   );
 
@@ -379,12 +379,12 @@ void main() {
             (state) => state.appointments.first.scheduledAt,
             'scheduled at',
             DateTime.utc(2026, 6, 18, 15),
+          )
+          .having(
+            (state) => state.reschedulingAppointmentId,
+            'rescheduling appointment id',
+            isNull,
           ),
-      isA<MyAppointmentsState>().having(
-        (state) => state.reschedulingAppointmentId,
-        'rescheduling appointment id',
-        isNull,
-      ),
     ],
   );
 }

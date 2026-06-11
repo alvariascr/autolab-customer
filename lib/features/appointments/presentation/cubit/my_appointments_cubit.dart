@@ -78,8 +78,7 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
           return current.id == updated.id ? updated : current;
         }).toList();
 
-        _emitSuccess(appointments);
-        emit(state.copyWith(clearCancelingAppointmentId: true));
+        _emitSuccess(appointments, clearCancelingAppointmentId: true);
         return true;
       },
     );
@@ -126,8 +125,7 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
           return current.id == updated.id ? updated : current;
         }).toList();
 
-        _emitSuccess(appointments);
-        emit(state.copyWith(clearReschedulingAppointmentId: true));
+        _emitSuccess(appointments, clearReschedulingAppointmentId: true);
         return updated;
       },
     );
@@ -147,7 +145,11 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
     );
   }
 
-  void _emitSuccess(List<Appointment> appointments) {
+  void _emitSuccess(
+    List<Appointment> appointments, {
+    bool clearCancelingAppointmentId = false,
+    bool clearReschedulingAppointmentId = false,
+  }) {
     if (isClosed) {
       return;
     }
@@ -161,6 +163,8 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
         appointments: ordered,
         clearMessage: true,
         clearCode: true,
+        clearCancelingAppointmentId: clearCancelingAppointmentId,
+        clearReschedulingAppointmentId: clearReschedulingAppointmentId,
       ),
     );
   }
