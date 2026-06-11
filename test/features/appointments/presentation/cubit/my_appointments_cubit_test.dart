@@ -100,7 +100,11 @@ void main() {
     seed: () => MyAppointmentsState(
       status: MyAppointmentsStatus.success,
       appointments: [
-        _appointment(id: 'appt-1', scheduledAt: DateTime.utc(2026, 6, 1)),
+        _appointment(
+          id: 'appt-1',
+          scheduledAt: DateTime.utc(2026, 6, 1),
+          status: 'scheduled',
+        ),
       ],
     ),
     act: (cubit) => cubit.cancelAppointment(
@@ -156,7 +160,11 @@ void main() {
     seed: () => MyAppointmentsState(
       status: MyAppointmentsStatus.success,
       appointments: [
-        _appointment(id: 'appt-1', scheduledAt: DateTime.utc(2026, 6, 1)),
+        _appointment(
+          id: 'appt-1',
+          scheduledAt: DateTime.utc(2026, 6, 1),
+          status: 'scheduled',
+        ),
       ],
     ),
     act: (cubit) => cubit.cancelAppointment(
@@ -178,7 +186,7 @@ void main() {
           .having(
             (state) => state.appointments.first.status,
             'appointment status',
-            'pending',
+            'scheduled',
           )
           .having((state) => state.message, 'message', 'No se pudo cancelar')
           .having((state) => state.code, 'code', 'APPOINTMENT_NOT_CANCELABLE'),
