@@ -1374,12 +1374,20 @@ class AppLocalizationsEs extends AppLocalizations {
       'Selecciona una fecha y hora disponible más adelante.';
 
   @override
-  String get appointmentCustomerNameRequired =>
-      'Completa tu nombre en el perfil antes de reservar.';
+  String get appointmentInvalidSlotInterval =>
+      'Selecciona uno de los horarios disponibles.';
 
   @override
-  String get appointmentCustomerPhoneRequired =>
-      'Completa tu teléfono en el perfil antes de reservar.';
+  String get appointmentBusinessHoursUnavailable =>
+      'Este taller aún no tiene horario configurado para ese día.';
+
+  @override
+  String get appointmentWorkshopClosed =>
+      'El taller está cerrado ese día. Selecciona otra fecha.';
+
+  @override
+  String get appointmentOutsideBusinessHours =>
+      'Ese horario está fuera del horario de atención del taller.';
 
   @override
   String get appointmentServiceNotSchedulable =>
@@ -1406,6 +1414,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentVehiclePlateLabel => 'Placa';
+
+  @override
+  String get appointmentVehiclePlateHint => 'Ej. ABC123';
 
   @override
   String get appointmentVehicleTypeLabel => 'Tipo de vehículo';
@@ -1438,13 +1449,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentVehicleBrandLabel => 'Marca';
 
   @override
+  String get appointmentVehicleBrandHint => 'Ej. Toyota';
+
+  @override
   String get appointmentVehicleModelLabel => 'Modelo';
+
+  @override
+  String get appointmentVehicleModelHint => 'Ej. Yaris';
 
   @override
   String get appointmentVehicleYearLabel => 'Año';
 
   @override
+  String get appointmentVehicleYearHint => 'Ej. 2019';
+
+  @override
   String get appointmentVehicleColorLabel => 'Color';
+
+  @override
+  String get appointmentVehicleColorHint => 'Ej. Negro';
 
   @override
   String get appointmentVehicleFuelLabel => 'Combustible';
@@ -1498,6 +1521,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentCreatingAction => 'CREANDO';
+
+  @override
+  String get appointmentCreatingTitle => 'Creando cita';
+
+  @override
+  String get appointmentCreatingMessage =>
+      'Estamos confirmando tu reserva. No cierres esta pantalla.';
+
+  @override
+  String get appointmentConfirmAction => 'CONFIRMAR CITA';
 
   @override
   String get appointmentFinishAction => 'FINALIZAR';
@@ -1554,15 +1587,59 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPaymentCard => 'Tarjeta';
 
   @override
-  String get appointmentPaymentSinpe => 'SINPE Móvil';
-
-  @override
   String get appointmentPaymentCardSubtitle =>
       'Pago con tarjeta de crédito o débito.';
 
   @override
-  String get appointmentPaymentSinpeSubtitle =>
-      'Recibirás las instrucciones para completar el pago.';
+  String get appointmentMockPaymentBadge => 'Ambiente de prueba';
+
+  @override
+  String get appointmentMockPaymentTitle => 'Pago con tarjeta';
+
+  @override
+  String get appointmentMockPaymentSubtitle =>
+      'Esta pantalla simula la redirección al proveedor de pago. No se procesará ningún cobro real.';
+
+  @override
+  String get appointmentMockPaymentApprovedTitle => 'Pago simulado aprobado';
+
+  @override
+  String get appointmentMockPaymentApprovedSubtitle =>
+      'La cita fue creada correctamente. En producción, este estado llegará desde la confirmación segura del proveedor de pago.';
+
+  @override
+  String get appointmentMockPaymentAmountLabel => 'Monto';
+
+  @override
+  String get appointmentMockPaymentReferenceLabel => 'Referencia';
+
+  @override
+  String get appointmentMockPaymentMerchantLabel => 'Comercio';
+
+  @override
+  String get appointmentMockPaymentApproveAction => 'Simular pago aprobado';
+
+  @override
+  String get appointmentMockPaymentApprovedAction => 'Finalizar';
+
+  @override
+  String get appointmentMockPaymentBackAction => 'Volver al taller';
+
+  @override
+  String get appointmentMockPaymentTimeRemaining =>
+      'Tiempo para completar el pago';
+
+  @override
+  String get appointmentMockPaymentExpired =>
+      'El tiempo para completar este pago venció. Vuelve al taller y genera una nueva reserva.';
+
+  @override
+  String get appointmentMockPaymentApprovedNotice =>
+      'Este pago es una simulación visual. La orden permanece pendiente hasta integrar la confirmación real del proveedor.';
+
+  @override
+  String get appointmentMockPaymentNotice =>
+      'Cuando LaroPay esté integrado, este paso abrirá el navegador seguro y el pago se confirmará por callback.';
 
   @override
   String get appointmentConfirmationDeliveryMessage =>
@@ -1570,6 +1647,34 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentWorkshopLabel => 'Taller';
+
+  @override
+  String get appointmentDurationLabel => 'Duración';
+
+  @override
+  String get appointmentPaymentMethodLabel => 'Pago';
+
+  @override
+  String get appointmentCustomerNameLabel => 'Nombre completo';
+
+  @override
+  String get appointmentCustomerPhoneLabel => 'Teléfono de contacto';
+
+  @override
+  String get appointmentCustomerEmailLabel => 'Correo para la cita';
+
+  @override
+  String get appointmentCustomerIdentificationLabel => 'Cédula';
+
+  @override
+  String get appointmentCustomerFiscalIdTypeLabel => 'Tipo de identificación';
+
+  @override
+  String get appointmentOptionalNoteLabel => 'Nota opcional';
+
+  @override
+  String get appointmentOptionalNoteHint =>
+      'Agrega detalles importantes para el taller.';
 
   @override
   String get appointmentProductsLabel => 'Productos';
@@ -1582,4 +1687,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get appointmentPriceToConfirm => 'Por confirmar';
+
+  @override
+  String appointmentDurationMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String appointmentDurationHours(Object hours) {
+    return '$hours h';
+  }
+
+  @override
+  String appointmentDurationHoursMinutes(Object hours, Object minutes) {
+    return '$hours h $minutes min';
+  }
 }

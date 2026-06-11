@@ -2512,17 +2512,29 @@ abstract class AppLocalizations {
   /// **'Selecciona una fecha y hora disponible más adelante.'**
   String get appointmentDateTimeInPast;
 
-  /// No description provided for @appointmentCustomerNameRequired.
+  /// No description provided for @appointmentInvalidSlotInterval.
   ///
   /// In es, this message translates to:
-  /// **'Completa tu nombre en el perfil antes de reservar.'**
-  String get appointmentCustomerNameRequired;
+  /// **'Selecciona uno de los horarios disponibles.'**
+  String get appointmentInvalidSlotInterval;
 
-  /// No description provided for @appointmentCustomerPhoneRequired.
+  /// No description provided for @appointmentBusinessHoursUnavailable.
   ///
   /// In es, this message translates to:
-  /// **'Completa tu teléfono en el perfil antes de reservar.'**
-  String get appointmentCustomerPhoneRequired;
+  /// **'Este taller aún no tiene horario configurado para ese día.'**
+  String get appointmentBusinessHoursUnavailable;
+
+  /// No description provided for @appointmentWorkshopClosed.
+  ///
+  /// In es, this message translates to:
+  /// **'El taller está cerrado ese día. Selecciona otra fecha.'**
+  String get appointmentWorkshopClosed;
+
+  /// No description provided for @appointmentOutsideBusinessHours.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese horario está fuera del horario de atención del taller.'**
+  String get appointmentOutsideBusinessHours;
 
   /// No description provided for @appointmentServiceNotSchedulable.
   ///
@@ -2565,6 +2577,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Placa'**
   String get appointmentVehiclePlateLabel;
+
+  /// No description provided for @appointmentVehiclePlateHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. ABC123'**
+  String get appointmentVehiclePlateHint;
 
   /// No description provided for @appointmentVehicleTypeLabel.
   ///
@@ -2626,11 +2644,23 @@ abstract class AppLocalizations {
   /// **'Marca'**
   String get appointmentVehicleBrandLabel;
 
+  /// No description provided for @appointmentVehicleBrandHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Toyota'**
+  String get appointmentVehicleBrandHint;
+
   /// No description provided for @appointmentVehicleModelLabel.
   ///
   /// In es, this message translates to:
   /// **'Modelo'**
   String get appointmentVehicleModelLabel;
+
+  /// No description provided for @appointmentVehicleModelHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Yaris'**
+  String get appointmentVehicleModelHint;
 
   /// No description provided for @appointmentVehicleYearLabel.
   ///
@@ -2638,11 +2668,23 @@ abstract class AppLocalizations {
   /// **'Año'**
   String get appointmentVehicleYearLabel;
 
+  /// No description provided for @appointmentVehicleYearHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. 2019'**
+  String get appointmentVehicleYearHint;
+
   /// No description provided for @appointmentVehicleColorLabel.
   ///
   /// In es, this message translates to:
   /// **'Color'**
   String get appointmentVehicleColorLabel;
+
+  /// No description provided for @appointmentVehicleColorHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Negro'**
+  String get appointmentVehicleColorHint;
 
   /// No description provided for @appointmentVehicleFuelLabel.
   ///
@@ -2746,6 +2788,24 @@ abstract class AppLocalizations {
   /// **'CREANDO'**
   String get appointmentCreatingAction;
 
+  /// No description provided for @appointmentCreatingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Creando cita'**
+  String get appointmentCreatingTitle;
+
+  /// No description provided for @appointmentCreatingMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos confirmando tu reserva. No cierres esta pantalla.'**
+  String get appointmentCreatingMessage;
+
+  /// No description provided for @appointmentConfirmAction.
+  ///
+  /// In es, this message translates to:
+  /// **'CONFIRMAR CITA'**
+  String get appointmentConfirmAction;
+
   /// No description provided for @appointmentFinishAction.
   ///
   /// In es, this message translates to:
@@ -2848,23 +2908,101 @@ abstract class AppLocalizations {
   /// **'Tarjeta'**
   String get appointmentPaymentCard;
 
-  /// No description provided for @appointmentPaymentSinpe.
-  ///
-  /// In es, this message translates to:
-  /// **'SINPE Móvil'**
-  String get appointmentPaymentSinpe;
-
   /// No description provided for @appointmentPaymentCardSubtitle.
   ///
   /// In es, this message translates to:
   /// **'Pago con tarjeta de crédito o débito.'**
   String get appointmentPaymentCardSubtitle;
 
-  /// No description provided for @appointmentPaymentSinpeSubtitle.
+  /// No description provided for @appointmentMockPaymentBadge.
   ///
   /// In es, this message translates to:
-  /// **'Recibirás las instrucciones para completar el pago.'**
-  String get appointmentPaymentSinpeSubtitle;
+  /// **'Ambiente de prueba'**
+  String get appointmentMockPaymentBadge;
+
+  /// No description provided for @appointmentMockPaymentTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago con tarjeta'**
+  String get appointmentMockPaymentTitle;
+
+  /// No description provided for @appointmentMockPaymentSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta pantalla simula la redirección al proveedor de pago. No se procesará ningún cobro real.'**
+  String get appointmentMockPaymentSubtitle;
+
+  /// No description provided for @appointmentMockPaymentApprovedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago simulado aprobado'**
+  String get appointmentMockPaymentApprovedTitle;
+
+  /// No description provided for @appointmentMockPaymentApprovedSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'La cita fue creada correctamente. En producción, este estado llegará desde la confirmación segura del proveedor de pago.'**
+  String get appointmentMockPaymentApprovedSubtitle;
+
+  /// No description provided for @appointmentMockPaymentAmountLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto'**
+  String get appointmentMockPaymentAmountLabel;
+
+  /// No description provided for @appointmentMockPaymentReferenceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Referencia'**
+  String get appointmentMockPaymentReferenceLabel;
+
+  /// No description provided for @appointmentMockPaymentMerchantLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Comercio'**
+  String get appointmentMockPaymentMerchantLabel;
+
+  /// No description provided for @appointmentMockPaymentApproveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Simular pago aprobado'**
+  String get appointmentMockPaymentApproveAction;
+
+  /// No description provided for @appointmentMockPaymentApprovedAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizar'**
+  String get appointmentMockPaymentApprovedAction;
+
+  /// No description provided for @appointmentMockPaymentBackAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver al taller'**
+  String get appointmentMockPaymentBackAction;
+
+  /// No description provided for @appointmentMockPaymentTimeRemaining.
+  ///
+  /// In es, this message translates to:
+  /// **'Tiempo para completar el pago'**
+  String get appointmentMockPaymentTimeRemaining;
+
+  /// No description provided for @appointmentMockPaymentExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'El tiempo para completar este pago venció. Vuelve al taller y genera una nueva reserva.'**
+  String get appointmentMockPaymentExpired;
+
+  /// No description provided for @appointmentMockPaymentApprovedNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Este pago es una simulación visual. La orden permanece pendiente hasta integrar la confirmación real del proveedor.'**
+  String get appointmentMockPaymentApprovedNotice;
+
+  /// No description provided for @appointmentMockPaymentNotice.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando LaroPay esté integrado, este paso abrirá el navegador seguro y el pago se confirmará por callback.'**
+  String get appointmentMockPaymentNotice;
 
   /// No description provided for @appointmentConfirmationDeliveryMessage.
   ///
@@ -2877,6 +3015,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Taller'**
   String get appointmentWorkshopLabel;
+
+  /// No description provided for @appointmentDurationLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Duración'**
+  String get appointmentDurationLabel;
+
+  /// No description provided for @appointmentPaymentMethodLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago'**
+  String get appointmentPaymentMethodLabel;
+
+  /// No description provided for @appointmentCustomerNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre completo'**
+  String get appointmentCustomerNameLabel;
+
+  /// No description provided for @appointmentCustomerPhoneLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono de contacto'**
+  String get appointmentCustomerPhoneLabel;
+
+  /// No description provided for @appointmentCustomerEmailLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Correo para la cita'**
+  String get appointmentCustomerEmailLabel;
+
+  /// No description provided for @appointmentCustomerIdentificationLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cédula'**
+  String get appointmentCustomerIdentificationLabel;
+
+  /// No description provided for @appointmentCustomerFiscalIdTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de identificación'**
+  String get appointmentCustomerFiscalIdTypeLabel;
+
+  /// No description provided for @appointmentOptionalNoteLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota opcional'**
+  String get appointmentOptionalNoteLabel;
+
+  /// No description provided for @appointmentOptionalNoteHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega detalles importantes para el taller.'**
+  String get appointmentOptionalNoteHint;
 
   /// No description provided for @appointmentProductsLabel.
   ///
@@ -2901,6 +3093,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Por confirmar'**
   String get appointmentPriceToConfirm;
+
+  /// No description provided for @appointmentDurationMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{minutes} min'**
+  String appointmentDurationMinutes(Object minutes);
+
+  /// No description provided for @appointmentDurationHours.
+  ///
+  /// In es, this message translates to:
+  /// **'{hours} h'**
+  String appointmentDurationHours(Object hours);
+
+  /// No description provided for @appointmentDurationHoursMinutes.
+  ///
+  /// In es, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String appointmentDurationHoursMinutes(Object hours, Object minutes);
 }
 
 class _AppLocalizationsDelegate

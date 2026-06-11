@@ -338,8 +338,12 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     emit(state.copyWith(selectedTime: time));
   }
 
-  void selectPaymentMethod(String method) {
+  void selectPaymentMethod(AppointmentPaymentMethod method) {
     emit(state.copyWith(selectedPaymentMethod: method));
+  }
+
+  void updateCustomerNote(String note) {
+    emit(state.copyWith(customerNote: note));
   }
 
   Future<bool> validateSelectedScheduleForBooking() async {
@@ -460,6 +464,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     if (state.submitStatus == AppointmentSubmitStatus.submitting) {
       return null;
+    }
+
+    if (state.createdAppointmentId != null) {
+      return state.createdAppointmentId;
     }
 
     if (workshopId.isEmpty ||
@@ -610,10 +618,6 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   }
 
   bool _isUnavailableDate(DateTime date) {
-    if (isSameDay(date, DateTime.now())) {
-      return false;
-    }
-
     return state.unavailableDates.any((unavailableDate) {
       return isSameDay(unavailableDate, date);
     });
@@ -643,8 +647,13 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         'Combustible: ${state.vehicleFuelType}',
       if (state.vehicleTransmissionType != null)
         'Transmision: ${state.vehicleTransmissionType}',
-      'Metodo de pago: ${state.selectedPaymentMethod}',
+      'Metodo de pago: ${state.selectedPaymentMethod.noteLabel}',
     ];
+
+    final customerNote = state.customerNote.trim();
+    if (customerNote.isNotEmpty) {
+      lines.add('Nota del cliente: $customerNote');
+    }
 
     if (state.includeProducts && state.selectedProducts.isNotEmpty) {
       final products = state.selectedProducts
@@ -696,8 +705,11 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     return switch (_bookingErrorCode(error)) {
       AppointmentSubmitError.authRequired => 'auth_required',
       AppointmentSubmitError.dateTimeInPast => 'datetime_in_past',
-      AppointmentSubmitError.customerNameRequired => 'customer_name_required',
-      AppointmentSubmitError.customerPhoneRequired => 'customer_phone_required',
+      AppointmentSubmitError.invalidSlotInterval => 'invalid_slot_interval',
+      AppointmentSubmitError.businessHoursUnavailable =>
+        'business_hours_unavailable',
+      AppointmentSubmitError.workshopClosed => 'workshop_closed',
+      AppointmentSubmitError.outsideBusinessHours => 'outside_business_hours',
       AppointmentSubmitError.serviceNotSchedulable => 'service_not_schedulable',
       AppointmentSubmitError.slotUnavailable => 'slot_unavailable',
       AppointmentSubmitError.vehicleNotOwned => 'vehicle_not_owned',
@@ -730,12 +742,20 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       return AppointmentSubmitError.dateTimeInPast;
     }
 
-    if (rawMessage.contains('appointment_customer_name_required')) {
-      return AppointmentSubmitError.customerNameRequired;
+    if (rawMessage.contains('appointment_invalid_slot_interval')) {
+      return AppointmentSubmitError.invalidSlotInterval;
     }
 
-    if (rawMessage.contains('appointment_customer_phone_required')) {
-      return AppointmentSubmitError.customerPhoneRequired;
+    if (rawMessage.contains('appointment_business_hours_unavailable')) {
+      return AppointmentSubmitError.businessHoursUnavailable;
+    }
+
+    if (rawMessage.contains('appointment_workshop_closed')) {
+      return AppointmentSubmitError.workshopClosed;
+    }
+
+    if (rawMessage.contains('appointment_outside_business_hours')) {
+      return AppointmentSubmitError.outsideBusinessHours;
     }
 
     if (rawMessage.contains('appointment_service_not_schedulable')) {

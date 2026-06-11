@@ -123,7 +123,7 @@ void main() {
     expect(times, ['08:00', '09:00', '09:30']);
   });
 
-  test('blocks the full duration of existing appointments', () {
+  test('blocks only the exact booked slot', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
         hours: const [
@@ -147,7 +147,7 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['10:30', '11:00', '11:30']);
+    expect(times, ['09:30', '10:00', '10:30', '11:00', '11:30']);
   });
 
   test('keeps overlapping slots available while capacity remains', () {
@@ -178,7 +178,7 @@ void main() {
     expect(times, ['09:00', '09:30', '10:00', '10:30']);
   });
 
-  test('blocks overlapping slots when configured capacity is reached', () {
+  test('blocks the exact slot when configured capacity is reached', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
         hours: const [
@@ -207,10 +207,10 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['10:30']);
+    expect(times, ['09:30', '10:00', '10:30']);
   });
 
-  test('treats consecutive appointments as half-open intervals', () {
+  test('tracks capacity per exact slot', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
         hours: const [
@@ -239,7 +239,7 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['09:00', '09:30', '10:00']);
+    expect(times, ['09:00', '09:30', '10:00', '10:30']);
 
     final unavailableTimes = calculator.unavailableTimesForDate(
       workshop: _workshop(
@@ -272,7 +272,7 @@ void main() {
     expect(unavailableTimes, isEmpty);
   });
 
-  test('returns full slots as unavailable times for visual blocking', () {
+  test('returns full exact slots as unavailable times for visual blocking', () {
     final result = calculator.calculateMonth(
       workshop: _workshop(
         hours: const [
@@ -301,8 +301,8 @@ void main() {
     );
 
     final date = DateTime(2026, 6, 1);
-    expect(result.availableTimesByDate[date], ['10:30']);
-    expect(result.unavailableTimesByDate[date], {'09:00', '09:30', '10:00'});
+    expect(result.availableTimesByDate[date], ['09:30', '10:00', '10:30']);
+    expect(result.unavailableTimesByDate[date], {'09:00'});
   });
 
   test('keeps future slots available for the current day', () {
@@ -327,7 +327,7 @@ void main() {
     expect(times.last, '16:30');
   });
 
-  test('uses default duration when service has no duration', () {
+  test('uses slot interval when service has no duration', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
         hours: const [
@@ -344,7 +344,7 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['07:00', '07:30', '08:00']);
+    expect(times, ['07:00', '07:30', '08:00', '08:30']);
   });
 }
 

@@ -36,12 +36,12 @@ void main() {
       expect(model.customerPhone, '8888-8888');
       expect(model.customerEmail, 'cliente@autolab.app');
       expect(model.vehicleType, 'AUTOMOVIL');
-      expect(model.scheduledAt, _localDateTime('2026-05-28T06:15:00.000Z'));
+      expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       expect(model.status, 'pending');
       expect(model.paymentMethod, 'sinpe');
       expect(model.notes, 'Llegar temprano');
       expect(model.totalAmount, 25000);
-      expect(model.cancelledAt, _localDateTime('2026-05-27T13:00:00.000Z'));
+      expect(model.cancelledAt, DateTime(2026, 5, 27, 7));
       expect(model.cancelledBy, 'user-1');
       expect(model.cancellationReason, 'No podré asistir');
       expect(model.products, hasLength(1));
@@ -164,7 +164,7 @@ void main() {
           'status': 'scheduled',
         });
 
-        expect(model.scheduledAt, _localDateTime('2026-05-28T06:15:00.000Z'));
+        expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       },
     );
 
@@ -178,7 +178,7 @@ void main() {
         'status': 'scheduled',
       });
 
-      expect(model.scheduledAt, _localDateTime('2026-06-18T20:30:00.000Z'));
+      expect(model.scheduledAt, DateTime(2026, 6, 18, 14, 30));
       expect(model.scheduledAt.isUtc, isFalse);
     });
 
@@ -244,7 +244,7 @@ void main() {
           'inventory_item_id': 'service-1',
           'orders': {
             'workshop_id': 'workshop-1',
-            'customers': {'updated_by': 'user-1'},
+            'customers': {'user_id': 'user-1'},
           },
         },
       });
@@ -256,7 +256,7 @@ void main() {
       expect(model.vehicleType, 'AUTOMOVIL');
       expect(model.vehiclePlate, 'ABC123');
       expect(model.status, 'scheduled');
-      expect(model.scheduledAt, _localDateTime('2026-05-28T06:15:00.000Z'));
+      expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       expect(model.notes, 'Revisar frenos');
     });
 
@@ -272,7 +272,7 @@ void main() {
           'inventory_items': {'name': 'Cambio de aceite'},
           'orders': {
             'workshop_id': 'workshop-1',
-            'customers': {'updated_by': 'user-1'},
+            'customers': {'user_id': 'user-1'},
             'workshops': {
               'name': 'AutoFix San Jose',
               'avatar_url': 'avatar.png',
@@ -305,7 +305,7 @@ void main() {
               {
                 'workshop_id': 'workshop-1',
                 'customers': [
-                  {'updated_by': 'user-1'},
+                  {'user_id': 'user-1'},
                 ],
                 'workshops': [
                   {'name': 'AutoFix San Jose', 'avatar_url': 'avatar.png'},
@@ -434,8 +434,4 @@ void main() {
       );
     });
   });
-}
-
-DateTime _localDateTime(String value) {
-  return DateTime.parse(value).toLocal();
 }

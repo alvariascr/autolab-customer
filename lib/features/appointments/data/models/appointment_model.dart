@@ -1,3 +1,4 @@
+import '../../../../core/utils/costa_rica_time.dart';
 import '../../domain/entities/appointment.dart';
 
 class AppointmentModel extends Appointment {
@@ -49,10 +50,7 @@ class AppointmentModel extends Appointment {
       vehiclePlate:
           _nullableString(map['vehicle_plate']) ??
           _nestedString(map, ['vehicles', 'license_plate']),
-      scheduledAt: _requiredDateTime(
-        map['scheduled_at'] ?? map['scheduled_datetime'],
-        'scheduled_at',
-      ),
+      scheduledAt: _appointmentDateTimeFromMap(map),
       status:
           map['status']?.toString() ??
           map['appointment_status']?.toString() ??
@@ -74,8 +72,10 @@ class AppointmentModel extends Appointment {
       paymentMethod: _nullableString(map['payment_method']),
       notes: _nullableString(map['notes']) ?? _nullableString(map['note']),
       totalAmount: _nullableMoney(map['total_amount'], 'total_amount'),
-      createdAt: _nullableDateTime(map['created_at'] ?? map['updated_at']),
-      cancelledAt: _nullableDateTime(map['cancelled_at']),
+      createdAt: _nullableCostaRicaDateTime(
+        map['created_at'] ?? map['updated_at'],
+      ),
+      cancelledAt: _nullableCostaRicaDateTime(map['cancelled_at']),
       cancelledBy: _nullableString(map['cancelled_by']),
       cancellationReason: _nullableString(map['cancellation_reason']),
       products: _productsFromMap(map),
@@ -138,7 +138,7 @@ class AppointmentModel extends Appointment {
           'order_services',
           'orders',
           'customers',
-          'updated_by',
+          'user_id',
         ]);
   }
 
@@ -248,16 +248,36 @@ class AppointmentModel extends Appointment {
     return dateTime;
   }
 
+  static DateTime _appointmentDateTimeFromMap(Map<String, dynamic> map) {
+    final rawDateTime = map['scheduled_datetime'] ?? map['scheduled_at'];
+    if (rawDateTime == null) {
+      throw FormatException(
+        'Missing required appointment datetime scheduled_datetime or scheduled_at',
+        map,
+      );
+    }
+
+    final fieldName = map['scheduled_datetime'] != null
+        ? 'scheduled_datetime'
+        : 'scheduled_at';
+    return utcToCostaRicaLocalTime(_requiredDateTime(rawDateTime, fieldName));
+  }
+
   static DateTime? _nullableDateTime(dynamic value) {
     if (value is DateTime) {
-      return value.toLocal();
+      return value;
     }
 
     if (value == null) {
       return null;
     }
 
-    return DateTime.tryParse(value.toString())?.toLocal();
+    return DateTime.tryParse(value.toString());
+  }
+
+  static DateTime? _nullableCostaRicaDateTime(dynamic value) {
+    final dateTime = _nullableDateTime(value);
+    return dateTime == null ? null : utcToCostaRicaLocalTime(dateTime);
   }
 
   static double? _nullableMoney(dynamic value, String fieldName) {

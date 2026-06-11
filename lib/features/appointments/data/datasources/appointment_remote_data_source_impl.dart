@@ -30,7 +30,6 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     inventory_items(name),
     appointment_products(product_id, quantity, unit_price)
   ''';
-
   static const _appointmentBaseSelect = '''
     id,
     order_service_id,
@@ -49,7 +48,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
       inventory_item_id,
       orders!inner(
         workshop_id,
-        customers!inner(id, updated_by)
+        customers!inner(id, user_id)
       )
     )
   ''';
@@ -76,7 +75,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
         id,
         workshop_id,
         workshops(name, avatar_url),
-        customers!inner(id, updated_by)
+        customers!inner(id, user_id)
       )
     )
   ''';
@@ -112,7 +111,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
       fallbackSelect: _appointmentBaseSelect,
       filters: (query) => query
           .eq('order_services.orders.workshop_id', workshopId)
-          .eq('order_services.orders.customers.updated_by', customerId)
+          .eq('order_services.orders.customers.user_id', customerId)
           .order('scheduled_datetime'),
     );
   }
@@ -125,7 +124,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
       select: _customerAppointmentSelect,
       fallbackSelect: _appointmentBaseSelect,
       filters: (query) => query
-          .eq('order_services.orders.customers.updated_by', customerId)
+          .eq('order_services.orders.customers.user_id', customerId)
           .order('scheduled_datetime'),
     );
   }
@@ -182,7 +181,7 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
           .from('appointments')
           .select(_customerAppointmentSelect)
           .eq('id', id)
-          .eq('order_services.orders.customers.updated_by', customerId)
+          .eq('order_services.orders.customers.user_id', customerId)
           .single();
 
       return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
