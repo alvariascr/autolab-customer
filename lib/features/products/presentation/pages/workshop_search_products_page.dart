@@ -146,12 +146,8 @@ class _WorkshopSearchProductsPageState
                   child: _SearchHeader(
                     controller: _controller,
                     onChanged: (_) => setState(() {}),
-                    onBackTap: () {
-                      context.go('/workshops/${widget.workshopId}');
-                    },
-                    onWorkshopTap: () {
-                      context.go('/workshops/${widget.workshopId}');
-                    },
+                    onBackTap: _returnToWorkshop,
+                    onWorkshopTap: _returnToWorkshop,
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -238,6 +234,15 @@ class _WorkshopSearchProductsPageState
         ),
       ),
     );
+  }
+
+  void _returnToWorkshop() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+      return;
+    }
+
+    context.go('/workshops/${widget.workshopId}');
   }
 }
 
