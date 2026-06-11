@@ -276,6 +276,64 @@ void main() {
     },
   );
 
+  test('rescheduleAppointment retorna fallo de auth sin usuario', () async {
+    final unauthenticatedRepository = AppointmentRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      errorHandler: errorHandler,
+      featureLogger: featureLogger,
+      currentUserIdProvider: () => null,
+    );
+    final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+
+    final result = await unauthenticatedRepository.rescheduleAppointment(
+      appointmentId: 'appt-1',
+      scheduledAt: scheduledAt,
+    );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected auth failure'),
+    );
+    verifyNever(
+      () => remoteDataSource.rescheduleAppointment(
+        appointmentId: any(named: 'appointmentId'),
+        customerId: any(named: 'customerId'),
+        scheduledAt: any(named: 'scheduledAt'),
+      ),
+    );
+  });
+
+  test(
+    'rescheduleAppointment mapea error de RPC a Failure controlado',
+    () async {
+      final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+      final failure = const ServerFailure(message: 'No se pudo reagendar');
+      when(
+        () => remoteDataSource.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      ).thenThrow(
+        const PostgrestException(message: 'appointment_not_reschedulable'),
+      );
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+      final result = await repository.rescheduleAppointment(
+        appointmentId: 'appt-1',
+        scheduledAt: scheduledAt,
+      );
+
+      expect(result.isLeft(), isTrue);
+      result.fold(
+        (actual) => expect(actual, failure),
+        (_) => fail('expected rescheduling failure'),
+      );
+      verify(() => errorHandler.handle(any(), any())).called(1);
+    },
+  );
+
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(
       () => remoteDataSource.createAppointment(
