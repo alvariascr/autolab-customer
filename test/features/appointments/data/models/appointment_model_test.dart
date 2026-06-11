@@ -20,6 +20,9 @@ void main() {
         'notes': 'Llegar temprano',
         'total_amount': '25000',
         'created_at': '2026-05-27T12:00:00.000Z',
+        'cancelled_at': '2026-05-27T13:00:00.000Z',
+        'cancelled_by': 'user-1',
+        'cancellation_reason': 'No podré asistir',
         'appointment_products': [
           {'product_id': 'product-1', 'quantity': '2', 'unit_price': '5000'},
         ],
@@ -38,6 +41,9 @@ void main() {
       expect(model.paymentMethod, 'sinpe');
       expect(model.notes, 'Llegar temprano');
       expect(model.totalAmount, 25000);
+      expect(model.cancelledAt, DateTime(2026, 5, 27, 7));
+      expect(model.cancelledBy, 'user-1');
+      expect(model.cancellationReason, 'No podré asistir');
       expect(model.products, hasLength(1));
       expect(model.products.first.productId, 'product-1');
       expect(model.products.first.quantity, 2);
@@ -63,6 +69,41 @@ void main() {
       expect(model.workshopName, 'AutoFix San Jose');
       expect(model.workshopAvatarUrl, 'avatar.png');
       expect(model.serviceName, 'Cambio de aceite');
+    });
+
+    test('acepta auditoria de cancelacion ausente en citas existentes', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'customer_id': 'user-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+      });
+
+      expect(model.cancelledAt, isNull);
+      expect(model.cancelledBy, isNull);
+      expect(model.cancellationReason, isNull);
+    });
+
+    test('acepta auditoria de cancelacion explicitamente nula', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'customer_id': 'user-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+        'cancelled_at': null,
+        'cancelled_by': null,
+        'cancellation_reason': null,
+      });
+
+      expect(model.cancelledAt, isNull);
+      expect(model.cancelledBy, isNull);
+      expect(model.cancellationReason, isNull);
     });
 
     test('convierte draft a parametros de RPC atomica', () {
@@ -146,6 +187,24 @@ void main() {
       },
     );
 
+    test('convierte scheduled_datetime UTC a hora civil de Costa Rica', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'scheduled_datetime': '2026-06-18T20:30:00.000Z',
+        'status': 'scheduled',
+      });
+
+      expect(model.scheduledAt.year, 2026);
+      expect(model.scheduledAt.month, 6);
+      expect(model.scheduledAt.day, 18);
+      expect(model.scheduledAt.hour, 14);
+      expect(model.scheduledAt.minute, 30);
+      expect(model.scheduledAt.isUtc, isFalse);
+    });
+
     test('usa campos legacy cuando order_services viene nulo', () {
       final model = AppointmentModel.fromMap({
         'id': 'appointment-1',
@@ -203,7 +262,7 @@ void main() {
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'note': 'Revisar frenos',
         'vehicle_id': 'vehicle-1',
-        'vehicles': {'vehicle_type': 'AUTOMOVIL'},
+        'vehicles': {'vehicle_type': 'AUTOMOVIL', 'license_plate': 'ABC123'},
         'order_services': {
           'inventory_item_id': 'service-1',
           'orders': {
@@ -218,6 +277,7 @@ void main() {
       expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
       expect(model.vehicleType, 'AUTOMOVIL');
+      expect(model.vehiclePlate, 'ABC123');
       expect(model.status, 'scheduled');
       expect(model.scheduledAt, DateTime(2026, 5, 28, 0, 15));
       expect(model.notes, 'Revisar frenos');
@@ -256,7 +316,7 @@ void main() {
         'appointment_status': 'scheduled',
         'scheduled_datetime': '2026-05-28T06:15:00.000Z',
         'vehicles': [
-          {'vehicle_type': 'AUTOMOVIL'},
+          {'vehicle_type': 'AUTOMOVIL', 'license_plate': 'ABC123'},
         ],
         'order_services': [
           {
@@ -283,6 +343,7 @@ void main() {
       expect(model.workshopId, 'workshop-1');
       expect(model.serviceId, 'service-1');
       expect(model.vehicleType, 'AUTOMOVIL');
+      expect(model.vehiclePlate, 'ABC123');
       expect(model.workshopName, 'AutoFix San Jose');
       expect(model.workshopAvatarUrl, 'avatar.png');
       expect(model.serviceName, 'Cambio de aceite');

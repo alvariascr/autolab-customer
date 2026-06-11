@@ -988,6 +988,264 @@ abstract class AppLocalizations {
   /// **'Programada'**
   String get myAppointmentsStatusConfirmed;
 
+  /// No description provided for @myAppointmentDetailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalle de cita'**
+  String get myAppointmentDetailTitle;
+
+  /// No description provided for @myAppointmentDetailPlate.
+  ///
+  /// In es, this message translates to:
+  /// **'Placa'**
+  String get myAppointmentDetailPlate;
+
+  /// No description provided for @myAppointmentDetailVehicle.
+  ///
+  /// In es, this message translates to:
+  /// **'Vehículo'**
+  String get myAppointmentDetailVehicle;
+
+  /// No description provided for @myAppointmentDetailDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get myAppointmentDetailDate;
+
+  /// No description provided for @myAppointmentDetailTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Hora'**
+  String get myAppointmentDetailTime;
+
+  /// No description provided for @myAppointmentDetailTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total a pagar'**
+  String get myAppointmentDetailTotal;
+
+  /// No description provided for @myAppointmentDetailItems.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos y servicios'**
+  String get myAppointmentDetailItems;
+
+  /// No description provided for @myAppointmentDetailPaymentMethod.
+  ///
+  /// In es, this message translates to:
+  /// **'Método de pago'**
+  String get myAppointmentDetailPaymentMethod;
+
+  /// No description provided for @myAppointmentDetailNotAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No disponible'**
+  String get myAppointmentDetailNotAvailable;
+
+  /// No description provided for @myAppointmentRescheduleAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Reagendar'**
+  String get myAppointmentRescheduleAction;
+
+  /// No description provided for @myAppointmentRescheduleSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'La opción de reagendar estará disponible pronto.'**
+  String get myAppointmentRescheduleSoon;
+
+  /// No description provided for @myAppointmentRescheduleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona nueva fecha'**
+  String get myAppointmentRescheduleTitle;
+
+  /// No description provided for @myAppointmentRescheduleCalendarMonth.
+  ///
+  /// In es, this message translates to:
+  /// **'Mes'**
+  String get myAppointmentRescheduleCalendarMonth;
+
+  /// No description provided for @myAppointmentRescheduleAvailableHours.
+  ///
+  /// In es, this message translates to:
+  /// **'Horas disponibles'**
+  String get myAppointmentRescheduleAvailableHours;
+
+  /// No description provided for @myAppointmentRescheduleConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar nueva fecha'**
+  String get myAppointmentRescheduleConfirm;
+
+  /// No description provided for @myAppointmentRescheduleLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargando horarios disponibles'**
+  String get myAppointmentRescheduleLoading;
+
+  /// No description provided for @myAppointmentRescheduleLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar los horarios. Intenta nuevamente.'**
+  String get myAppointmentRescheduleLoadError;
+
+  /// No description provided for @myAppointmentRescheduleNoHours.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay horarios disponibles para esta fecha.'**
+  String get myAppointmentRescheduleNoHours;
+
+  /// No description provided for @myAppointmentRescheduleSelectHour.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona una hora disponible.'**
+  String get myAppointmentRescheduleSelectHour;
+
+  /// No description provided for @myAppointmentRescheduleFailure.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos reagendar la cita. Intenta nuevamente.'**
+  String get myAppointmentRescheduleFailure;
+
+  /// No description provided for @myAppointmentCancelBusyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hay una cancelación en proceso.'**
+  String get myAppointmentCancelBusyMessage;
+
+  /// No description provided for @myAppointmentRescheduleBusyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hay un reagendado en proceso.'**
+  String get myAppointmentRescheduleBusyMessage;
+
+  /// No description provided for @myAppointmentRescheduleSuccessTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Cita reagendada!'**
+  String get myAppointmentRescheduleSuccessTitle;
+
+  /// No description provided for @myAppointmentRescheduleSuccessMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu cita ha sido actualizada correctamente.'**
+  String get myAppointmentRescheduleSuccessMessage;
+
+  /// No description provided for @myAppointmentRescheduleSuccessAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver mis citas'**
+  String get myAppointmentRescheduleSuccessAction;
+
+  /// No description provided for @myAppointmentCancelAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar cita'**
+  String get myAppointmentCancelAction;
+
+  /// No description provided for @myAppointmentCancelTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar cita'**
+  String get myAppointmentCancelTitle;
+
+  /// No description provided for @myAppointmentCancelReasonQuestion.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Por qué deseas cancelar esta cita?'**
+  String get myAppointmentCancelReasonQuestion;
+
+  /// No description provided for @myAppointmentCancelReasonNoNeed.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya no necesito el servicio'**
+  String get myAppointmentCancelReasonNoNeed;
+
+  /// No description provided for @myAppointmentCancelReasonChangedWorkshop.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambié de taller'**
+  String get myAppointmentCancelReasonChangedWorkshop;
+
+  /// No description provided for @myAppointmentCancelReasonBookingError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error en la reserva'**
+  String get myAppointmentCancelReasonBookingError;
+
+  /// No description provided for @myAppointmentCancelReasonCannotAttend.
+  ///
+  /// In es, this message translates to:
+  /// **'No podré asistir'**
+  String get myAppointmentCancelReasonCannotAttend;
+
+  /// No description provided for @myAppointmentCancelReasonOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro motivo'**
+  String get myAppointmentCancelReasonOther;
+
+  /// No description provided for @myAppointmentCancelCommentsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Comentarios (opcional)'**
+  String get myAppointmentCancelCommentsHint;
+
+  /// No description provided for @myAppointmentCancelContinue.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get myAppointmentCancelContinue;
+
+  /// No description provided for @myAppointmentCancelConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Deseas cancelar esta cita?'**
+  String get myAppointmentCancelConfirmTitle;
+
+  /// No description provided for @myAppointmentCancelConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta acción no se puede deshacer.'**
+  String get myAppointmentCancelConfirmMessage;
+
+  /// No description provided for @myAppointmentCancelConfirmNo.
+  ///
+  /// In es, this message translates to:
+  /// **'No, volver'**
+  String get myAppointmentCancelConfirmNo;
+
+  /// No description provided for @myAppointmentCancelConfirmYes.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí, cancelar'**
+  String get myAppointmentCancelConfirmYes;
+
+  /// No description provided for @myAppointmentCancelSuccessTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Cita cancelada!'**
+  String get myAppointmentCancelSuccessTitle;
+
+  /// No description provided for @myAppointmentCancelSuccessMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu cita ha sido cancelada correctamente.'**
+  String get myAppointmentCancelSuccessMessage;
+
+  /// No description provided for @myAppointmentCancelSuccessAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a mis citas'**
+  String get myAppointmentCancelSuccessAction;
+
+  /// No description provided for @myAppointmentCancelFailure.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cancelar la cita. Intenta nuevamente.'**
+  String get myAppointmentCancelFailure;
+
   /// No description provided for @vehiclesTitle.
   ///
   /// In es, this message translates to:

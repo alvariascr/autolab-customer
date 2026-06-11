@@ -11,6 +11,7 @@ class AppointmentModel extends Appointment {
     required super.customerPhone,
     required super.customerEmail,
     required super.vehicleType,
+    super.vehiclePlate,
     required super.scheduledAt,
     required super.status,
     super.workshopName,
@@ -20,6 +21,9 @@ class AppointmentModel extends Appointment {
     super.notes,
     super.totalAmount,
     super.createdAt,
+    super.cancelledAt,
+    super.cancelledBy,
+    super.cancellationReason,
     super.products,
   });
 
@@ -43,6 +47,9 @@ class AppointmentModel extends Appointment {
         map['vehicle_type'],
         _nestedValue(map, ['vehicles', 'vehicle_type']),
       ], 'vehicle_type'),
+      vehiclePlate:
+          _nullableString(map['vehicle_plate']) ??
+          _nestedString(map, ['vehicles', 'license_plate']),
       scheduledAt: _appointmentDateTimeFromMap(map),
       status:
           map['status']?.toString() ??
@@ -65,7 +72,12 @@ class AppointmentModel extends Appointment {
       paymentMethod: _nullableString(map['payment_method']),
       notes: _nullableString(map['notes']) ?? _nullableString(map['note']),
       totalAmount: _nullableMoney(map['total_amount'], 'total_amount'),
-      createdAt: _nullableDateTime(map['created_at'] ?? map['updated_at']),
+      createdAt: _nullableCostaRicaDateTime(
+        map['created_at'] ?? map['updated_at'],
+      ),
+      cancelledAt: _nullableCostaRicaDateTime(map['cancelled_at']),
+      cancelledBy: _nullableString(map['cancelled_by']),
+      cancellationReason: _nullableString(map['cancellation_reason']),
       products: _productsFromMap(map),
     );
   }
@@ -106,12 +118,16 @@ class AppointmentModel extends Appointment {
       'customer_phone': customerPhone,
       'customer_email': customerEmail,
       'vehicle_type': vehicleType,
+      'vehicle_plate': vehiclePlate,
       'scheduled_at': scheduledAt.toUtc().toIso8601String(),
       'status': status,
       'payment_method': paymentMethod,
       'notes': notes,
       'total_amount': totalAmount,
       'created_at': createdAt?.toUtc().toIso8601String(),
+      'cancelled_at': cancelledAt?.toUtc().toIso8601String(),
+      'cancelled_by': cancelledBy,
+      'cancellation_reason': cancellationReason,
     };
   }
 
@@ -257,6 +273,11 @@ class AppointmentModel extends Appointment {
     }
 
     return DateTime.tryParse(value.toString());
+  }
+
+  static DateTime? _nullableCostaRicaDateTime(dynamic value) {
+    final dateTime = _nullableDateTime(value);
+    return dateTime == null ? null : utcToCostaRicaLocalTime(dateTime);
   }
 
   static double? _nullableMoney(dynamic value, String fieldName) {

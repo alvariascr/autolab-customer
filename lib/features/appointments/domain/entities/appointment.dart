@@ -10,6 +10,7 @@ class Appointment extends Equatable {
     required this.customerPhone,
     required this.customerEmail,
     required this.vehicleType,
+    this.vehiclePlate,
     required this.scheduledAt,
     required this.status,
     this.workshopName,
@@ -19,6 +20,9 @@ class Appointment extends Equatable {
     this.notes,
     this.totalAmount,
     this.createdAt,
+    this.cancelledAt,
+    this.cancelledBy,
+    this.cancellationReason,
     this.products = const [],
   });
 
@@ -30,6 +34,7 @@ class Appointment extends Equatable {
   final String customerPhone;
   final String customerEmail;
   final String vehicleType;
+  final String? vehiclePlate;
   final DateTime scheduledAt;
   final String status;
   final String? workshopName;
@@ -39,6 +44,9 @@ class Appointment extends Equatable {
   final String? notes;
   final double? totalAmount;
   final DateTime? createdAt;
+  final DateTime? cancelledAt;
+  final String? cancelledBy;
+  final String? cancellationReason;
   final List<AppointmentProductLine> products;
 
   @override
@@ -51,6 +59,7 @@ class Appointment extends Equatable {
     customerPhone,
     customerEmail,
     vehicleType,
+    vehiclePlate,
     scheduledAt,
     status,
     workshopName,
@@ -60,6 +69,9 @@ class Appointment extends Equatable {
     notes,
     totalAmount,
     createdAt,
+    cancelledAt,
+    cancelledBy,
+    cancellationReason,
     products,
   ];
 }

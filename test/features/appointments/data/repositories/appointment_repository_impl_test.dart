@@ -147,6 +147,193 @@ void main() {
     );
   });
 
+  test(
+    'cancelAppointment delega cancelacion con usuario autenticado',
+    () async {
+      when(
+        () => remoteDataSource.cancelAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          reason: 'No podre asistir',
+          comments: 'Cambio de planes',
+        ),
+      ).thenAnswer(
+        (_) async => _appointment(
+          id: 'appt-1',
+          customerId: _currentUserId,
+          status: 'cancelled',
+        ),
+      );
+
+      final result = await repository.cancelAppointment(
+        appointmentId: 'appt-1',
+        reason: 'No podre asistir',
+        comments: 'Cambio de planes',
+      );
+      final appointment = result.getOrElse(() => throw StateError('missing'));
+
+      expect(result.isRight(), isTrue);
+      expect(appointment.status, 'cancelled');
+      verify(
+        () => remoteDataSource.cancelAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          reason: 'No podre asistir',
+          comments: 'Cambio de planes',
+        ),
+      ).called(1);
+    },
+  );
+
+  test('cancelAppointment retorna fallo de auth sin usuario', () async {
+    final unauthenticatedRepository = AppointmentRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      errorHandler: errorHandler,
+      featureLogger: featureLogger,
+      currentUserIdProvider: () => null,
+    );
+
+    final result = await unauthenticatedRepository.cancelAppointment(
+      appointmentId: 'appt-1',
+      reason: 'No podre asistir',
+    );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected auth failure'),
+    );
+    verifyNever(
+      () => remoteDataSource.cancelAppointment(
+        appointmentId: any(named: 'appointmentId'),
+        customerId: any(named: 'customerId'),
+        reason: any(named: 'reason'),
+        comments: any(named: 'comments'),
+      ),
+    );
+  });
+
+  test('cancelAppointment mapea error de RPC a Failure controlado', () async {
+    final failure = const ServerFailure(message: 'No se pudo cancelar');
+    when(
+      () => remoteDataSource.cancelAppointment(
+        appointmentId: 'appt-1',
+        customerId: _currentUserId,
+        reason: 'No podre asistir',
+        comments: any(named: 'comments'),
+      ),
+    ).thenThrow(
+      const PostgrestException(message: 'appointment_not_cancelable'),
+    );
+    when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+    final result = await repository.cancelAppointment(
+      appointmentId: 'appt-1',
+      reason: 'No podre asistir',
+    );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (actual) => expect(actual, failure),
+      (_) => fail('expected cancellation failure'),
+    );
+    verify(() => errorHandler.handle(any(), any())).called(1);
+  });
+
+  test(
+    'rescheduleAppointment delega nueva fecha con usuario autenticado',
+    () async {
+      final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+      when(
+        () => remoteDataSource.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      ).thenAnswer(
+        (_) async => _appointment(
+          id: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      );
+
+      final result = await repository.rescheduleAppointment(
+        appointmentId: 'appt-1',
+        scheduledAt: scheduledAt,
+      );
+      final appointment = result.getOrElse(() => throw StateError('missing'));
+
+      expect(result.isRight(), isTrue);
+      expect(appointment.scheduledAt, scheduledAt);
+      verify(
+        () => remoteDataSource.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      ).called(1);
+    },
+  );
+
+  test('rescheduleAppointment retorna fallo de auth sin usuario', () async {
+    final unauthenticatedRepository = AppointmentRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      errorHandler: errorHandler,
+      featureLogger: featureLogger,
+      currentUserIdProvider: () => null,
+    );
+    final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+
+    final result = await unauthenticatedRepository.rescheduleAppointment(
+      appointmentId: 'appt-1',
+      scheduledAt: scheduledAt,
+    );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected auth failure'),
+    );
+    verifyNever(
+      () => remoteDataSource.rescheduleAppointment(
+        appointmentId: any(named: 'appointmentId'),
+        customerId: any(named: 'customerId'),
+        scheduledAt: any(named: 'scheduledAt'),
+      ),
+    );
+  });
+
+  test(
+    'rescheduleAppointment mapea error de RPC a Failure controlado',
+    () async {
+      final scheduledAt = DateTime.utc(2026, 6, 18, 15);
+      final failure = const ServerFailure(message: 'No se pudo reagendar');
+      when(
+        () => remoteDataSource.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          customerId: _currentUserId,
+          scheduledAt: scheduledAt,
+        ),
+      ).thenThrow(
+        const PostgrestException(message: 'appointment_not_reschedulable'),
+      );
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+      final result = await repository.rescheduleAppointment(
+        appointmentId: 'appt-1',
+        scheduledAt: scheduledAt,
+      );
+
+      expect(result.isLeft(), isTrue);
+      result.fold(
+        (actual) => expect(actual, failure),
+        (_) => fail('expected rescheduling failure'),
+      );
+      verify(() => errorHandler.handle(any(), any())).called(1);
+    },
+  );
+
   test('createAppointment mapea timeout a Failure controlado', () async {
     when(
       () => remoteDataSource.createAppointment(
@@ -320,6 +507,8 @@ AppointmentDraft _draft() {
 AppointmentModel _appointment({
   String id = 'appt-1',
   String customerId = 'user-1',
+  String status = 'pending',
+  DateTime? scheduledAt,
 }) {
   return AppointmentModel(
     id: id,
@@ -330,7 +519,7 @@ AppointmentModel _appointment({
     customerPhone: '8888-8888',
     customerEmail: 'cliente@autolab.app',
     vehicleType: 'AUTOMOVIL',
-    scheduledAt: DateTime.utc(2026, 5, 28, 6, 15),
-    status: 'pending',
+    scheduledAt: scheduledAt ?? DateTime.utc(2026, 5, 28, 6, 15),
+    status: status,
   );
 }
