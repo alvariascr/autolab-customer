@@ -20,6 +20,9 @@ class Appointment extends Equatable {
     this.notes,
     this.totalAmount,
     this.createdAt,
+    this.cancelledAt,
+    this.cancelledBy,
+    this.cancellationReason,
     this.products = const [],
   });
 
@@ -41,6 +44,9 @@ class Appointment extends Equatable {
   final String? notes;
   final double? totalAmount;
   final DateTime? createdAt;
+  final DateTime? cancelledAt;
+  final String? cancelledBy;
+  final String? cancellationReason;
   final List<AppointmentProductLine> products;
 
   @override
@@ -63,6 +69,9 @@ class Appointment extends Equatable {
     notes,
     totalAmount,
     createdAt,
+    cancelledAt,
+    cancelledBy,
+    cancellationReason,
     products,
   ];
 }

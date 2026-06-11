@@ -23,6 +23,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     notes,
     total_amount,
     created_at,
+    cancelled_at,
+    cancelled_by,
+    cancellation_reason,
     workshops(name, avatar_url),
     inventory_items(name),
     appointment_products(product_id, quantity, unit_price)
@@ -38,6 +41,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
+    cancelled_at,
+    cancelled_by,
+    cancellation_reason,
     vehicles(vehicle_type, license_plate),
     order_services!inner(
       inventory_item_id,
@@ -58,6 +64,9 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     employee_id,
     updated_at,
     updated_by,
+    cancelled_at,
+    cancelled_by,
+    cancellation_reason,
     vehicles(vehicle_type, license_plate),
     order_services!inner(
       id,

@@ -20,6 +20,9 @@ void main() {
         'notes': 'Llegar temprano',
         'total_amount': '25000',
         'created_at': '2026-05-27T12:00:00.000Z',
+        'cancelled_at': '2026-05-27T13:00:00.000Z',
+        'cancelled_by': 'user-1',
+        'cancellation_reason': 'No podré asistir',
         'appointment_products': [
           {'product_id': 'product-1', 'quantity': '2', 'unit_price': '5000'},
         ],
@@ -38,6 +41,9 @@ void main() {
       expect(model.paymentMethod, 'sinpe');
       expect(model.notes, 'Llegar temprano');
       expect(model.totalAmount, 25000);
+      expect(model.cancelledAt, _localDateTime('2026-05-27T13:00:00.000Z'));
+      expect(model.cancelledBy, 'user-1');
+      expect(model.cancellationReason, 'No podré asistir');
       expect(model.products, hasLength(1));
       expect(model.products.first.productId, 'product-1');
       expect(model.products.first.quantity, 2);

@@ -20,6 +20,9 @@ class AppointmentModel extends Appointment {
     super.notes,
     super.totalAmount,
     super.createdAt,
+    super.cancelledAt,
+    super.cancelledBy,
+    super.cancellationReason,
     super.products,
   });
 
@@ -72,6 +75,9 @@ class AppointmentModel extends Appointment {
       notes: _nullableString(map['notes']) ?? _nullableString(map['note']),
       totalAmount: _nullableMoney(map['total_amount'], 'total_amount'),
       createdAt: _nullableDateTime(map['created_at'] ?? map['updated_at']),
+      cancelledAt: _nullableDateTime(map['cancelled_at']),
+      cancelledBy: _nullableString(map['cancelled_by']),
+      cancellationReason: _nullableString(map['cancellation_reason']),
       products: _productsFromMap(map),
     );
   }
@@ -119,6 +125,9 @@ class AppointmentModel extends Appointment {
       'notes': notes,
       'total_amount': totalAmount,
       'created_at': createdAt?.toUtc().toIso8601String(),
+      'cancelled_at': cancelledAt?.toUtc().toIso8601String(),
+      'cancelled_by': cancelledBy,
+      'cancellation_reason': cancellationReason,
     };
   }
 
