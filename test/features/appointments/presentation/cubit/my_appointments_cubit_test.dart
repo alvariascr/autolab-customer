@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/features/appointments/domain/entities/appointment.dart';
 import 'package:autolab_customer/features/appointments/domain/repositories/appointment_repository.dart';
@@ -130,6 +132,104 @@ void main() {
       ),
     ],
   );
+
+  blocTest<MyAppointmentsCubit, MyAppointmentsState>(
+    'cancelAppointment conserva la cita y expone el error cuando falla',
+    build: () {
+      when(
+        () => repository.cancelAppointment(
+          appointmentId: 'appt-1',
+          reason: 'No podre asistir',
+          comments: null,
+        ),
+      ).thenAnswer(
+        (_) async => const Left(
+          ServerFailure(
+            message: 'No se pudo cancelar',
+            code: 'APPOINTMENT_NOT_CANCELABLE',
+          ),
+        ),
+      );
+
+      return MyAppointmentsCubit(repository);
+    },
+    seed: () => MyAppointmentsState(
+      status: MyAppointmentsStatus.success,
+      appointments: [
+        _appointment(id: 'appt-1', scheduledAt: DateTime.utc(2026, 6, 1)),
+      ],
+    ),
+    act: (cubit) => cubit.cancelAppointment(
+      appointment: cubit.state.appointments.first,
+      reason: 'No podre asistir',
+    ),
+    expect: () => [
+      isA<MyAppointmentsState>().having(
+        (state) => state.cancelingAppointmentId,
+        'canceling appointment id',
+        'appt-1',
+      ),
+      isA<MyAppointmentsState>()
+          .having(
+            (state) => state.cancelingAppointmentId,
+            'canceling appointment id',
+            isNull,
+          )
+          .having(
+            (state) => state.appointments.first.status,
+            'appointment status',
+            'pending',
+          )
+          .having((state) => state.message, 'message', 'No se pudo cancelar')
+          .having((state) => state.code, 'code', 'APPOINTMENT_NOT_CANCELABLE'),
+    ],
+  );
+
+  test('cancelAppointment bloquea una segunda solicitud simultanea', () async {
+    final completer = Completer<Either<Failure, Appointment>>();
+    final appointment = _appointment(
+      id: 'appt-1',
+      scheduledAt: DateTime.utc(2026, 6, 1),
+    );
+    when(
+      () => repository.cancelAppointment(
+        appointmentId: 'appt-1',
+        reason: 'No podre asistir',
+        comments: null,
+      ),
+    ).thenAnswer((_) => completer.future);
+    final cubit = MyAppointmentsCubit(repository);
+
+    final firstRequest = cubit.cancelAppointment(
+      appointment: appointment,
+      reason: 'No podre asistir',
+    );
+    final secondResult = await cubit.cancelAppointment(
+      appointment: appointment,
+      reason: 'No podre asistir',
+    );
+
+    expect(secondResult, isFalse);
+    verify(
+      () => repository.cancelAppointment(
+        appointmentId: 'appt-1',
+        reason: 'No podre asistir',
+        comments: null,
+      ),
+    ).called(1);
+
+    completer.complete(
+      Right(
+        _appointment(
+          id: 'appt-1',
+          scheduledAt: DateTime.utc(2026, 6, 1),
+          status: 'cancelled',
+        ),
+      ),
+    );
+    expect(await firstRequest, isTrue);
+    await cubit.close();
+  });
 
   blocTest<MyAppointmentsCubit, MyAppointmentsState>(
     'rescheduleAppointment reemplaza la cita reagendada',

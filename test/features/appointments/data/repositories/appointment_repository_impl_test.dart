@@ -185,6 +185,61 @@ void main() {
     },
   );
 
+  test('cancelAppointment retorna fallo de auth sin usuario', () async {
+    final unauthenticatedRepository = AppointmentRepositoryImpl(
+      remoteDataSource: remoteDataSource,
+      errorHandler: errorHandler,
+      featureLogger: featureLogger,
+      currentUserIdProvider: () => null,
+    );
+
+    final result = await unauthenticatedRepository.cancelAppointment(
+      appointmentId: 'appt-1',
+      reason: 'No podre asistir',
+    );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected auth failure'),
+    );
+    verifyNever(
+      () => remoteDataSource.cancelAppointment(
+        appointmentId: any(named: 'appointmentId'),
+        customerId: any(named: 'customerId'),
+        reason: any(named: 'reason'),
+        comments: any(named: 'comments'),
+      ),
+    );
+  });
+
+  test('cancelAppointment mapea error de RPC a Failure controlado', () async {
+    final failure = const ServerFailure(message: 'No se pudo cancelar');
+    when(
+      () => remoteDataSource.cancelAppointment(
+        appointmentId: 'appt-1',
+        customerId: _currentUserId,
+        reason: 'No podre asistir',
+        comments: null,
+      ),
+    ).thenThrow(
+      const PostgrestException(message: 'appointment_not_cancelable'),
+    );
+    when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+
+    final result = await repository.cancelAppointment(
+      appointmentId: 'appt-1',
+      reason: 'No podre asistir',
+    );
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (actual) => expect(actual, failure),
+      (_) => fail('expected cancellation failure'),
+    );
+    verify(() => errorHandler.handle(any(), any())).called(1);
+  });
+
   test(
     'rescheduleAppointment delega nueva fecha con usuario autenticado',
     () async {
