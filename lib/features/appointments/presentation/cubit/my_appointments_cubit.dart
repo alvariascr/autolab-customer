@@ -9,6 +9,9 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
   MyAppointmentsCubit(this._repository)
     : super(const MyAppointmentsState.initial());
 
+  static const cancelBusyCode = 'APPOINTMENT_CANCEL_BUSY';
+  static const rescheduleBusyCode = 'APPOINTMENT_RESCHEDULE_BUSY';
+
   final AppointmentRepository _repository;
 
   Future<void> load() async {
@@ -38,6 +41,7 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
     String? comments,
   }) async {
     if (state.cancelingAppointmentId != null) {
+      emit(state.copyWith(code: cancelBusyCode, clearMessage: true));
       return false;
     }
 
@@ -86,6 +90,7 @@ class MyAppointmentsCubit extends Cubit<MyAppointmentsState> {
     required DateTime scheduledAt,
   }) async {
     if (state.reschedulingAppointmentId != null) {
+      emit(state.copyWith(code: rescheduleBusyCode, clearMessage: true));
       return null;
     }
 

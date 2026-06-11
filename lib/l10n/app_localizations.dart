@@ -1108,6 +1108,18 @@ abstract class AppLocalizations {
   /// **'No pudimos reagendar la cita. Intenta nuevamente.'**
   String get myAppointmentRescheduleFailure;
 
+  /// No description provided for @myAppointmentCancelBusyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hay una cancelación en proceso.'**
+  String get myAppointmentCancelBusyMessage;
+
+  /// No description provided for @myAppointmentRescheduleBusyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya hay un reagendado en proceso.'**
+  String get myAppointmentRescheduleBusyMessage;
+
   /// No description provided for @myAppointmentRescheduleSuccessTitle.
   ///
   /// In es, this message translates to:

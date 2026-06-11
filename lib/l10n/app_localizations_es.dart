@@ -569,6 +569,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'No pudimos reagendar la cita. Intenta nuevamente.';
 
   @override
+  String get myAppointmentCancelBusyMessage =>
+      'Ya hay una cancelación en proceso.';
+
+  @override
+  String get myAppointmentRescheduleBusyMessage =>
+      'Ya hay un reagendado en proceso.';
+
+  @override
   String get myAppointmentRescheduleSuccessTitle => '¡Cita reagendada!';
 
   @override

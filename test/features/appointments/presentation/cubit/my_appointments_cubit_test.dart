@@ -210,6 +210,7 @@ void main() {
     );
 
     expect(secondResult, isFalse);
+    expect(cubit.state.code, MyAppointmentsCubit.cancelBusyCode);
     verify(
       () => repository.cancelAppointment(
         appointmentId: 'appt-1',
@@ -230,6 +231,51 @@ void main() {
     expect(await firstRequest, isTrue);
     await cubit.close();
   });
+
+  test(
+    'rescheduleAppointment informa una segunda solicitud simultanea',
+    () async {
+      final completer = Completer<Either<Failure, Appointment>>();
+      final appointment = _appointment(
+        id: 'appt-1',
+        scheduledAt: DateTime.utc(2026, 6, 1),
+      );
+      final newDate = DateTime.utc(2026, 6, 18, 15);
+      when(
+        () => repository.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          scheduledAt: newDate,
+        ),
+      ).thenAnswer((_) => completer.future);
+      final cubit = MyAppointmentsCubit(repository);
+
+      final firstRequest = cubit.rescheduleAppointment(
+        appointment: appointment,
+        scheduledAt: newDate,
+      );
+      final secondResult = await cubit.rescheduleAppointment(
+        appointment: appointment,
+        scheduledAt: newDate,
+      );
+
+      expect(secondResult, isNull);
+      expect(cubit.state.code, MyAppointmentsCubit.rescheduleBusyCode);
+      verify(
+        () => repository.rescheduleAppointment(
+          appointmentId: 'appt-1',
+          scheduledAt: newDate,
+        ),
+      ).called(1);
+
+      completer.complete(
+        Right(
+          _appointment(id: 'appt-1', scheduledAt: newDate, status: 'scheduled'),
+        ),
+      );
+      expect(await firstRequest, isNotNull);
+      await cubit.close();
+    },
+  );
 
   blocTest<MyAppointmentsCubit, MyAppointmentsState>(
     'rescheduleAppointment reemplaza la cita reagendada',

@@ -174,6 +174,8 @@
   "myAppointmentRescheduleNoHours": "No hay horarios disponibles para esta fecha.",
   "myAppointmentRescheduleSelectHour": "Selecciona una hora disponible.",
   "myAppointmentRescheduleFailure": "No pudimos reagendar la cita. Intenta nuevamente.",
+  "myAppointmentCancelBusyMessage": "Ya hay una cancelación en proceso.",
+  "myAppointmentRescheduleBusyMessage": "Ya hay un reagendado en proceso.",
   "myAppointmentRescheduleSuccessTitle": "¡Cita reagendada!",
   "myAppointmentRescheduleSuccessMessage": "Tu cita ha sido actualizada correctamente.",
   "myAppointmentRescheduleSuccessAction": "Ver mis citas",

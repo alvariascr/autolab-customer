@@ -230,12 +230,15 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     }
 
     if (updated == null) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _friendlyFailureMessage(
-              cubit.state.message,
-              AppLocalizations.of(context)!.myAppointmentRescheduleFailure,
+            _appointmentActionFailureMessage(
+              l10n: l10n,
+              code: cubit.state.code,
+              message: cubit.state.message,
+              fallback: l10n.myAppointmentRescheduleFailure,
             ),
           ),
         ),
@@ -283,12 +286,15 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     }
 
     if (!canceled) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _friendlyFailureMessage(
-              cubit.state.message,
-              AppLocalizations.of(context)!.myAppointmentCancelFailure,
+            _appointmentActionFailureMessage(
+              l10n: l10n,
+              code: cubit.state.code,
+              message: cubit.state.message,
+              fallback: l10n.myAppointmentCancelFailure,
             ),
           ),
         ),
@@ -1956,6 +1962,20 @@ String _friendlyFailureMessage(String? message, String fallback) {
   }
 
   return text;
+}
+
+String _appointmentActionFailureMessage({
+  required AppLocalizations l10n,
+  required String? code,
+  required String? message,
+  required String fallback,
+}) {
+  return switch (code) {
+    MyAppointmentsCubit.cancelBusyCode => l10n.myAppointmentCancelBusyMessage,
+    MyAppointmentsCubit.rescheduleBusyCode =>
+      l10n.myAppointmentRescheduleBusyMessage,
+    _ => _friendlyFailureMessage(message, fallback),
+  };
 }
 
 String _formatAppointmentTime(DateTime value) {
