@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/utils/costa_rica_time.dart';
 import '../models/appointment_model.dart';
 import 'appointment_remote_data_source.dart';
 
@@ -8,28 +9,6 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
 
   final SupabaseClient client;
 
-  static const _appointmentSelect = '''
-    id,
-    customer_id,
-    workshop_id,
-    service_id,
-    customer_name,
-    customer_phone,
-    customer_email,
-    vehicle_type,
-    scheduled_at,
-    status,
-    payment_method,
-    notes,
-    total_amount,
-    created_at,
-    cancelled_at,
-    cancelled_by,
-    cancellation_reason,
-    workshops(name, avatar_url),
-    inventory_items(name),
-    appointment_products(product_id, quantity, unit_price)
-  ''';
   static const _appointmentBaseSelect = '''
     id,
     order_service_id,
@@ -156,18 +135,15 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     required String customerId,
     required DateTime scheduledAt,
   }) async {
-    await _getAppointmentById(appointmentId, customerId: customerId);
-
-    await client
-        .from('appointments')
-        .update({
-          'scheduled_datetime': scheduledAt.toUtc().toIso8601String(),
-          'appointment_status': 'scheduled',
-          'updated_by': customerId,
-        })
-        .eq('id', appointmentId)
-        .select('id')
-        .single();
+    await client.rpc<void>(
+      'reschedule_customer_appointment',
+      params: {
+        'p_appointment_id': appointmentId,
+        'p_scheduled_datetime': costaRicaLocalTimeToUtc(
+          scheduledAt,
+        ).toIso8601String(),
+      },
+    );
 
     return _getAppointmentById(appointmentId, customerId: customerId);
   }
@@ -176,29 +152,14 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     String id, {
     required String customerId,
   }) async {
-    try {
-      final response = await client
-          .from('appointments')
-          .select(_customerAppointmentSelect)
-          .eq('id', id)
-          .eq('order_services.orders.customers.user_id', customerId)
-          .single();
+    final response = await client
+        .from('appointments')
+        .select(_customerAppointmentSelect)
+        .eq('id', id)
+        .eq('order_services.orders.customers.user_id', customerId)
+        .single();
 
-      return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
-    } on PostgrestException catch (error) {
-      if (!_isRelationshipError(error)) {
-        rethrow;
-      }
-
-      final response = await client
-          .from('appointments')
-          .select(_appointmentSelect)
-          .eq('id', id)
-          .eq('customer_id', customerId)
-          .single();
-
-      return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
-    }
+    return AppointmentModel.fromMap(Map<String, dynamic>.from(response));
   }
 
   Future<List<AppointmentModel>> _getAppointments({
