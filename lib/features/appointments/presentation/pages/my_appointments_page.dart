@@ -1959,7 +1959,9 @@ String _textOrFallback(String? value, String fallback) {
 
 String _friendlyFailureMessage(String? message, String fallback) {
   final text = message?.trim() ?? '';
-  if (text.isEmpty || RegExp(r'^[A-Z]+_\d+$').hasMatch(text)) {
+  final looksTechnical =
+      text.isEmpty || RegExp(r'^[A-Z0-9_.:-]+$').hasMatch(text);
+  if (looksTechnical) {
     return fallback;
   }
 
