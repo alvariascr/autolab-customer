@@ -865,6 +865,7 @@ class _RescheduleAppointmentSheetState
   final _workshopRepository = sl<WorkshopRepository>();
   final _getBookedAppointmentSlots = sl<GetBookedAppointmentSlots>();
   final _isAppointmentSlotAvailable = sl<IsAppointmentSlotAvailable>();
+  int _availabilityRequestId = 0;
 
   DateTime _focusedDate = DateTime.now();
   DateTime? _selectedDate;
@@ -887,6 +888,7 @@ class _RescheduleAppointmentSheetState
   }
 
   Future<void> _loadAvailability(DateTime month) async {
+    final requestId = ++_availabilityRequestId;
     setState(() {
       _loading = true;
       _failed = false;
@@ -915,7 +917,7 @@ class _RescheduleAppointmentSheetState
         bookedSlots: _withoutCurrentAppointmentSlot(bookedSlots),
       );
 
-      if (!mounted) {
+      if (!mounted || requestId != _availabilityRequestId) {
         return;
       }
 
@@ -925,7 +927,7 @@ class _RescheduleAppointmentSheetState
         _loading = false;
       });
     } catch (_) {
-      if (!mounted) {
+      if (!mounted || requestId != _availabilityRequestId) {
         return;
       }
 
