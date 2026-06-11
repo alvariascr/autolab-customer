@@ -220,7 +220,7 @@ void main() {
         appointmentId: 'appt-1',
         customerId: _currentUserId,
         reason: 'No podre asistir',
-        comments: null,
+        comments: any(named: 'comments'),
       ),
     ).thenThrow(
       const PostgrestException(message: 'appointment_not_cancelable'),
