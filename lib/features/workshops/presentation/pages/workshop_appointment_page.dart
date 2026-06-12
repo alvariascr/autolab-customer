@@ -335,6 +335,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                 onClose: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
+                    return;
                   }
 
                   _goToWorkshopProfileOrHome(context);
