@@ -332,7 +332,13 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                 appointmentId: appointmentId,
                 amountLabel: _appointmentTotalLabel(submitState, l10n),
                 workshopName: _workshopName(submitState),
-                onClose: () => _goToWorkshopProfileOrHome(context),
+                onClose: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+
+                  _goToWorkshopProfileOrHome(context);
+                },
               ),
             ),
           );

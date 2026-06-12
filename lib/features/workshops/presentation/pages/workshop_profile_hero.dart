@@ -33,7 +33,14 @@ class _ProfileHero extends StatelessWidget {
             left: 16,
             child: _HeroIconButton(
               icon: Icons.close_rounded,
-              onTap: () => context.go('/home-customer'),
+              onTap: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                  return;
+                }
+
+                context.go('/home-customer');
+              },
             ),
           ),
           Positioned(
