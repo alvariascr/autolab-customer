@@ -33,6 +33,12 @@ coverage/
 **/doc/api/
 
 # =========================
+# Node / Supabase CLI local state
+# =========================
+node_modules/
+supabase/.temp/
+
+# =========================
 # Android
 # =========================
 android/.gradle/

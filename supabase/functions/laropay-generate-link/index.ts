@@ -1,0 +1,465 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+type LaropayLinkRequest = {
+  internalTransactionId?: string;
+  idTransaction?: number;
+  amount?: number;
+  document?: string;
+  detail?: string;
+  customerFirstName?: string;
+  customerLastName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerLocation?: string;
+  expirationType?: string;
+  expirationValue?: number;
+  urlCallback?: string;
+  securityCode?: string;
+};
+
+type ExistingLaropayLink = {
+  link_id: string | null;
+  link_url: string | null;
+  status: string | null;
+  response_code: string | null;
+  response_description: string | null;
+  reject_reason: string | null;
+  auth_response_code: string | null;
+};
+
+const corsHeaders = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-headers":
+    "authorization, x-client-info, apikey, content-type",
+  "access-control-allow-methods": "POST, OPTIONS",
+};
+
+Deno.serve(async (request) => {
+  if (request.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (request.method !== "POST") {
+    return json({ error: "method_not_allowed" }, 405);
+  }
+
+  try {
+    const env = loadEnv();
+    const user = await authenticatedUser(request, env);
+    const input = await parseJson(request);
+    const validationError = validate(input);
+
+    if (validationError !== null) {
+      return json({ error: validationError }, 400);
+    }
+
+    await assertOrderBelongsToUser(env, user.id, input);
+
+    const existingLink = await findReusableLink(env, user.id, input);
+    if (existingLink !== null) {
+      return json({
+        response: stringValue(existingLink.response_code),
+        responseDescription: stringValue(existingLink.response_description),
+        linkID: stringValue(existingLink.link_id),
+        linkURL: stringValue(existingLink.link_url),
+        status: stringValue(existingLink.status),
+        rejectReason: stringValue(existingLink.reject_reason),
+        authResponseCode: stringValue(existingLink.auth_response_code),
+        reused: true,
+      });
+    }
+
+    const laropayPayload = buildLaropayPayload(input, env);
+    const laropayResponse = await callLaropay(laropayPayload, env).catch(
+      async (error) => {
+        if (error instanceof LaropayHttpError) {
+          await persistAttempt(env, user.id, input, laropayPayload, {
+            response: "HTTP_ERROR",
+            responseDescription: "Laropay rejected the request",
+            statusCode: error.status,
+            body: error.body,
+          });
+
+          return null;
+        }
+
+        if (isAbortError(error)) {
+          await persistAttempt(env, user.id, input, laropayPayload, {
+            response: "TIMEOUT",
+            responseDescription: "Laropay request timed out",
+          });
+
+          return null;
+        }
+
+        await persistAttempt(env, user.id, input, laropayPayload, {
+          response: "NETWORK_ERROR",
+          responseDescription: "Laropay request failed before response",
+          error: safeError(error),
+        });
+
+        return null;
+      },
+    );
+
+    if (laropayResponse === null) {
+      return json({ error: "laropay_gateway_rejected" }, 502);
+    }
+
+    const linkID = stringValue(laropayResponse.linkID);
+    const linkURL = stringValue(laropayResponse.linkURL);
+
+    if (linkID === "" || linkURL === "") {
+      await persistAttempt(env, user.id, input, laropayPayload, laropayResponse);
+      return json({ error: "laropay_invalid_response" }, 502);
+    }
+
+    await persistAttempt(env, user.id, input, laropayPayload, laropayResponse);
+
+    return json({
+      response: stringValue(laropayResponse.response),
+      responseDescription: stringValue(laropayResponse.responseDescription),
+      linkID,
+      linkURL,
+      status: stringValue(laropayResponse.status),
+      rejectReason: stringValue(laropayResponse.rejectReason),
+      authResponseCode: stringValue(laropayResponse.authResponseCode),
+      reused: false,
+    });
+  } catch (error) {
+    console.error("laropay_generate_link_failed", safeError(error));
+    if (error instanceof Error && error.message.startsWith("auth_")) {
+      return json({ error: error.message }, 401);
+    }
+
+    if (error instanceof Error && error.message.startsWith("invalid_")) {
+      return json({ error: error.message }, 400);
+    }
+
+    if (error instanceof Error && error.message === "transaction_not_found") {
+      return json({ error: error.message }, 403);
+    }
+
+    return json({ error: "laropay_generate_link_failed" }, 500);
+  }
+});
+
+async function authenticatedUser(request: Request, env: Env) {
+  const authorization = request.headers.get("authorization") ?? "";
+  if (!authorization.toLowerCase().startsWith("bearer ")) {
+    throw new Error("auth_required");
+  }
+
+  const accessToken = authorization.replace(/^bearer\s+/i, "").trim();
+  const supabase = supabaseClient(env);
+  const { data, error } = await supabase.auth.getUser(accessToken);
+
+  if (error !== null || data.user === null) {
+    throw new Error("auth_invalid");
+  }
+
+  return data.user;
+}
+
+async function parseJson(request: Request): Promise<LaropayLinkRequest> {
+  const decoded = await request.json();
+  if (decoded === null || typeof decoded !== "object" || Array.isArray(decoded)) {
+    throw new Error("invalid_json");
+  }
+
+  return decoded as LaropayLinkRequest;
+}
+
+async function assertOrderBelongsToUser(
+  env: Env,
+  userId: string,
+  input: LaropayLinkRequest,
+) {
+  const supabase = supabaseClient(env);
+  const { data, error } = await supabase
+    .from("orders")
+    .select("id, customers!inner(user_id)")
+    .eq("id", stringValue(input.internalTransactionId))
+    .eq("customers.user_id", userId)
+    .maybeSingle();
+
+  if (error !== null) {
+    throw new Error("invalid_internal_transaction");
+  }
+
+  if (data === null) {
+    throw new Error("transaction_not_found");
+  }
+}
+
+async function findReusableLink(
+  env: Env,
+  userId: string,
+  input: LaropayLinkRequest,
+): Promise<ExistingLaropayLink | null> {
+  const supabase = supabaseClient(env);
+  const { data, error } = await supabase
+    .from("laropay_payment_links")
+    .select(
+      "link_id, link_url, status, response_code, response_description, reject_reason, auth_response_code",
+    )
+    .eq("user_id", userId)
+    .eq("internal_transaction_id", stringValue(input.internalTransactionId))
+    .not("link_id", "is", null)
+    .not("link_url", "is", null)
+    .in("status", ["created", "pending"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error !== null) {
+    throw error;
+  }
+
+  return data as ExistingLaropayLink | null;
+}
+
+function validate(input: LaropayLinkRequest): string | null {
+  if (stringValue(input.internalTransactionId) === "") {
+    return "internal_transaction_required";
+  }
+
+  if (!Number.isInteger(input.idTransaction)) {
+    return "transaction_type_required";
+  }
+
+  if (typeof input.amount !== "number" || input.amount <= 0) {
+    return "amount_invalid";
+  }
+
+  if (stringValue(input.customerFirstName) === "") {
+    return "customer_first_name_required";
+  }
+
+  if (stringValue(input.customerLastName) === "") {
+    return "customer_last_name_required";
+  }
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(stringValue(input.customerEmail))) {
+    return "customer_email_invalid";
+  }
+
+  const expirationType = stringValue(input.expirationType || "D").toUpperCase();
+  if (!["D", "H", "M"].includes(expirationType)) {
+    return "expiration_type_invalid";
+  }
+
+  if (!Number.isInteger(input.expirationValue) || input.expirationValue <= 0) {
+    return "expiration_value_invalid";
+  }
+
+  return null;
+}
+
+function buildLaropayPayload(input: LaropayLinkRequest, env: Env) {
+  return {
+    idUser: env.laropayIdUser,
+    token: env.laropayToken,
+    idTransaction: input.idTransaction,
+    amount: input.amount,
+    document: trimOrNull(input.document),
+    detail: trimOrNull(input.detail),
+    customerFirstName: stringValue(input.customerFirstName),
+    customerLastName: stringValue(input.customerLastName),
+    customerEmail: stringValue(input.customerEmail),
+    customerPhone: trimOrNull(input.customerPhone),
+    customerLocation: trimOrNull(input.customerLocation),
+    expirationType: stringValue(input.expirationType || "D").toUpperCase(),
+    expirationValue: input.expirationValue || 1,
+    urlCallback: stringValue(input.urlCallback || env.laropayCallbackUrl),
+    securityCode: trimOrNull(input.securityCode),
+  };
+}
+
+async function callLaropay(payload: Record<string, unknown>, env: Env) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+
+  try {
+    const response = await fetch(`${env.laropayBaseUrl}/api/GetNewSecureLink`, {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": `Basic ${btoa(
+          `${env.laropayBasicUser}:${env.laropayBasicPassword}`,
+        )}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new LaropayHttpError(response.status, body);
+    }
+
+    return body as Record<string, unknown>;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function persistAttempt(
+  env: Env,
+  userId: string,
+  input: LaropayLinkRequest,
+  laropayPayload: Record<string, unknown>,
+  laropayResponse: Record<string, unknown>,
+) {
+  const linkID = trimOrNull(laropayResponse.linkID);
+  const linkURL = trimOrNull(laropayResponse.linkURL);
+  const supabase = supabaseClient(env);
+  const requestPayload = sanitizeJson({
+    ...laropayPayload,
+    idUser: "<redacted>",
+    token: "<redacted>",
+  });
+  const responsePayload = sanitizeJson(laropayResponse);
+  const { error } = await supabase.from("laropay_payment_links").insert({
+    user_id: userId,
+    internal_transaction_id: stringValue(input.internalTransactionId),
+    id_transaction: input.idTransaction,
+    amount: input.amount,
+    currency_code: currencyCode(input.idTransaction),
+    document: trimOrNull(input.document),
+    detail: trimOrNull(input.detail),
+    customer_email: stringValue(input.customerEmail),
+    expiration_type: stringValue(input.expirationType || "D").toUpperCase(),
+    expiration_value: input.expirationValue,
+    url_callback: stringValue(input.urlCallback || env.laropayCallbackUrl),
+    link_id: linkID,
+    link_url: linkURL,
+    status: normalizedStatus(laropayResponse),
+    response_code: stringValue(laropayResponse.response),
+    response_description: stringValue(laropayResponse.responseDescription),
+    reject_reason: stringValue(laropayResponse.rejectReason),
+    auth_response_code: stringValue(laropayResponse.authResponseCode),
+    request_payload: requestPayload,
+    response_payload: responsePayload,
+  });
+
+  if (error !== null) {
+    throw error;
+  }
+}
+
+function sanitizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sanitizeJson);
+  }
+
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => {
+        if (isSensitiveKey(key)) {
+          return [key, stringValue(item) === "" ? "" : "<redacted>"];
+        }
+
+        return [key, sanitizeJson(item)];
+      }),
+    );
+  }
+
+  return value;
+}
+
+function isSensitiveKey(key: string) {
+  return ["iduser", "token", "newtoken", "authorization"].includes(
+    key.toLowerCase(),
+  );
+}
+
+function supabaseClient(env: Env, authorization?: string) {
+  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+    global: authorization !== undefined ? { headers: { authorization } } : {},
+  });
+}
+
+function currencyCode(idTransaction?: number) {
+  return idTransaction === 2 ? "USD" : "CRC";
+}
+
+function normalizedStatus(response: Record<string, unknown>) {
+  const explicitStatus = stringValue(response.status);
+  if (explicitStatus !== "") {
+    return explicitStatus;
+  }
+
+  return stringValue(response.linkID) === "" ? "failed" : "created";
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function trimOrNull(value: unknown) {
+  const text = stringValue(value);
+  return text === "" ? null : text;
+}
+
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "content-type": "application/json",
+    },
+  });
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+function safeError(error: unknown) {
+  if (error instanceof LaropayHttpError) {
+    return { status: error.status, body: error.body };
+  }
+
+  return error instanceof Error ? error.message : String(error);
+}
+
+function loadEnv(): Env {
+  return {
+    supabaseUrl: requiredEnv("SUPABASE_URL"),
+    supabaseServiceRoleKey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    laropayBaseUrl: requiredEnv("LAROPAY_BASE_URL").replace(/\/+$/, ""),
+    laropayBasicUser: requiredEnv("LAROPAY_BASIC_USER"),
+    laropayBasicPassword: requiredEnv("LAROPAY_BASIC_PASSWORD"),
+    laropayIdUser: requiredEnv("LAROPAY_ID_USER"),
+    laropayToken: requiredEnv("LAROPAY_TOKEN"),
+    laropayCallbackUrl: requiredEnv("LAROPAY_CALLBACK_URL"),
+  };
+}
+
+function requiredEnv(key: string) {
+  const value = Deno.env.get(key)?.trim() ?? "";
+  if (value === "") {
+    throw new Error(`missing_env_${key}`);
+  }
+
+  return value;
+}
+
+type Env = {
+  supabaseUrl: string;
+  supabaseServiceRoleKey: string;
+  laropayBaseUrl: string;
+  laropayBasicUser: string;
+  laropayBasicPassword: string;
+  laropayIdUser: string;
+  laropayToken: string;
+  laropayCallbackUrl: string;
+};
+
+class LaropayHttpError extends Error {
+  constructor(public readonly status: number, public readonly body: unknown) {
+    super("laropay_http_error");
+  }
+}
