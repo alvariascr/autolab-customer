@@ -169,7 +169,7 @@ class AutolabCustomer {
       fillColor: enabled ? white : background,
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusInput),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: border),
       ),
       contentPadding: const EdgeInsets.all(spacingMd),
       border: OutlineInputBorder(
