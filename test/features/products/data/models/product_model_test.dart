@@ -46,5 +46,11 @@ void main() {
       expect(model.minimumStockAlert, 3);
       expect(model.sellingPrice, 18500);
     });
+
+    test('normaliza el identificador del taller', () {
+      final model = ProductModel.fromMap({'workshop_id': '  workshop-1  '});
+
+      expect(model.workshopId, 'workshop-1');
+    });
   });
 }

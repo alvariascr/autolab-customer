@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/router/build_context_navigation.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
@@ -146,12 +146,8 @@ class _WorkshopSearchProductsPageState
                   child: _SearchHeader(
                     controller: _controller,
                     onChanged: (_) => setState(() {}),
-                    onBackTap: () {
-                      context.go('/workshops/${widget.workshopId}');
-                    },
-                    onWorkshopTap: () {
-                      context.go('/workshops/${widget.workshopId}');
-                    },
+                    onBackTap: _returnToWorkshop,
+                    onWorkshopTap: _returnToWorkshop,
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -238,6 +234,10 @@ class _WorkshopSearchProductsPageState
         ),
       ),
     );
+  }
+
+  void _returnToWorkshop() {
+    context.popOrGo('/workshops/${widget.workshopId}');
   }
 }
 
