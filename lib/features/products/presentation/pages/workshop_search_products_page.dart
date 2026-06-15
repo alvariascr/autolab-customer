@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/router/build_context_navigation.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
@@ -237,12 +237,7 @@ class _WorkshopSearchProductsPageState
   }
 
   void _returnToWorkshop() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-      return;
-    }
-
-    context.go('/workshops/${widget.workshopId}');
+    context.popOrGo('/workshops/${widget.workshopId}');
   }
 }
 

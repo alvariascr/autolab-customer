@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_image.dart';
@@ -213,14 +213,7 @@ class _ProductHero extends StatelessWidget {
   }
 
   void _returnToPreviousScreen(BuildContext context) {
-    final router = GoRouter.of(context);
-
-    if (router.canPop()) {
-      context.pop();
-      return;
-    }
-
-    context.go(
+    context.popOrGo(
       product.workshopId.isEmpty
           ? '/home-customer'
           : '/workshops/${product.workshopId}',
