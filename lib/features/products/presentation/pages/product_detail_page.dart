@@ -213,14 +213,17 @@ class _ProductHero extends StatelessWidget {
   }
 
   void _returnToPreviousScreen(BuildContext context) {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
+    final router = GoRouter.of(context);
+
+    if (router.canPop()) {
+      context.pop();
       return;
     }
 
-    final workshopId = product.workshopId.trim();
     context.go(
-      workshopId.isEmpty ? '/home-customer' : '/workshops/$workshopId',
+      product.workshopId.isEmpty
+          ? '/home-customer'
+          : '/workshops/${product.workshopId}',
     );
   }
 }
