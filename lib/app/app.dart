@@ -86,8 +86,6 @@ class _MyAppState extends State<MyApp> {
       child: MaterialApp.router(
         scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
         theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
         onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
         routerConfig: widget.router,
         builder: (context, child) {

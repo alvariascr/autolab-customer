@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 
-import 'autolab_customer.dart';
+import 'app_colors.dart';
 
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData get light => AutolabCustomer.lightTheme;
+  static ThemeData get light {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: AppColors.autolabRed,
+      primary: AppColors.autolabRed,
+      surface: AppColors.appointmentBackground,
+    );
 
-  static ThemeData get dark => AutolabCustomer.darkTheme;
+    return ThemeData(
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: colorScheme.surface,
+      useMaterial3: true,
+    );
+  }
 }
