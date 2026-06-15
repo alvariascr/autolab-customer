@@ -226,4 +226,235 @@ class AutolabCustomer {
     borderRadius: BorderRadius.circular(radiusCard),
     boxShadow: shadowLevel1,
   );
+
+  static ThemeData get lightTheme => _themeData(Brightness.light);
+
+  static ThemeData get darkTheme => _themeData(Brightness.dark);
+
+  static ThemeData _themeData(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final surfaceColor = isDark ? darkSurface : white;
+    final backgroundColor = isDark ? darkBackground : background;
+    final textColor = isDark ? darkText : secondary;
+    final secondaryTextColor = isDark ? darkSecondaryText : gray;
+    final borderColor = isDark ? gray : border;
+
+    final colorScheme = isDark
+        ? const ColorScheme.dark(
+            primary: primary,
+            onPrimary: white,
+            secondary: gray,
+            onSecondary: secondary,
+            surface: darkSurface,
+            onSurface: white,
+            error: error,
+            onError: white,
+            outline: gray,
+          )
+        : const ColorScheme.light(
+            primary: primary,
+            onPrimary: white,
+            secondary: secondary,
+            onSecondary: white,
+            surface: white,
+            onSurface: secondary,
+            error: error,
+            onError: white,
+            outline: border,
+          );
+
+    final textTheme = TextTheme(
+      displayLarge: display.copyWith(color: textColor),
+      headlineLarge: h1.copyWith(color: textColor),
+      headlineMedium: h2.copyWith(color: textColor),
+      headlineSmall: h3.copyWith(color: textColor),
+      bodyLarge: bodyLarge.copyWith(color: textColor),
+      bodyMedium: body.copyWith(color: textColor),
+      bodySmall: caption.copyWith(color: secondaryTextColor),
+      labelLarge: label.copyWith(color: textColor),
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      fontFamily: primaryFont,
+      scaffoldBackgroundColor: backgroundColor,
+      colorScheme: colorScheme,
+      textTheme: textTheme,
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surfaceColor,
+        contentPadding: const EdgeInsets.all(spacingMd),
+        border: _inputBorder(borderColor),
+        enabledBorder: _inputBorder(borderColor),
+        disabledBorder: _inputBorder(borderColor),
+        focusedBorder: _inputBorder(primary, width: 2),
+        errorBorder: _inputBorder(error),
+        focusedErrorBorder: _inputBorder(error, width: 2),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: white,
+          minimumSize: const Size(double.infinity, 56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusButton),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: surfaceColor,
+          foregroundColor: primary,
+          minimumSize: const Size(double.infinity, 56),
+          side: const BorderSide(color: primary, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusButton),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primary,
+          minimumSize: const Size(0, 56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusButton),
+          ),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: surfaceColor,
+        elevation: 2,
+        shadowColor: shadowLevel1.first.color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusCard),
+        ),
+      ),
+      extensions: [
+        AutolabCustomColors(
+          success: success,
+          warning: warning,
+          info: info,
+          appointmentConfirmed: appointmentConfirmed,
+          appointmentPending: appointmentPending,
+          appointmentCancelled: appointmentCancelled,
+          appointmentCompleted: isDark ? white : appointmentCompleted,
+          navigationActive: navigationActive,
+          navigationInactive: navigationInactive,
+          ratingBadge: ratingBadge,
+          distanceBadge: isDark ? darkSurface : distanceBadge,
+        ),
+      ],
+    );
+  }
+
+  static OutlineInputBorder _inputBorder(Color color, {double width = 1}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(radiusInput),
+      borderSide: BorderSide(color: color, width: width),
+    );
+  }
+}
+
+@immutable
+class AutolabCustomColors extends ThemeExtension<AutolabCustomColors> {
+  const AutolabCustomColors({
+    required this.success,
+    required this.warning,
+    required this.info,
+    required this.appointmentConfirmed,
+    required this.appointmentPending,
+    required this.appointmentCancelled,
+    required this.appointmentCompleted,
+    required this.navigationActive,
+    required this.navigationInactive,
+    required this.ratingBadge,
+    required this.distanceBadge,
+  });
+
+  final Color success;
+  final Color warning;
+  final Color info;
+  final Color appointmentConfirmed;
+  final Color appointmentPending;
+  final Color appointmentCancelled;
+  final Color appointmentCompleted;
+  final Color navigationActive;
+  final Color navigationInactive;
+  final Color ratingBadge;
+  final Color distanceBadge;
+
+  @override
+  AutolabCustomColors copyWith({
+    Color? success,
+    Color? warning,
+    Color? info,
+    Color? appointmentConfirmed,
+    Color? appointmentPending,
+    Color? appointmentCancelled,
+    Color? appointmentCompleted,
+    Color? navigationActive,
+    Color? navigationInactive,
+    Color? ratingBadge,
+    Color? distanceBadge,
+  }) {
+    return AutolabCustomColors(
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      info: info ?? this.info,
+      appointmentConfirmed: appointmentConfirmed ?? this.appointmentConfirmed,
+      appointmentPending: appointmentPending ?? this.appointmentPending,
+      appointmentCancelled: appointmentCancelled ?? this.appointmentCancelled,
+      appointmentCompleted: appointmentCompleted ?? this.appointmentCompleted,
+      navigationActive: navigationActive ?? this.navigationActive,
+      navigationInactive: navigationInactive ?? this.navigationInactive,
+      ratingBadge: ratingBadge ?? this.ratingBadge,
+      distanceBadge: distanceBadge ?? this.distanceBadge,
+    );
+  }
+
+  @override
+  AutolabCustomColors lerp(covariant AutolabCustomColors? other, double t) {
+    if (other == null) {
+      return this;
+    }
+
+    return AutolabCustomColors(
+      success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      info: Color.lerp(info, other.info, t)!,
+      appointmentConfirmed: Color.lerp(
+        appointmentConfirmed,
+        other.appointmentConfirmed,
+        t,
+      )!,
+      appointmentPending: Color.lerp(
+        appointmentPending,
+        other.appointmentPending,
+        t,
+      )!,
+      appointmentCancelled: Color.lerp(
+        appointmentCancelled,
+        other.appointmentCancelled,
+        t,
+      )!,
+      appointmentCompleted: Color.lerp(
+        appointmentCompleted,
+        other.appointmentCompleted,
+        t,
+      )!,
+      navigationActive: Color.lerp(
+        navigationActive,
+        other.navigationActive,
+        t,
+      )!,
+      navigationInactive: Color.lerp(
+        navigationInactive,
+        other.navigationInactive,
+        t,
+      )!,
+      ratingBadge: Color.lerp(ratingBadge, other.ratingBadge, t)!,
+      distanceBadge: Color.lerp(distanceBadge, other.distanceBadge, t)!,
+    );
+  }
 }
