@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_image.dart';
@@ -179,7 +180,7 @@ class _ProductHero extends StatelessWidget {
             top: MediaQuery.paddingOf(context).top + 12,
             child: _HeaderCircleButton(
               icon: Icons.arrow_back_rounded,
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () => _returnToPreviousScreen(context),
             ),
           ),
           Positioned(
@@ -208,6 +209,14 @@ class _ProductHero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _returnToPreviousScreen(BuildContext context) {
+    context.popOrGo(
+      product.workshopId.isEmpty
+          ? '/home-customer'
+          : '/workshops/${product.workshopId}',
     );
   }
 }

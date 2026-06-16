@@ -27,7 +27,7 @@ class ProductModel extends Product {
   factory ProductModel.fromMap(Map<String, dynamic> map) {
     return ProductModel(
       id: map['id']?.toString() ?? '',
-      workshopId: map['workshop_id']?.toString() ?? '',
+      workshopId: map['workshop_id']?.toString().trim() ?? '',
       name: map['name']?.toString() ?? '',
       description: map['description']?.toString() ?? '',
       primaryImageUrl: map['primary_image_url']?.toString() ?? '',
