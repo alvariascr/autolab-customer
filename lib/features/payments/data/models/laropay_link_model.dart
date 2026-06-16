@@ -15,9 +15,13 @@ class LaropayLinkModel extends LaropayLink {
     final linkId = json['linkID']?.toString().trim() ?? '';
     final linkUrlValue = json['linkURL']?.toString().trim() ?? '';
     final linkUrl = Uri.tryParse(linkUrlValue);
+    final isValidSecureUrl =
+        linkUrl != null && linkUrl.isScheme('https') && linkUrl.host.isNotEmpty;
 
-    if (linkId.isEmpty || linkUrl == null || !linkUrl.hasScheme) {
-      throw const FormatException('Laropay response missing linkID/linkURL');
+    if (linkId.isEmpty || !isValidSecureUrl) {
+      throw const FormatException(
+        'Laropay response missing linkID or secure HTTPS linkURL',
+      );
     }
 
     return LaropayLinkModel(

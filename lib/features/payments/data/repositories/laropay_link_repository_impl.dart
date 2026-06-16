@@ -45,7 +45,6 @@ class LaropayLinkRepositoryImpl implements LaropayLinkRepository {
     final context = {
       'transactionId': request.internalTransactionId,
       'amount': request.amount,
-      'email': request.customerEmail,
     };
 
     try {
@@ -114,7 +113,7 @@ class LaropayLinkRepositoryImpl implements LaropayLinkRepository {
       );
     }
 
-    if (request.amount <= 0) {
+    if (!request.amount.isFinite || request.amount <= 0) {
       return ValidationFailure.fromErrorItem(
         CustomerErrorCatalog.laropayInvalidAmount,
       );

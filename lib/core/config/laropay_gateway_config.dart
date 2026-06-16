@@ -19,6 +19,6 @@ class LaropayGatewayConfig {
 
   bool get isConfigured {
     final uri = generateLinkUri;
-    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
+    return uri != null && uri.isScheme('https') && uri.host.isNotEmpty;
   }
 }

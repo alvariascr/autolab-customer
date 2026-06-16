@@ -72,6 +72,18 @@ void main() {
     },
   );
 
+  test('rejects non finite amount before calling datasource', () async {
+    final result = await repository.generateLink(_request(amount: double.nan));
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) =>
+          expect(failure.code, CustomerErrorCatalog.laropayInvalidAmount.code),
+      (_) => fail('expected failure'),
+    );
+    verifyNever(() => remoteDataSource.generateLink(any()));
+  });
+
   test('rejects invalid email before calling datasource', () async {
     final result = await repository.generateLink(
       _request(customerEmail: 'invalid-email'),

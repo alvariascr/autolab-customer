@@ -66,6 +66,41 @@ void main() {
     );
   });
 
+  test('throws when gateway url is not https', () async {
+    final dataSource = LaropayLinkRemoteDataSourceImpl(
+      client: MockClient((_) async => http.Response('{}', 200)),
+      config: LaropayGatewayConfig(
+        generateLinkUri: Uri.parse('http://api.autolab.test/laropay/links'),
+      ),
+      authTokenProvider: () => 'session-token',
+    );
+
+    expect(
+      () => dataSource.generateLink(_request()),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('throws before request when auth token is missing', () async {
+    var called = false;
+    final dataSource = LaropayLinkRemoteDataSourceImpl(
+      client: MockClient((_) async {
+        called = true;
+        return http.Response('{}', 200);
+      }),
+      config: LaropayGatewayConfig(
+        generateLinkUri: Uri.parse('https://api.autolab.test/laropay/links'),
+      ),
+      authTokenProvider: () => ' ',
+    );
+
+    expect(
+      () => dataSource.generateLink(_request()),
+      throwsA(isA<StateError>()),
+    );
+    expect(called, isFalse);
+  });
+
   test('throws gateway exception for non successful response', () async {
     final dataSource = LaropayLinkRemoteDataSourceImpl(
       client: MockClient((_) async => http.Response('bad request', 400)),
@@ -86,6 +121,18 @@ void main() {
       () => LaropayLinkModel.fromJson({
         'response': '00',
         'responseDescription': 'Success',
+      }),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('throws format exception when link url is not https', () {
+    expect(
+      () => LaropayLinkModel.fromJson({
+        'response': '00',
+        'responseDescription': 'Success',
+        'linkID': 'link-1',
+        'linkURL': 'http://pay.test/link-1',
       }),
       throwsA(isA<FormatException>()),
     );

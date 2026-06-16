@@ -28,14 +28,17 @@ class LaropayLinkRemoteDataSourceImpl implements LaropayLinkRemoteDataSource {
     }
 
     final authToken = _authTokenProvider()?.trim();
+    if (authToken == null || authToken.isEmpty) {
+      throw StateError('Missing auth token for Laropay link generation');
+    }
+
     final response = await _client
         .post(
           uri,
           headers: {
             'accept': 'application/json',
             'content-type': 'application/json',
-            if (authToken != null && authToken.isNotEmpty)
-              'authorization': 'Bearer $authToken',
+            'authorization': 'Bearer $authToken',
           },
           body: jsonEncode(request.toGatewayJson()),
         )
