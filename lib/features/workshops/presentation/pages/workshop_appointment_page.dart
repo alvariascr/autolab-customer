@@ -13,7 +13,7 @@ import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
-import 'mock_card_payment_page.dart';
+import 'laropay_checkout_page.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({super.key, required this.workshopId});
@@ -328,7 +328,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             AppointmentPaymentMethod.card) {
           await Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => MockCardPaymentPage(
+              builder: (_) => LaropayCheckoutPage(
                 appointmentId: appointmentId,
                 amountLabel: _appointmentTotalLabel(submitState, l10n),
                 workshopName: _workshopName(submitState),
