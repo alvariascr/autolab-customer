@@ -27,6 +27,11 @@ type ExistingLaropayLink = {
   auth_response_code: string | null;
 };
 
+type OrderPaymentData = {
+  amount: number;
+  currencyCode: string;
+};
+
 const corsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-headers":
@@ -53,10 +58,15 @@ Deno.serve(async (request) => {
       return json({ error: validationError }, 400);
     }
 
-    await assertOrderBelongsToUser(env, user.id, input);
+    const orderPayment = await loadOrderPaymentData(env, user.id, input);
     await markExpiredLinks(env, user.id, input);
 
-    const reservation = await reservePendingLink(env, user.id, input);
+    const reservation = await reservePendingLink(
+      env,
+      user.id,
+      input,
+      orderPayment,
+    );
     if ("existingLink" in reservation) {
       const existingLink = reservation.existingLink;
       return json({
@@ -75,7 +85,7 @@ Deno.serve(async (request) => {
       return json({ error: "laropay_link_generation_in_progress" }, 409);
     }
 
-    const laropayPayload = buildLaropayPayload(input, env);
+    const laropayPayload = buildLaropayPayload(input, env, orderPayment);
     const laropayResponse = await callLaropay(laropayPayload, env).catch(
       async (error) => {
         if (error instanceof LaropayHttpError) {
@@ -83,6 +93,7 @@ Deno.serve(async (request) => {
             env,
             user.id,
             input,
+            orderPayment,
             laropayPayload,
             {
               response: "HTTP_ERROR",
@@ -101,6 +112,7 @@ Deno.serve(async (request) => {
             env,
             user.id,
             input,
+            orderPayment,
             laropayPayload,
             {
               response: "TIMEOUT",
@@ -116,6 +128,7 @@ Deno.serve(async (request) => {
           env,
           user.id,
           input,
+          orderPayment,
           laropayPayload,
           {
             response: "NETWORK_ERROR",
@@ -141,6 +154,7 @@ Deno.serve(async (request) => {
         env,
         user.id,
         input,
+        orderPayment,
         laropayPayload,
         laropayResponse,
         reservation.id,
@@ -152,6 +166,7 @@ Deno.serve(async (request) => {
       env,
       user.id,
       input,
+      orderPayment,
       laropayPayload,
       laropayResponse,
       reservation.id,
@@ -217,15 +232,15 @@ async function parseJson(request: Request): Promise<LaropayLinkRequest> {
   return decoded as LaropayLinkRequest;
 }
 
-async function assertOrderBelongsToUser(
+async function loadOrderPaymentData(
   env: Env,
   userId: string,
   input: LaropayLinkRequest,
-) {
+): Promise<OrderPaymentData> {
   const supabase = supabaseClient(env);
   const { data, error } = await supabase
     .from("orders")
-    .select("id, customers!inner(user_id)")
+    .select("id, remaining_amount, total_amount, customers!inner(user_id)")
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", userId)
     .maybeSingle();
@@ -237,6 +252,21 @@ async function assertOrderBelongsToUser(
   if (data === null) {
     throw new Error("transaction_not_found");
   }
+
+  const remainingAmount = numberValue(
+    (data as Record<string, unknown>).remaining_amount,
+  );
+  const totalAmount = numberValue((data as Record<string, unknown>).total_amount);
+  const amount = remainingAmount > 0 ? remainingAmount : totalAmount;
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("invalid_order_amount");
+  }
+
+  return {
+    amount,
+    currencyCode: currencyCode(input.idTransaction),
+  };
 }
 
 async function findActiveLink(
@@ -288,6 +318,7 @@ async function reservePendingLink(
   env: Env,
   userId: string,
   input: LaropayLinkRequest,
+  orderPayment: OrderPaymentData,
 ): Promise<
   | { id: string }
   | { existingLink: ExistingLaropayLink }
@@ -300,8 +331,8 @@ async function reservePendingLink(
       user_id: userId,
       internal_transaction_id: stringValue(input.internalTransactionId),
       id_transaction: input.idTransaction,
-      amount: input.amount,
-      currency_code: currencyCode(input.idTransaction),
+      amount: orderPayment.amount,
+      currency_code: orderPayment.currencyCode,
       document: trimOrNull(input.document),
       detail: trimOrNull(input.detail),
       customer_email: stringValue(input.customerEmail),
@@ -379,12 +410,16 @@ function validate(input: LaropayLinkRequest): string | null {
   return null;
 }
 
-function buildLaropayPayload(input: LaropayLinkRequest, env: Env) {
+function buildLaropayPayload(
+  input: LaropayLinkRequest,
+  env: Env,
+  orderPayment: OrderPaymentData,
+) {
   return {
     idUser: env.laropayIdUser,
     token: env.laropayToken,
     idTransaction: input.idTransaction,
-    amount: input.amount,
+    amount: orderPayment.amount,
     document: trimOrNull(input.document),
     detail: trimOrNull(input.detail),
     customerFirstName: stringValue(input.customerFirstName),
@@ -432,6 +467,7 @@ async function persistAttempt(
   env: Env,
   userId: string,
   input: LaropayLinkRequest,
+  orderPayment: OrderPaymentData,
   laropayPayload: Record<string, unknown>,
   laropayResponse: Record<string, unknown>,
   reservationId?: string,
@@ -449,8 +485,8 @@ async function persistAttempt(
     user_id: userId,
     internal_transaction_id: stringValue(input.internalTransactionId),
     id_transaction: input.idTransaction,
-    amount: input.amount,
-    currency_code: currencyCode(input.idTransaction),
+    amount: orderPayment.amount,
+    currency_code: orderPayment.currencyCode,
     document: trimOrNull(input.document),
     detail: trimOrNull(input.detail),
     customer_email: stringValue(input.customerEmail),
@@ -528,6 +564,18 @@ function normalizedStatus(response: Record<string, unknown>) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function numberValue(value: unknown) {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return Number(value);
+  }
+
+  return Number.NaN;
 }
 
 function trimOrNull(value: unknown) {
