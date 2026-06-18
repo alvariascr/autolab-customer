@@ -1,7 +1,7 @@
 class LaropayGatewayConfig {
   const LaropayGatewayConfig({
     required this.generateLinkUri,
-    this.timeout = const Duration(seconds: 20),
+    this.timeout = const Duration(seconds: 15),
   });
 
   factory LaropayGatewayConfig.fromEnvironment() {

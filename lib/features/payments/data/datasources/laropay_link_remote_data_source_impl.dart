@@ -24,12 +24,16 @@ class LaropayLinkRemoteDataSourceImpl implements LaropayLinkRemoteDataSource {
   Future<LaropayLinkModel> generateLink(LaropayLinkRequest request) async {
     final uri = _config.generateLinkUri;
     if (!_config.isConfigured || uri == null) {
-      throw StateError('LAROPAY_GENERATE_LINK_URL is not configured');
+      throw const LaropayConfigurationException(
+        'LAROPAY_GENERATE_LINK_URL is not configured',
+      );
     }
 
     final authToken = _authTokenProvider()?.trim();
     if (authToken == null || authToken.isEmpty) {
-      throw StateError('Missing auth token for Laropay link generation');
+      throw const LaropayAuthException(
+        'Missing auth token for Laropay link generation',
+      );
     }
 
     final response = await _client
@@ -47,7 +51,7 @@ class LaropayLinkRemoteDataSourceImpl implements LaropayLinkRemoteDataSource {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw LaropayGatewayException(
         statusCode: response.statusCode,
-        message: response.body,
+        message: _safeGatewayErrorMessage(response),
       );
     }
 
@@ -58,6 +62,49 @@ class LaropayLinkRemoteDataSourceImpl implements LaropayLinkRemoteDataSource {
 
     return LaropayLinkModel.fromJson(decoded);
   }
+
+  String _safeGatewayErrorMessage(http.Response response) {
+    if (response.statusCode >= 500) {
+      return 'laropay_gateway_unavailable';
+    }
+
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        final error = decoded['error']?.toString().trim();
+        if (error != null && error.isNotEmpty) {
+          return error;
+        }
+
+        final message = decoded['message']?.toString().trim();
+        if (message != null && message.isNotEmpty) {
+          return message;
+        }
+      }
+    } catch (_) {
+      return 'laropay_gateway_rejected';
+    }
+
+    return 'laropay_gateway_rejected';
+  }
+}
+
+class LaropayConfigurationException implements Exception {
+  const LaropayConfigurationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'LaropayConfigurationException';
+}
+
+class LaropayAuthException implements Exception {
+  const LaropayAuthException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'LaropayAuthException';
 }
 
 class LaropayGatewayException implements Exception {

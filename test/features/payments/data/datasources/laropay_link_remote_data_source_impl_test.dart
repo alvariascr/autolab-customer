@@ -62,7 +62,7 @@ void main() {
 
     expect(
       () => dataSource.generateLink(_request()),
-      throwsA(isA<StateError>()),
+      throwsA(isA<LaropayConfigurationException>()),
     );
   });
 
@@ -77,7 +77,7 @@ void main() {
 
     expect(
       () => dataSource.generateLink(_request()),
-      throwsA(isA<StateError>()),
+      throwsA(isA<LaropayConfigurationException>()),
     );
   });
 
@@ -96,7 +96,7 @@ void main() {
 
     expect(
       () => dataSource.generateLink(_request()),
-      throwsA(isA<StateError>()),
+      throwsA(isA<LaropayAuthException>()),
     );
     expect(called, isFalse);
   });
@@ -113,6 +113,55 @@ void main() {
     expect(
       () => dataSource.generateLink(_request()),
       throwsA(isA<LaropayGatewayException>()),
+    );
+  });
+
+  test('redacts unsafe gateway body on server errors', () async {
+    final dataSource = LaropayLinkRemoteDataSourceImpl(
+      client: MockClient(
+        (_) async => http.Response(
+          'Error: database password leaked\n    at handler.ts:1',
+          500,
+        ),
+      ),
+      config: LaropayGatewayConfig(
+        generateLinkUri: Uri.parse('https://api.autolab.test/laropay/links'),
+      ),
+      authTokenProvider: () => 'session-token',
+    );
+
+    expect(
+      () => dataSource.generateLink(_request()),
+      throwsA(
+        isA<LaropayGatewayException>().having(
+          (error) => error.message,
+          'message',
+          'laropay_gateway_unavailable',
+        ),
+      ),
+    );
+  });
+
+  test('uses safe structured gateway error when available', () async {
+    final dataSource = LaropayLinkRemoteDataSourceImpl(
+      client: MockClient(
+        (_) async => http.Response(jsonEncode({'error': 'invalid_order'}), 400),
+      ),
+      config: LaropayGatewayConfig(
+        generateLinkUri: Uri.parse('https://api.autolab.test/laropay/links'),
+      ),
+      authTokenProvider: () => 'session-token',
+    );
+
+    expect(
+      () => dataSource.generateLink(_request()),
+      throwsA(
+        isA<LaropayGatewayException>().having(
+          (error) => error.message,
+          'message',
+          'invalid_order',
+        ),
+      ),
     );
   });
 
