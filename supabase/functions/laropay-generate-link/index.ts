@@ -296,7 +296,7 @@ async function reservePendingLink(
     p_detail: trimOrNull(input.detail),
     p_customer_email: stringValue(input.customerEmail),
     p_expiration_type: normalizedExpirationType(input),
-    p_expiration_value: input.expirationValue,
+    p_expiration_value: normalizedExpirationValue(input),
     p_expires_at: calculateExpiresAt(input).toISOString(),
     p_url_callback: env.laropayCallbackUrl,
     p_request_payload: sanitizeJson({
@@ -361,7 +361,8 @@ function validate(input: LaropayLinkRequest): string | null {
     return "expiration_type_invalid";
   }
 
-  if (!Number.isInteger(input.expirationValue) || input.expirationValue <= 0) {
+  const expirationValue = normalizedExpirationValue(input);
+  if (!Number.isInteger(expirationValue) || expirationValue <= 0) {
     return "expiration_value_invalid";
   }
 
@@ -386,7 +387,7 @@ function buildLaropayPayload(
     customerPhone: trimOrNull(input.customerPhone),
     customerLocation: trimOrNull(input.customerLocation),
     expirationType: normalizedExpirationType(input),
-    expirationValue: input.expirationValue || 1,
+    expirationValue: normalizedExpirationValue(input),
     urlCallback: env.laropayCallbackUrl,
     securityCode: trimOrNull(input.securityCode),
   };
@@ -449,7 +450,7 @@ async function persistAttempt(
     detail: trimOrNull(input.detail),
     customer_email: stringValue(input.customerEmail),
     expiration_type: normalizedExpirationType(input),
-    expiration_value: input.expirationValue,
+    expiration_value: normalizedExpirationValue(input),
     expires_at: calculateExpiresAt(input).toISOString(),
     url_callback: env.laropayCallbackUrl,
     link_id: linkID,
@@ -553,8 +554,12 @@ function normalizedExpirationType(input: LaropayLinkRequest) {
   return stringValue(input.expirationType || "D").toUpperCase();
 }
 
+function normalizedExpirationValue(input: LaropayLinkRequest) {
+  return input.expirationValue ?? 1;
+}
+
 function calculateExpiresAt(input: LaropayLinkRequest) {
-  const expirationValue = input.expirationValue || 1;
+  const expirationValue = normalizedExpirationValue(input);
   const millisecondsByType: Record<string, number> = {
     D: 24 * 60 * 60 * 1000,
     H: 60 * 60 * 1000,
