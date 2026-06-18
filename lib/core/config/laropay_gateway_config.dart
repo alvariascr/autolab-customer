@@ -9,16 +9,17 @@ class LaropayGatewayConfig {
       'LAROPAY_GENERATE_LINK_URL',
     ).trim();
 
-    return LaropayGatewayConfig(
-      generateLinkUri: uriValue.isEmpty ? null : Uri.tryParse(uriValue),
-    );
+    if (uriValue.isEmpty) {
+      return const LaropayGatewayConfig(generateLinkUri: null);
+    }
+
+    return LaropayGatewayConfig(generateLinkUri: Uri.tryParse(uriValue));
   }
 
   final Uri? generateLinkUri;
   final Duration timeout;
 
-  bool get isConfigured {
-    final uri = generateLinkUri;
-    return uri != null && uri.isScheme('https') && uri.host.isNotEmpty;
-  }
+  bool get isConfigured =>
+      generateLinkUri?.isScheme('https') == true &&
+      generateLinkUri?.host.isNotEmpty == true;
 }
