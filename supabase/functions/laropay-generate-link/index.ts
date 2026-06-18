@@ -32,6 +32,11 @@ type OrderPaymentData = {
   currencyCode: string;
 };
 
+type AuthenticatedRequestUser = {
+  id: string;
+  authorization: string;
+};
+
 const corsHeaders = {
   "access-control-allow-origin": "*",
   "access-control-allow-headers":
@@ -58,9 +63,7 @@ Deno.serve(async (request) => {
       return json({ error: validationError }, 400);
     }
 
-    const orderPayment = await loadOrderPaymentData(env, user.id, input);
-    await markExpiredLinks(env, user.id, input);
-
+    const orderPayment = await loadOrderPaymentData(env, user, input);
     const reservation = await reservePendingLink(
       env,
       user.id,
@@ -200,21 +203,24 @@ Deno.serve(async (request) => {
   }
 });
 
-async function authenticatedUser(request: Request, env: Env) {
+async function authenticatedUser(
+  request: Request,
+  env: Env,
+): Promise<AuthenticatedRequestUser> {
   const authorization = request.headers.get("authorization") ?? "";
   if (!authorization.toLowerCase().startsWith("bearer ")) {
     throw new Error("auth_required");
   }
 
   const accessToken = authorization.replace(/^bearer\s+/i, "").trim();
-  const supabase = supabaseClient(env);
+  const supabase = authSupabaseClient(env);
   const { data, error } = await supabase.auth.getUser(accessToken);
 
   if (error !== null || data.user === null) {
     throw new Error("auth_invalid");
   }
 
-  return data.user;
+  return { id: data.user.id, authorization };
 }
 
 async function parseJson(request: Request): Promise<LaropayLinkRequest> {
@@ -234,15 +240,15 @@ async function parseJson(request: Request): Promise<LaropayLinkRequest> {
 
 async function loadOrderPaymentData(
   env: Env,
-  userId: string,
+  user: AuthenticatedRequestUser,
   input: LaropayLinkRequest,
 ): Promise<OrderPaymentData> {
-  const supabase = supabaseClient(env);
+  const supabase = userSupabaseClient(env, user.authorization);
   const { data, error } = await supabase
     .from("orders")
     .select("id, remaining_amount, total_amount, customers!inner(user_id)")
     .eq("id", stringValue(input.internalTransactionId))
-    .eq("customers.user_id", userId)
+    .eq("customers.user_id", user.id)
     .maybeSingle();
 
   if (error !== null) {
@@ -269,51 +275,6 @@ async function loadOrderPaymentData(
   };
 }
 
-async function findActiveLink(
-  env: Env,
-  userId: string,
-  input: LaropayLinkRequest,
-): Promise<ExistingLaropayLink | null> {
-  const supabase = supabaseClient(env);
-  const { data, error } = await supabase
-    .from("laropay_payment_links")
-    .select(
-      "id, link_id, link_url, status, response_code, response_description, reject_reason, auth_response_code",
-    )
-    .eq("user_id", userId)
-    .eq("internal_transaction_id", stringValue(input.internalTransactionId))
-    .in("status", ["created", "pending"])
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error !== null) {
-    throw error;
-  }
-
-  return data as ExistingLaropayLink | null;
-}
-
-async function markExpiredLinks(
-  env: Env,
-  userId: string,
-  input: LaropayLinkRequest,
-) {
-  const supabase = supabaseClient(env);
-  const { error } = await supabase
-    .from("laropay_payment_links")
-    .update({ status: "expired" })
-    .eq("user_id", userId)
-    .eq("internal_transaction_id", stringValue(input.internalTransactionId))
-    .in("status", ["created", "pending"])
-    .lte("expires_at", new Date().toISOString());
-
-  if (error !== null) {
-    throw error;
-  }
-}
-
 async function reservePendingLink(
   env: Env,
   userId: string,
@@ -324,49 +285,46 @@ async function reservePendingLink(
   | { existingLink: ExistingLaropayLink }
   | { inProgress: true }
 > {
-  const supabase = supabaseClient(env);
-  const { data, error } = await supabase
-    .from("laropay_payment_links")
-    .insert({
-      user_id: userId,
-      internal_transaction_id: stringValue(input.internalTransactionId),
-      id_transaction: input.idTransaction,
-      amount: orderPayment.amount,
-      currency_code: orderPayment.currencyCode,
-      document: trimOrNull(input.document),
-      detail: trimOrNull(input.detail),
-      customer_email: stringValue(input.customerEmail),
-      expiration_type: normalizedExpirationType(input),
-      expiration_value: input.expirationValue,
-      expires_at: calculateExpiresAt(input).toISOString(),
-      url_callback: env.laropayCallbackUrl,
-      status: "pending",
-      request_payload: sanitizeJson({
-        ...input,
-        urlCallback: env.laropayCallbackUrl,
-      }),
-    })
-    .select("id")
-    .single();
+  const supabase = adminSupabaseClient(env);
+  const { data, error } = await supabase.rpc("reserve_laropay_payment_link", {
+    p_user_id: userId,
+    p_internal_transaction_id: stringValue(input.internalTransactionId),
+    p_id_transaction: input.idTransaction,
+    p_amount: orderPayment.amount,
+    p_currency_code: orderPayment.currencyCode,
+    p_document: trimOrNull(input.document),
+    p_detail: trimOrNull(input.detail),
+    p_customer_email: stringValue(input.customerEmail),
+    p_expiration_type: normalizedExpirationType(input),
+    p_expiration_value: input.expirationValue,
+    p_expires_at: calculateExpiresAt(input).toISOString(),
+    p_url_callback: env.laropayCallbackUrl,
+    p_request_payload: sanitizeJson({
+      ...input,
+      urlCallback: env.laropayCallbackUrl,
+    }),
+  });
 
-  if (error === null) {
-    return { id: stringValue(data.id) };
+  if (error !== null) {
+    throw error;
   }
 
-  if (isUniqueViolation(error)) {
-    const existingLink = await findActiveLink(env, userId, input);
-    if (
-      existingLink !== null &&
-      stringValue(existingLink.link_id) !== "" &&
-      stringValue(existingLink.link_url) !== ""
-    ) {
-      return { existingLink };
-    }
+  const result = data as Record<string, unknown>;
+  const kind = stringValue(result.kind);
 
+  if (kind === "reserved") {
+    return { id: stringValue(result.id) };
+  }
+
+  if (kind === "existing") {
+    return { existingLink: result.link as ExistingLaropayLink };
+  }
+
+  if (kind === "in_progress") {
     return { inProgress: true };
   }
 
-  throw error;
+  throw new Error("invalid_reservation_response");
 }
 
 function validate(input: LaropayLinkRequest): string | null {
@@ -474,7 +432,7 @@ async function persistAttempt(
 ) {
   const linkID = trimOrNull(laropayResponse.linkID);
   const linkURL = trimOrNull(laropayResponse.linkURL);
-  const supabase = supabaseClient(env);
+  const supabase = adminSupabaseClient(env);
   const requestPayload = sanitizeJson({
     ...laropayPayload,
     idUser: "<redacted>",
@@ -543,10 +501,18 @@ function isSensitiveKey(key: string) {
   );
 }
 
-function supabaseClient(env: Env, authorization?: string) {
-  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
-    global: authorization !== undefined ? { headers: { authorization } } : {},
+function authSupabaseClient(env: Env) {
+  return createClient(env.supabaseUrl, env.supabaseAnonKey);
+}
+
+function userSupabaseClient(env: Env, authorization: string) {
+  return createClient(env.supabaseUrl, env.supabaseAnonKey, {
+    global: { headers: { authorization } },
   });
+}
+
+function adminSupabaseClient(env: Env) {
+  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey);
 }
 
 function currencyCode(idTransaction?: number) {
@@ -609,15 +575,6 @@ function isSecureUrl(value: string) {
   }
 }
 
-function isUniqueViolation(error: unknown) {
-  return (
-    error !== null &&
-    typeof error === "object" &&
-    "code" in error &&
-    (error as { code?: unknown }).code === "23505"
-  );
-}
-
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -634,10 +591,30 @@ function isAbortError(error: unknown) {
 
 function safeError(error: unknown) {
   if (error instanceof LaropayHttpError) {
-    return { status: error.status, body: error.body };
+    return { status: error.status, body: sanitizeJson(error.body) };
   }
 
-  return error instanceof Error ? error.message : String(error);
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      code: safeErrorCode(error.message),
+    };
+  }
+
+  return { name: "NonError" };
+}
+
+function safeErrorCode(message: string) {
+  if (
+    message.startsWith("auth_") ||
+    message.startsWith("invalid_") ||
+    message.startsWith("missing_env_") ||
+    message === "transaction_not_found"
+  ) {
+    return message;
+  }
+
+  return "unexpected_error";
 }
 
 function loadEnv(): Env {
@@ -654,6 +631,7 @@ function loadEnv(): Env {
 
   return {
     supabaseUrl: requiredEnv("SUPABASE_URL"),
+    supabaseAnonKey: requiredEnv("SUPABASE_ANON_KEY"),
     supabaseServiceRoleKey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     laropayBaseUrl,
     laropayBasicUser: requiredEnv("LAROPAY_BASIC_USER"),
@@ -675,6 +653,7 @@ function requiredEnv(key: string) {
 
 type Env = {
   supabaseUrl: string;
+  supabaseAnonKey: string;
   supabaseServiceRoleKey: string;
   laropayBaseUrl: string;
   laropayBasicUser: string;

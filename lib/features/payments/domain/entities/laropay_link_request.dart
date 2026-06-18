@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+
+@immutable
 class LaropayLinkRequest {
   const LaropayLinkRequest({
     required this.internalTransactionId,
@@ -30,26 +33,4 @@ class LaropayLinkRequest {
   final int expirationValue;
   final Uri? urlCallback;
   final String? securityCode;
-
-  Map<String, dynamic> toGatewayJson() {
-    return {
-      'internalTransactionId': internalTransactionId.trim(),
-      'idTransaction': idTransaction,
-      'amount': amount,
-      if (_hasValue(document)) 'document': document!.trim(),
-      if (_hasValue(detail)) 'detail': detail!.trim(),
-      'customerFirstName': customerFirstName.trim(),
-      'customerLastName': customerLastName.trim(),
-      'customerEmail': customerEmail.trim(),
-      if (_hasValue(customerPhone)) 'customerPhone': customerPhone!.trim(),
-      if (_hasValue(customerLocation))
-        'customerLocation': customerLocation!.trim(),
-      'expirationType': expirationType.trim().toUpperCase(),
-      'expirationValue': expirationValue,
-      if (urlCallback != null) 'urlCallback': urlCallback.toString(),
-      if (_hasValue(securityCode)) 'securityCode': securityCode!.trim(),
-    };
-  }
-
-  bool _hasValue(String? value) => value != null && value.trim().isNotEmpty;
 }

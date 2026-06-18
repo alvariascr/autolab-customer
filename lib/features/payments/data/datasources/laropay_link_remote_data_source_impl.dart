@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../core/config/laropay_gateway_config.dart';
 import '../../domain/entities/laropay_link_request.dart';
+import '../mappers/laropay_link_request_mapper.dart';
 import '../models/laropay_link_model.dart';
 import 'laropay_link_remote_data_source.dart';
 

@@ -186,6 +186,16 @@ void main() {
       throwsA(isA<FormatException>()),
     );
   });
+
+  test('throws format exception when response metadata is missing', () {
+    expect(
+      () => LaropayLinkModel.fromJson({
+        'linkID': 'link-1',
+        'linkURL': 'https://pay.test/link-1',
+      }),
+      throwsA(isA<FormatException>()),
+    );
+  });
 }
 
 LaropayLinkRequest _request() {
