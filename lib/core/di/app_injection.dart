@@ -1,5 +1,6 @@
 import 'package:autolab_core/autolab_core.dart';
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,6 +13,11 @@ import '../../features/appointments/presentation/cubit/my_appointments_cubit.dar
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
+import '../../features/payments/data/datasources/laropay_link_remote_data_source.dart';
+import '../../features/payments/data/datasources/laropay_link_remote_data_source_impl.dart';
+import '../../features/payments/data/repositories/laropay_link_repository_impl.dart';
+import '../../features/payments/domain/repositories/laropay_link_repository.dart';
+import '../../features/payments/domain/usecases/generate_laropay_link.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
@@ -33,6 +39,7 @@ import '../../features/workshops/domain/usecases/get_booked_appointment_slots.da
 import '../../features/workshops/domain/usecases/get_customer_vehicle_by_plate.dart';
 import '../../features/workshops/domain/usecases/get_customer_vehicles.dart';
 import '../../features/workshops/domain/usecases/is_appointment_slot_available.dart';
+import '../config/laropay_gateway_config.dart';
 import '../location/current_location_data_source.dart';
 import '../location/geocoding_client.dart';
 import '../location/geolocator_client.dart';
@@ -59,6 +66,10 @@ Future<void> _registerExternalDependencies() async {
   final prefs = await SharedPreferences.getInstance();
 
   sl.registerSingleton<SharedPreferences>(prefs);
+  sl.registerLazySingleton<http.Client>(http.Client.new);
+  sl.registerLazySingleton<LaropayGatewayConfig>(
+    LaropayGatewayConfig.fromEnvironment,
+  );
   sl.registerLazySingleton<FeatureLogger>(() => FeatureLogger(sl<AppLogger>()));
   sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
   sl.registerLazySingleton<GeolocatorClient>(DefaultGeolocatorClient.new);
@@ -95,6 +106,24 @@ Future<void> _registerExternalDependencies() async {
 
 void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
+  sl.registerLazySingleton<LaropayLinkRemoteDataSource>(
+    () => LaropayLinkRemoteDataSourceImpl(
+      client: sl<http.Client>(),
+      config: sl<LaropayGatewayConfig>(),
+      authTokenProvider: () =>
+          sl<SupabaseClient>().auth.currentSession?.accessToken,
+    ),
+  );
+  sl.registerLazySingleton<LaropayLinkRepository>(
+    () => LaropayLinkRepositoryImpl(
+      remoteDataSource: sl<LaropayLinkRemoteDataSource>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+      featureLogger: sl<FeatureLogger>(),
+    ),
+  );
+  sl.registerLazySingleton<GenerateLaropayLink>(
+    () => GenerateLaropayLink(sl<LaropayLinkRepository>()),
+  );
   sl.registerLazySingleton<WorkshopRemoteDataSource>(
     () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),
   );
