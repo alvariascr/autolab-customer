@@ -485,6 +485,15 @@ class AppLocalizationsEs extends AppLocalizations {
       'Consulta tus citas próximas, pasadas y canceladas.';
 
   @override
+  String get profileDarkModeTitle => 'Modo oscuro';
+
+  @override
+  String get profileDarkModeEnabled => 'Activado';
+
+  @override
+  String get profileDarkModeDisabled => 'Desactivado';
+
+  @override
   String get myAppointmentsTitle => 'Mis citas';
 
   @override

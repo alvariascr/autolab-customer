@@ -944,6 +944,24 @@ abstract class AppLocalizations {
   /// **'Consulta tus citas próximas, pasadas y canceladas.'**
   String get profileAppointmentsSubtitle;
 
+  /// No description provided for @profileDarkModeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo oscuro'**
+  String get profileDarkModeTitle;
+
+  /// No description provided for @profileDarkModeEnabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Activado'**
+  String get profileDarkModeEnabled;
+
+  /// No description provided for @profileDarkModeDisabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Desactivado'**
+  String get profileDarkModeDisabled;
+
   /// No description provided for @myAppointmentsTitle.
   ///
   /// In es, this message translates to:

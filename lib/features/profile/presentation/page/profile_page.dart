@@ -216,6 +216,7 @@ class _ThemeModeSwitchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: AppThemeModeController.mode,
       builder: (context, mode, _) {
@@ -256,7 +257,7 @@ class _ThemeModeSwitchCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Modo oscuro',
+                      l10n.profileDarkModeTitle,
                       style: TextStyle(
                         color: textColor,
                         fontSize: 16,
@@ -265,7 +266,9 @@ class _ThemeModeSwitchCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      isDark ? 'Activado' : 'Desactivado',
+                      isDark
+                          ? l10n.profileDarkModeEnabled
+                          : l10n.profileDarkModeDisabled,
                       style: TextStyle(
                         color: secondaryTextColor,
                         fontSize: 12,
