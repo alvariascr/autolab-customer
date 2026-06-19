@@ -94,6 +94,15 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 
   @override
+  void didUpdateWidget(covariant HomeCustomerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?._detach(this);
+      widget.controller?._attach(this);
+    }
+  }
+
+  @override
   void dispose() {
     widget.controller?._detach(this);
     WidgetsBinding.instance.removeObserver(this);
