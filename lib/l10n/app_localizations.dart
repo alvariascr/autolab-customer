@@ -616,6 +616,64 @@ abstract class AppLocalizations {
   /// **'Perfil'**
   String get navigationProfile;
 
+  /// No description provided for @customerOnboardingSlideVehicleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu vehículo
+  /// nuestra prioridad'**
+  String get customerOnboardingSlideVehicleTitle;
+
+  /// No description provided for @customerOnboardingSlideVehicleSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios, productos y talleres confiables cerca de ti.'**
+  String get customerOnboardingSlideVehicleSubtitle;
+
+  /// No description provided for @customerOnboardingSlideBookingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Agenda en
+  /// pocos pasos'**
+  String get customerOnboardingSlideBookingTitle;
+
+  /// No description provided for @customerOnboardingSlideBookingSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reserva citas con talleres disponibles sin perder tiempo.'**
+  String get customerOnboardingSlideBookingSubtitle;
+
+  /// No description provided for @customerOnboardingSlideSearchTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Encuentra lo que
+  /// tu carro necesita'**
+  String get customerOnboardingSlideSearchTitle;
+
+  /// No description provided for @customerOnboardingSlideSearchSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Explora servicios y productos pensados para tu vehículo.'**
+  String get customerOnboardingSlideSearchSubtitle;
+
+  /// No description provided for @customerOnboardingSlideOrganizedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo más claro
+  /// y organizado'**
+  String get customerOnboardingSlideOrganizedTitle;
+
+  /// No description provided for @customerOnboardingSlideOrganizedSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta tus citas, talleres y datos desde un solo lugar.'**
+  String get customerOnboardingSlideOrganizedSubtitle;
+
+  /// No description provided for @customerOnboardingStartAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Comenzar'**
+  String get customerOnboardingStartAction;
+
   /// No description provided for @searchBarHint.
   ///
   /// In es, this message translates to:

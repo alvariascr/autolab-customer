@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/autolab_customer.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth/application/auth_session_cubit.dart';
 
 class CustomerOnboardingPage extends StatefulWidget {
@@ -16,29 +17,6 @@ class CustomerOnboardingPage extends StatefulWidget {
 class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
   int _currentPage = 0;
 
-  static const List<_OnboardingSlide> _slides = [
-    _OnboardingSlide(
-      title: 'Tu vehículo\nnuestra prioridad',
-      subtitle: 'Servicios, productos y talleres confiables cerca de ti.',
-      icon: Icons.directions_car_filled_outlined,
-    ),
-    _OnboardingSlide(
-      title: 'Agenda en\npocos pasos',
-      subtitle: 'Reserva citas con talleres disponibles sin perder tiempo.',
-      icon: Icons.event_available_outlined,
-    ),
-    _OnboardingSlide(
-      title: 'Encuentra lo que\ntu carro necesita',
-      subtitle: 'Explora servicios y productos pensados para tu vehículo.',
-      icon: Icons.build_circle_outlined,
-    ),
-    _OnboardingSlide(
-      title: 'Todo más claro\ny organizado',
-      subtitle: 'Consulta tus citas, talleres y datos desde un solo lugar.',
-      icon: Icons.garage_outlined,
-    ),
-  ];
-
   void _handleStart() {
     context.read<AuthSessionCubit>().markCustomerOnboardingSeen();
     context.go('/home-customer');
@@ -46,6 +24,8 @@ class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final slides = _buildSlides(l10n);
     final size = MediaQuery.sizeOf(context);
     final isCompactHeight = size.height < 720;
     final horizontalPadding = size.width < 360 ? 22.0 : 28.0;
@@ -70,9 +50,9 @@ class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return CarouselSlider.builder(
-                      itemCount: _slides.length,
+                      itemCount: slides.length,
                       itemBuilder: (context, index, realIndex) {
-                        return _OnboardingSlideView(slide: _slides[index]);
+                        return _OnboardingSlideView(slide: slides[index]);
                       },
                       options: CarouselOptions(
                         height: constraints.maxHeight,
@@ -105,7 +85,7 @@ class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
                     ),
                   ),
                   child: Text(
-                    'Comenzar',
+                    l10n.customerOnboardingStartAction,
                     style: AutolabCustomer.h3.copyWith(
                       color: AutolabCustomer.white,
                       fontSize: isCompactHeight ? 16 : 18,
@@ -115,13 +95,38 @@ class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
                 ),
               ),
               SizedBox(height: buttonBottomGap),
-              _OnboardingDots(count: _slides.length, activeIndex: _currentPage),
+              _OnboardingDots(count: slides.length, activeIndex: _currentPage),
               SizedBox(height: isCompactHeight ? 12 : 24),
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<_OnboardingSlide> _buildSlides(AppLocalizations l10n) {
+    return [
+      _OnboardingSlide(
+        title: l10n.customerOnboardingSlideVehicleTitle,
+        subtitle: l10n.customerOnboardingSlideVehicleSubtitle,
+        icon: Icons.directions_car_filled_outlined,
+      ),
+      _OnboardingSlide(
+        title: l10n.customerOnboardingSlideBookingTitle,
+        subtitle: l10n.customerOnboardingSlideBookingSubtitle,
+        icon: Icons.event_available_outlined,
+      ),
+      _OnboardingSlide(
+        title: l10n.customerOnboardingSlideSearchTitle,
+        subtitle: l10n.customerOnboardingSlideSearchSubtitle,
+        icon: Icons.build_circle_outlined,
+      ),
+      _OnboardingSlide(
+        title: l10n.customerOnboardingSlideOrganizedTitle,
+        subtitle: l10n.customerOnboardingSlideOrganizedSubtitle,
+        icon: Icons.garage_outlined,
+      ),
+    ];
   }
 }
 

@@ -301,6 +301,40 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navigationProfile => 'Perfil';
 
   @override
+  String get customerOnboardingSlideVehicleTitle =>
+      'Tu vehículo\nnuestra prioridad';
+
+  @override
+  String get customerOnboardingSlideVehicleSubtitle =>
+      'Servicios, productos y talleres confiables cerca de ti.';
+
+  @override
+  String get customerOnboardingSlideBookingTitle => 'Agenda en\npocos pasos';
+
+  @override
+  String get customerOnboardingSlideBookingSubtitle =>
+      'Reserva citas con talleres disponibles sin perder tiempo.';
+
+  @override
+  String get customerOnboardingSlideSearchTitle =>
+      'Encuentra lo que\ntu carro necesita';
+
+  @override
+  String get customerOnboardingSlideSearchSubtitle =>
+      'Explora servicios y productos pensados para tu vehículo.';
+
+  @override
+  String get customerOnboardingSlideOrganizedTitle =>
+      'Todo más claro\ny organizado';
+
+  @override
+  String get customerOnboardingSlideOrganizedSubtitle =>
+      'Consulta tus citas, talleres y datos desde un solo lugar.';
+
+  @override
+  String get customerOnboardingStartAction => 'Comenzar';
+
+  @override
   String get searchBarHint => 'Buscar en Autolab';
 
   @override
