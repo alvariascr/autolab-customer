@@ -89,6 +89,8 @@
   "navigationMap": "Mapa",
   "navigationSearch": "Buscar",
   "navigationCart": "Carrito",
+  "navigationCartComingSoonTitle": "Carrito próximamente",
+  "navigationCartComingSoonMessage": "Muy pronto podrás revisar tus productos desde aquí.",
   "navigationProfile": "Perfil",
   "searchBarHint": "Buscar en Autolab",
   "workshopSearchClearTooltip": "Limpiar búsqueda",

@@ -291,6 +291,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navigationCart => 'Carrito';
 
   @override
+  String get navigationCartComingSoonTitle => 'Carrito próximamente';
+
+  @override
+  String get navigationCartComingSoonMessage =>
+      'Muy pronto podrás revisar tus productos desde aquí.';
+
+  @override
   String get navigationProfile => 'Perfil';
 
   @override

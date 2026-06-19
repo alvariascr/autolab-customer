@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
 import '../profile/presentation/page/profile_page.dart';
@@ -93,6 +94,7 @@ class _ComingSoonTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF050606) : Colors.white;
     final textColor = isDark
@@ -118,7 +120,7 @@ class _ComingSoonTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Carrito próximamente',
+                  l10n.navigationCartComingSoonTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: textColor,
@@ -128,7 +130,7 @@ class _ComingSoonTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Muy pronto podrás revisar tus productos desde aquí.',
+                  l10n.navigationCartComingSoonMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: secondaryTextColor,

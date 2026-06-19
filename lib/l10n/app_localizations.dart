@@ -598,6 +598,18 @@ abstract class AppLocalizations {
   /// **'Carrito'**
   String get navigationCart;
 
+  /// No description provided for @navigationCartComingSoonTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrito próximamente'**
+  String get navigationCartComingSoonTitle;
+
+  /// No description provided for @navigationCartComingSoonMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Muy pronto podrás revisar tus productos desde aquí.'**
+  String get navigationCartComingSoonMessage;
+
   /// No description provided for @navigationProfile.
   ///
   /// In es, this message translates to:
