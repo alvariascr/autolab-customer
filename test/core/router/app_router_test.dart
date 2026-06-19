@@ -94,6 +94,20 @@ void main() {
       expect(redirect, '/customer-onboarding');
     });
 
+    test('redirige customer con onboarding pendiente desde home customer', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'user-1',
+          role: 'customer',
+          showCustomerOnboarding: true,
+        ),
+        location: '/home-customer',
+      );
+
+      expect(redirect, '/customer-onboarding');
+    });
+
     test('redirige admin autenticado de /login a /home', () {
       final redirect = guard.redirectFor(
         authState: const AuthSessionState(

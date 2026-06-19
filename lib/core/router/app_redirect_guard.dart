@@ -43,6 +43,12 @@ class AppRedirectGuard {
     }
 
     if (role == UserRoles.customer &&
+        authState.showCustomerOnboarding &&
+        !isCustomerOnboarding) {
+      return '/customer-onboarding';
+    }
+
+    if (role == UserRoles.customer &&
         isCustomerOnboarding &&
         !authState.showCustomerOnboarding) {
       return '/home-customer';
