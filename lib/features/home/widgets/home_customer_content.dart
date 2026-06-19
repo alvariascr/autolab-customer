@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/location/location_cubit.dart';
 import '../../../core/location/location_state.dart';
 import '../../../core/theme/autolab_customer.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../products/domain/repositories/product_repository.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
@@ -49,6 +50,7 @@ class HomeCustomerContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = _HomeColors.of(context);
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
@@ -90,7 +92,7 @@ class HomeCustomerContent extends StatelessWidget {
                               horizontal: horizontalMargin,
                             ),
                             child: Text(
-                              '¿Qué necesitas hoy?',
+                              l10n.homeNeedsTitle,
                               style: AutolabCustomer.h2.copyWith(
                                 color: colors.text,
                                 fontSize: AutolabCustomer.responsiveDouble(
@@ -281,19 +283,28 @@ class _AutolabLogoPainter extends CustomPainter {
 class _ServiceCategories extends StatelessWidget {
   const _ServiceCategories();
 
-  static const _items = [
-    _ServiceCategory('Balanceo', Icons.car_repair_outlined),
-    _ServiceCategory('Grúa', Icons.local_shipping_outlined),
-    _ServiceCategory('Llantas', Icons.tire_repair_outlined),
-    _ServiceCategory('Revisión\ngeneral', Icons.oil_barrel_outlined),
-    _ServiceCategory('Mecánica\neléctrica', Icons.electric_car_outlined),
-    _ServiceCategory('Batería', Icons.battery_charging_full_outlined),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = _HomeColors.of(context);
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
+    final items = [
+      _ServiceCategory(l10n.homeServiceBalance, Icons.car_repair_outlined),
+      _ServiceCategory(l10n.homeServiceTow, Icons.local_shipping_outlined),
+      _ServiceCategory(l10n.homeServiceTires, Icons.tire_repair_outlined),
+      _ServiceCategory(
+        l10n.homeServiceGeneralReview,
+        Icons.oil_barrel_outlined,
+      ),
+      _ServiceCategory(
+        l10n.homeServiceElectricMechanic,
+        Icons.electric_car_outlined,
+      ),
+      _ServiceCategory(
+        l10n.homeServiceBattery,
+        Icons.battery_charging_full_outlined,
+      ),
+    ];
     final itemWidth = AutolabCustomer.responsiveDouble(
       context,
       compact: 62,
@@ -324,10 +335,10 @@ class _ServiceCategories extends StatelessWidget {
       child: ListView.separated(
         padding: EdgeInsets.symmetric(horizontal: horizontalMargin),
         scrollDirection: Axis.horizontal,
-        itemCount: _items.length,
+        itemCount: items.length,
         separatorBuilder: (_, _) => SizedBox(width: separatorWidth),
         itemBuilder: (context, index) {
-          final item = _items[index];
+          final item = items[index];
 
           return SizedBox(
             width: itemWidth,
@@ -368,6 +379,7 @@ class _PromotionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = _HomeColors.of(context);
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
     final cardHeight = AutolabCustomer.responsiveDouble(
@@ -385,7 +397,7 @@ class _PromotionsSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Próximamente',
+                  l10n.homePromotionsComingSoon,
                   style: AutolabCustomer.h2.copyWith(
                     color: colors.text,
                     fontSize: AutolabCustomer.responsiveDouble(
@@ -418,7 +430,7 @@ class _PromotionsSection extends StatelessWidget {
                 ),
                 const SizedBox(height: AutolabCustomer.spacingSmd - 2),
                 Text(
-                  'Promociones y beneficios',
+                  l10n.homePromotionsTitle,
                   style: AutolabCustomer.bodyLarge.copyWith(
                     color: colors.text,
                     fontWeight: FontWeight.w700,
@@ -426,7 +438,7 @@ class _PromotionsSection extends StatelessWidget {
                 ),
                 const SizedBox(height: AutolabCustomer.spacingXs),
                 Text(
-                  'Muy pronto estarán disponibles para ti.',
+                  l10n.homePromotionsSubtitle,
                   textAlign: TextAlign.center,
                   style: AutolabCustomer.caption.copyWith(
                     color: colors.secondaryText,

@@ -1333,6 +1333,37 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.';
 
   @override
+  String get homeNeedsTitle => '¿Qué necesitas hoy?';
+
+  @override
+  String get homeServiceBalance => 'Balanceo';
+
+  @override
+  String get homeServiceTow => 'Grúa';
+
+  @override
+  String get homeServiceTires => 'Llantas';
+
+  @override
+  String get homeServiceGeneralReview => 'Revisión\ngeneral';
+
+  @override
+  String get homeServiceElectricMechanic => 'Mecánica\neléctrica';
+
+  @override
+  String get homeServiceBattery => 'Batería';
+
+  @override
+  String get homePromotionsComingSoon => 'Próximamente';
+
+  @override
+  String get homePromotionsTitle => 'Promociones y beneficios';
+
+  @override
+  String get homePromotionsSubtitle =>
+      'Muy pronto estarán disponibles para ti.';
+
+  @override
   String get appointmentCreatedSuccess => 'Tu cita fue creada correctamente.';
 
   @override

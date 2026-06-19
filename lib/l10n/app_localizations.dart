@@ -2452,6 +2452,68 @@ abstract class AppLocalizations {
   /// **'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.'**
   String get homePlaceholderSubtitle;
 
+  /// No description provided for @homeNeedsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué necesitas hoy?'**
+  String get homeNeedsTitle;
+
+  /// No description provided for @homeServiceBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Balanceo'**
+  String get homeServiceBalance;
+
+  /// No description provided for @homeServiceTow.
+  ///
+  /// In es, this message translates to:
+  /// **'Grúa'**
+  String get homeServiceTow;
+
+  /// No description provided for @homeServiceTires.
+  ///
+  /// In es, this message translates to:
+  /// **'Llantas'**
+  String get homeServiceTires;
+
+  /// No description provided for @homeServiceGeneralReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión
+  /// general'**
+  String get homeServiceGeneralReview;
+
+  /// No description provided for @homeServiceElectricMechanic.
+  ///
+  /// In es, this message translates to:
+  /// **'Mecánica
+  /// eléctrica'**
+  String get homeServiceElectricMechanic;
+
+  /// No description provided for @homeServiceBattery.
+  ///
+  /// In es, this message translates to:
+  /// **'Batería'**
+  String get homeServiceBattery;
+
+  /// No description provided for @homePromotionsComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximamente'**
+  String get homePromotionsComingSoon;
+
+  /// No description provided for @homePromotionsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Promociones y beneficios'**
+  String get homePromotionsTitle;
+
+  /// No description provided for @homePromotionsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Muy pronto estarán disponibles para ti.'**
+  String get homePromotionsSubtitle;
+
   /// No description provided for @appointmentCreatedSuccess.
   ///
   /// In es, this message translates to:
