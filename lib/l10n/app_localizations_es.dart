@@ -952,6 +952,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Explora opciones cercanas sin salir del home.';
 
   @override
+  String get workshopsSectionViewAll => 'Ver todos';
+
+  @override
   String get workshopsSectionLoadError =>
       'No fue posible cargar los talleres en este momento.';
 

@@ -1786,6 +1786,12 @@ abstract class AppLocalizations {
   /// **'Explora opciones cercanas sin salir del home.'**
   String get workshopsSectionSubtitle;
 
+  /// No description provided for @workshopsSectionViewAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get workshopsSectionViewAll;
+
   /// No description provided for @workshopsSectionLoadError.
   ///
   /// In es, this message translates to:

@@ -319,6 +319,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
             onSearchClose: _closeSearch,
+            onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
             productRepository: sl.isRegistered<ProductRepository>()
                 ? sl<ProductRepository>()
                 : null,

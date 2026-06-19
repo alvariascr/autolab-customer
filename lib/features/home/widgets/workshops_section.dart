@@ -19,6 +19,7 @@ class WorkshopsSection extends StatelessWidget {
     required this.emptyStateResolver,
     required this.isLoading,
     required this.workshopFailure,
+    required this.onViewAllTap,
   });
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
@@ -29,6 +30,7 @@ class WorkshopsSection extends StatelessWidget {
   final WorkshopEmptyStateResolver emptyStateResolver;
   final bool isLoading;
   final Failure? workshopFailure;
+  final VoidCallback onViewAllTap;
 
   @override
   Widget build(BuildContext context) {
@@ -103,11 +105,20 @@ class WorkshopsSection extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                'Ver todos',
-                style: AutolabCustomer.body.copyWith(
-                  color: AutolabCustomer.primary,
-                  fontWeight: FontWeight.w600,
+              TextButton(
+                onPressed: onViewAllTap,
+                style: TextButton.styleFrom(
+                  foregroundColor: AutolabCustomer.primary,
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  l10n.workshopsSectionViewAll,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

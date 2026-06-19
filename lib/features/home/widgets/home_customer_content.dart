@@ -27,6 +27,7 @@ class HomeCustomerContent extends StatelessWidget {
     required this.emptyStateResolver,
     required this.onLocationTap,
     required this.onSearchClose,
+    required this.onViewAllWorkshopsTap,
     this.onSearchQueryChanged,
     this.workshopFailure,
     this.productRepository,
@@ -41,6 +42,7 @@ class HomeCustomerContent extends StatelessWidget {
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
   final VoidCallback onSearchClose;
+  final VoidCallback onViewAllWorkshopsTap;
   final ProductRepository? productRepository;
   final RecentSearchesStore? recentSearchesStore;
   final ValueChanged<String>? onSearchQueryChanged;
@@ -116,6 +118,7 @@ class HomeCustomerContent extends StatelessWidget {
                             emptyStateResolver: emptyStateResolver,
                             isLoading: isWorkshopsLoading,
                             workshopFailure: workshopFailure,
+                            onViewAllTap: onViewAllWorkshopsTap,
                           ),
                           const SizedBox(height: AutolabCustomer.spacingScreen),
                           Padding(

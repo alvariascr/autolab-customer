@@ -300,6 +300,7 @@
   "locationSheetSavedAddressSubtitle": "Próximamente podrás guardar tus direcciones favoritas.",
   "workshopsSectionTitle": "Talleres cercanos",
   "workshopsSectionSubtitle": "Explora opciones cercanas sin salir del home.",
+  "workshopsSectionViewAll": "Ver todos",
   "workshopsSectionLoadError": "No fue posible cargar los talleres en este momento.",
   "workshopErrorLoadFailed": "No fue posible cargar los talleres en este momento.",
   "workshopErrorNetwork": "Revisa tu conexión para consultar los talleres cercanos.",

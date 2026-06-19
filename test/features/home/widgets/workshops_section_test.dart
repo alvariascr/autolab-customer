@@ -72,6 +72,7 @@ Widget _buildTestApp() {
           emptyStateResolver: const WorkshopEmptyStateResolver(),
           isLoading: false,
           workshopFailure: null,
+          onViewAllTap: () {},
         ),
       ),
     ),
