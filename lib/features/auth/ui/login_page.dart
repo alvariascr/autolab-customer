@@ -1,9 +1,8 @@
-import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_feedback.dart';
@@ -28,7 +27,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
   final GlobalKey<RegisterCardState> registerCardKey =
       GlobalKey<RegisterCardState>();
 
@@ -38,9 +36,10 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isPasswordHidden = true;
   bool _showLoginError = false;
-  bool _isShowingRegister = false;
+  bool _isShowingRegister = true;
   bool _dismissEmailConfirmedMessage = false;
   bool _showRegisterSuccessMessage = false;
+  bool _hasAppliedInitialMode = false;
 
   bool get _shouldShowInlineLoginError {
     return !_isShowingRegister && _showLoginError;
@@ -50,10 +49,12 @@ class _LoginPageState extends State<LoginPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: AutolabCustomer.authErrorIcon,
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        margin: const EdgeInsets.all(AutolabCustomer.spacingLg),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusInput + 2),
+        ),
       ),
     );
   }
@@ -93,8 +94,6 @@ class _LoginPageState extends State<LoginPage> {
       _dismissEmailConfirmedMessage = true;
       _showRegisterSuccessMessage = false;
     });
-
-    cardKey.currentState?.toggleCard();
   }
 
   void _goToLoginFromRegister(BuildContext context) {
@@ -107,13 +106,18 @@ class _LoginPageState extends State<LoginPage> {
       _dismissEmailConfirmedMessage = true;
       _showRegisterSuccessMessage = false;
     });
-
-    cardKey.currentState?.toggleCard();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final startsInLogin =
+        GoRouterState.of(context).uri.queryParameters['mode'] == 'login';
+
+    if (!_hasAppliedInitialMode && startsInLogin && _isShowingRegister) {
+      _isShowingRegister = false;
+    }
+    _hasAppliedInitialMode = true;
 
     return MultiBlocProvider(
       providers: [
@@ -125,6 +129,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ],
       child: Scaffold(
+        backgroundColor: AutolabCustomer.authBackgroundColor(context),
         body: MultiBlocListener(
           listeners: [
             BlocListener<LoginFormCubit, LoginFormState>(
@@ -154,6 +159,7 @@ class _LoginPageState extends State<LoginPage> {
                     state.user != null) {
                   context.read<AuthSessionCubit>().setAuthenticated(
                     state.user!,
+                    showCustomerOnboarding: true,
                   );
                 }
               },
@@ -171,8 +177,6 @@ class _LoginPageState extends State<LoginPage> {
                     _dismissEmailConfirmedMessage = true;
                     _showRegisterSuccessMessage = true;
                   });
-
-                  cardKey.currentState?.toggleCard();
                 }
               },
             ),
@@ -249,59 +253,70 @@ class _LoginPageState extends State<LoginPage> {
                       ? 560
                       : isTabletWeb
                       ? 520
-                      : w * 0.92;
+                      : (w * 0.88).clamp(300.0, 420.0);
 
-                  final double cardHeight = (h * 0.92).clamp(520.0, 720.0);
+                  final double cardHeight = h;
                   final double logoSize = isTabletWeb ? 220 : 190;
 
                   return Center(
-                    child: FlipCard(
-                      key: cardKey,
-                      flipOnTouch: false,
-                      front: _buildLogin(
-                        context,
-                        cardWidth,
-                        cardHeight,
-                        logoSize,
-                        isLoginLoading,
-                        errorMessage,
-                        successMessage,
-                        l10n,
-                      ),
-                      back: RegisterCard(
-                        key: registerCardKey,
-                        cardWidth: cardWidth,
-                        cardHeight: cardHeight,
-                        logoSize: logoSize,
-                        isLoading: isRegisterLoading,
-                        emailErrorMessage: isRegisterEmailError
-                            ? registerErrorMessage
-                            : null,
-                        formErrorMessage: isRegisterEmailError
-                            ? null
-                            : registerErrorMessage,
-                        onBackToLogin: () => _goToLoginFromRegister(context),
-                        onRegisterRequested:
-                            ({
-                              required String name,
-                              required String email,
-                              required String phone,
-                              required String password,
-                            }) {
-                              setState(() {
-                                _showLoginError = false;
-                                _isShowingRegister = true;
-                                _showRegisterSuccessMessage = false;
-                              });
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 360),
+                      reverseDuration: const Duration(milliseconds: 280),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: _buildAuthSwitchTransition,
+                      child: _isShowingRegister
+                          ? KeyedSubtree(
+                              key: const ValueKey('register'),
+                              child: RegisterCard(
+                                key: registerCardKey,
+                                cardWidth: cardWidth,
+                                cardHeight: cardHeight,
+                                logoSize: logoSize,
+                                isLoading: isRegisterLoading,
+                                emailErrorMessage: isRegisterEmailError
+                                    ? registerErrorMessage
+                                    : null,
+                                formErrorMessage: isRegisterEmailError
+                                    ? null
+                                    : registerErrorMessage,
+                                onBackToLogin: () =>
+                                    _goToLoginFromRegister(context),
+                                onRegisterRequested:
+                                    ({
+                                      required String name,
+                                      required String email,
+                                      required String phone,
+                                      required String password,
+                                    }) {
+                                      setState(() {
+                                        _showLoginError = false;
+                                        _isShowingRegister = true;
+                                        _showRegisterSuccessMessage = false;
+                                      });
 
-                              context.read<RegisterFormCubit>().submit(
-                                name: name,
-                                email: email,
-                                phone: phone,
-                                password: password,
-                              );
-                            },
-                      ),
+                                      context.read<RegisterFormCubit>().submit(
+                                        name: name,
+                                        email: email,
+                                        phone: phone,
+                                        password: password,
+                                      );
+                                    },
+                              ),
+                            )
+                          : KeyedSubtree(
+                              key: const ValueKey('login'),
+                              child: _buildLogin(
+                                context,
+                                cardWidth,
+                                cardHeight,
+                                logoSize,
+                                isLoginLoading,
+                                errorMessage,
+                                successMessage,
+                                l10n,
+                              ),
+                            ),
                     ),
                   );
                 },
@@ -310,6 +325,19 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAuthSwitchTransition(Widget child, Animation<double> animation) {
+    final isRegister = child.key == const ValueKey('register');
+    final offsetAnimation = Tween<Offset>(
+      begin: Offset(isRegister ? -0.08 : 0.08, 0),
+      end: Offset.zero,
+    ).animate(animation);
+
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(position: offsetAnimation, child: child),
     );
   }
 
@@ -323,199 +351,173 @@ class _LoginPageState extends State<LoginPage> {
     String? successMessage,
     AppLocalizations l10n,
   ) {
+    final isCompactHeight = cardHeight < 720;
+    final topPadding = (cardHeight * (isCompactHeight ? 0.18 : 0.30)).clamp(
+      56.0,
+      220.0,
+    );
+    final titleSize = isCompactHeight ? 24.0 : 28.0;
+    final subtitleSize = isCompactHeight ? 15.0 : 17.0;
+    final buttonHeight = isCompactHeight ? 50.0 : 54.0;
+    final sectionGap = isCompactHeight ? 20.0 : 34.0;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return AuthCardShell(
       cardWidth: cardWidth,
       cardHeight: cardHeight,
       logoSize: logoSize,
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Form(
-                key: _formKeyLogin,
-                child: Column(
-                  children: [
-                    Text(
-                      l10n.authLoginTitle,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    if (errorMessage != null) ...[
-                      AuthErrorBanner(message: errorMessage),
-                      const SizedBox(height: 15),
-                    ] else if (successMessage != null) ...[
-                      AuthErrorBanner(
-                        message: successMessage,
-                        variant: AuthBannerVariant.success,
-                      ),
-                      const SizedBox(height: 15),
-                    ],
-                    TextFormField(
-                      controller: _emailLoginCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authLoginEmailLabel,
-                        hint: l10n.authLoginEmailHint,
-                        icon: Icons.email_outlined,
-                      ),
-                      validator: (value) => Validators.email(value, l10n),
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _passLoginCtrl,
-                      obscureText: _isPasswordHidden,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authLoginPasswordLabel,
-                        hint: l10n.authLoginPasswordHint,
-                        icon: Icons.lock_outline,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordHidden
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey.shade700,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordHidden = !_isPasswordHidden;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) => Validators.password(value, l10n),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: 220,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : () => _login(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                l10n.authLoginSubmit,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () {
-                        context.go('/forgot-password');
-                      },
-                      child: Text(
-                        l10n.authLoginForgotPassword,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.authLoginSocialPrompt,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const FaIcon(
-                              FontAwesomeIcons.google,
-                              color: Colors.white,
-                            ),
-                            label: Text(
-                              l10n.authLoginGoogle,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              elevation: 5,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const FaIcon(
-                              FontAwesomeIcons.facebookF,
-                              color: Colors.white,
-                            ),
-                            label: Text(
-                              l10n.authLoginFacebook,
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              elevation: 5,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          l10n.authLoginNoAccount,
-                          style: TextStyle(color: Colors.grey[700]),
-                        ),
-                        TextButton(
-                          onPressed: () => _goToRegister(context),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            l10n.authLoginRegisterAction,
-                            style: const TextStyle(
-                              color: Colors.lightBlue,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            0,
+            topPadding.toDouble(),
+            0,
+            AutolabCustomer.spacingLg + keyboardInset,
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Form(
+            key: _formKeyLogin,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.authLoginTitle,
+                  style: AutolabCustomer.h1.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
+                SizedBox(height: isCompactHeight ? 6 : 8),
+                Text(
+                  'Añade tus datos para iniciar sesión.',
+                  style: AutolabCustomer.bodyLarge.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                    fontSize: subtitleSize,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 16 : 22),
+                if (errorMessage != null) ...[
+                  AuthErrorBanner(message: errorMessage),
+                  const SizedBox(height: 18),
+                ] else if (successMessage != null) ...[
+                  AuthErrorBanner(
+                    message: successMessage,
+                    variant: AuthBannerVariant.success,
+                  ),
+                  const SizedBox(height: 18),
+                ],
+                TextFormField(
+                  controller: _emailLoginCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authLoginEmailLabel,
+                    hint: 'Email',
+                    icon: Icons.email_outlined,
+                  ),
+                  validator: (value) => Validators.email(value, l10n),
+                ),
+                SizedBox(height: isCompactHeight ? 12 : 16),
+                TextFormField(
+                  controller: _passLoginCtrl,
+                  obscureText: _isPasswordHidden,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authLoginPasswordLabel,
+                    hint: 'Contraseña',
+                    icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordHidden
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AutolabCustomer.primary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordHidden = !_isPasswordHidden;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (value) => Validators.password(value, l10n),
+                ),
+                SizedBox(height: sectionGap),
+                SizedBox(
+                  width: double.infinity,
+                  height: buttonHeight,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : () => _login(context),
+                    style: AutolabCustomer.primaryButton.copyWith(
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AutolabCustomer.radiusButton + 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AutolabCustomer.white,
+                            ),
+                          )
+                        : Text(
+                            l10n.authLoginSubmit,
+                            style: AutolabCustomer.h3.copyWith(
+                              color: AutolabCustomer.white,
+                              fontSize: isCompactHeight ? 16 : 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 12 : 18),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      context.go('/forgot-password');
+                    },
+                    child: Text(
+                      '¿Olvidó su contraseña?',
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.authTextColor(context),
+                        fontSize: subtitleSize,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: TextButton(
+                    onPressed: () => _goToRegister(context),
+                    child: Text(
+                      l10n.authLoginRegisterAction,
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

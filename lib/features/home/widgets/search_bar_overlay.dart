@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/location/current_location.dart';
+import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/repositories/product_repository.dart';
@@ -174,14 +175,19 @@ class _SearchOverlayContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFE9EEF2),
+      color: AutolabCustomer.customerBackgroundColor(context),
       child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+              padding: const EdgeInsets.fromLTRB(
+                AutolabCustomer.spacingScreen,
+                AutolabCustomer.spacingSm + 2,
+                AutolabCustomer.spacingScreen,
+                AutolabCustomer.spacingSmd,
+              ),
               child: _SearchOverlayField(
                 controller: controller,
                 autofocus: autofocus,
@@ -242,52 +248,53 @@ class _SearchOverlayField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final fieldColor = AutolabCustomer.customerInvertedSurfaceColor(context);
+    final iconColor = AutolabCustomer.customerOnInvertedSurfaceColor(context);
+    final hintColor = AutolabCustomer.customerHintColor(context);
 
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, child) {
         return Material(
-          color: Colors.white,
+          color: fieldColor,
           borderRadius: BorderRadius.circular(999),
-          elevation: 8,
-          shadowColor: const Color(0x24000000),
+          elevation: 0,
           child: SizedBox(
-            height: 52,
+            height: AutolabCustomer.spacingXxl,
             child: TextField(
               key: const ValueKey('workshop-search-overlay-field'),
               controller: controller,
               autofocus: autofocus,
+              cursorColor: AutolabCustomer.primary,
+              style: AutolabCustomer.bodyLarge.copyWith(color: iconColor),
               textInputAction: TextInputAction.search,
               onSubmitted: onSubmitted,
               decoration: InputDecoration(
+                filled: true,
+                fillColor: fieldColor,
                 hintText: l10n.searchBarHint,
-                hintStyle: const TextStyle(
-                  color: Color(0xFF6D757C),
-                  fontSize: 16,
+                hintStyle: AutolabCustomer.bodyLarge.copyWith(
+                  color: hintColor,
                   fontWeight: FontWeight.w700,
                 ),
                 prefixIcon: IconButton(
                   key: const ValueKey('workshop-search-close-button'),
                   tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                   onPressed: onBack,
-                  icon: const Icon(
-                    Icons.arrow_back_rounded,
-                    color: Color(0xFF5F676D),
-                  ),
+                  icon: Icon(Icons.arrow_back_rounded, color: iconColor),
                 ),
                 suffixIcon: value.text.trim().isEmpty
-                    ? const Icon(Icons.search_rounded, color: Color(0xFF5F676D))
+                    ? Icon(Icons.search_rounded, color: iconColor)
                     : IconButton(
                         key: const ValueKey('workshop-search-clear-button'),
                         tooltip: l10n.workshopSearchClearTooltip,
                         onPressed: onClear,
-                        icon: const Icon(
-                          Icons.cancel_rounded,
-                          color: Color(0xFF9AA1A8),
-                        ),
+                        icon: Icon(Icons.cancel_rounded, color: hintColor),
                       ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: AutolabCustomer.spacingMd - 1,
+                ),
               ),
             ),
           ),
@@ -340,9 +347,15 @@ class _WorkshopSearchResults extends StatelessWidget {
 
     return ListView.separated(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AutolabCustomer.spacingSmd + 2,
+        AutolabCustomer.spacingSm,
+        AutolabCustomer.spacingSmd + 2,
+        AutolabCustomer.spacingSm,
+      ),
       itemCount: productResults.length + workshops.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: AutolabCustomer.spacingSm + 2),
       itemBuilder: (context, index) {
         if (index < productResults.length) {
           final result = productResults[index];
@@ -359,7 +372,7 @@ class _WorkshopSearchResults extends StatelessWidget {
         final workshop = workshops[workshopIndex];
 
         return InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard + 2),
           onTap: () {
             onSearchCommitted(query);
             _showWorkshopDetails(context, workshop);
@@ -395,12 +408,17 @@ class _WorkshopProductResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final workshop = result.workshop;
+    final surfaceColor = AutolabCustomer.customerElevatedSurfaceColor(context);
+    final textColor = AutolabCustomer.customerTextColor(context);
+    final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    );
 
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      color: surfaceColor,
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard + 2),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard + 2),
         onTap: () {
           onSearchCommitted(query);
           context.push(
@@ -408,7 +426,12 @@ class _WorkshopProductResultCard extends StatelessWidget {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+          padding: const EdgeInsets.fromLTRB(
+            AutolabCustomer.spacingSmd + 2,
+            AutolabCustomer.spacingSmd + 2,
+            AutolabCustomer.spacingSmd + 2,
+            AutolabCustomer.spacingMd,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -417,18 +440,20 @@ class _WorkshopProductResultCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: const Color(0xFFF8F4EF),
+                    backgroundColor: AutolabCustomer.customerSoftSurfaceColor(
+                      context,
+                    ),
                     backgroundImage: workshop.avatarUrl.trim().isNotEmpty
                         ? NetworkImage(workshop.avatarUrl)
                         : null,
                     child: workshop.avatarUrl.trim().isEmpty
-                        ? const Icon(
+                        ? Icon(
                             Icons.storefront_rounded,
-                            color: Color(0xFF9B3D24),
+                            color: AutolabCustomer.primary,
                           )
                         : null,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AutolabCustomer.spacingSmd),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,39 +462,37 @@ class _WorkshopProductResultCard extends StatelessWidget {
                           workshop.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF181411),
-                            fontSize: 20,
+                          style: AutolabCustomer.h3.copyWith(
+                            color: textColor,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AutolabCustomer.spacingXs),
                         _WorkshopResultMeta(workshop: workshop),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AutolabCustomer.spacingSm - 2),
                         Text(
                           '${result.count} resultado${result.count == 1 ? '' : 's'} para "$query"',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF6B5F57),
-                            fontSize: 13,
+                          style: AutolabCustomer.caption.copyWith(
+                            color: secondaryTextColor,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded),
+                  Icon(Icons.chevron_right_rounded, color: textColor),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AutolabCustomer.spacingSmd + 2),
               SizedBox(
                 height: 206,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: result.products.take(8).length,
                   separatorBuilder: (context, index) =>
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AutolabCustomer.spacingSmd),
                   itemBuilder: (context, index) {
                     final product = result.products[index];
 
@@ -492,6 +515,9 @@ class _WorkshopResultMeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    );
     final locationLabel = workshop.locationAddress.trim();
     final deliveryLabel = workshop.offersHomeService
         ? 'A domicilio'
@@ -501,10 +527,10 @@ class _WorkshopResultMeta extends StatelessWidget {
       children: [
         const Icon(
           Icons.location_on_outlined,
-          size: 16,
-          color: Color(0xFF9B3D24),
+          size: AutolabCustomer.iconXs,
+          color: AutolabCustomer.primary,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AutolabCustomer.spacingXs),
         Expanded(
           child: Text(
             locationLabel.isEmpty
@@ -512,9 +538,8 @@ class _WorkshopResultMeta extends StatelessWidget {
                 : '$locationLabel - $deliveryLabel',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF6B5F57),
-              fontSize: 13,
+            style: AutolabCustomer.caption.copyWith(
+              color: secondaryTextColor,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -531,6 +556,15 @@ class _SearchProductPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = AutolabCustomer.customerTextColor(context);
+    final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    );
+    final addBackground = AutolabCustomer.customerInvertedSurfaceColor(context);
+    final addIconColor = AutolabCustomer.customerOnInvertedSurfaceColor(
+      context,
+    );
+
     return SizedBox(
       width: 138,
       child: Column(
@@ -542,7 +576,9 @@ class _SearchProductPreview extends StatelessWidget {
               ProductImage(
                 imageUrl: product.primaryImageUrl,
                 height: 112,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(
+                  AutolabCustomer.radiusInput + 2,
+                ),
               ),
               Positioned(
                 right: 6,
@@ -550,43 +586,35 @@ class _SearchProductPreview extends StatelessWidget {
                 child: Container(
                   width: 34,
                   height: 34,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: addBackground,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x22000000),
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
+                    boxShadow: AutolabCustomer.shadowLevel1,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_rounded,
-                    color: Color(0xFF181411),
-                    size: 26,
+                    color: addIconColor,
+                    size: AutolabCustomer.iconLg - 6,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AutolabCustomer.spacingMd + 2),
           ProductPriceText(
             price: product.sellingPrice,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 17,
+            style: AutolabCustomer.bodyLarge.copyWith(
+              color: textColor,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AutolabCustomer.spacingXs),
           Text(
             product.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF3A332E),
-              fontSize: 14,
+            style: AutolabCustomer.body.copyWith(
+              color: secondaryTextColor,
               height: 1.2,
             ),
           ),
@@ -610,22 +638,29 @@ class _RecentSearches extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final textColor = AutolabCustomer.customerTextColor(context);
+    final chipBackground = AutolabCustomer.customerChipBackgroundColor(context);
+    final chipBorder = AutolabCustomer.customerBorderColor(context);
 
     if (recentSearches.isEmpty) {
       return _SearchEmptyMessage(message: l10n.workshopSearchStartMessage);
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+      padding: const EdgeInsets.fromLTRB(
+        AutolabCustomer.spacingScreen,
+        AutolabCustomer.spacingSm,
+        AutolabCustomer.spacingScreen,
+        AutolabCustomer.spacingXl - 4,
+      ),
       children: [
         Row(
           children: [
             Expanded(
               child: Text(
                 l10n.workshopSearchRecentTitle,
-                style: const TextStyle(
-                  color: Color(0xFF181411),
-                  fontSize: 15,
+                style: AutolabCustomer.body.copyWith(
+                  color: textColor,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -637,23 +672,26 @@ class _RecentSearches extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AutolabCustomer.spacingSmd),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: recentSearches.map((query) {
             return ActionChip(
               key: ValueKey('recent-search-$query'),
-              avatar: const Icon(Icons.history_rounded, size: 17),
+              avatar: const Icon(
+                Icons.history_rounded,
+                size: AutolabCustomer.iconXs + 1,
+              ),
               label: Text(query),
               onPressed: () => onSelected(query),
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE9DDD2)),
+              backgroundColor: chipBackground,
+              side: BorderSide(color: chipBorder),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(999),
               ),
-              labelStyle: const TextStyle(
-                color: Color(0xFF181411),
+              labelStyle: AutolabCustomer.body.copyWith(
+                color: textColor,
                 fontWeight: FontWeight.w700,
               ),
             );
@@ -671,17 +709,17 @@ class _SearchEmptyMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = AutolabCustomer.customerSecondaryTextColor(context);
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AutolabCustomer.spacingLg + 4,
+        ),
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF6B5F57),
-            fontSize: 14,
-            height: 1.45,
-          ),
+          style: AutolabCustomer.body.copyWith(color: textColor, height: 1.45),
         ),
       ),
     );

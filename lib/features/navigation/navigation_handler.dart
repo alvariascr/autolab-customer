@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
 import '../profile/presentation/page/profile_page.dart';
@@ -17,11 +18,7 @@ class NavigationHandler {
   }) {
     switch (index) {
       case 0:
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeCustomerPage()),
-          (route) => false,
-        );
+        context.go('/home-customer');
         return;
 
       case 1:

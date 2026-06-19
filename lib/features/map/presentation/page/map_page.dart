@@ -15,7 +15,9 @@ import '../cubit/map_cubit.dart';
 import '../cubit/map_state.dart';
 
 class MapPage extends StatelessWidget {
-  const MapPage({super.key});
+  const MapPage({super.key, this.showBottomNavigation = true});
+
+  final bool showBottomNavigation;
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +25,15 @@ class MapPage extends StatelessWidget {
       create: (_) =>
           sl<MapCubit>()
             ..loadWorkshops(context.read<LocationCubit>().state.location),
-      child: const _MapPageView(),
+      child: _MapPageView(showBottomNavigation: showBottomNavigation),
     );
   }
 }
 
 class _MapPageView extends StatefulWidget {
-  const _MapPageView();
+  const _MapPageView({required this.showBottomNavigation});
+
+  final bool showBottomNavigation;
 
   @override
   State<_MapPageView> createState() => _MapPageViewState();
@@ -154,10 +158,12 @@ class _MapPageViewState extends State<_MapPageView> {
           },
         ),
       ),
-      bottomNavigationBar: CustomBottomNavbar(
-        currentIndex: _currentIndex,
-        onTap: _handleBottomNavigation,
-      ),
+      bottomNavigationBar: widget.showBottomNavigation
+          ? CustomBottomNavbar(
+              currentIndex: _currentIndex,
+              onTap: _handleBottomNavigation,
+            )
+          : null,
     );
   }
 

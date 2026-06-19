@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/autolab_customer.dart';
+
 class AuthCardShell extends StatelessWidget {
   const AuthCardShell({
     super.key,
@@ -16,31 +18,11 @@ class AuthCardShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 15,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: cardWidth,
-        height: cardHeight,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            Padding(padding: const EdgeInsets.only(top: 140), child: child),
-            Positioned(
-              top: 0,
-              child: Image.asset(
-                'assets/images/virtual/Mesa de trabajo 10@2x.png',
-                width: logoSize,
-                height: logoSize,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return Container(
+      width: cardWidth,
+      height: cardHeight,
+      color: AutolabCustomer.authBackgroundColor(context),
+      child: child,
     );
   }
 }

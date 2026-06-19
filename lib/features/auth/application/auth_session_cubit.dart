@@ -74,16 +74,25 @@ class AuthSessionCubit extends Cubit<AuthSessionState> {
     );
   }
 
-  void setAuthenticated(AppUser user) {
+  void setAuthenticated(AppUser user, {bool showCustomerOnboarding = false}) {
     emit(
       AuthSessionState(
         status: AuthSessionStatus.authenticated,
         userId: user.id,
         role: user.role,
+        showCustomerOnboarding: showCustomerOnboarding,
         code: null,
         uiKey: null,
       ),
     );
+  }
+
+  void markCustomerOnboardingSeen() {
+    if (!state.showCustomerOnboarding) {
+      return;
+    }
+
+    emit(state.copyWith(showCustomerOnboarding: false));
   }
 
   Future<void> logout() async {

@@ -24,6 +24,7 @@ void main() {
               child: const WorkshopsCarousel(
                 workshops: [],
                 emptyMessage: 'No hay talleres disponibles',
+                height: 320,
               ),
             ),
           ),
@@ -74,6 +75,7 @@ void main() {
               child: const WorkshopsCarousel(
                 workshops: workshops,
                 emptyMessage: 'No hay talleres disponibles',
+                height: 320,
               ),
             ),
           ),

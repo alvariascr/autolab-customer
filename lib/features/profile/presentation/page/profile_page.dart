@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_theme_mode_controller.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.showBottomNavigation = true});
+
+  final bool showBottomNavigation;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -33,19 +36,30 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? const Color(0xFF050606)
+        : const Color(0xFFF8F4EF);
+    final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final textColor = isDark
+        ? const Color(0xFFF4E9E9)
+        : const Color(0xFF181411);
+    final secondaryTextColor = isDark
+        ? const Color(0xFFA9A9A9)
+        : const Color(0xFF6B5F57);
+    final borderColor = isDark
+        ? const Color(0xFF3A3A3A)
+        : const Color(0xFFE9DDD2);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4EF),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F4EF),
+        backgroundColor: backgroundColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         title: Text(
           l10n.profileTitle,
-          style: const TextStyle(
-            color: Color(0xFF181411),
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -56,22 +70,27 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: surfaceColor,
                 borderRadius: BorderRadius.circular(28),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x12000000),
-                    blurRadius: 22,
-                    offset: Offset(0, 10),
-                  ),
-                ],
+                boxShadow: isDark
+                    ? null
+                    : const [
+                        BoxShadow(
+                          color: Color(0x12000000),
+                          blurRadius: 22,
+                          offset: Offset(0, 10),
+                        ),
+                      ],
+                border: isDark ? Border.all(color: borderColor) : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 28,
-                    backgroundColor: Color(0xFF181411),
+                    backgroundColor: isDark
+                        ? const Color(0xFFFF281B)
+                        : const Color(0xFF181411),
                     child: Icon(
                       Icons.person_outline_rounded,
                       color: Colors.white,
@@ -81,8 +100,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 16),
                   Text(
                     l10n.profileAccountTitle,
-                    style: const TextStyle(
-                      color: Color(0xFF181411),
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),
@@ -90,8 +109,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 8),
                   Text(
                     l10n.profileAccountSubtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF6B5F57),
+                    style: TextStyle(
+                      color: secondaryTextColor,
                       fontSize: 14,
                       height: 1.45,
                     ),
@@ -121,25 +140,27 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               title: l10n.vehiclesTitle,
               subtitle: l10n.vehiclesProfileSubtitle,
-              borderColor: const Color(0xFFE9DDD2),
+              borderColor: borderColor,
               onTap: () => context.push('/vehicles'),
             ),
+            const SizedBox(height: 20),
+            const _ThemeModeSwitchCard(),
             const SizedBox(height: 20),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: surfaceColor,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE9DDD2)),
+                border: Border.all(color: borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     l10n.profileSessionTitle,
-                    style: const TextStyle(
-                      color: Color(0xFF181411),
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
@@ -147,8 +168,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 8),
                   Text(
                     l10n.profileSessionSubtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF6B5F57),
+                    style: TextStyle(
+                      color: secondaryTextColor,
                       fontSize: 13,
                       height: 1.45,
                     ),
@@ -158,7 +179,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: double.infinity,
                     child: FilledButton.icon(
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF181411),
+                        backgroundColor: isDark
+                            ? const Color(0xFFFF281B)
+                            : const Color(0xFF181411),
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(52),
                         shape: RoundedRectangleBorder(
@@ -178,10 +201,92 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottomNavbar(
-        currentIndex: _currentIndex,
-        onTap: _handleBottomNavigation,
-      ),
+      bottomNavigationBar: widget.showBottomNavigation
+          ? CustomBottomNavbar(
+              currentIndex: _currentIndex,
+              onTap: _handleBottomNavigation,
+            )
+          : null,
+    );
+  }
+}
+
+class _ThemeModeSwitchCard extends StatelessWidget {
+  const _ThemeModeSwitchCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppThemeModeController.mode,
+      builder: (context, mode, _) {
+        final isDark = mode == ThemeMode.dark;
+        final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+        final textColor = isDark
+            ? const Color(0xFFF4E9E9)
+            : const Color(0xFF181411);
+        final secondaryTextColor = isDark
+            ? const Color(0xFFA9A9A9)
+            : const Color(0xFF6B5F57);
+        final borderColor = isDark
+            ? const Color(0xFF3A3A3A)
+            : const Color(0xFFE9DDD2);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              _ProfileActionIcon(
+                icon: isDark
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined,
+                backgroundColor: isDark
+                    ? const Color(0xFF3A3A3A)
+                    : const Color(0xFFF4E9E9),
+                foregroundColor: const Color(0xFFE32119),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Modo oscuro',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isDark ? 'Activado' : 'Desactivado',
+                      style: TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isDark,
+                activeThumbColor: const Color(0xFFFF281B),
+                activeTrackColor: const Color(
+                  0xFFFF281B,
+                ).withValues(alpha: 0.32),
+                onChanged: AppThemeModeController.setDarkMode,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -205,8 +310,17 @@ class _ProfileMenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final textColor = isDark
+        ? const Color(0xFFF4E9E9)
+        : const Color(0xFF181411);
+    final secondaryTextColor = isDark
+        ? const Color(0xFFA9A9A9)
+        : const Color(0xFF6B5F57);
+
     return Material(
-      color: Colors.white,
+      color: surfaceColor,
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
@@ -228,8 +342,8 @@ class _ProfileMenuCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Color(0xFF181411),
+                      style: TextStyle(
+                        color: textColor,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
@@ -237,8 +351,8 @@ class _ProfileMenuCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFF6B5F57),
+                      style: TextStyle(
+                        color: secondaryTextColor,
                         fontSize: 12,
                         height: 1.3,
                       ),

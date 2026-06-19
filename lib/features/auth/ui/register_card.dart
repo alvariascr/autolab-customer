@@ -1,6 +1,8 @@
 import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
 import 'widgets/auth_card_shell.dart';
@@ -120,222 +122,349 @@ class RegisterCardState extends State<RegisterCard> {
     final emailErrorMessage = _hideRemoteEmailError
         ? null
         : widget.emailErrorMessage;
+    final isCompactHeight = widget.cardHeight < 760;
+    final topPadding = (widget.cardHeight * (isCompactHeight ? 0.025 : 0.07))
+        .clamp(16.0, 96.0);
+    final fieldGap = isCompactHeight ? 10.0 : 14.0;
+    final titleSize = isCompactHeight ? 24.0 : 28.0;
+    final subtitleSize = isCompactHeight ? 15.0 : 17.0;
+    final buttonHeight = isCompactHeight ? 50.0 : 54.0;
+    final socialButtonSize = isCompactHeight ? 48.0 : 58.0;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return AuthCardShell(
       cardWidth: widget.cardWidth,
       cardHeight: widget.cardHeight,
       logoSize: widget.logoSize,
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Form(
-                key: _formKeyRegister,
-                child: Column(
-                  children: [
-                    Text(
-                      l10n.authRegisterTitle,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            0,
+            topPadding.toDouble(),
+            0,
+            AutolabCustomer.spacingLg + keyboardInset,
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Form(
+            key: _formKeyRegister,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.authRegisterTitle,
+                  style: AutolabCustomer.h1.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 6 : 8),
+                Text(
+                  'Añade tus datos para registrarse',
+                  style: AutolabCustomer.bodyLarge.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                    fontSize: subtitleSize,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 14 : 20),
+                TextFormField(
+                  controller: _nameCtrl,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authRegisterNameLabel,
+                    hint: 'Nombre Completo',
+                    icon: Icons.person_outline,
+                  ),
+                  validator: (value) => Validators.name(value, l10n),
+                ),
+                SizedBox(height: fieldGap),
+                TextFormField(
+                  controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  onChanged: (_) {
+                    if (_localErrorMessage != null ||
+                        widget.emailErrorMessage != null) {
+                      setState(() {
+                        _localErrorMessage = null;
+                        _hideRemoteEmailError = true;
+                      });
+                    }
+                  },
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authRegisterEmailLabel,
+                    hint: 'Email',
+                    icon: Icons.email_outlined,
+                  ).copyWith(errorText: emailErrorMessage, errorMaxLines: 2),
+                  validator: (value) => Validators.email(value, l10n),
+                ),
+                SizedBox(height: fieldGap),
+                TextFormField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authRegisterPhoneLabel,
+                    hint: 'Número de Teléfono',
+                    icon: Icons.phone_outlined,
+                  ),
+                  validator: (value) => Validators.phone(value, l10n),
+                ),
+                SizedBox(height: fieldGap),
+                TextFormField(
+                  controller: _passCtrl,
+                  obscureText: _isPasswordVisible,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authRegisterPasswordLabel,
+                    hint: 'Contraseña',
+                    icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AutolabCustomer.primary,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _nameCtrl,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authRegisterNameLabel,
-                        hint: l10n.authRegisterNameHint,
-                        icon: Icons.person_outline,
-                      ),
-                      validator: (value) => Validators.name(value, l10n),
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      onChanged: (_) {
-                        if (_localErrorMessage != null ||
-                            widget.emailErrorMessage != null) {
-                          setState(() {
-                            _localErrorMessage = null;
-                            _hideRemoteEmailError = true;
-                          });
-                        }
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
                       },
-                      decoration:
-                          buildAuthInputDecoration(
-                            label: l10n.authRegisterEmailLabel,
-                            hint: l10n.authRegisterEmailHint,
-                            icon: Icons.email_outlined,
-                          ).copyWith(
-                            errorText: emailErrorMessage,
-                            errorMaxLines: 2,
-                          ),
-                      validator: (value) => Validators.email(value, l10n),
                     ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authRegisterPhoneLabel,
-                        hint: l10n.authRegisterPhoneHint,
-                        icon: Icons.phone_outlined,
+                  ),
+                  validator: (value) => Validators.password(value, l10n),
+                ),
+                SizedBox(height: fieldGap),
+                TextFormField(
+                  controller: _confirmPassCtrl,
+                  obscureText: _isConfrimPasswordVisible,
+                  cursorColor: AutolabCustomer.primary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.authTextColor(context),
+                  ),
+                  decoration: buildAuthInputDecoration(
+                    context: context,
+                    label: l10n.authRegisterConfirmPasswordLabel,
+                    hint: 'Confirmar Contraseña',
+                    icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfrimPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AutolabCustomer.primary,
                       ),
-                      validator: (value) => Validators.phone(value, l10n),
+                      onPressed: () {
+                        setState(() {
+                          _isConfrimPasswordVisible =
+                              !_isConfrimPasswordVisible;
+                        });
+                      },
                     ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _passCtrl,
-                      obscureText: _isPasswordVisible,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authRegisterPasswordLabel,
-                        hint: l10n.authRegisterPasswordHint,
-                        icon: Icons.lock_outline,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey.shade700,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                        ),
+                  ),
+                  validator: (v) =>
+                      Validators.confirmPassword(v, _passCtrl.text, l10n),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Checkbox(
+                      value: _acceptsTerms,
+                      activeColor: AutolabCustomer.primary,
+                      checkColor: AutolabCustomer.white,
+                      side: BorderSide(
+                        color: AutolabCustomer.authOutlineColor(context),
                       ),
-                      validator: (value) => Validators.password(value, l10n),
+                      onChanged: (v) {
+                        setState(() {
+                          _acceptsTerms = v ?? false;
+                          if (_acceptsTerms) {
+                            _localErrorMessage = null;
+                          }
+                        });
+                      },
                     ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _confirmPassCtrl,
-                      obscureText: _isConfrimPasswordVisible,
-                      decoration: buildAuthInputDecoration(
-                        label: l10n.authRegisterConfirmPasswordLabel,
-                        hint: l10n.authRegisterConfirmPasswordHint,
-                        icon: Icons.lock_outline,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isConfrimPasswordVisible
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey.shade700,
+                    Expanded(
+                      child: Wrap(
+                        children: [
+                          Text(
+                            l10n.authRegisterAcceptTermsPrefix,
+                            style: AutolabCustomer.caption.copyWith(
+                              color: AutolabCustomer.authTextColor(context),
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _isConfrimPasswordVisible =
-                                  !_isConfrimPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (v) =>
-                          Validators.confirmPassword(v, _passCtrl.text, l10n),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Checkbox(
-                          value: _acceptsTerms,
-                          onChanged: (v) {
-                            setState(() {
-                              _acceptsTerms = v ?? false;
-                              if (_acceptsTerms) {
-                                _localErrorMessage = null;
-                              }
-                            });
-                          },
-                        ),
-                        Expanded(
-                          child: Wrap(
-                            children: [
-                              Text(l10n.authRegisterAcceptTermsPrefix),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const TermsPage(),
-                                    ),
-                                  );
-                                },
-                                child: Text(
-                                  l10n.authRegisterAcceptTermsLink,
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    decoration: TextDecoration.underline,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const TermsPage(),
                                 ),
+                              );
+                            },
+                            child: Text(
+                              l10n.authRegisterAcceptTermsLink,
+                              style: AutolabCustomer.caption.copyWith(
+                                color: AutolabCustomer.primary,
+                                decoration: TextDecoration.underline,
+                                decorationColor: AutolabCustomer.primary,
+                                fontWeight: FontWeight.w700,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    if (feedbackMessage != null) ...[
-                      AuthErrorBanner(message: feedbackMessage),
-                      const SizedBox(height: 12),
-                    ],
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: widget.isLoading ? null : _register,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: widget.isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                l10n.authRegisterSubmit,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(l10n.authRegisterHaveAccount),
-                        TextButton(
-                          onPressed: widget.onBackToLogin,
-                          child: Text(
-                            l10n.authRegisterLoginAction,
-                            style: const TextStyle(color: Colors.lightBlue),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
                   ],
                 ),
-              ),
+                const SizedBox(height: 8),
+                if (feedbackMessage != null) ...[
+                  AuthErrorBanner(message: feedbackMessage),
+                  const SizedBox(height: 10),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  height: buttonHeight,
+                  child: ElevatedButton(
+                    onPressed: widget.isLoading ? null : _register,
+                    style: AutolabCustomer.primaryButton.copyWith(
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AutolabCustomer.radiusButton + 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: widget.isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AutolabCustomer.white,
+                            ),
+                          )
+                        : Text(
+                            l10n.authRegisterSubmit,
+                            style: AutolabCustomer.h3.copyWith(
+                              color: AutolabCustomer.white,
+                              fontSize: isCompactHeight ? 16 : 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 12 : 18),
+                Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        '¿Ya tienes cuenta? ',
+                        style: AutolabCustomer.bodyLarge.copyWith(
+                          color: AutolabCustomer.authTextColor(context),
+                          fontSize: isCompactHeight ? 14 : 16,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: widget.onBackToLogin,
+                        child: Text(
+                          l10n.authRegisterLoginAction,
+                          style: AutolabCustomer.bodyLarge.copyWith(
+                            color: AutolabCustomer.primary,
+                            fontSize: isCompactHeight ? 14 : 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 10 : 14),
+                Center(
+                  child: Text(
+                    'o Iniciar sesión con',
+                    style: AutolabCustomer.bodyLarge.copyWith(
+                      color: AutolabCustomer.authTextColor(context),
+                      fontSize: isCompactHeight ? 14 : 16,
+                    ),
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 12 : 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _AuthSocialButton(
+                      icon: FontAwesomeIcons.google,
+                      color: AutolabCustomer.primary,
+                      size: socialButtonSize,
+                    ),
+                    _AuthSocialButton(
+                      icon: FontAwesomeIcons.facebookF,
+                      color: AutolabCustomer.facebook,
+                      size: socialButtonSize,
+                    ),
+                    _AuthSocialButton(
+                      icon: FontAwesomeIcons.apple,
+                      color: AutolabCustomer.white,
+                      size: socialButtonSize,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthSocialButton extends StatelessWidget {
+  const _AuthSocialButton({
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
+
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: AutolabCustomer.authOutlineColor(context),
+          width: 1.5,
+        ),
+      ),
+      child: Center(
+        child: FaIcon(icon, color: color, size: size * 0.48),
       ),
     );
   }

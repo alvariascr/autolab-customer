@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
+import '../core/theme/app_theme_mode_controller.dart';
 import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
@@ -38,10 +39,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  static const _splashDuration = Duration(seconds: 4);
+
   StreamSubscription<AuthState>? _authStateSubscription;
   StreamSubscription<Uri>? _appLinkSubscription;
   final AppLinks _appLinks = AppLinks();
   late final AuthNavigationController _authNavigationController;
+  Timer? _splashTimer;
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -55,12 +60,18 @@ class _MyAppState extends State<MyApp> {
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
     unawaited(_listenForAppLinks());
+    _splashTimer = Timer(_splashDuration, () {
+      if (!mounted) return;
+
+      setState(() => _showSplash = false);
+    });
   }
 
   @override
   void dispose() {
     _authStateSubscription?.cancel();
     _appLinkSubscription?.cancel();
+    _splashTimer?.cancel();
     super.dispose();
   }
 
@@ -83,56 +94,84 @@ class _MyAppState extends State<MyApp> {
         BlocProvider.value(value: widget.authSessionCubit),
         BlocProvider.value(value: widget.locationCubit),
       ],
-      child: MaterialApp.router(
-        scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
-        theme: AppTheme.light,
-        onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-        routerConfig: widget.router,
-        builder: (context, child) {
-          return BlocListener<AuthSessionCubit, AuthSessionState>(
-            listenWhen: (previous, current) {
-              return previous.message != current.message ||
-                  previous.code != current.code ||
-                  previous.uiKey != current.uiKey;
-            },
-            listener: (context, state) {
-              if (!hasAuthFeedback(
-                message: state.message,
-                code: state.code,
-                uiKey: state.uiKey,
-              )) {
-                return;
-              }
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: AppThemeModeController.mode,
+        builder: (context, themeMode, _) {
+          return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeMode,
+            onGenerateTitle: (context) =>
+                AppLocalizations.of(context)!.appTitle,
+            routerConfig: widget.router,
+            builder: (context, child) {
+              return BlocListener<AuthSessionCubit, AuthSessionState>(
+                listenWhen: (previous, current) {
+                  return previous.message != current.message ||
+                      previous.code != current.code ||
+                      previous.uiKey != current.uiKey;
+                },
+                listener: (context, state) {
+                  if (!hasAuthFeedback(
+                    message: state.message,
+                    code: state.code,
+                    uiKey: state.uiKey,
+                  )) {
+                    return;
+                  }
 
-              final l10n = AppLocalizations.of(context)!;
-              final resolvedMessage = AuthUiErrorResolver.resolve(
-                l10n: l10n,
-                code: state.code,
-                uiKey: state.uiKey,
-                message: state.message,
+                  final l10n = AppLocalizations.of(context)!;
+                  final resolvedMessage = AuthUiErrorResolver.resolve(
+                    l10n: l10n,
+                    code: state.code,
+                    uiKey: state.uiKey,
+                    message: state.message,
+                  );
+
+                  MyApp._scaffoldMessengerKey.currentState
+                    ?..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text(resolvedMessage),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+
+                  context.read<AuthSessionCubit>().clearFeedback();
+                },
+                child: _showSplash
+                    ? const _StartupSplashScreen()
+                    : child ?? const SizedBox.shrink(),
               );
-
-              MyApp._scaffoldMessengerKey.currentState
-                ?..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(resolvedMessage),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-
-              context.read<AuthSessionCubit>().clearFeedback();
             },
-            child: child ?? const SizedBox.shrink(),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
           );
         },
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    );
+  }
+}
+
+class _StartupSplashScreen extends StatelessWidget {
+  const _StartupSplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Color(0xFFFF281B),
+      child: SizedBox.expand(
+        child: Image(
+          image: AssetImage('assets/images/splash/splash_intro.png'),
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
