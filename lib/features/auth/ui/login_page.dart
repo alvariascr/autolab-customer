@@ -390,7 +390,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 SizedBox(height: isCompactHeight ? 6 : 8),
                 Text(
-                  'Añade tus datos para iniciar sesión.',
+                  l10n.authLoginSubtitle,
                   style: AutolabCustomer.bodyLarge.copyWith(
                     color: AutolabCustomer.authTextColor(context),
                     fontSize: subtitleSize,
@@ -417,7 +417,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authLoginEmailLabel,
-                    hint: 'Email',
+                    hint: l10n.authLoginEmailHint,
                     icon: Icons.email_outlined,
                   ),
                   validator: (value) => Validators.email(value, l10n),
@@ -433,7 +433,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authLoginPasswordLabel,
-                    hint: 'Contraseña',
+                    hint: l10n.authLoginPasswordHint,
                     icon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -492,7 +492,7 @@ class _LoginPageState extends State<LoginPage> {
                       context.go('/forgot-password');
                     },
                     child: Text(
-                      '¿Olvidó su contraseña?',
+                      l10n.authLoginForgotPassword,
                       style: AutolabCustomer.bodyLarge.copyWith(
                         color: AutolabCustomer.authTextColor(context),
                         fontSize: subtitleSize,

@@ -15,6 +15,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authLoginTitle => 'Iniciar sesión';
 
   @override
+  String get authLoginSubtitle => 'Añade tus datos para iniciar sesión.';
+
+  @override
   String get authLoginEmailLabel => 'Correo electrónico';
 
   @override

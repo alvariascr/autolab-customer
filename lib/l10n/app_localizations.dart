@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'Iniciar sesión'**
   String get authLoginTitle;
 
+  /// No description provided for @authLoginSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade tus datos para iniciar sesión.'**
+  String get authLoginSubtitle;
+
   /// No description provided for @authLoginEmailLabel.
   ///
   /// In es, this message translates to:

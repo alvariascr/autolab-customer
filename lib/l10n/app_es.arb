@@ -2,6 +2,7 @@
   "appTitle": "Autolab Customer",
   "@@locale": "es",
   "authLoginTitle": "Iniciar sesión",
+  "authLoginSubtitle": "Añade tus datos para iniciar sesión.",
   "authLoginEmailLabel": "Correo electrónico",
   "authLoginEmailHint": "Ingresa tu correo electrónico",
   "authLoginPasswordLabel": "Contraseña",
