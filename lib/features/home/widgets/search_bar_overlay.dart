@@ -407,6 +407,7 @@ class _WorkshopProductResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final workshop = result.workshop;
     final surfaceColor = AutolabCustomer.customerElevatedSurfaceColor(context);
     final textColor = AutolabCustomer.customerTextColor(context);
@@ -471,7 +472,10 @@ class _WorkshopProductResultCard extends StatelessWidget {
                         _WorkshopResultMeta(workshop: workshop),
                         const SizedBox(height: AutolabCustomer.spacingSm - 2),
                         Text(
-                          '${result.count} resultado${result.count == 1 ? '' : 's'} para "$query"',
+                          l10n.workshopSearchProductResults(
+                            result.count,
+                            query,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AutolabCustomer.caption.copyWith(
@@ -515,13 +519,14 @@ class _WorkshopResultMeta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
       context,
     );
     final locationLabel = workshop.locationAddress.trim();
     final deliveryLabel = workshop.offersHomeService
-        ? 'A domicilio'
-        : 'En taller';
+        ? l10n.workshopSearchHomeDelivery
+        : l10n.workshopSearchInWorkshop;
 
     return Row(
       children: [

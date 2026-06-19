@@ -98,6 +98,15 @@
   "workshopSearchSuggestedTitle": "Búsquedas sugeridas",
   "workshopSearchStartMessage": "Ingresa el nombre, descripción o ubicación de un taller para encontrarlo más rápido.",
   "workshopSearchNoResults": "No encontramos talleres que coincidan con tu búsqueda.",
+  "workshopSearchProductResults": "{count, plural, =1{1 resultado para \"{query}\"} other{{count} resultados para \"{query}\"}}",
+  "@workshopSearchProductResults": {
+    "placeholders": {
+      "count": {},
+      "query": {}
+    }
+  },
+  "workshopSearchHomeDelivery": "A domicilio",
+  "workshopSearchInWorkshop": "En taller",
   "adminHomeTitle": "Panel administrativo",
   "adminHomeSubtitle": "Vista inicial para coordinación interna de Autolab.",
   "adminHomeHeroLabel": "Operación del día",

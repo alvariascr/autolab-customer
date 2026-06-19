@@ -320,6 +320,17 @@ class AppLocalizationsEs extends AppLocalizations {
       'No encontramos talleres que coincidan con tu búsqueda.';
 
   @override
+  String workshopSearchProductResults(Object count, Object query) {
+    return '$count resultado${count == 1 ? '' : 's'} para "$query"';
+  }
+
+  @override
+  String get workshopSearchHomeDelivery => 'A domicilio';
+
+  @override
+  String get workshopSearchInWorkshop => 'En taller';
+
+  @override
   String get adminHomeTitle => 'Panel administrativo';
 
   @override

@@ -652,6 +652,24 @@ abstract class AppLocalizations {
   /// **'No encontramos talleres que coincidan con tu búsqueda.'**
   String get workshopSearchNoResults;
 
+  /// No description provided for @workshopSearchProductResults.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 resultado para "{query}"} other{{count} resultados para "{query}"}}'**
+  String workshopSearchProductResults(Object count, Object query);
+
+  /// No description provided for @workshopSearchHomeDelivery.
+  ///
+  /// In es, this message translates to:
+  /// **'A domicilio'**
+  String get workshopSearchHomeDelivery;
+
+  /// No description provided for @workshopSearchInWorkshop.
+  ///
+  /// In es, this message translates to:
+  /// **'En taller'**
+  String get workshopSearchInWorkshop;
+
   /// No description provided for @adminHomeTitle.
   ///
   /// In es, this message translates to:
