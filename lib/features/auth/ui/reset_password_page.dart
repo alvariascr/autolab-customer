@@ -209,9 +209,7 @@ class _ResetPasswordForm extends StatelessWidget {
               ),
               decoration: buildAuthInputDecoration(
                 context: context,
-                label: l10n.authResetPasswordNewPasswordLabel,
                 hint: l10n.authResetPasswordNewPasswordHint,
-                icon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
                     isPasswordHidden ? Icons.visibility_off : Icons.visibility,
@@ -232,9 +230,7 @@ class _ResetPasswordForm extends StatelessWidget {
               ),
               decoration: buildAuthInputDecoration(
                 context: context,
-                label: l10n.authRegisterConfirmPasswordLabel,
                 hint: l10n.authRegisterConfirmPasswordHint,
-                icon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
                     isConfirmPasswordHidden

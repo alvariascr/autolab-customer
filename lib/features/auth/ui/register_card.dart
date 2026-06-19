@@ -175,9 +175,7 @@ class RegisterCardState extends State<RegisterCard> {
                   ),
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authRegisterNameLabel,
                     hint: l10n.appointmentCustomerNameLabel,
-                    icon: Icons.person_outline,
                   ),
                   validator: (value) => Validators.name(value, l10n),
                 ),
@@ -200,9 +198,7 @@ class RegisterCardState extends State<RegisterCard> {
                   },
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authRegisterEmailLabel,
                     hint: l10n.authRegisterEmailHint,
-                    icon: Icons.email_outlined,
                   ).copyWith(errorText: emailErrorMessage, errorMaxLines: 2),
                   validator: (value) => Validators.email(value, l10n),
                 ),
@@ -216,9 +212,7 @@ class RegisterCardState extends State<RegisterCard> {
                   ),
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authRegisterPhoneLabel,
                     hint: l10n.authRegisterPhoneHint,
-                    icon: Icons.phone_outlined,
                   ),
                   validator: (value) => Validators.phone(value, l10n),
                 ),
@@ -232,9 +226,7 @@ class RegisterCardState extends State<RegisterCard> {
                   ),
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authRegisterPasswordLabel,
                     hint: l10n.authRegisterPasswordHint,
-                    icon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isPasswordVisible
@@ -261,9 +253,7 @@ class RegisterCardState extends State<RegisterCard> {
                   ),
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authRegisterConfirmPasswordLabel,
                     hint: l10n.authRegisterConfirmPasswordHint,
-                    icon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isConfrimPasswordVisible

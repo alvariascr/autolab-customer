@@ -416,9 +416,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authLoginEmailLabel,
                     hint: l10n.authLoginEmailHint,
-                    icon: Icons.email_outlined,
                   ),
                   validator: (value) => Validators.email(value, l10n),
                 ),
@@ -432,9 +430,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   decoration: buildAuthInputDecoration(
                     context: context,
-                    label: l10n.authLoginPasswordLabel,
                     hint: l10n.authLoginPasswordHint,
-                    icon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isPasswordHidden

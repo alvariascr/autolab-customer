@@ -4,13 +4,10 @@ import '../../../../core/theme/autolab_customer.dart';
 
 InputDecoration buildAuthInputDecoration({
   required BuildContext context,
-  required String label,
   required String hint,
-  required IconData icon,
   Widget? suffixIcon,
 }) {
   return InputDecoration(
-    labelText: null,
     hintText: hint,
     hintStyle: AutolabCustomer.bodyLarge.copyWith(
       color: AutolabCustomer.authHintColor(context),
