@@ -186,7 +186,7 @@ class _WorkshopCardBody extends StatelessWidget {
                 height: compact ? null : 22,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
                   child: Row(
                     children: [
                       if (distanceLabel != null) ...[
