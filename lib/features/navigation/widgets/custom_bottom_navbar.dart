@@ -181,7 +181,7 @@ class _SearchNavItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
-        width: isSelected ? AutolabCustomer.spacingXxl : expandedWidth,
+        width: isSelected ? expandedWidth : AutolabCustomer.spacingXxl,
         height: AutolabCustomer.spacingXxl,
         margin: const EdgeInsets.only(bottom: AutolabCustomer.spacingMd),
         decoration: BoxDecoration(
