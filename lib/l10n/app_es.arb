@@ -26,6 +26,7 @@
   "authLoginNoAccount": "¿No tienes cuenta?",
   "authLoginRegisterAction": "Registrarse",
   "authRegisterTitle": "Registrarse",
+  "authRegisterSubtitle": "Añade tus datos para registrarse",
   "authRegisterNameLabel": "Nombre",
   "authRegisterNameHint": "Ingresa tu nombre",
   "authRegisterEmailLabel": "Correo electrónico",

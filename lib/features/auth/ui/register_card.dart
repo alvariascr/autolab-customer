@@ -160,7 +160,7 @@ class RegisterCardState extends State<RegisterCard> {
                 ),
                 SizedBox(height: isCompactHeight ? 6 : 8),
                 Text(
-                  'Añade tus datos para registrarse',
+                  l10n.authRegisterSubtitle,
                   style: AutolabCustomer.bodyLarge.copyWith(
                     color: AutolabCustomer.authTextColor(context),
                     fontSize: subtitleSize,
@@ -176,7 +176,7 @@ class RegisterCardState extends State<RegisterCard> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authRegisterNameLabel,
-                    hint: 'Nombre Completo',
+                    hint: l10n.appointmentCustomerNameLabel,
                     icon: Icons.person_outline,
                   ),
                   validator: (value) => Validators.name(value, l10n),
@@ -201,7 +201,7 @@ class RegisterCardState extends State<RegisterCard> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authRegisterEmailLabel,
-                    hint: 'Email',
+                    hint: l10n.authRegisterEmailHint,
                     icon: Icons.email_outlined,
                   ).copyWith(errorText: emailErrorMessage, errorMaxLines: 2),
                   validator: (value) => Validators.email(value, l10n),
@@ -217,7 +217,7 @@ class RegisterCardState extends State<RegisterCard> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authRegisterPhoneLabel,
-                    hint: 'Número de Teléfono',
+                    hint: l10n.authRegisterPhoneHint,
                     icon: Icons.phone_outlined,
                   ),
                   validator: (value) => Validators.phone(value, l10n),
@@ -233,7 +233,7 @@ class RegisterCardState extends State<RegisterCard> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authRegisterPasswordLabel,
-                    hint: 'Contraseña',
+                    hint: l10n.authRegisterPasswordHint,
                     icon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -262,7 +262,7 @@ class RegisterCardState extends State<RegisterCard> {
                   decoration: buildAuthInputDecoration(
                     context: context,
                     label: l10n.authRegisterConfirmPasswordLabel,
-                    hint: 'Confirmar Contraseña',
+                    hint: l10n.authRegisterConfirmPasswordHint,
                     icon: Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -380,7 +380,7 @@ class RegisterCardState extends State<RegisterCard> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        '¿Ya tienes cuenta? ',
+                        '${l10n.authRegisterHaveAccount} ',
                         style: AutolabCustomer.bodyLarge.copyWith(
                           color: AutolabCustomer.authTextColor(context),
                           fontSize: isCompactHeight ? 14 : 16,
@@ -403,7 +403,7 @@ class RegisterCardState extends State<RegisterCard> {
                 SizedBox(height: isCompactHeight ? 10 : 14),
                 Center(
                   child: Text(
-                    'o Iniciar sesión con',
+                    l10n.authLoginSocialPrompt,
                     style: AutolabCustomer.bodyLarge.copyWith(
                       color: AutolabCustomer.authTextColor(context),
                       fontSize: isCompactHeight ? 14 : 16,

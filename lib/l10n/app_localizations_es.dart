@@ -91,6 +91,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authRegisterTitle => 'Registrarse';
 
   @override
+  String get authRegisterSubtitle => 'Añade tus datos para registrarse';
+
+  @override
   String get authRegisterNameLabel => 'Nombre';
 
   @override

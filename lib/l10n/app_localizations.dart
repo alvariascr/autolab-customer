@@ -250,6 +250,12 @@ abstract class AppLocalizations {
   /// **'Registrarse'**
   String get authRegisterTitle;
 
+  /// No description provided for @authRegisterSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade tus datos para registrarse'**
+  String get authRegisterSubtitle;
+
   /// No description provided for @authRegisterNameLabel.
   ///
   /// In es, this message translates to:
