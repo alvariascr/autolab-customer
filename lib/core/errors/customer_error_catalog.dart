@@ -107,4 +107,34 @@ final class CustomerErrorCatalog {
     code: 'CUS_APT_001',
     uiKey: 'appointmentCreateFailed',
   );
+
+  static const laropayInvalidRequest = ErrorItem(
+    code: 'CUS_PAY_001',
+    uiKey: 'paymentInvalidRequest',
+  );
+
+  static const laropayInvalidAmount = ErrorItem(
+    code: 'CUS_PAY_002',
+    uiKey: 'paymentInvalidAmount',
+  );
+
+  static const laropayInvalidExpiration = ErrorItem(
+    code: 'CUS_PAY_003',
+    uiKey: 'paymentInvalidExpiration',
+  );
+
+  static const laropayNetworkError = ErrorItem(
+    code: 'CUS_PAY_004',
+    uiKey: 'paymentNetworkError',
+  );
+
+  static const laropayGatewayRejected = ErrorItem(
+    code: 'CUS_PAY_005',
+    uiKey: 'paymentGatewayRejected',
+  );
+
+  static const laropayInvalidResponse = ErrorItem(
+    code: 'CUS_PAY_006',
+    uiKey: 'paymentInvalidResponse',
+  );
 }
