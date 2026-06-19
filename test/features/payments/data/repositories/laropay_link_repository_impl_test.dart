@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:autolab_core/autolab_core.dart';
 import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
+import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:autolab_customer/features/payments/data/datasources/laropay_link_remote_data_source.dart';
 import 'package:autolab_customer/features/payments/data/datasources/laropay_link_remote_data_source_impl.dart';
 import 'package:autolab_customer/features/payments/data/models/laropay_link_model.dart';
@@ -135,6 +136,37 @@ void main() {
     when(
       () => remoteDataSource.generateLink(any()),
     ).thenThrow(const LaropayGatewayException(statusCode: 400, message: 'bad'));
+
+    final result = await repository.generateLink(_request());
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(
+        failure.code,
+        CustomerErrorCatalog.laropayGatewayRejected.code,
+      ),
+      (_) => fail('expected failure'),
+    );
+  });
+
+  test('maps missing auth token to auth failure', () async {
+    when(
+      () => remoteDataSource.generateLink(any()),
+    ).thenThrow(const LaropayAuthException('missing token'));
+
+    final result = await repository.generateLink(_request());
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure.code, AuthErrorCatalog.sessionExpired.code),
+      (_) => fail('expected failure'),
+    );
+  });
+
+  test('maps configuration error to controlled failure', () async {
+    when(
+      () => remoteDataSource.generateLink(any()),
+    ).thenThrow(const LaropayConfigurationException('missing url'));
 
     final result = await repository.generateLink(_request());
 

@@ -5,6 +5,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/customer_error_catalog.dart';
 import '../../../../core/logging/feature_logger.dart';
+import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../domain/entities/laropay_link.dart';
 import '../../domain/entities/laropay_link_request.dart';
 import '../../domain/repositories/laropay_link_repository.dart';
@@ -67,6 +68,27 @@ class LaropayLinkRepositoryImpl implements LaropayLinkRepository {
         stackTrace: stackTrace,
       );
       _logFailure('generate_laropay_link_timeout', failure, context, error);
+      return Left(failure);
+    } on LaropayAuthException catch (error, stackTrace) {
+      final failure = AuthFailure.fromErrorItem(
+        AuthErrorCatalog.sessionExpired,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+      _logFailure('generate_laropay_link_auth_failed', failure, context, error);
+      return Left(failure);
+    } on LaropayConfigurationException catch (error, stackTrace) {
+      final failure = ServerFailure.fromErrorItem(
+        CustomerErrorCatalog.laropayGatewayRejected,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+      _logFailure(
+        'generate_laropay_link_configuration_failed',
+        failure,
+        context,
+        error,
+      );
       return Left(failure);
     } on LaropayGatewayException catch (error, stackTrace) {
       final failure = ServerFailure.fromErrorItem(
