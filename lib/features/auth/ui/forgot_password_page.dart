@@ -186,7 +186,7 @@ class _ForgotPasswordForm extends StatelessWidget {
                 decoration: buildAuthInputDecoration(
                   context: context,
                   label: l10n.authLoginEmailLabel,
-                  hint: 'Email',
+                  hint: l10n.authLoginEmailHint,
                   icon: Icons.email_outlined,
                 ),
                 validator: (value) => Validators.email(value, l10n),
