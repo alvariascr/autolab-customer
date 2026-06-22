@@ -219,7 +219,12 @@ class _ThemeModeSwitchCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return BlocBuilder<AppThemeModeCubit, ThemeMode>(
       builder: (context, mode) {
-        final isDark = mode == ThemeMode.dark;
+        final isDark = switch (mode) {
+          ThemeMode.dark => true,
+          ThemeMode.light => false,
+          ThemeMode.system =>
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+        };
         final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
         final textColor = isDark
             ? const Color(0xFFF4E9E9)
