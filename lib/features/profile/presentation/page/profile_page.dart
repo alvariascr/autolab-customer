@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme_mode_controller.dart';
+import '../../../../core/theme/app_theme_mode_cubit.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
@@ -217,9 +217,8 @@ class _ThemeModeSwitchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: AppThemeModeController.mode,
-      builder: (context, mode, _) {
+    return BlocBuilder<AppThemeModeCubit, ThemeMode>(
+      builder: (context, mode) {
         final isDark = mode == ThemeMode.dark;
         final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
         final textColor = isDark
@@ -284,7 +283,7 @@ class _ThemeModeSwitchCard extends StatelessWidget {
                 activeTrackColor: const Color(
                   0xFFFF281B,
                 ).withValues(alpha: 0.32),
-                onChanged: AppThemeModeController.setDarkMode,
+                onChanged: context.read<AppThemeModeCubit>().setDarkMode,
               ),
             ],
           ),

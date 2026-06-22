@@ -9,7 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
-import '../core/theme/app_theme_mode_controller.dart';
+import '../core/theme/app_theme_mode_cubit.dart';
 import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
@@ -83,10 +83,10 @@ class _MyAppState extends State<MyApp> {
         RepositoryProvider.value(value: widget.authRepository),
         BlocProvider.value(value: widget.authSessionCubit),
         BlocProvider.value(value: widget.locationCubit),
+        BlocProvider(create: (_) => AppThemeModeCubit()),
       ],
-      child: ValueListenableBuilder<ThemeMode>(
-        valueListenable: AppThemeModeController.mode,
-        builder: (context, themeMode, _) {
+      child: BlocBuilder<AppThemeModeCubit, ThemeMode>(
+        builder: (context, themeMode) {
           return MaterialApp.router(
             debugShowCheckedModeBanner: false,
             scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
