@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/router/build_context_navigation.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_image.dart';
 import '../widgets/product_price_text.dart';
@@ -83,7 +83,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   title: 'Descripcion',
                   child: Text(
                     product.effectiveDescription,
-                    style: AppTextStyles.normal.copyWith(
+                    style: AutolabCustomer.body.copyWith(
                       color: const Color(0xFF3A332E),
                       height: 1.45,
                     ),
@@ -310,7 +310,7 @@ class _WorkshopLine extends StatelessWidget {
             workshopName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.normal.copyWith(
+            style: AutolabCustomer.body.copyWith(
               color: const Color(0xFF6B5F57),
               fontWeight: FontWeight.w700,
             ),

@@ -31,6 +31,20 @@ void main() {
       },
     );
 
+    test(
+      'redirige a /login cuando no esta autenticado y visita ruta dinamica',
+      () {
+        final redirect = guard.redirectFor(
+          authState: const AuthSessionState(
+            status: AuthSessionStatus.unauthenticated,
+          ),
+          location: '/workshops/workshop-1/appointments/new',
+        );
+
+        expect(redirect, '/login');
+      },
+    );
+
     test('permite pedir recuperacion sin estar autenticado', () {
       final redirect = guard.redirectFor(
         authState: const AuthSessionState(
@@ -64,17 +78,57 @@ void main() {
       expect(redirect, isNull);
     });
 
-    test('redirige customer autenticado de /login a /home-customer', () {
+    test('permite mostrar la ruta splash inicial', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(status: AuthSessionStatus.initial),
+        location: '/startup-splash',
+      );
+
+      expect(redirect, isNull);
+    });
+
+    test(
+      'redirige customer con sesion restaurada de /login a home customer',
+      () {
+        final redirect = guard.redirectFor(
+          authState: const AuthSessionState(
+            status: AuthSessionStatus.authenticated,
+            userId: 'user-1',
+            role: 'customer',
+          ),
+          location: '/login',
+        );
+
+        expect(redirect, '/home-customer');
+      },
+    );
+
+    test('redirige customer con login reciente de /login a onboarding', () {
       final redirect = guard.redirectFor(
         authState: const AuthSessionState(
           status: AuthSessionStatus.authenticated,
           userId: 'user-1',
           role: 'customer',
+          showCustomerOnboarding: true,
         ),
         location: '/login',
       );
 
-      expect(redirect, '/home-customer');
+      expect(redirect, '/customer-onboarding');
+    });
+
+    test('redirige customer con onboarding pendiente desde home customer', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'user-1',
+          role: 'customer',
+          showCustomerOnboarding: true,
+        ),
+        location: '/home-customer',
+      );
+
+      expect(redirect, '/customer-onboarding');
     });
 
     test('redirige admin autenticado de /login a /home', () {
@@ -114,6 +168,46 @@ void main() {
       );
 
       expect(redirect, '/home');
+    });
+
+    test('protege onboarding de customer para admin', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'user-1',
+          role: 'admin',
+        ),
+        location: '/customer-onboarding',
+      );
+
+      expect(redirect, '/home');
+    });
+
+    test('omite onboarding si customer ya lo vio en la sesion actual', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'user-1',
+          role: 'customer',
+        ),
+        location: '/customer-onboarding',
+      );
+
+      expect(redirect, '/home-customer');
+    });
+
+    test('permite onboarding si viene de login reciente', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.authenticated,
+          userId: 'user-1',
+          role: 'customer',
+          showCustomerOnboarding: true,
+        ),
+        location: '/customer-onboarding',
+      );
+
+      expect(redirect, isNull);
     });
 
     test('permite la ruta correcta para el rol autenticado', () {

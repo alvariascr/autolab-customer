@@ -106,6 +106,12 @@ abstract class AppLocalizations {
   /// **'Iniciar sesión'**
   String get authLoginTitle;
 
+  /// No description provided for @authLoginSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade tus datos para iniciar sesión.'**
+  String get authLoginSubtitle;
+
   /// No description provided for @authLoginEmailLabel.
   ///
   /// In es, this message translates to:
@@ -243,6 +249,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Registrarse'**
   String get authRegisterTitle;
+
+  /// No description provided for @authRegisterSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade tus datos para registrarse'**
+  String get authRegisterSubtitle;
 
   /// No description provided for @authRegisterNameLabel.
   ///
@@ -562,6 +574,12 @@ abstract class AppLocalizations {
   /// **'Las contraseñas no coinciden.'**
   String get validationPasswordsDoNotMatch;
 
+  /// No description provided for @routerInvalidWorkshopId.
+  ///
+  /// In es, this message translates to:
+  /// **'ID de taller no válido'**
+  String get routerInvalidWorkshopId;
+
   /// No description provided for @navigationHome.
   ///
   /// In es, this message translates to:
@@ -586,11 +604,77 @@ abstract class AppLocalizations {
   /// **'Carrito'**
   String get navigationCart;
 
+  /// No description provided for @navigationCartComingSoonTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Carrito próximamente'**
+  String get navigationCartComingSoonTitle;
+
+  /// No description provided for @navigationCartComingSoonMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Muy pronto podrás revisar tus productos desde aquí.'**
+  String get navigationCartComingSoonMessage;
+
   /// No description provided for @navigationProfile.
   ///
   /// In es, this message translates to:
   /// **'Perfil'**
   String get navigationProfile;
+
+  /// No description provided for @customerOnboardingSlideVehicleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu vehículo\nnuestra prioridad'**
+  String get customerOnboardingSlideVehicleTitle;
+
+  /// No description provided for @customerOnboardingSlideVehicleSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios, productos y talleres confiables cerca de ti.'**
+  String get customerOnboardingSlideVehicleSubtitle;
+
+  /// No description provided for @customerOnboardingSlideBookingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Agenda en\npocos pasos'**
+  String get customerOnboardingSlideBookingTitle;
+
+  /// No description provided for @customerOnboardingSlideBookingSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reserva citas con talleres disponibles sin perder tiempo.'**
+  String get customerOnboardingSlideBookingSubtitle;
+
+  /// No description provided for @customerOnboardingSlideSearchTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Encuentra lo que\ntu carro necesita'**
+  String get customerOnboardingSlideSearchTitle;
+
+  /// No description provided for @customerOnboardingSlideSearchSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Explora servicios y productos pensados para tu vehículo.'**
+  String get customerOnboardingSlideSearchSubtitle;
+
+  /// No description provided for @customerOnboardingSlideOrganizedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Todo más claro\ny organizado'**
+  String get customerOnboardingSlideOrganizedTitle;
+
+  /// No description provided for @customerOnboardingSlideOrganizedSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta tus citas, talleres y datos desde un solo lugar.'**
+  String get customerOnboardingSlideOrganizedSubtitle;
+
+  /// No description provided for @customerOnboardingStartAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Comenzar'**
+  String get customerOnboardingStartAction;
 
   /// No description provided for @searchBarHint.
   ///
@@ -639,6 +723,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No encontramos talleres que coincidan con tu búsqueda.'**
   String get workshopSearchNoResults;
+
+  /// No description provided for @workshopSearchProductResults.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 resultado para \"{query}\"} other{{count} resultados para \"{query}\"}}'**
+  String workshopSearchProductResults(num count, Object query);
+
+  /// No description provided for @workshopSearchHomeDelivery.
+  ///
+  /// In es, this message translates to:
+  /// **'A domicilio'**
+  String get workshopSearchHomeDelivery;
+
+  /// No description provided for @workshopSearchInWorkshop.
+  ///
+  /// In es, this message translates to:
+  /// **'En taller'**
+  String get workshopSearchInWorkshop;
 
   /// No description provided for @adminHomeTitle.
   ///
@@ -843,6 +945,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Consulta tus citas próximas, pasadas y canceladas.'**
   String get profileAppointmentsSubtitle;
+
+  /// No description provided for @profileDarkModeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo oscuro'**
+  String get profileDarkModeTitle;
+
+  /// No description provided for @profileDarkModeEnabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Activado'**
+  String get profileDarkModeEnabled;
+
+  /// No description provided for @profileDarkModeDisabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Desactivado'**
+  String get profileDarkModeDisabled;
 
   /// No description provided for @myAppointmentsTitle.
   ///
@@ -1756,6 +1876,12 @@ abstract class AppLocalizations {
   /// **'Explora opciones cercanas sin salir del home.'**
   String get workshopsSectionSubtitle;
 
+  /// No description provided for @workshopsSectionViewAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get workshopsSectionViewAll;
+
   /// No description provided for @workshopsSectionLoadError.
   ///
   /// In es, this message translates to:
@@ -2439,6 +2565,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.'**
   String get homePlaceholderSubtitle;
+
+  /// No description provided for @homeNeedsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué necesitas hoy?'**
+  String get homeNeedsTitle;
+
+  /// No description provided for @homeServiceBalance.
+  ///
+  /// In es, this message translates to:
+  /// **'Balanceo'**
+  String get homeServiceBalance;
+
+  /// No description provided for @homeServiceTow.
+  ///
+  /// In es, this message translates to:
+  /// **'Grúa'**
+  String get homeServiceTow;
+
+  /// No description provided for @homeServiceTires.
+  ///
+  /// In es, this message translates to:
+  /// **'Llantas'**
+  String get homeServiceTires;
+
+  /// No description provided for @homeServiceGeneralReview.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión\ngeneral'**
+  String get homeServiceGeneralReview;
+
+  /// No description provided for @homeServiceElectricMechanic.
+  ///
+  /// In es, this message translates to:
+  /// **'Mecánica\neléctrica'**
+  String get homeServiceElectricMechanic;
+
+  /// No description provided for @homeServiceBattery.
+  ///
+  /// In es, this message translates to:
+  /// **'Batería'**
+  String get homeServiceBattery;
+
+  /// No description provided for @homePromotionsComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximamente'**
+  String get homePromotionsComingSoon;
+
+  /// No description provided for @homePromotionsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Promociones y beneficios'**
+  String get homePromotionsTitle;
+
+  /// No description provided for @homePromotionsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Muy pronto estarán disponibles para ti.'**
+  String get homePromotionsSubtitle;
 
   /// No description provided for @appointmentCreatedSuccess.
   ///

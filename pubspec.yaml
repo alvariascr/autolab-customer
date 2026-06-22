@@ -8,7 +8,6 @@ environment:
   sdk: ^3.10.8
 
 dependencies:
-  flip_card: ^0.7.0
   font_awesome_flutter: ^10.7.0
   path: ^1.9.0
   crypto: ^3.0.3
@@ -67,6 +66,9 @@ flutter:
 
   assets:
     - assets/images/virtual/
+    - assets/images/splash/
+    - assets/images/logo/
+    - assets/images/onboarding/
   fonts:
     - family: Waxcel
       fonts:

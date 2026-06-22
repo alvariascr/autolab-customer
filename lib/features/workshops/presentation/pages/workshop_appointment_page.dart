@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/di/app_injection.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
@@ -26,8 +26,8 @@ class WorkshopAppointmentPage extends StatefulWidget {
 }
 
 class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
-  static const ink = AppColors.ink;
-  static const muted = AppColors.muted;
+  static const ink = AutolabCustomer.secondary;
+  static const muted = AutolabCustomer.gray;
 
   @override
   Widget build(BuildContext context) {
@@ -475,7 +475,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                   child: Text(
                     message,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.ink,
+                      color: AutolabCustomer.secondary,
                       fontWeight: FontWeight.w700,
                       height: 1.25,
                     ),
@@ -632,7 +632,7 @@ class _DesktopStepItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active || done
         ? _appointmentPrimary(context)
-        : AppColors.disabledStep;
+        : AutolabCustomer.gray;
     final titleColor = active || done
         ? _appointmentPrimary(context)
         : _WorkshopAppointmentPageState.muted;
@@ -666,7 +666,7 @@ class _DesktopStepItem extends StatelessWidget {
               ),
             ),
             if (showLine)
-              Container(width: 1, height: 48, color: AppColors.subtleBorder),
+              Container(width: 1, height: 48, color: AutolabCustomer.border),
           ],
         ),
         const SizedBox(width: 30),
@@ -793,7 +793,7 @@ class _MobileHeaderState extends State<_MobileHeader> {
                 border: Border.all(
                   color: active
                       ? _appointmentPrimary(context)
-                      : AppColors.subtleBorder,
+                      : AutolabCustomer.border,
                   width: active ? 2 : 1,
                 ),
               ),
@@ -973,7 +973,7 @@ class _VehicleFormCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.zero,
-      borderSide: BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: AutolabCustomer.border),
     );
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.zero,
@@ -984,7 +984,7 @@ class _VehicleFormCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AutolabCustomer.border),
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -1250,7 +1250,7 @@ class _VehiclePickerStrip extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AutolabCustomer.border),
             ),
             child: Text(
               l10n.appointmentNoVehiclesForWorkshop,
@@ -1294,7 +1294,7 @@ class _AddVehiclePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.appointmentSelectedBackground,
+      color: AutolabCustomer.background,
       borderRadius: BorderRadius.circular(999),
       child: InkWell(
         onTap: onTap,
@@ -1365,7 +1365,9 @@ class _ExistingVehicleCard extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? _appointmentPrimary(context) : AppColors.border,
+              color: selected
+                  ? _appointmentPrimary(context)
+                  : AutolabCustomer.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -1377,7 +1379,7 @@ class _ExistingVehicleCard extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: selected
-                      ? AppColors.appointmentSelectedBackground
+                      ? AutolabCustomer.background
                       : const Color(0xFFF6F6F6),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -1399,7 +1401,7 @@ class _ExistingVehicleCard extends StatelessWidget {
                             : Icons.radio_button_unchecked,
                         color: selected
                             ? _appointmentPrimary(context)
-                            : AppColors.muted,
+                            : AutolabCustomer.gray,
                         size: 22,
                       ),
                     ),
@@ -1529,7 +1531,7 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.appointmentSelectedBackground : Colors.white,
+      color: selected ? AutolabCustomer.background : Colors.white,
       elevation: 2,
       shadowColor: Colors.black26,
       child: InkWell(
@@ -1539,7 +1541,9 @@ class _ServiceCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? _appointmentPrimary(context) : AppColors.border,
+              color: selected
+                  ? _appointmentPrimary(context)
+                  : AutolabCustomer.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -1652,7 +1656,7 @@ class _EmptyServicesMessage extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AutolabCustomer.border),
       ),
       child: Row(
         children: [
@@ -1709,7 +1713,7 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AutolabCustomer.border),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x10000000),
@@ -1809,7 +1813,7 @@ class _ProductOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.appointmentSelectedBackground : Colors.white,
+      color: selected ? AutolabCustomer.background : Colors.white,
       elevation: 2,
       shadowColor: Colors.black26,
       child: InkWell(
@@ -1819,7 +1823,9 @@ class _ProductOptionCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? _appointmentPrimary(context) : AppColors.border,
+              color: selected
+                  ? _appointmentPrimary(context)
+                  : AutolabCustomer.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -1880,7 +1886,7 @@ class _ProductOptionCard extends StatelessWidget {
               else
                 Icon(
                   Icons.radio_button_unchecked_rounded,
-                  color: AppColors.disabledIcon,
+                  color: AutolabCustomer.gray,
                 ),
             ],
           ),
@@ -1902,7 +1908,7 @@ class _ProductsInfoMessage extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AutolabCustomer.border),
       ),
       child: Row(
         children: [
@@ -2034,7 +2040,7 @@ class _PaymentMethodCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AppColors.appointmentSelectedBackground : Colors.white,
+      color: selected ? AutolabCustomer.background : Colors.white,
       elevation: 2,
       shadowColor: Colors.black26,
       child: InkWell(
@@ -2044,7 +2050,9 @@ class _PaymentMethodCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? _appointmentPrimary(context) : AppColors.border,
+              color: selected
+                  ? _appointmentPrimary(context)
+                  : AutolabCustomer.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -2091,7 +2099,7 @@ class _PaymentMethodCard extends StatelessWidget {
                     : Icons.radio_button_unchecked_rounded,
                 color: selected
                     ? _appointmentPrimary(context)
-                    : AppColors.disabledIcon,
+                    : AutolabCustomer.gray,
               ),
             ],
           ),
@@ -2134,7 +2142,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AutolabCustomer.border),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x22000000),
@@ -2270,7 +2278,7 @@ class _OutlineActionButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.darkControl,
+          foregroundColor: AutolabCustomer.secondary,
           side: BorderSide(color: Color(0xFF555555)),
           shape: const RoundedRectangleBorder(),
           textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
@@ -2602,10 +2610,10 @@ class _TableCalendarDay extends StatelessWidget {
         : disabled
         ? const Color(0xFFC96B6B)
         : outside
-        ? AppColors.disabledBorder
+        ? AutolabCustomer.border
         : day.weekday == DateTime.saturday || day.weekday == DateTime.sunday
         ? const Color(0xFFC96B6B)
-        : AppColors.subtleText;
+        : AutolabCustomer.gray;
 
     return Container(
       alignment: Alignment.topRight,
@@ -2613,7 +2621,7 @@ class _TableCalendarDay extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         border: Border.all(
-          color: disabled ? const Color(0xFFF2C6C6) : AppColors.calendarBorder,
+          color: disabled ? const Color(0xFFF2C6C6) : AutolabCustomer.border,
           width: 0.7,
         ),
       ),
@@ -2678,7 +2686,7 @@ class _AvailableHoursPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AutolabCustomer.border),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1A000000),
@@ -2754,13 +2762,13 @@ class _AvailableHoursPanel extends StatelessWidget {
                           ? _appointmentPrimary(context)
                           : Colors.white,
                       foregroundColor: unavailable
-                          ? AppColors.disabledIcon
+                          ? AutolabCustomer.gray
                           : selected
                           ? Colors.white
                           : const Color(0xFF344050),
                       side: BorderSide(
                         color: unavailable
-                            ? AppColors.disabledBorder
+                            ? AutolabCustomer.border
                             : selected
                             ? _appointmentPrimary(context)
                             : const Color(0xFF555555),
@@ -2797,7 +2805,7 @@ class _AvailabilityPanelMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? AppColors.muted;
+    final effectiveColor = color ?? AutolabCustomer.gray;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2838,7 +2846,7 @@ class _ContactInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.zero,
-      borderSide: BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: AutolabCustomer.border),
     );
 
     return TextFormField(
@@ -2908,7 +2916,7 @@ class _BookingReviewStep extends StatelessWidget {
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AutolabCustomer.border),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x15000000),
@@ -2972,7 +2980,7 @@ class _BookingReviewStep extends StatelessWidget {
                 label: l10n.appointmentDurationLabel,
                 value: _durationLabel(l10n, service?.estimatedDurationHours),
               ),
-              const Divider(height: 28, color: AppColors.border),
+              const Divider(height: 28, color: AutolabCustomer.border),
               Text(
                 l10n.appointmentOptionalNoteLabel,
                 style: const TextStyle(
@@ -2991,7 +2999,7 @@ class _BookingReviewStep extends StatelessWidget {
                 maxLength: 280,
                 onChanged: onNoteChanged,
               ),
-              const Divider(height: 28, color: AppColors.border),
+              const Divider(height: 28, color: AutolabCustomer.border),
               Text(
                 l10n.appointmentProductsLabel,
                 style: const TextStyle(
@@ -3012,7 +3020,7 @@ class _BookingReviewStep extends StatelessWidget {
                 )
               else
                 ...products.map((item) => _ProductSummaryRow(item: item)),
-              const Divider(height: 30, color: AppColors.border),
+              const Divider(height: 30, color: AutolabCustomer.border),
               _SummaryRow(
                 label: l10n.appointmentTotalToPayLabel,
                 value: hasPricelessItems
@@ -3092,7 +3100,7 @@ class _PaymentStep extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AutolabCustomer.border),
         boxShadow: const [
           BoxShadow(
             color: Color(0x15000000),
@@ -3140,7 +3148,7 @@ class _PaymentStep extends StatelessWidget {
                 : formatProductPrice(total),
             emphasize: true,
           ),
-          const Divider(height: 30, color: AppColors.border),
+          const Divider(height: 30, color: AutolabCustomer.border),
           _PaymentMethodStep(
             selectedMethod: selectedMethod,
             onSelected: onSelected,

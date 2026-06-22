@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
 import '../application/auth_feedback.dart';
@@ -57,6 +58,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     return BlocProvider.value(
       value: _cubit,
       child: Scaffold(
+        backgroundColor: AutolabCustomer.authBackgroundColor(context),
         body: BlocListener<PasswordRecoveryCubit, PasswordRecoveryState>(
           listener: (context, state) {
             if (state.status != PasswordRecoveryStatus.success) return;
@@ -156,9 +158,15 @@ class _ResetPasswordForm extends StatelessWidget {
             message: state.message,
           )
         : null;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.fromLTRB(
+        AutolabCustomer.spacingScreen,
+        0,
+        AutolabCustomer.spacingScreen,
+        AutolabCustomer.spacingLg + keyboardInset,
+      ),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Form(
         key: formKey,
@@ -166,57 +174,69 @@ class _ResetPasswordForm extends StatelessWidget {
           children: [
             Text(
               l10n.authResetPasswordTitle,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: AutolabCustomer.h2.copyWith(
+                color: AutolabCustomer.authTextColor(context),
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
             Text(
               l10n.authResetPasswordSubtitle,
-              style: TextStyle(color: Colors.grey.shade700, height: 1.35),
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.authHintColor(context),
+                height: 1.35,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AutolabCustomer.spacingScreen),
             if (errorMessage != null) ...[
               AuthErrorBanner(message: errorMessage),
-              const SizedBox(height: 15),
+              const SizedBox(height: AutolabCustomer.spacingMd - 1),
             ] else if (successMessage != null) ...[
               AuthErrorBanner(
                 message: successMessage,
                 variant: AuthBannerVariant.success,
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: AutolabCustomer.spacingMd - 1),
             ],
             TextFormField(
               controller: passwordCtrl,
               obscureText: isPasswordHidden,
+              cursorColor: AutolabCustomer.primary,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.authTextColor(context),
+              ),
               decoration: buildAuthInputDecoration(
-                label: l10n.authResetPasswordNewPasswordLabel,
+                context: context,
                 hint: l10n.authResetPasswordNewPasswordHint,
-                icon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
                     isPasswordHidden ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey.shade700,
+                    color: AutolabCustomer.primary,
                   ),
                   onPressed: onTogglePassword,
                 ),
               ),
               validator: (value) => Validators.password(value, l10n),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: AutolabCustomer.spacingMd - 1),
             TextFormField(
               controller: confirmPasswordCtrl,
               obscureText: isConfirmPasswordHidden,
+              cursorColor: AutolabCustomer.primary,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.authTextColor(context),
+              ),
               decoration: buildAuthInputDecoration(
-                label: l10n.authRegisterConfirmPasswordLabel,
+                context: context,
                 hint: l10n.authRegisterConfirmPasswordHint,
-                icon: Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
                     isConfirmPasswordHidden
                         ? Icons.visibility_off
                         : Icons.visibility,
-                    color: Colors.grey.shade700,
+                    color: AutolabCustomer.primary,
                   ),
                   onPressed: onToggleConfirmPassword,
                 ),
@@ -229,44 +249,39 @@ class _ResetPasswordForm extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: AutolabCustomer.spacingLg - 2),
             SizedBox(
               width: 240,
               height: 50,
               child: ElevatedButton(
                 onPressed: isLoading ? null : onSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                style: AutolabCustomer.primaryButton,
                 child: isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: AutolabCustomer.white,
                         ),
                       )
                     : Text(
                         l10n.authResetPasswordSubmit,
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: AutolabCustomer.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AutolabCustomer.white,
                         ),
                       ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
             TextButton(
               onPressed: isLoading ? null : () => context.go('/login'),
               child: Text(
                 l10n.authPasswordResetBackToLogin,
-                style: const TextStyle(color: Colors.grey),
+                style: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.authHintColor(context),
+                ),
               ),
             ),
           ],

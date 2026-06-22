@@ -15,6 +15,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authLoginTitle => 'Iniciar sesión';
 
   @override
+  String get authLoginSubtitle => 'Añade tus datos para iniciar sesión.';
+
+  @override
   String get authLoginEmailLabel => 'Correo electrónico';
 
   @override
@@ -86,6 +89,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get authRegisterTitle => 'Registrarse';
+
+  @override
+  String get authRegisterSubtitle => 'Añade tus datos para registrarse';
 
   @override
   String get authRegisterNameLabel => 'Nombre';
@@ -273,6 +279,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get validationPasswordsDoNotMatch => 'Las contraseñas no coinciden.';
 
   @override
+  String get routerInvalidWorkshopId => 'ID de taller no válido';
+
+  @override
   String get navigationHome => 'Inicio';
 
   @override
@@ -285,7 +294,48 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navigationCart => 'Carrito';
 
   @override
+  String get navigationCartComingSoonTitle => 'Carrito próximamente';
+
+  @override
+  String get navigationCartComingSoonMessage =>
+      'Muy pronto podrás revisar tus productos desde aquí.';
+
+  @override
   String get navigationProfile => 'Perfil';
+
+  @override
+  String get customerOnboardingSlideVehicleTitle =>
+      'Tu vehículo\nnuestra prioridad';
+
+  @override
+  String get customerOnboardingSlideVehicleSubtitle =>
+      'Servicios, productos y talleres confiables cerca de ti.';
+
+  @override
+  String get customerOnboardingSlideBookingTitle => 'Agenda en\npocos pasos';
+
+  @override
+  String get customerOnboardingSlideBookingSubtitle =>
+      'Reserva citas con talleres disponibles sin perder tiempo.';
+
+  @override
+  String get customerOnboardingSlideSearchTitle =>
+      'Encuentra lo que\ntu carro necesita';
+
+  @override
+  String get customerOnboardingSlideSearchSubtitle =>
+      'Explora servicios y productos pensados para tu vehículo.';
+
+  @override
+  String get customerOnboardingSlideOrganizedTitle =>
+      'Todo más claro\ny organizado';
+
+  @override
+  String get customerOnboardingSlideOrganizedSubtitle =>
+      'Consulta tus citas, talleres y datos desde un solo lugar.';
+
+  @override
+  String get customerOnboardingStartAction => 'Comenzar';
 
   @override
   String get searchBarHint => 'Buscar en Autolab';
@@ -312,6 +362,23 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get workshopSearchNoResults =>
       'No encontramos talleres que coincidan con tu búsqueda.';
+
+  @override
+  String workshopSearchProductResults(num count, Object query) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count resultados para \"$query\"',
+      one: '1 resultado para \"$query\"',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workshopSearchHomeDelivery => 'A domicilio';
+
+  @override
+  String get workshopSearchInWorkshop => 'En taller';
 
   @override
   String get adminHomeTitle => 'Panel administrativo';
@@ -425,6 +492,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get profileAppointmentsSubtitle =>
       'Consulta tus citas próximas, pasadas y canceladas.';
+
+  @override
+  String get profileDarkModeTitle => 'Modo oscuro';
+
+  @override
+  String get profileDarkModeEnabled => 'Activado';
+
+  @override
+  String get profileDarkModeDisabled => 'Desactivado';
 
   @override
   String get myAppointmentsTitle => 'Mis citas';
@@ -935,6 +1011,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Explora opciones cercanas sin salir del home.';
 
   @override
+  String get workshopsSectionViewAll => 'Ver todos';
+
+  @override
   String get workshopsSectionLoadError =>
       'No fue posible cargar los talleres en este momento.';
 
@@ -1325,6 +1404,37 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get homePlaceholderSubtitle =>
       'Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.';
+
+  @override
+  String get homeNeedsTitle => '¿Qué necesitas hoy?';
+
+  @override
+  String get homeServiceBalance => 'Balanceo';
+
+  @override
+  String get homeServiceTow => 'Grúa';
+
+  @override
+  String get homeServiceTires => 'Llantas';
+
+  @override
+  String get homeServiceGeneralReview => 'Revisión\ngeneral';
+
+  @override
+  String get homeServiceElectricMechanic => 'Mecánica\neléctrica';
+
+  @override
+  String get homeServiceBattery => 'Batería';
+
+  @override
+  String get homePromotionsComingSoon => 'Próximamente';
+
+  @override
+  String get homePromotionsTitle => 'Promociones y beneficios';
+
+  @override
+  String get homePromotionsSubtitle =>
+      'Muy pronto estarán disponibles para ti.';
 
   @override
   String get appointmentCreatedSuccess => 'Tu cita fue creada correctamente.';

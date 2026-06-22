@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/location/current_location.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../domain/entities/workshop.dart';
 import 'workshop_card.dart';
 
@@ -10,11 +11,13 @@ class WorkshopsCarousel extends StatelessWidget {
   final List<Workshop> workshops;
   final String emptyMessage;
   final CurrentLocation? currentLocation;
+  final double height;
 
   const WorkshopsCarousel({
     super.key,
     required this.workshops,
     required this.emptyMessage,
+    required this.height,
     this.currentLocation,
   });
 
@@ -24,16 +27,29 @@ class WorkshopsCarousel extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text(emptyMessage, textAlign: TextAlign.center),
+          child: Text(
+            emptyMessage,
+            textAlign: TextAlign.center,
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+            ),
+          ),
         ),
       );
     }
 
+    final viewportFraction = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 0.86,
+      regular: 0.78,
+      tablet: 0.48,
+    );
+
     return CarouselSlider(
       options: CarouselOptions(
-        height: 320,
+        height: height,
         enlargeCenterPage: true,
-        viewportFraction: 0.78,
+        viewportFraction: viewportFraction,
         enableInfiniteScroll: workshops.length > 1,
         autoPlay: workshops.length > 1,
         autoPlayInterval: const Duration(seconds: 3),

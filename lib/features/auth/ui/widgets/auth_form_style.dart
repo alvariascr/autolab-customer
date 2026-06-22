@@ -1,39 +1,37 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/autolab_customer.dart';
+
 InputDecoration buildAuthInputDecoration({
-  required String label,
+  required BuildContext context,
   required String hint,
-  required IconData icon,
   Widget? suffixIcon,
 }) {
   return InputDecoration(
-    labelText: label,
-    labelStyle: TextStyle(color: Colors.grey.shade700),
-    floatingLabelStyle: const TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.w600,
-    ),
     hintText: hint,
-    hintStyle: TextStyle(color: Colors.grey.shade400),
-    prefixIcon: Icon(icon, color: Colors.grey.shade600),
+    hintStyle: AutolabCustomer.bodyLarge.copyWith(
+      color: AutolabCustomer.authHintColor(context),
+      fontWeight: FontWeight.w500,
+    ),
     suffixIcon: suffixIcon,
     filled: true,
-    fillColor: Colors.grey.shade100,
+    fillColor: AutolabCustomer.authInputFillColor(context),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+      borderRadius: BorderRadius.circular(16),
     ),
     focusedBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.black, width: 2),
-      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AutolabCustomer.primary, width: 1.5),
+      borderRadius: BorderRadius.circular(16),
     ),
     errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AutolabCustomer.error, width: 1.5),
+      borderRadius: BorderRadius.circular(16),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.red, width: 2),
-      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AutolabCustomer.error, width: 2),
+      borderRadius: BorderRadius.circular(16),
     ),
   );
 }

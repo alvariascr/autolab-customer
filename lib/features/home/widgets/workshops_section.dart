@@ -2,6 +2,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/location/location_state.dart';
+import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
@@ -18,6 +19,7 @@ class WorkshopsSection extends StatelessWidget {
     required this.emptyStateResolver,
     required this.isLoading,
     required this.workshopFailure,
+    required this.onViewAllTap,
   });
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
@@ -28,24 +30,38 @@ class WorkshopsSection extends StatelessWidget {
   final WorkshopEmptyStateResolver emptyStateResolver;
   final bool isLoading;
   final Failure? workshopFailure;
+  final VoidCallback onViewAllTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final textColor = AutolabCustomer.customerTextColor(context);
+    final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    );
+    final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
+    final carouselHeight = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 270,
+      regular: 300,
+      tablet: 340,
+    );
 
     if (isLoading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+        padding: EdgeInsets.symmetric(vertical: AutolabCustomer.spacingLg),
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (workshopFailure != null) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
+        padding: const EdgeInsets.symmetric(
+          vertical: AutolabCustomer.spacingLg,
+        ),
         child: Text(
           emptyStateResolver.resolveLoadError(workshopFailure!, l10n),
-          style: const TextStyle(color: Color(0xFF6B5F57)),
+          style: AutolabCustomer.body.copyWith(color: secondaryTextColor),
         ),
       );
     }
@@ -69,30 +85,53 @@ class WorkshopsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.workshopsSectionTitle,
-          style: const TextStyle(
-            color: Color(0xFF181411),
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalMargin),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.workshopsSectionTitle,
+                  style: AutolabCustomer.h2.copyWith(
+                    color: textColor,
+                    fontSize: AutolabCustomer.responsiveDouble(
+                      context,
+                      compact: 21,
+                      regular: 24,
+                      tablet: 28,
+                    ),
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onViewAllTap,
+                style: TextButton.styleFrom(
+                  foregroundColor: AutolabCustomer.primary,
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  l10n.workshopsSectionViewAll,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.workshopsSectionSubtitle,
-          style: const TextStyle(
-            color: Color(0xFF6B5F57),
-            fontSize: 14,
-            height: 1.45,
-          ),
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AutolabCustomer.spacingSmd + 2),
         SizedBox(
-          height: 320,
+          height: carouselHeight,
           child: WorkshopsCarousel(
             workshops: nearbyWorkshops,
             currentLocation: searchLocation,
             emptyMessage: emptyMessage,
+            height: carouselHeight,
           ),
         ),
       ],

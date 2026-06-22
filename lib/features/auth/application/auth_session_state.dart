@@ -7,6 +7,7 @@ class AuthSessionState extends Equatable {
     required this.status,
     this.userId,
     this.role,
+    this.showCustomerOnboarding = false,
     this.message,
     this.code,
     this.uiKey,
@@ -17,6 +18,7 @@ class AuthSessionState extends Equatable {
   final AuthSessionStatus status;
   final String? userId;
   final String? role;
+  final bool showCustomerOnboarding;
   final String? message;
   final String? code;
   final String? uiKey;
@@ -27,6 +29,7 @@ class AuthSessionState extends Equatable {
     AuthSessionStatus? status,
     String? userId,
     String? role,
+    bool? showCustomerOnboarding,
     String? message,
     String? code,
     String? uiKey,
@@ -39,6 +42,8 @@ class AuthSessionState extends Equatable {
       status: status ?? this.status,
       userId: clearUser ? null : (userId ?? this.userId),
       role: clearUser ? null : (role ?? this.role),
+      showCustomerOnboarding:
+          showCustomerOnboarding ?? this.showCustomerOnboarding,
       message: clearMessage ? null : (message ?? this.message),
       code: clearCode ? null : (code ?? this.code),
       uiKey: clearUiKey ? null : (uiKey ?? this.uiKey),
@@ -46,5 +51,13 @@ class AuthSessionState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, userId, role, message, code, uiKey];
+  List<Object?> get props => [
+    status,
+    userId,
+    role,
+    showCustomerOnboarding,
+    message,
+    code,
+    uiKey,
+  ];
 }
