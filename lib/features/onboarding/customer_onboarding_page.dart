@@ -36,70 +36,74 @@ class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
 
     return Scaffold(
       backgroundColor: AutolabCustomer.authBackgroundColor(context),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            verticalPadding,
-            horizontalPadding,
-            bottomPadding,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: CarouselSlider.builder(
+              itemCount: slides.length,
+              itemBuilder: (context, index, realIndex) {
+                return _OnboardingSlideView(
+                  slide: slides[index],
+                  horizontalPadding: horizontalPadding,
+                  verticalPadding: verticalPadding,
+                );
+              },
+              options: CarouselOptions(
+                height: size.height,
+                viewportFraction: 1,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 2),
+                autoPlayAnimationDuration: const Duration(milliseconds: 450),
+                enableInfiniteScroll: false,
+                enlargeCenterPage: false,
+                onPageChanged: (index, reason) {
+                  setState(() => _currentPage = index);
+                },
+              ),
+            ),
           ),
-          child: Column(
-            children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return CarouselSlider.builder(
-                      itemCount: slides.length,
-                      itemBuilder: (context, index, realIndex) {
-                        return _OnboardingSlideView(slide: slides[index]);
-                      },
-                      options: CarouselOptions(
-                        height: constraints.maxHeight,
-                        viewportFraction: 1,
-                        autoPlay: true,
-                        autoPlayInterval: const Duration(seconds: 2),
-                        autoPlayAnimationDuration: const Duration(
-                          milliseconds: 450,
+          Positioned(
+            left: horizontalPadding,
+            right: horizontalPadding,
+            bottom: bottomPadding,
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: buttonHeight,
+                    child: ElevatedButton(
+                      onPressed: _handleStart,
+                      style: AutolabCustomer.primaryButton.copyWith(
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
-                        enableInfiniteScroll: false,
-                        enlargeCenterPage: false,
-                        onPageChanged: (index, reason) {
-                          setState(() => _currentPage = index);
-                        },
                       ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                height: buttonHeight,
-                child: ElevatedButton(
-                  onPressed: _handleStart,
-                  style: AutolabCustomer.primaryButton.copyWith(
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                      child: Text(
+                        l10n.customerOnboardingStartAction,
+                        style: AutolabCustomer.h3.copyWith(
+                          color: AutolabCustomer.white,
+                          fontSize: isCompactHeight ? 16 : 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                  child: Text(
-                    l10n.customerOnboardingStartAction,
-                    style: AutolabCustomer.h3.copyWith(
-                      color: AutolabCustomer.white,
-                      fontSize: isCompactHeight ? 16 : 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  SizedBox(height: buttonBottomGap),
+                  _OnboardingDots(
+                    count: slides.length,
+                    activeIndex: _currentPage,
                   ),
-                ),
+                  SizedBox(height: isCompactHeight ? 12 : 24),
+                ],
               ),
-              SizedBox(height: buttonBottomGap),
-              _OnboardingDots(count: slides.length, activeIndex: _currentPage),
-              SizedBox(height: isCompactHeight ? 12 : 24),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -109,31 +113,37 @@ class _CustomerOnboardingPageState extends State<CustomerOnboardingPage> {
       _OnboardingSlide(
         title: l10n.customerOnboardingSlideVehicleTitle,
         subtitle: l10n.customerOnboardingSlideVehicleSubtitle,
-        icon: Icons.directions_car_filled_outlined,
+        imagePath: 'assets/images/onboarding/onboarding_1.png',
       ),
       _OnboardingSlide(
         title: l10n.customerOnboardingSlideBookingTitle,
         subtitle: l10n.customerOnboardingSlideBookingSubtitle,
-        icon: Icons.event_available_outlined,
+        imagePath: 'assets/images/onboarding/onboarding_2.png',
       ),
       _OnboardingSlide(
         title: l10n.customerOnboardingSlideSearchTitle,
         subtitle: l10n.customerOnboardingSlideSearchSubtitle,
-        icon: Icons.build_circle_outlined,
+        imagePath: 'assets/images/onboarding/onboarding_3.png',
       ),
       _OnboardingSlide(
         title: l10n.customerOnboardingSlideOrganizedTitle,
         subtitle: l10n.customerOnboardingSlideOrganizedSubtitle,
-        icon: Icons.garage_outlined,
+        imagePath: 'assets/images/onboarding/onboarding_4.png',
       ),
     ];
   }
 }
 
 class _OnboardingSlideView extends StatelessWidget {
-  const _OnboardingSlideView({required this.slide});
+  const _OnboardingSlideView({
+    required this.slide,
+    required this.horizontalPadding,
+    required this.verticalPadding,
+  });
 
   final _OnboardingSlide slide;
+  final double horizontalPadding;
+  final double verticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -146,52 +156,66 @@ class _OnboardingSlideView extends StatelessWidget {
         ? 30.0
         : 34.0;
     final subtitleSize = isCompactHeight ? 15.0 : 17.0;
-    final iconContainerSize = isCompactHeight ? 128.0 : 160.0;
-    final iconSize = isCompactHeight ? 68.0 : 84.0;
+    final topGap = isCompactHeight ? 44.0 : 72.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        const Spacer(),
-        Text(
-          slide.title,
-          style: AutolabCustomer.display.copyWith(
-            color: AutolabCustomer.authTextColor(context),
-            fontSize: titleSize,
-            height: 1.16,
-            fontWeight: FontWeight.w700,
+        Positioned.fill(
+          child: Image.asset(
+            slide.imagePath,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
           ),
         ),
-        SizedBox(height: isCompactHeight ? 10 : 14),
-        Text(
-          slide.subtitle,
-          style: AutolabCustomer.bodyLarge.copyWith(
-            color: AutolabCustomer.authTextColor(context),
-            fontSize: subtitleSize,
-            height: 1.22,
-          ),
-        ),
-        const Spacer(),
-        Center(
-          child: Container(
-            width: iconContainerSize,
-            height: iconContainerSize,
+        Positioned.fill(
+          child: DecoratedBox(
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AutolabCustomer.primary.withValues(alpha: 0.12),
-              border: Border.all(
-                color: AutolabCustomer.primary.withValues(alpha: 0.28),
-                width: 1.5,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AutolabCustomer.secondary.withValues(alpha: 0.34),
+                  AutolabCustomer.secondary.withValues(alpha: 0.08),
+                  AutolabCustomer.secondary.withValues(alpha: 0.42),
+                ],
+                stops: const [0, 0.48, 1],
               ),
             ),
-            child: Icon(
-              slide.icon,
-              color: AutolabCustomer.primary,
-              size: iconSize,
+          ),
+        ),
+        SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              verticalPadding + topGap,
+              horizontalPadding,
+              0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  slide.title,
+                  style: AutolabCustomer.display.copyWith(
+                    color: AutolabCustomer.white,
+                    fontSize: titleSize,
+                    height: 1.16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 10 : 14),
+                Text(
+                  slide.subtitle,
+                  style: AutolabCustomer.bodyLarge.copyWith(
+                    color: AutolabCustomer.white,
+                    fontSize: subtitleSize,
+                    height: 1.22,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        const Spacer(),
       ],
     );
   }
@@ -235,10 +259,10 @@ class _OnboardingSlide {
   const _OnboardingSlide({
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.imagePath,
   });
 
   final String title;
   final String subtitle;
-  final IconData icon;
+  final String imagePath;
 }
