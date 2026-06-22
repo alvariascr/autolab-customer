@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../domain/entities/product.dart';
 import 'product_image.dart';
 import 'product_price_text.dart';
@@ -42,7 +42,7 @@ class ProductCard extends StatelessWidget {
               product.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.normal.copyWith(
+              style: AutolabCustomer.body.copyWith(
                 color: const Color(0xFF181411),
                 fontWeight: FontWeight.w800,
                 fontSize: 15,
@@ -51,7 +51,7 @@ class ProductCard extends StatelessWidget {
             const SizedBox(height: 4),
             ProductPriceText(
               price: product.sellingPrice,
-              style: AppTextStyles.small.copyWith(
+              style: AutolabCustomer.caption.copyWith(
                 color: const Color(0xFF181411),
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
@@ -63,7 +63,7 @@ class ProductCard extends StatelessWidget {
                 product.effectiveDescription,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.small.copyWith(
+                style: AutolabCustomer.caption.copyWith(
                   color: const Color(0xFF6B5F57),
                   fontSize: 12,
                 ),
