@@ -88,7 +88,13 @@ Deno.serve(async (request) => {
       return json({ error: "laropay_link_generation_in_progress" }, 409);
     }
 
-    const laropayPayload = buildLaropayPayload(input, env, orderPayment);
+    const callbackUrl = buildCallbackUrl(env.laropayCallbackUrl, reservation.id);
+    const laropayPayload = buildLaropayPayload(
+      input,
+      env,
+      orderPayment,
+      callbackUrl,
+    );
     const laropayResponse = await callLaropay(laropayPayload, env).catch(
       async (error) => {
         if (error instanceof LaropayHttpError) {
@@ -105,6 +111,7 @@ Deno.serve(async (request) => {
               body: error.body,
             },
             reservation.id,
+            callbackUrl,
           );
 
           return null;
@@ -122,6 +129,7 @@ Deno.serve(async (request) => {
               responseDescription: "Laropay request timed out",
             },
             reservation.id,
+            callbackUrl,
           );
 
           return null;
@@ -139,6 +147,7 @@ Deno.serve(async (request) => {
             error: safeError(error),
           },
           reservation.id,
+          callbackUrl,
         );
 
         return null;
@@ -161,6 +170,7 @@ Deno.serve(async (request) => {
         laropayPayload,
         laropayResponse,
         reservation.id,
+        callbackUrl,
       );
       return json({ error: "laropay_invalid_response" }, 502);
     }
@@ -173,6 +183,7 @@ Deno.serve(async (request) => {
       laropayPayload,
       laropayResponse,
       reservation.id,
+      callbackUrl,
     );
 
     return json({
@@ -373,6 +384,7 @@ function buildLaropayPayload(
   input: LaropayLinkRequest,
   env: Env,
   orderPayment: OrderPaymentData,
+  callbackUrl: string,
 ) {
   return {
     idUser: env.laropayIdUser,
@@ -388,7 +400,7 @@ function buildLaropayPayload(
     customerLocation: trimOrNull(input.customerLocation),
     expirationType: normalizedExpirationType(input),
     expirationValue: normalizedExpirationValue(input),
-    urlCallback: env.laropayCallbackUrl,
+    urlCallback: callbackUrl,
     securityCode: trimOrNull(input.securityCode),
   };
 }
@@ -430,6 +442,7 @@ async function persistAttempt(
   laropayPayload: Record<string, unknown>,
   laropayResponse: Record<string, unknown>,
   reservationId?: string,
+  callbackUrl = env.laropayCallbackUrl,
 ) {
   const linkID = trimOrNull(laropayResponse.linkID);
   const linkURL = trimOrNull(laropayResponse.linkURL);
@@ -452,7 +465,7 @@ async function persistAttempt(
     expiration_type: normalizedExpirationType(input),
     expiration_value: normalizedExpirationValue(input),
     expires_at: calculateExpiresAt(input).toISOString(),
-    url_callback: env.laropayCallbackUrl,
+    url_callback: callbackUrl,
     link_id: linkID,
     link_url: linkURL,
     status: normalizedStatus(laropayResponse),
@@ -474,6 +487,12 @@ async function persistAttempt(
   if (error !== null) {
     throw error;
   }
+}
+
+function buildCallbackUrl(callbackBaseUrl: string, paymentLinkId: string) {
+  const callbackUrl = new URL(callbackBaseUrl);
+  callbackUrl.searchParams.set("paymentLinkId", paymentLinkId);
+  return callbackUrl.toString();
 }
 
 function sanitizeJson(value: unknown): unknown {
@@ -578,6 +597,11 @@ function isSecureUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(value);
 }
 
 function json(body: Record<string, unknown>, status = 200) {

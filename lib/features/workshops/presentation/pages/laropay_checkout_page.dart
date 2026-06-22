@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../../payments/domain/entities/laropay_link.dart';
 import '../../../payments/domain/entities/laropay_link_request.dart';
 import '../../../payments/domain/usecases/generate_laropay_link.dart';
@@ -101,7 +101,7 @@ class _LaropayCheckoutPageState extends State<LaropayCheckoutPage> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AutolabCustomer.border),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0x18000000),
@@ -130,7 +130,7 @@ class _LaropayCheckoutPageState extends State<LaropayCheckoutPage> {
                             Text(
                               statusConfig.title,
                               style: const TextStyle(
-                                color: AppColors.ink,
+                                color: AutolabCustomer.secondary,
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -139,13 +139,16 @@ class _LaropayCheckoutPageState extends State<LaropayCheckoutPage> {
                             Text(
                               statusConfig.subtitle,
                               style: const TextStyle(
-                                color: AppColors.muted,
+                                color: AutolabCustomer.gray,
                                 fontSize: 16,
                                 height: 1.35,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const Divider(height: 34, color: AppColors.border),
+                            const Divider(
+                              height: 34,
+                              color: AutolabCustomer.border,
+                            ),
                             _LaropayStatusCard(
                               icon: statusConfig.icon,
                               message: statusConfig.message,
@@ -523,7 +526,7 @@ class _LaropayStatusCard extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                color: AppColors.ink,
+                color: AutolabCustomer.secondary,
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
                 height: 1.3,
@@ -565,7 +568,7 @@ class _LaropayNotice extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                color: AppColors.ink,
+                color: AutolabCustomer.secondary,
                 fontSize: 14,
                 height: 1.35,
                 fontWeight: FontWeight.w700,
@@ -601,7 +604,7 @@ class _LaropayDetailRow extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                color: AppColors.muted,
+                color: AutolabCustomer.gray,
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -615,7 +618,7 @@ class _LaropayDetailRow extends StatelessWidget {
               style: TextStyle(
                 color: emphasize
                     ? Theme.of(context).colorScheme.primary
-                    : AppColors.ink,
+                    : AutolabCustomer.secondary,
                 fontSize: emphasize ? 22 : 15,
                 fontWeight: FontWeight.w900,
               ),

@@ -16,6 +16,7 @@ import '../features/auth/application/auth_session_cubit.dart';
 import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
 import '../features/auth/ui/auth_ui_error_resolver.dart';
+import '../features/payments/application/laropay_return_navigation_controller.dart';
 import '../l10n/app_localizations.dart';
 
 class MyApp extends StatefulWidget {
@@ -43,6 +44,8 @@ class _MyAppState extends State<MyApp> {
   StreamSubscription<Uri>? _appLinkSubscription;
   final AppLinks _appLinks = AppLinks();
   late final AuthNavigationController _authNavigationController;
+  late final LaropayReturnNavigationController
+  _laropayReturnNavigationController;
 
   @override
   void initState() {
@@ -52,6 +55,9 @@ class _MyAppState extends State<MyApp> {
       clearSession: () async {
         await widget.authSessionCubit.logout();
       },
+    );
+    _laropayReturnNavigationController = LaropayReturnNavigationController(
+      navigate: widget.router.go,
     );
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
@@ -67,13 +73,21 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _listenForAppLinks() async {
     _appLinkSubscription = _appLinks.uriLinkStream.listen(
-      (uri) => unawaited(_authNavigationController.handleAppLink(uri)),
+      (uri) => unawaited(_handleAppLink(uri)),
     );
 
     final initialLink = await _appLinks.getInitialLink();
     if (initialLink == null) return;
 
-    await _authNavigationController.handleAppLink(initialLink);
+    await _handleAppLink(initialLink);
+  }
+
+  Future<void> _handleAppLink(Uri uri) async {
+    if (_laropayReturnNavigationController.handleAppLink(uri)) {
+      return;
+    }
+
+    await _authNavigationController.handleAppLink(uri);
   }
 
   @override
