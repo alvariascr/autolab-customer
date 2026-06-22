@@ -64,6 +64,15 @@ void main() {
       expect(redirect, isNull);
     });
 
+    test('permite mostrar la ruta splash inicial', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(status: AuthSessionStatus.initial),
+        location: '/startup-splash',
+      );
+
+      expect(redirect, isNull);
+    });
+
     test(
       'redirige customer con sesion restaurada de /login a home customer',
       () {

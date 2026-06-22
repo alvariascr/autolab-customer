@@ -13,6 +13,7 @@ import '../../features/onboarding/customer_onboarding_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
+import '../../features/splash/startup_splash_page.dart';
 import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../features/workshops/presentation/pages/workshop_profile_page.dart';
 import 'app_redirect_guard.dart';
@@ -26,13 +27,17 @@ class AppRouter {
   final AppRedirectGuard _redirectGuard;
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: StartupSplashPage.routePath,
     refreshListenable: GoRouterRefreshStream(authSessionCubit.stream),
     redirect: (context, state) => redirectFor(
       authState: authSessionCubit.state,
       location: state.matchedLocation,
     ),
     routes: [
+      GoRoute(
+        path: StartupSplashPage.routePath,
+        builder: (context, state) => const StartupSplashPage(),
+      ),
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => _authTransitionPage(

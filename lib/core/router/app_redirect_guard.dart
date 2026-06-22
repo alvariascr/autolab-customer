@@ -9,9 +9,14 @@ class AppRedirectGuard {
     required String location,
   }) {
     final bool isLoggingIn = location == '/login';
+    final bool isStartupSplash = location == '/startup-splash';
     final bool isCustomerOnboarding = location == '/customer-onboarding';
     final bool isPasswordRecovery =
         location == '/forgot-password' || location == '/reset-password';
+
+    if (isStartupSplash) {
+      return null;
+    }
 
     if (isPasswordRecovery) {
       return null;

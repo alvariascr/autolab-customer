@@ -10,7 +10,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/app_theme_mode_controller.dart';
-import '../core/theme/autolab_customer.dart';
 import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
@@ -40,14 +39,10 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  static const _splashDuration = Duration(seconds: 4);
-
   StreamSubscription<AuthState>? _authStateSubscription;
   StreamSubscription<Uri>? _appLinkSubscription;
   final AppLinks _appLinks = AppLinks();
   late final AuthNavigationController _authNavigationController;
-  Timer? _splashTimer;
-  bool _showSplash = true;
 
   @override
   void initState() {
@@ -61,18 +56,12 @@ class _MyAppState extends State<MyApp> {
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
     unawaited(_listenForAppLinks());
-    _splashTimer = Timer(_splashDuration, () {
-      if (!mounted) return;
-
-      setState(() => _showSplash = false);
-    });
   }
 
   @override
   void dispose() {
     _authStateSubscription?.cancel();
     _appLinkSubscription?.cancel();
-    _splashTimer?.cancel();
     super.dispose();
   }
 
@@ -142,9 +131,7 @@ class _MyAppState extends State<MyApp> {
 
                   context.read<AuthSessionCubit>().clearFeedback();
                 },
-                child: _showSplash
-                    ? const _StartupSplashScreen()
-                    : child ?? const SizedBox.shrink(),
+                child: child ?? const SizedBox.shrink(),
               );
             },
             localizationsDelegates: const [
@@ -156,23 +143,6 @@ class _MyAppState extends State<MyApp> {
             supportedLocales: AppLocalizations.supportedLocales,
           );
         },
-      ),
-    );
-  }
-}
-
-class _StartupSplashScreen extends StatelessWidget {
-  const _StartupSplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const ColoredBox(
-      color: AutolabCustomer.primary,
-      child: SizedBox.expand(
-        child: Image(
-          image: AssetImage('assets/images/splash/splash_intro.png'),
-          fit: BoxFit.cover,
-        ),
       ),
     );
   }
