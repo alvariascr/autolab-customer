@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/app_theme_mode_controller.dart';
+import '../core/theme/autolab_customer.dart';
 import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
@@ -166,7 +167,7 @@ class _StartupSplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const ColoredBox(
-      color: Color(0xFFFF281B),
+      color: AutolabCustomer.primary,
       child: SizedBox.expand(
         child: Image(
           image: AssetImage('assets/images/splash/splash_intro.png'),
