@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/location/location_state.dart';
+import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
 import '../location/location_ui_presenter.dart';
 
@@ -17,11 +18,33 @@ class DeliveryLocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final textColor = AutolabCustomer.customerTextColor(context);
+    final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    );
     final isLoading = state.status == LocationFlowStatus.loading;
     final isRequestingPermission =
         state.status == LocationFlowStatus.requestingPermission;
     final isBusy = isLoading || isRequestingPermission;
     final headerCopy = LocationUiPresenter.header(state, l10n);
+    final eyebrowSize = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 13,
+      regular: 15,
+      tablet: 16,
+    );
+    final titleSize = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 15,
+      regular: 17,
+      tablet: 19,
+    );
+    final subtitleSize = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 9,
+      regular: 10,
+      tablet: 11,
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
@@ -31,82 +54,71 @@ class DeliveryLocationCard extends StatelessWidget {
           onTap: isBusy ? null : onTap,
           borderRadius: BorderRadius.circular(14),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Column(
               children: [
-                const SizedBox(width: 20, height: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        headerCopy.eyebrow,
+                Text(
+                  headerCopy.eyebrow,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.primary,
+                    fontSize: eyebrowSize,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        headerCopy.title,
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF3FA572),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                        style: AutolabCustomer.bodyLarge.copyWith(
+                          color: textColor,
+                          fontWeight: FontWeight.w800,
+                          fontSize: titleSize,
+                          height: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 1),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              headerCopy.title,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF181411),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                                height: 1.1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 1),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF181411),
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      if (headerCopy.subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          headerCopy.subtitle,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF6B5F57),
-                            fontSize: 10,
-                            height: 1.25,
-                          ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: textColor,
+                      size: 18,
+                    ),
+                    if (isBusy) ...[
+                      const SizedBox(width: 8),
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AutolabCustomer.primary,
                         ),
-                      ],
+                      ),
                     ],
+                  ],
+                ),
+                if (headerCopy.subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    headerCopy.subtitle,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AutolabCustomer.label.copyWith(
+                      color: secondaryTextColor,
+                      fontSize: subtitleSize,
+                      height: 1.25,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: isBusy
-                      ? const Padding(
-                          padding: EdgeInsets.only(top: 1),
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
+                ],
               ],
             ),
           ),

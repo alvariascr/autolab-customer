@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/autolab_customer.dart';
 
 class ProductPriceText extends StatelessWidget {
   const ProductPriceText({super.key, required this.price, this.style});
@@ -14,7 +14,7 @@ class ProductPriceText extends StatelessWidget {
       formatProductPrice(price),
       style:
           style ??
-          AppTextStyles.subtitle.copyWith(
+          AutolabCustomer.bodyLarge.copyWith(
             color: const Color(0xFF181411),
             fontWeight: FontWeight.w800,
           ),

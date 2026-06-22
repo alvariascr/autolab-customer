@@ -1,4 +1,5 @@
 import 'package:autolab_customer/core/di/app_injection.dart';
+import 'package:autolab_customer/core/theme/app_theme_mode_cubit.dart';
 import 'package:autolab_customer/features/appointments/domain/repositories/appointment_repository.dart';
 import 'package:autolab_customer/features/appointments/presentation/cubit/my_appointments_cubit.dart';
 import 'package:autolab_customer/features/appointments/presentation/pages/my_appointments_page.dart';
@@ -123,8 +124,11 @@ class _TestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthSessionCubit>.value(
-      value: authSessionCubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthSessionCubit>.value(value: authSessionCubit),
+        BlocProvider(create: (_) => AppThemeModeCubit()),
+      ],
       child: MaterialApp.router(
         routerConfig: router,
         localizationsDelegates: const [

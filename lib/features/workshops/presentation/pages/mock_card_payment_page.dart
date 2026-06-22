@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class MockCardPaymentPage extends StatefulWidget {
@@ -112,7 +112,7 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AutolabCustomer.border),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0x18000000),
@@ -143,7 +143,7 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                                   ? l10n.appointmentMockPaymentApprovedTitle
                                   : l10n.appointmentMockPaymentTitle,
                               style: const TextStyle(
-                                color: AppColors.ink,
+                                color: AutolabCustomer.secondary,
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -154,13 +154,16 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                                   ? l10n.appointmentMockPaymentApprovedSubtitle
                                   : l10n.appointmentMockPaymentSubtitle,
                               style: const TextStyle(
-                                color: AppColors.muted,
+                                color: AutolabCustomer.gray,
                                 fontSize: 16,
                                 height: 1.35,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const Divider(height: 34, color: AppColors.border),
+                            const Divider(
+                              height: 34,
+                              color: AutolabCustomer.border,
+                            ),
                             if (_isApproved)
                               _MockPaymentStatusCard(
                                 icon: Icons.check_circle_outline,
@@ -280,7 +283,7 @@ class _MockPaymentStatusCard extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                color: AppColors.ink,
+                color: AutolabCustomer.secondary,
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
               ),
@@ -320,7 +323,7 @@ class _MockPaymentTimer extends StatelessWidget {
             child: Text(
               l10n.appointmentMockPaymentTimeRemaining,
               style: const TextStyle(
-                color: AppColors.ink,
+                color: AutolabCustomer.secondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -371,7 +374,7 @@ class _MockPaymentNotice extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                color: AppColors.ink,
+                color: AutolabCustomer.secondary,
                 fontSize: 14,
                 height: 1.35,
                 fontWeight: FontWeight.w700,
@@ -407,7 +410,7 @@ class _MockPaymentDetailRow extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                color: AppColors.muted,
+                color: AutolabCustomer.gray,
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -419,7 +422,7 @@ class _MockPaymentDetailRow extends StatelessWidget {
               style: TextStyle(
                 color: emphasize
                     ? Theme.of(context).colorScheme.primary
-                    : AppColors.ink,
+                    : AutolabCustomer.secondary,
                 fontSize: emphasize ? 22 : 15,
                 fontWeight: FontWeight.w900,
               ),

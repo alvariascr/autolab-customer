@@ -4,7 +4,7 @@ import 'package:dartz/dartz.dart' show Either;
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/app_injection.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../pages/product_detail_page.dart';
@@ -114,7 +114,7 @@ class _ProductsMessage extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.small.copyWith(
+              style: AutolabCustomer.caption.copyWith(
                 color: const Color(0xFF6B5F57),
                 height: 1.35,
               ),

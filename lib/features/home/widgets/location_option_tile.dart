@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/autolab_customer.dart';
+
 class LocationOptionTile extends StatelessWidget {
   const LocationOptionTile({
     super.key,
@@ -17,47 +19,52 @@ class LocationOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
+    final textColor = enabled
+        ? AutolabCustomer.customerTextColor(context)
+        : AutolabCustomer.customerDisabledTextColor(context);
+    final secondaryTextColor = enabled
+        ? AutolabCustomer.customerSecondaryTextColor(context)
+        : AutolabCustomer.customerDisabledTextColor(context);
 
     return Material(
-      color: const Color(0xFFF8F4EF),
-      borderRadius: BorderRadius.circular(20),
+      color: AutolabCustomer.customerSoftSurfaceColor(context),
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard + 4),
       child: ListTile(
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard + 4),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AutolabCustomer.spacingMd,
+          vertical: AutolabCustomer.spacingXs,
+        ),
         leading: Container(
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            color: AutolabCustomer.customerElevatedSurfaceColor(context),
+            borderRadius: BorderRadius.circular(AutolabCustomer.radiusInput),
           ),
-          child: Icon(
-            icon,
-            color: enabled ? const Color(0xFF181411) : const Color(0xFF9B8E84),
-            size: 19,
-          ),
+          child: Icon(icon, color: textColor, size: AutolabCustomer.iconSm - 1),
         ),
         title: Text(
           title,
-          style: TextStyle(
-            color: enabled ? const Color(0xFF181411) : const Color(0xFF7D6F66),
-            fontSize: 14,
+          style: AutolabCustomer.body.copyWith(
+            color: textColor,
             fontWeight: FontWeight.w700,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
-            fontSize: 12,
+          style: AutolabCustomer.caption.copyWith(
+            color: secondaryTextColor,
             height: 1.35,
           ),
         ),
         trailing: Icon(
           enabled ? Icons.arrow_forward_ios_rounded : Icons.schedule_rounded,
-          size: enabled ? 14 : 16,
-          color: enabled ? const Color(0xFF6B5F57) : const Color(0xFF9B8E84),
+          size: enabled ? AutolabCustomer.iconXs - 2 : AutolabCustomer.iconXs,
+          color: secondaryTextColor,
         ),
       ),
     );

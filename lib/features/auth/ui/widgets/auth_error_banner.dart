@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/autolab_customer.dart';
+
 class AuthErrorBanner extends StatelessWidget {
   const AuthErrorBanner({
     super.key,
@@ -16,11 +18,14 @@ class AuthErrorBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AutolabCustomer.spacingSmd + 2,
+        vertical: AutolabCustomer.spacingSmd,
+      ),
       decoration: BoxDecoration(
         color: palette.background,
         border: Border.all(color: palette.border),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusInput),
         boxShadow: [
           BoxShadow(
             color: palette.shadow,
@@ -41,13 +46,12 @@ class AuthErrorBanner extends StatelessWidget {
             ),
             child: Icon(palette.icon, color: palette.iconColor, size: 18),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AutolabCustomer.spacingSm + 2),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: AutolabCustomer.body.copyWith(
                 color: palette.text,
-                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 height: 1.3,
               ),
@@ -83,21 +87,21 @@ class _AuthBannerPalette {
   factory _AuthBannerPalette.fromVariant(AuthBannerVariant variant) {
     return switch (variant) {
       AuthBannerVariant.error => const _AuthBannerPalette(
-        background: Color(0xFFFFF1F0),
-        border: Color(0xFFFFC9C5),
-        shadow: Color(0x14D92D20),
-        iconBackground: Color(0xFFFFE2DF),
-        iconColor: Color(0xFFD92D20),
-        text: Color(0xFFB42318),
+        background: AutolabCustomer.authErrorBackground,
+        border: AutolabCustomer.authErrorBorder,
+        shadow: AutolabCustomer.authErrorShadow,
+        iconBackground: AutolabCustomer.authErrorIconBackground,
+        iconColor: AutolabCustomer.authErrorIcon,
+        text: AutolabCustomer.authErrorText,
         icon: Icons.error_outline,
       ),
       AuthBannerVariant.success => const _AuthBannerPalette(
-        background: Color(0xFFF0FDF4),
-        border: Color(0xFFBBF7D0),
-        shadow: Color(0x1422C55E),
-        iconBackground: Color(0xFFDCFCE7),
-        iconColor: Color(0xFF16A34A),
-        text: Color(0xFF166534),
+        background: AutolabCustomer.authSuccessBackground,
+        border: AutolabCustomer.authSuccessBorder,
+        shadow: AutolabCustomer.authSuccessShadow,
+        iconBackground: AutolabCustomer.authSuccessIconBackground,
+        iconColor: AutolabCustomer.authSuccessIcon,
+        text: AutolabCustomer.authSuccessText,
         icon: Icons.check_circle_outline,
       ),
     };

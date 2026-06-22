@@ -14,7 +14,7 @@ class _ProfileMessage extends StatelessWidget {
           child: Text(
             message,
             textAlign: TextAlign.center,
-            style: AppTextStyles.normal.copyWith(
+            style: AutolabCustomer.body.copyWith(
               color: const Color(0xFF6B5F57),
             ),
           ),

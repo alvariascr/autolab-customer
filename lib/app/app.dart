@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
+import '../core/theme/app_theme_mode_cubit.dart';
 import '../features/auth/application/auth_feedback.dart';
 import '../features/auth/application/auth_navigation_controller.dart';
 import '../features/auth/application/auth_session_cubit.dart';
@@ -82,57 +83,66 @@ class _MyAppState extends State<MyApp> {
         RepositoryProvider.value(value: widget.authRepository),
         BlocProvider.value(value: widget.authSessionCubit),
         BlocProvider.value(value: widget.locationCubit),
+        BlocProvider(create: (_) => AppThemeModeCubit()),
       ],
-      child: MaterialApp.router(
-        scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
-        theme: AppTheme.light,
-        onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-        routerConfig: widget.router,
-        builder: (context, child) {
-          return BlocListener<AuthSessionCubit, AuthSessionState>(
-            listenWhen: (previous, current) {
-              return previous.message != current.message ||
-                  previous.code != current.code ||
-                  previous.uiKey != current.uiKey;
-            },
-            listener: (context, state) {
-              if (!hasAuthFeedback(
-                message: state.message,
-                code: state.code,
-                uiKey: state.uiKey,
-              )) {
-                return;
-              }
+      child: BlocBuilder<AppThemeModeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            scaffoldMessengerKey: MyApp._scaffoldMessengerKey,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeMode,
+            onGenerateTitle: (context) =>
+                AppLocalizations.of(context)!.appTitle,
+            routerConfig: widget.router,
+            builder: (context, child) {
+              return BlocListener<AuthSessionCubit, AuthSessionState>(
+                listenWhen: (previous, current) {
+                  return previous.message != current.message ||
+                      previous.code != current.code ||
+                      previous.uiKey != current.uiKey;
+                },
+                listener: (context, state) {
+                  if (!hasAuthFeedback(
+                    message: state.message,
+                    code: state.code,
+                    uiKey: state.uiKey,
+                  )) {
+                    return;
+                  }
 
-              final l10n = AppLocalizations.of(context)!;
-              final resolvedMessage = AuthUiErrorResolver.resolve(
-                l10n: l10n,
-                code: state.code,
-                uiKey: state.uiKey,
-                message: state.message,
+                  final l10n = AppLocalizations.of(context)!;
+                  final resolvedMessage = AuthUiErrorResolver.resolve(
+                    l10n: l10n,
+                    code: state.code,
+                    uiKey: state.uiKey,
+                    message: state.message,
+                  );
+
+                  MyApp._scaffoldMessengerKey.currentState
+                    ?..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text(resolvedMessage),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+
+                  context.read<AuthSessionCubit>().clearFeedback();
+                },
+                child: child ?? const SizedBox.shrink(),
               );
-
-              MyApp._scaffoldMessengerKey.currentState
-                ?..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(resolvedMessage),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-
-              context.read<AuthSessionCubit>().clearFeedback();
             },
-            child: child ?? const SizedBox.shrink(),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
           );
         },
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
       ),
     );
   }

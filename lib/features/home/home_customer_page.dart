@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/di/app_injection.dart';
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
+import '../../core/theme/autolab_customer.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
@@ -20,15 +21,39 @@ import 'location/location_ui_presenter.dart';
 import 'widgets/home_customer_content.dart';
 import 'widgets/location_option_tile.dart';
 
+class HomeCustomerController {
+  _HomeCustomerPageState? _state;
+
+  void openSearch() => _state?._openSearchFromNavigation();
+
+  void closeSearch() => _state?._closeSearchFromNavigation();
+
+  void _attach(_HomeCustomerPageState state) {
+    _state = state;
+  }
+
+  void _detach(_HomeCustomerPageState state) {
+    if (_state == state) {
+      _state = null;
+    }
+  }
+}
+
 class HomeCustomerPage extends StatefulWidget {
   const HomeCustomerPage({
     super.key,
     this.initialIndex = 0,
     this.initialShowSearchBar = false,
+    this.showBottomNavigation = true,
+    this.controller,
+    this.onSearchClosed,
   });
 
   final int initialIndex;
   final bool initialShowSearchBar;
+  final bool showBottomNavigation;
+  final HomeCustomerController? controller;
+  final VoidCallback? onSearchClosed;
 
   @override
   State<HomeCustomerPage> createState() => _HomeCustomerPageState();
@@ -50,6 +75,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   void initState() {
     super.initState();
+    widget.controller?._attach(this);
     _currentIndex = widget.initialIndex;
     _showSearchBar = widget.initialShowSearchBar;
     _queryStore = sl.isRegistered<WorkshopDiscoveryQueryStore>()
@@ -68,7 +94,17 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 
   @override
+  void didUpdateWidget(covariant HomeCustomerPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?._detach(this);
+      widget.controller?._attach(this);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.controller?._detach(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
@@ -143,38 +179,45 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AutolabCustomer.customerElevatedSurfaceColor(context),
       showDragHandle: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AutolabCustomer.radiusModal),
+        ),
       ),
       builder: (sheetContext) {
         return SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              padding: const EdgeInsets.fromLTRB(
+                AutolabCustomer.spacingScreen,
+                AutolabCustomer.spacingSm,
+                AutolabCustomer.spacingScreen,
+                AutolabCustomer.spacingLg,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     sheetCopy.title,
-                    style: const TextStyle(
-                      color: Color(0xFF181411),
+                    style: AutolabCustomer.bodyLarge.copyWith(
+                      color: AutolabCustomer.customerTextColor(context),
                       fontWeight: FontWeight.w800,
-                      fontSize: 18,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AutolabCustomer.spacingSm - 2),
                   Text(
                     sheetCopy.subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF6B5F57),
-                      fontSize: 13,
+                    style: AutolabCustomer.caption.copyWith(
+                      color: AutolabCustomer.customerSecondaryTextColor(
+                        context,
+                      ),
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AutolabCustomer.spacingMd + 2),
                   LocationOptionTile(
                     icon: Icons.my_location_outlined,
                     title: sheetCopy.currentLocationTitle,
@@ -184,19 +227,19 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                       await _handleLocationAction(state);
                     },
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AutolabCustomer.spacingSm + 2),
                   LocationOptionTile(
                     icon: Icons.search_rounded,
                     title: sheetCopy.writeAddressTitle,
                     subtitle: sheetCopy.writeAddressSubtitle,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AutolabCustomer.spacingSm + 2),
                   LocationOptionTile(
                     icon: Icons.home_outlined,
                     title: sheetCopy.homeTitle,
                     subtitle: sheetCopy.savedAddressSubtitle,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AutolabCustomer.spacingSm + 2),
                   LocationOptionTile(
                     icon: Icons.work_outline_rounded,
                     title: sheetCopy.workTitle,
@@ -213,11 +256,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   void _handleBottomNavigation(int index) {
     if (index == 2) {
-      _queryStore?.setQuery(_searchController.text);
-      setState(() {
-        _currentIndex = 2;
-        _showSearchBar = true;
-      });
+      _openSearchFromNavigation();
       return;
     }
 
@@ -229,8 +268,21 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     NavigationHandler.handle(context, index);
   }
 
+  void _openSearchFromNavigation() {
+    _queryStore?.setQuery(_searchController.text);
+    setState(() {
+      _currentIndex = 2;
+      _showSearchBar = true;
+    });
+  }
+
   void _closeSearch() {
     _queryStore?.clear();
+    _closeSearchFromNavigation();
+    widget.onSearchClosed?.call();
+  }
+
+  void _closeSearchFromNavigation() {
     setState(() {
       _currentIndex = 0;
       _showSearchBar = false;
@@ -240,9 +292,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _showSearchBar
-          ? const Color(0xFFE9EEF2)
-          : const Color(0xFFF8F4EF),
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       extendBody: true,
       body: FutureBuilder<Either<Failure, List<Workshop>>>(
         future: _workshopsFuture,
@@ -269,6 +319,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
             onSearchClose: _closeSearch,
+            onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
             productRepository: sl.isRegistered<ProductRepository>()
                 ? sl<ProductRepository>()
                 : null,
@@ -280,10 +331,12 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
           );
         },
       ),
-      bottomNavigationBar: CustomBottomNavbar(
-        currentIndex: _currentIndex,
-        onTap: _handleBottomNavigation,
-      ),
+      bottomNavigationBar: widget.showBottomNavigation
+          ? CustomBottomNavbar(
+              currentIndex: _currentIndex,
+              onTap: _handleBottomNavigation,
+            )
+          : null,
     );
   }
 }

@@ -418,7 +418,7 @@ class _ProductsMessage extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.small.copyWith(
+              style: AutolabCustomer.caption.copyWith(
                 color: const Color(0xFF6B5F57),
                 height: 1.35,
               ),
