@@ -625,8 +625,7 @@ abstract class AppLocalizations {
   /// No description provided for @customerOnboardingSlideVehicleTitle.
   ///
   /// In es, this message translates to:
-  /// **'Tu vehículo
-  /// nuestra prioridad'**
+  /// **'Tu vehículo\nnuestra prioridad'**
   String get customerOnboardingSlideVehicleTitle;
 
   /// No description provided for @customerOnboardingSlideVehicleSubtitle.
@@ -638,8 +637,7 @@ abstract class AppLocalizations {
   /// No description provided for @customerOnboardingSlideBookingTitle.
   ///
   /// In es, this message translates to:
-  /// **'Agenda en
-  /// pocos pasos'**
+  /// **'Agenda en\npocos pasos'**
   String get customerOnboardingSlideBookingTitle;
 
   /// No description provided for @customerOnboardingSlideBookingSubtitle.
@@ -651,8 +649,7 @@ abstract class AppLocalizations {
   /// No description provided for @customerOnboardingSlideSearchTitle.
   ///
   /// In es, this message translates to:
-  /// **'Encuentra lo que
-  /// tu carro necesita'**
+  /// **'Encuentra lo que\ntu carro necesita'**
   String get customerOnboardingSlideSearchTitle;
 
   /// No description provided for @customerOnboardingSlideSearchSubtitle.
@@ -664,8 +661,7 @@ abstract class AppLocalizations {
   /// No description provided for @customerOnboardingSlideOrganizedTitle.
   ///
   /// In es, this message translates to:
-  /// **'Todo más claro
-  /// y organizado'**
+  /// **'Todo más claro\ny organizado'**
   String get customerOnboardingSlideOrganizedTitle;
 
   /// No description provided for @customerOnboardingSlideOrganizedSubtitle.
@@ -731,8 +727,8 @@ abstract class AppLocalizations {
   /// No description provided for @workshopSearchProductResults.
   ///
   /// In es, this message translates to:
-  /// **'{count, plural, =1{1 resultado para "{query}"} other{{count} resultados para "{query}"}}'**
-  String workshopSearchProductResults(Object count, Object query);
+  /// **'{count, plural, =1{1 resultado para \"{query}\"} other{{count} resultados para \"{query}\"}}'**
+  String workshopSearchProductResults(num count, Object query);
 
   /// No description provided for @workshopSearchHomeDelivery.
   ///
@@ -2597,15 +2593,13 @@ abstract class AppLocalizations {
   /// No description provided for @homeServiceGeneralReview.
   ///
   /// In es, this message translates to:
-  /// **'Revisión
-  /// general'**
+  /// **'Revisión\ngeneral'**
   String get homeServiceGeneralReview;
 
   /// No description provided for @homeServiceElectricMechanic.
   ///
   /// In es, this message translates to:
-  /// **'Mecánica
-  /// eléctrica'**
+  /// **'Mecánica\neléctrica'**
   String get homeServiceElectricMechanic;
 
   /// No description provided for @homeServiceBattery.

@@ -364,8 +364,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'No encontramos talleres que coincidan con tu búsqueda.';
 
   @override
-  String workshopSearchProductResults(Object count, Object query) {
-    return '$count resultado${count == 1 ? '' : 's'} para "$query"';
+  String workshopSearchProductResults(num count, Object query) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count resultados para \"$query\"',
+      one: '1 resultado para \"$query\"',
+    );
+    return '$_temp0';
   }
 
   @override

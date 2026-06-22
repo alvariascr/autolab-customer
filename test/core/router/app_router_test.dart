@@ -31,6 +31,20 @@ void main() {
       },
     );
 
+    test(
+      'redirige a /login cuando no esta autenticado y visita ruta dinamica',
+      () {
+        final redirect = guard.redirectFor(
+          authState: const AuthSessionState(
+            status: AuthSessionStatus.unauthenticated,
+          ),
+          location: '/workshops/workshop-1/appointments/new',
+        );
+
+        expect(redirect, '/login');
+      },
+    );
+
     test('permite pedir recuperacion sin estar autenticado', () {
       final redirect = guard.redirectFor(
         authState: const AuthSessionState(
