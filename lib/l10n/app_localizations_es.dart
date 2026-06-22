@@ -279,6 +279,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get validationPasswordsDoNotMatch => 'Las contraseñas no coinciden.';
 
   @override
+  String get routerInvalidWorkshopId => 'ID de taller no válido';
+
+  @override
   String get navigationHome => 'Inicio';
 
   @override

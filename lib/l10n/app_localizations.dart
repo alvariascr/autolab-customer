@@ -574,6 +574,12 @@ abstract class AppLocalizations {
   /// **'Las contraseñas no coinciden.'**
   String get validationPasswordsDoNotMatch;
 
+  /// No description provided for @routerInvalidWorkshopId.
+  ///
+  /// In es, this message translates to:
+  /// **'ID de taller no válido'**
+  String get routerInvalidWorkshopId;
+
   /// No description provided for @navigationHome.
   ///
   /// In es, this message translates to:

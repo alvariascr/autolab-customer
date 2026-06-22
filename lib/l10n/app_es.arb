@@ -85,6 +85,7 @@
   "validationPasswordTooShort": "La contraseña debe tener al menos 6 caracteres.",
   "validationConfirmPasswordRequired": "Confirma la contraseña.",
   "validationPasswordsDoNotMatch": "Las contraseñas no coinciden.",
+  "routerInvalidWorkshopId": "ID de taller no válido",
   "navigationHome": "Inicio",
   "navigationMap": "Mapa",
   "navigationSearch": "Buscar",
