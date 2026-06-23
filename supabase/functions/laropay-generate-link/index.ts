@@ -161,7 +161,8 @@ Deno.serve(async (request) => {
     const linkID = stringValue(laropayResponse.linkID);
     const linkURL = stringValue(laropayResponse.linkURL);
 
-    if (linkID === "" || !isSecureUrl(linkURL)) {
+    if (stringValue(laropayResponse.response) !== "00" || linkID === "" ||
+      !isSecureUrl(linkURL)) {
       await persistAttempt(
         env,
         user.id,
@@ -257,7 +258,9 @@ async function loadOrderPaymentData(
   const supabase = userSupabaseClient(env, user.authorization);
   const { data, error } = await supabase
     .from("orders")
-    .select("id, remaining_amount, total_amount, customers!inner(user_id)")
+    .select(
+      "id, remaining_amount, total_amount, payment_status, customers!inner(user_id)",
+    )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
     .maybeSingle();
@@ -270,11 +273,15 @@ async function loadOrderPaymentData(
     throw new Error("transaction_not_found");
   }
 
-  const remainingAmount = numberValue(
-    (data as Record<string, unknown>).remaining_amount,
-  );
-  const totalAmount = numberValue((data as Record<string, unknown>).total_amount);
-  const amount = remainingAmount > 0 ? remainingAmount : totalAmount;
+  const order = data as Record<string, unknown>;
+  if (stringValue(order.payment_status).toLowerCase() === "paid") {
+    throw new Error("invalid_order_payment_status");
+  }
+
+  const rawRemainingAmount = order.remaining_amount;
+  const amount = hasStoredValue(rawRemainingAmount)
+    ? numberValue(rawRemainingAmount)
+    : numberValue(order.total_amount);
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error("invalid_order_amount");
@@ -343,7 +350,7 @@ function validate(input: LaropayLinkRequest): string | null {
     return "internal_transaction_required";
   }
 
-  if (!Number.isInteger(input.idTransaction)) {
+  if (![1, 2].includes(input.idTransaction ?? Number.NaN)) {
     return "transaction_type_required";
   }
 
@@ -540,6 +547,10 @@ function currencyCode(idTransaction?: number) {
 }
 
 function normalizedStatus(response: Record<string, unknown>) {
+  if (stringValue(response.response) !== "00") {
+    return "failed";
+  }
+
   const explicitStatus = stringValue(response.status).toLowerCase();
   if (explicitStatus !== "") {
     return explicitStatus;
@@ -562,6 +573,10 @@ function numberValue(value: unknown) {
   }
 
   return Number.NaN;
+}
+
+function hasStoredValue(value: unknown) {
+  return value !== null && value !== undefined && stringValue(value) !== "";
 }
 
 function trimOrNull(value: unknown) {

@@ -77,6 +77,7 @@ class LaropayCheckoutLauncher {
               order_number,
               remaining_amount,
               total_amount,
+              payment_status,
               customers!inner(user_id)
             )
           )
@@ -116,10 +117,17 @@ class LaropayCheckoutLauncher {
   }
 
   static double _paymentAmount(Map<String, dynamic> order) {
+    if (_stringValue(order['payment_status']).toLowerCase() == 'paid') {
+      return double.nan;
+    }
+
+    final rawRemainingAmount = order['remaining_amount'];
     final remainingAmount = _numberValue(order['remaining_amount']);
-    return remainingAmount > 0
-        ? remainingAmount
-        : _numberValue(order['total_amount']);
+    if (_hasStoredValue(rawRemainingAmount)) {
+      return remainingAmount;
+    }
+
+    return _numberValue(order['total_amount']);
   }
 
   static _LaropayUserProfile _userProfile(User user) {
@@ -218,4 +226,8 @@ double _numberValue(Object? value) {
   }
 
   return double.tryParse(value?.toString() ?? '') ?? double.nan;
+}
+
+bool _hasStoredValue(Object? value) {
+  return value != null && value.toString().trim().isNotEmpty;
 }

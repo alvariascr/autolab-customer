@@ -15,8 +15,6 @@ class LaropayLinkRequest {
     this.customerLocation,
     this.expirationType = 'D',
     this.expirationValue = 1,
-    this.urlCallback,
-    this.securityCode,
   });
 
   final String internalTransactionId;
@@ -31,6 +29,4 @@ class LaropayLinkRequest {
   final String? customerLocation;
   final String expirationType;
   final int expirationValue;
-  final Uri? urlCallback;
-  final String? securityCode;
 }

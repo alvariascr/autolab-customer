@@ -211,7 +211,6 @@ LaropayLinkRequest _request({
     customerLocation: 'San Jose',
     expirationType: expirationType,
     expirationValue: 2,
-    urlCallback: Uri.parse('https://autolab.test/callback/laropay'),
   );
 }
 

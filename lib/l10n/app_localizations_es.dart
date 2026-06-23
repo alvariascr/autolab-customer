@@ -1798,6 +1798,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPaymentMethodLabel => 'Pago';
 
   @override
+  String get laropayPaymentPending =>
+      'Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.';
+
+  @override
+  String get laropayPaymentStartError =>
+      'La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.';
+
+  @override
   String get appointmentCustomerNameLabel => 'Nombre completo';
 
   @override

@@ -3274,6 +3274,18 @@ abstract class AppLocalizations {
   /// **'Pago'**
   String get appointmentPaymentMethodLabel;
 
+  /// No description provided for @laropayPaymentPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.'**
+  String get laropayPaymentPending;
+
+  /// No description provided for @laropayPaymentStartError.
+  ///
+  /// In es, this message translates to:
+  /// **'La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.'**
+  String get laropayPaymentStartError;
+
   /// No description provided for @appointmentCustomerNameLabel.
   ///
   /// In es, this message translates to:

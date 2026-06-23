@@ -23,10 +23,11 @@ class LaropayLinkModel extends LaropayLink {
 
     if (linkId.isEmpty ||
         !isValidSecureUrl ||
+        response != '00' ||
         response.isEmpty ||
         responseDescription.isEmpty) {
       throw const FormatException(
-        'Laropay response missing linkID, secure HTTPS linkURL or response metadata',
+        'Laropay response is not successful or is missing secure link metadata',
       );
     }
 

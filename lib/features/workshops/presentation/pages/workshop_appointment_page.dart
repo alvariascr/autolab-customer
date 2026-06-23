@@ -288,10 +288,16 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     _goToWorkshopProfileOrHome(context);
   }
 
-  void _goToWorkshopProfileOrHome(BuildContext context) {
+  void _goToWorkshopProfileOrHome(
+    BuildContext context, {
+    String? paymentStatus,
+  }) {
     final workshopId = widget.workshopId.trim();
+    final paymentQuery = paymentStatus == null ? '' : '?payment=$paymentStatus';
     context.go(
-      workshopId.isEmpty ? '/home-customer' : '/workshops/$workshopId',
+      workshopId.isEmpty
+          ? '/home-customer'
+          : '/workshops/$workshopId$paymentQuery',
     );
   }
 
@@ -326,23 +332,13 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
             );
-          } on LaropayCheckoutLaunchException catch (error) {
+          } on LaropayCheckoutLaunchException {
             if (context.mounted) {
-              _showAppointmentMessage(
-                context,
-                message: error.message,
-                type: _AppointmentMessageType.error,
-              );
-              _goToWorkshopProfileOrHome(context);
+              _goToWorkshopProfileOrHome(context, paymentStatus: 'link-error');
             }
           } catch (_) {
             if (context.mounted) {
-              _showAppointmentMessage(
-                context,
-                message: 'No fue posible iniciar el pago con Laropay.',
-                type: _AppointmentMessageType.error,
-              );
-              _goToWorkshopProfileOrHome(context);
+              _goToWorkshopProfileOrHome(context, paymentStatus: 'link-error');
             }
           }
         } else {

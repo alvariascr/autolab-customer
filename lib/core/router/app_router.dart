@@ -93,7 +93,10 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return WorkshopProfilePage(workshopId: workshopId);
+          return WorkshopProfilePage(
+            workshopId: workshopId,
+            paymentStatus: state.uri.queryParameters['payment'],
+          );
         },
       ),
       GoRoute(

@@ -196,6 +196,18 @@ void main() {
       throwsA(isA<FormatException>()),
     );
   });
+
+  test('throws format exception when Laropay response is not successful', () {
+    expect(
+      () => LaropayLinkModel.fromJson({
+        'response': '99',
+        'responseDescription': 'Rejected',
+        'linkID': 'link-1',
+        'linkURL': 'https://pay.test/link-1',
+      }),
+      throwsA(isA<FormatException>()),
+    );
+  });
 }
 
 LaropayLinkRequest _request() {
@@ -212,6 +224,5 @@ LaropayLinkRequest _request() {
     customerLocation: 'San Jose',
     expirationType: 'D',
     expirationValue: 2,
-    urlCallback: Uri.parse('https://autolab.test/callback/laropay'),
   );
 }

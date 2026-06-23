@@ -16,8 +16,6 @@ extension LaropayLinkRequestMapper on LaropayLinkRequest {
         'customerLocation': customerLocation!.trim(),
       'expirationType': expirationType.trim().toUpperCase(),
       'expirationValue': expirationValue,
-      if (urlCallback != null) 'urlCallback': urlCallback.toString(),
-      if (_hasValue(securityCode)) 'securityCode': securityCode!.trim(),
     };
   }
 
