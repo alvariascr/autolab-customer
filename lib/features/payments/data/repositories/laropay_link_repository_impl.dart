@@ -58,7 +58,7 @@ class LaropayLinkRepositoryImpl implements LaropayLinkRepository {
       _featureLogger.info(
         feature: 'payments',
         action: 'generate_laropay_link_succeeded',
-        context: {...context, 'linkId': link.linkId, 'status': link.status},
+        context: {...context, 'status': link.status},
       );
       return Right(link);
     } on TimeoutException catch (error, stackTrace) {

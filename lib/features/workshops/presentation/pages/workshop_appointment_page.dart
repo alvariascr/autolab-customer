@@ -28,6 +28,9 @@ class WorkshopAppointmentPage extends StatefulWidget {
 class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   static const ink = AutolabCustomer.secondary;
   static const muted = AutolabCustomer.gray;
+  static const _minimumCardPaymentPreparation = Duration(milliseconds: 900);
+
+  bool _isPreparingCardPayment = false;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +99,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }) {
     final isSubmitting =
         state.submitStatus == AppointmentSubmitStatus.submitting;
+    final isBusy = isSubmitting || _isPreparingCardPayment;
 
     return Stack(
       children: [
@@ -125,13 +129,13 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             _FooterActions(
               canGoBack: state.currentStep > 0,
               isLastStep: state.currentStep == steps.length - 1,
-              isSubmitting: isSubmitting,
+              isSubmitting: isBusy,
               onBack: () => _handleBack(context, state),
               onNext: () => _goNextStep(context, state, steps.length),
             ),
           ],
         ),
-        if (isSubmitting) const _BookingSubmittingOverlay(),
+        if (isBusy) const _BookingSubmittingOverlay(),
       ],
     );
   }
@@ -300,6 +304,14 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
     if (state.currentStep == stepCount - 1) {
       final cubit = context.read<AppointmentCubit>();
+      final isCardPayment =
+          state.selectedPaymentMethod == AppointmentPaymentMethod.card;
+      final preparationStartedAt = DateTime.now();
+
+      if (isCardPayment) {
+        setState(() => _isPreparingCardPayment = true);
+      }
+
       final appointmentId = await cubit.submitBooking();
 
       if (!context.mounted) {
@@ -308,8 +320,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
       final submitState = cubit.state;
       if (appointmentId != null) {
-        if (submitState.selectedPaymentMethod ==
-            AppointmentPaymentMethod.card) {
+        if (isCardPayment) {
           try {
             await sl<LaropayCheckoutLauncher>().launch(
               appointmentId: appointmentId,
@@ -348,6 +359,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           message: _appointmentSubmitErrorMessage(submitState, l10n),
           type: _AppointmentMessageType.error,
         );
+      }
+
+      if (isCardPayment && context.mounted) {
+        await _completeCardPaymentPreparation(preparationStartedAt);
       }
       return;
     }
@@ -408,6 +423,18 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     }
 
     context.read<AppointmentCubit>().goNext();
+  }
+
+  Future<void> _completeCardPaymentPreparation(DateTime startedAt) async {
+    final elapsed = DateTime.now().difference(startedAt);
+    final remaining = _minimumCardPaymentPreparation - elapsed;
+    if (!remaining.isNegative) {
+      await Future<void>.delayed(remaining);
+    }
+
+    if (mounted) {
+      setState(() => _isPreparingCardPayment = false);
+    }
   }
 
   void _showAppointmentMessage(
