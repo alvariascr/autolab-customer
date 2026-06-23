@@ -376,6 +376,14 @@
   "workshopProfileUnknownDay": "Día no disponible",
   "workshopProfilePaymentMethodsTitle": "Métodos de pago",
   "workshopProfilePaymentMethodsEmpty": "Métodos de pago no disponibles.",
+  "workshopProfileCatalogTitle": "Explora el catálogo",
+  "workshopProfileCatalogAllTab": "Todos",
+  "workshopProfileCatalogPopularTab": "Populares",
+  "workshopProfileCatalogServicesTab": "Servicios",
+  "workshopProfileCatalogProductsTab": "Productos",
+  "workshopProfileCatalogViewAll": "Ver todos",
+  "workshopProfileCatalogComingSoon": "Próximamente",
+  "workshopProfileProductsLoadError": "No fue posible cargar los productos de este taller.",
   "appointmentSelectServiceRequired": "Selecciona un servicio para continuar.",
   "appointmentSelectDateTimeRequired": "Selecciona un día y una hora.",
   "appointmentStepVehicle": "Seleccionar tipo de vehículo",
@@ -628,3 +636,4 @@
     }
   }
 }
+

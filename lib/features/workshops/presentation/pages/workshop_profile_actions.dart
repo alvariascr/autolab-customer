@@ -182,98 +182,28 @@ class _DeliverySummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Column(
+    return Row(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE9E2DC)),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SummaryCell(
-                    title: workshop.hasValidDeliveryRadius
-                        ? l10n.workshopProfileCoverageValue(
-                            workshop.deliveryRadiusKm.toStringAsFixed(0),
-                          )
-                        : l10n.workshopProfileCoverageUnavailable,
-                    subtitle: l10n.workshopProfileCoverageAreaSubtitle,
-                  ),
-                ),
-              ],
-            ),
+        Expanded(
+          child: _ContactAction(
+            icon: Icons.call_outlined,
+            label: l10n.workshopProfileCallAction,
+            enabled: workshop.phone.isNotEmpty,
+            onTap: () => _ProfileActions.launchPhone(context, workshop.phone),
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _ContactAction(
-                icon: Icons.call_outlined,
-                label: l10n.workshopProfileCallAction,
-                enabled: workshop.phone.isNotEmpty,
-                onTap: () =>
-                    _ProfileActions.launchPhone(context, workshop.phone),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ContactAction(
-                icon: Icons.map_outlined,
-                label: l10n.workshopProfileOpenLocationAction,
-                enabled:
-                    workshop.hasValidCoordinates ||
-                    workshop.locationAddress.isNotEmpty,
-                onTap: () => _ProfileActions.openLocation(context, workshop),
-              ),
-            ),
-          ],
-        ),
-        if (workshop.locationAddress.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _BusinessInfoTile(
-            icon: Icons.location_on_outlined,
-            title: workshop.locationAddress,
-            trailing: Icons.copy_rounded,
+        const SizedBox(width: AutolabCustomer.spacingMd),
+        Expanded(
+          child: _ContactAction(
+            icon: Icons.map_outlined,
+            label: l10n.workshopProfileOpenLocationAction,
+            enabled:
+                workshop.hasValidCoordinates ||
+                workshop.locationAddress.isNotEmpty,
+            onTap: () => _ProfileActions.openLocation(context, workshop),
           ),
-        ],
+        ),
       ],
-    );
-  }
-}
-
-class _SummaryCell extends StatelessWidget {
-  const _SummaryCell({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-      child: Column(
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontWeight: FontWeight.w900,
-              fontSize: 15,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF6B5F57), fontSize: 13),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -294,71 +224,52 @@ class _ContactAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: enabled ? const Color(0xFFF7F7F7) : const Color(0xFFE8E8E8),
-      borderRadius: BorderRadius.circular(16),
+      color: enabled
+          ? AutolabCustomer.primary
+          : AutolabCustomer.customerDisabledTextColor(context),
+      borderRadius: BorderRadius.circular(999),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(999),
         onTap: enabled ? onTap : null,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: AutolabCustomer.responsiveDouble(
+              context,
+              compact: AutolabCustomer.spacingSm,
+              regular: AutolabCustomer.spacingSmd,
+              tablet: AutolabCustomer.spacingMd,
+            ),
+            vertical: AutolabCustomer.responsiveDouble(
+              context,
+              compact: AutolabCustomer.spacingSm,
+              regular: AutolabCustomer.spacingSm + 2,
+              tablet: AutolabCustomer.spacingSmd,
+            ),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 19),
-              const SizedBox(width: 8),
+              Icon(icon, size: 18, color: AutolabCustomer.white),
+              const SizedBox(width: AutolabCustomer.spacingSm),
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: AutolabCustomer.bodyLarge.copyWith(
+                    color: AutolabCustomer.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: AutolabCustomer.responsiveDouble(
+                      context,
+                      compact: 12,
+                      regular: 14,
+                      tablet: 16,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _BusinessInfoTile extends StatelessWidget {
-  const _BusinessInfoTile({
-    required this.icon,
-    required this.title,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final IconData? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 28, color: const Color(0xFF6B5F57)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF181411),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (trailing != null)
-            Icon(trailing, size: 26, color: const Color(0xFF9A9A9A)),
-        ],
       ),
     );
   }
