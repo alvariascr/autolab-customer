@@ -50,7 +50,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4EF),
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       body: FutureBuilder<Either<Failure, Workshop?>>(
         future: _workshopFuture,
         builder: (context, snapshot) {

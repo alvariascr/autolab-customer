@@ -2122,6 +2122,54 @@ abstract class AppLocalizations {
   /// **'Métodos de pago no disponibles.'**
   String get workshopProfilePaymentMethodsEmpty;
 
+  /// No description provided for @workshopProfileCatalogTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Explora el catálogo'**
+  String get workshopProfileCatalogTitle;
+
+  /// No description provided for @workshopProfileCatalogAllTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get workshopProfileCatalogAllTab;
+
+  /// No description provided for @workshopProfileCatalogPopularTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Populares'**
+  String get workshopProfileCatalogPopularTab;
+
+  /// No description provided for @workshopProfileCatalogServicesTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios'**
+  String get workshopProfileCatalogServicesTab;
+
+  /// No description provided for @workshopProfileCatalogProductsTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos'**
+  String get workshopProfileCatalogProductsTab;
+
+  /// No description provided for @workshopProfileCatalogViewAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get workshopProfileCatalogViewAll;
+
+  /// No description provided for @workshopProfileCatalogComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximamente'**
+  String get workshopProfileCatalogComingSoon;
+
+  /// No description provided for @workshopProfileProductsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible cargar los productos de este taller.'**
+  String get workshopProfileProductsLoadError;
+
   /// No description provided for @appointmentSelectServiceRequired.
   ///
   /// In es, this message translates to:

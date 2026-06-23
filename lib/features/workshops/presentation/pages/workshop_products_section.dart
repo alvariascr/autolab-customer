@@ -11,7 +11,7 @@ class _ProductsSection extends StatefulWidget {
 
 class _ProductsSectionState extends State<_ProductsSection> {
   late Future<Either<Failure, List<Product>>> _productsFuture;
-  String _selectedSection = 'Todos';
+  String _selectedSection = _SectionKey.all;
 
   @override
   void initState() {
@@ -26,6 +26,7 @@ class _ProductsSectionState extends State<_ProductsSection> {
     return FutureBuilder<Either<Failure, List<Product>>>(
       future: _productsFuture,
       builder: (context, snapshot) {
+        final l10n = AppLocalizations.of(context)!;
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 240,
@@ -39,62 +40,53 @@ class _ProductsSectionState extends State<_ProductsSection> {
             const <Product>[];
 
         if (result == null || result.isLeft()) {
-          return const _ProductsMessage(
+          return _ProductsMessage(
             icon: Icons.error_outline_rounded,
-            message: 'No fue posible cargar los productos de este taller.',
-          );
-        }
-
-        if (products.isEmpty) {
-          return const _ProductsMessage(
-            icon: Icons.inventory_2_outlined,
-            message: 'Este taller aun no tiene productos publicados.',
+            message: l10n.workshopProfileProductsLoadError,
           );
         }
 
         final sections = _buildSections(products);
-        final selectedProducts = _selectedSection == 'Todos'
+        final selectedProducts = _selectedSection == _SectionKey.all
             ? const <Product>[]
             : sections[_selectedSection] ?? const <Product>[];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Explora el catalogo',
-              style: TextStyle(
-                color: Color(0xFF181411),
-                fontSize: 26,
+            Text(
+              l10n.workshopProfileCatalogTitle,
+              style: AutolabCustomer.h1.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontSize: AutolabCustomer.responsiveDouble(
+                  context,
+                  compact: 23,
+                  regular: 27,
+                  tablet: 32,
+                ),
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AutolabCustomer.spacingMd),
             _SectionTabs(
               sections: sections.keys.toList(),
               selectedSection: _selectedSection,
               onSelected: (section) {
-                if (section == 'Populares') {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Proximamente')));
-                  return;
-                }
-
                 setState(() => _selectedSection = section);
               },
             ),
-            const SizedBox(height: 18),
-            if (_selectedSection == 'Todos') ...[
+            const SizedBox(height: AutolabCustomer.spacingMd),
+            if (_selectedSection == _SectionKey.all) ...[
               const _ComingSoonPopularGroup(),
               ...sections.entries
-                  .where((entry) => entry.key != 'Todos')
+                  .where((entry) => entry.key != _SectionKey.all)
                   .map(
                     (entry) => _ProductMenuGroup(
                       title: entry.key,
                       products: entry.value,
                     ),
                   ),
-            ] else if (_selectedSection == 'Populares')
+            ] else if (_selectedSection == _SectionKey.popular)
               const _ComingSoonPopularGroup()
             else
               _ProductMenuGroup(
@@ -110,18 +102,18 @@ class _ProductsSectionState extends State<_ProductsSection> {
   Map<String, List<Product>> _buildSections(List<Product> products) {
     final sections = <String, List<Product>>{};
 
-    sections['Todos'] = products;
-    sections['Populares'] = const <Product>[];
+    sections[_SectionKey.all] = products;
+    sections[_SectionKey.popular] = const <Product>[];
 
     final services = products.where(_isService).toList();
     if (services.isNotEmpty) {
-      sections['Servicios'] = services;
+      sections[_SectionKey.services] = services;
     }
 
     final tangibleProducts = products.where((product) => !_isService(product));
     final productsByType = tangibleProducts.toList();
     if (productsByType.isNotEmpty) {
-      sections['Productos'] = productsByType;
+      sections[_SectionKey.products] = productsByType;
     }
 
     final byCategory = <String, List<Product>>{};
@@ -151,6 +143,15 @@ class _ProductsSectionState extends State<_ProductsSection> {
   }
 }
 
+class _SectionKey {
+  const _SectionKey._();
+
+  static const all = 'all';
+  static const popular = 'popular';
+  static const services = 'services';
+  static const products = 'products';
+}
+
 class _SectionTabs extends StatelessWidget {
   const _SectionTabs({
     required this.sections,
@@ -165,34 +166,48 @@ class _SectionTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 38,
+        regular: 44,
+        tablet: 50,
+      ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: sections.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 10),
+        separatorBuilder: (context, index) =>
+            const SizedBox(width: AutolabCustomer.spacingSmd),
         itemBuilder: (context, index) {
           final section = sections[index];
           final isSelected = section == selectedSection;
 
           return ChoiceChip(
             showCheckmark: false,
-            avatar: Icon(
-              _iconForSection(section),
-              size: 18,
-              color: isSelected ? Colors.white : const Color(0xFF181411),
-            ),
-            label: Text(section),
+            label: Text(_labelForSection(context, section)),
             selected: isSelected,
             onSelected: (_) => onSelected(section),
-            backgroundColor: const Color(0xFFF1F1F1),
-            selectedColor: const Color(0xFF181411),
-            side: BorderSide.none,
+            backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+            selectedColor: AutolabCustomer.customerSurfaceColor(context),
+            side: BorderSide(
+              color: isSelected
+                  ? AutolabCustomer.primary
+                  : AutolabCustomer.customerSurfaceColor(context),
+              width: 1.4,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(999),
             ),
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : const Color(0xFF181411),
-              fontSize: 15,
+            labelPadding: const EdgeInsets.symmetric(
+              horizontal: AutolabCustomer.spacingMd,
+            ),
+            labelStyle: AutolabCustomer.bodyLarge.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontSize: AutolabCustomer.responsiveDouble(
+                context,
+                compact: 13,
+                regular: 15,
+                tablet: 16,
+              ),
               fontWeight: FontWeight.w800,
             ),
           );
@@ -201,26 +216,16 @@ class _SectionTabs extends StatelessWidget {
     );
   }
 
-  IconData _iconForSection(String section) {
-    final normalized = section.trim().toLowerCase();
+  String _labelForSection(BuildContext context, String section) {
+    final l10n = AppLocalizations.of(context)!;
 
-    if (normalized == 'todos') {
-      return Icons.menu_rounded;
-    }
-
-    if (normalized == 'populares') {
-      return Icons.star_rounded;
-    }
-
-    if (normalized == 'servicios') {
-      return Icons.build_circle_outlined;
-    }
-
-    if (normalized == 'productos') {
-      return Icons.inventory_2_outlined;
-    }
-
-    return Icons.sell_outlined;
+    return switch (section) {
+      _SectionKey.all => l10n.workshopProfileCatalogAllTab,
+      _SectionKey.popular => l10n.workshopProfileCatalogPopularTab,
+      _SectionKey.services => l10n.workshopProfileCatalogServicesTab,
+      _SectionKey.products => l10n.workshopProfileCatalogProductsTab,
+      _ => section,
+    };
   }
 }
 
@@ -237,27 +242,31 @@ class _ProductMenuGroup extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.only(bottom: AutolabCustomer.spacingLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Divider(height: 34),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
+          Divider(
+            height: AutolabCustomer.spacingLg,
+            color: AutolabCustomer.customerDividerColor(context),
           ),
-          const SizedBox(height: 14),
+          _SectionHeader(title: _sectionTitle(context, title)),
+          const SizedBox(height: AutolabCustomer.spacingMd),
           LayoutBuilder(
             builder: (context, constraints) {
-              final tileWidth = (constraints.maxWidth - 16) / 2;
+              final columns = constraints.maxWidth >= 680 ? 3 : 2;
+              final spacing = AutolabCustomer.responsiveDouble(
+                context,
+                compact: AutolabCustomer.spacingMd,
+                regular: AutolabCustomer.spacingMd,
+                tablet: AutolabCustomer.spacingLg,
+              );
+              final tileWidth =
+                  (constraints.maxWidth - (spacing * (columns - 1))) / columns;
 
               return Wrap(
-                spacing: 16,
-                runSpacing: 24,
+                spacing: spacing,
+                runSpacing: AutolabCustomer.spacingMd,
                 children: products.map((product) {
                   return SizedBox(
                     width: tileWidth,
@@ -271,6 +280,17 @@ class _ProductMenuGroup extends StatelessWidget {
       ),
     );
   }
+
+  String _sectionTitle(BuildContext context, String title) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return switch (title) {
+      _SectionKey.popular => l10n.workshopProfileCatalogPopularTab,
+      _SectionKey.services => l10n.workshopProfileCatalogServicesTab,
+      _SectionKey.products => l10n.workshopProfileCatalogProductsTab,
+      _ => title,
+    };
+  }
 }
 
 class _ComingSoonPopularGroup extends StatelessWidget {
@@ -278,26 +298,93 @@ class _ComingSoonPopularGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(bottom: 28),
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AutolabCustomer.spacingLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Populares',
-            style: TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 24,
+          _SectionHeader(
+            title: l10n.workshopProfileCatalogPopularTab,
+            showViewAll: true,
+          ),
+          const SizedBox(height: AutolabCustomer.spacingMd),
+          const _ComingSoonCard(),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, this.showViewAll = false});
+
+  final String title;
+  final bool showViewAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: AutolabCustomer.h1.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontSize: AutolabCustomer.responsiveDouble(
+                context,
+                compact: 23,
+                regular: 28,
+                tablet: 32,
+              ),
               fontWeight: FontWeight.w900,
             ),
           ),
-          SizedBox(height: 12),
-          _ProductsMessage(
-            icon: Icons.star_border_rounded,
-            message:
-                'Proximamente mostraremos los productos mas populares de este taller.',
+        ),
+        if (showViewAll)
+          Text(
+            AppLocalizations.of(context)!.workshopProfileCatalogViewAll,
+            style: AutolabCustomer.bodyLarge.copyWith(
+              color: AutolabCustomer.primary,
+              fontSize: AutolabCustomer.responsiveDouble(
+                context,
+                compact: 14,
+                regular: 17,
+                tablet: 19,
+              ),
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ],
+      ],
+    );
+  }
+}
+
+class _ComingSoonCard extends StatelessWidget {
+  const _ComingSoonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 116,
+        regular: 140,
+        tablet: 180,
+      ),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+      ),
+      child: Text(
+        AppLocalizations.of(context)!.workshopProfileCatalogComingSoon,
+        style: AutolabCustomer.bodyLarge.copyWith(
+          color: AutolabCustomer.customerSecondaryTextColor(context),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -311,7 +398,7 @@ class _MenuProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -319,77 +406,70 @@ class _MenuProductTile extends StatelessWidget {
           ),
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ProductImage(
-                imageUrl: product.primaryImageUrl,
-                height: 150,
-                borderRadius: BorderRadius.circular(14),
-                placeholderIconSize: 42,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AutolabCustomer.customerSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+          border: Border.all(
+            color: AutolabCustomer.customerBorderColor(context),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ProductImage(
+              imageUrl: product.primaryImageUrl,
+              height: AutolabCustomer.responsiveDouble(
+                context,
+                compact: 92,
+                regular: 112,
+                tablet: 140,
               ),
-              Positioned(
-                right: 8,
-                bottom: -14,
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x22000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 5),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AutolabCustomer.radiusCard),
+              ),
+              placeholderIconSize: 42,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AutolabCustomer.spacingSmd),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AutolabCustomer.bodyLarge.copyWith(
+                      color: AutolabCustomer.customerTextColor(context),
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: AutolabCustomer.spacingSm),
+                  ProductPriceText(
+                    price: product.sellingPrice,
+                    style: AutolabCustomer.body.copyWith(
+                      color: AutolabCustomer.customerTextColor(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: AutolabCustomer.spacingXs),
+                  Text(
+                    product.effectiveDescription,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AutolabCustomer.caption.copyWith(
+                      color: AutolabCustomer.customerSecondaryTextColor(
+                        context,
                       ),
-                    ],
+                      height: 1.2,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: Color(0xFF181411),
-                    size: 30,
-                  ),
-                ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            product.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              height: 1.1,
             ),
-          ),
-          const SizedBox(height: 6),
-          ProductPriceText(
-            price: product.sellingPrice,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            product.effectiveDescription,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF6B5F57),
-              fontSize: 14,
-              height: 1.2,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -405,21 +485,24 @@ class _ProductsMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AutolabCustomer.spacingLg,
+        vertical: AutolabCustomer.spacingLg,
+      ),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBFAF8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE7DED5)),
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF9B3D24)),
-          const SizedBox(width: 12),
+          Icon(icon, color: AutolabCustomer.primary),
+          const SizedBox(width: AutolabCustomer.spacingSmd),
           Expanded(
             child: Text(
               message,
               style: AutolabCustomer.caption.copyWith(
-                color: const Color(0xFF6B5F57),
+                color: AutolabCustomer.customerSecondaryTextColor(context),
                 height: 1.35,
               ),
             ),
