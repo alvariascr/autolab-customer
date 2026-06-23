@@ -1153,6 +1153,31 @@ class AppLocalizationsEs extends AppLocalizations {
       'Métodos de pago no disponibles.';
 
   @override
+  String get workshopProfileCatalogTitle => 'Explora el catálogo';
+
+  @override
+  String get workshopProfileCatalogAllTab => 'Todos';
+
+  @override
+  String get workshopProfileCatalogPopularTab => 'Populares';
+
+  @override
+  String get workshopProfileCatalogServicesTab => 'Servicios';
+
+  @override
+  String get workshopProfileCatalogProductsTab => 'Productos';
+
+  @override
+  String get workshopProfileCatalogViewAll => 'Ver todos';
+
+  @override
+  String get workshopProfileCatalogComingSoon => 'Próximamente';
+
+  @override
+  String get workshopProfileProductsLoadError =>
+      'No fue posible cargar los productos de este taller.';
+
+  @override
   String get appointmentSelectServiceRequired =>
       'Selecciona un servicio para continuar.';
 
