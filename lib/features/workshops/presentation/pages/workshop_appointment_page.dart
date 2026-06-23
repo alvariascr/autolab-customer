@@ -315,10 +315,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
             );
-
-            if (context.mounted) {
-              _goToWorkshopProfileOrHome(context);
-            }
           } on LaropayCheckoutLaunchException catch (error) {
             if (context.mounted) {
               _showAppointmentMessage(
