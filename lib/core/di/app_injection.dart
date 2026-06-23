@@ -13,6 +13,7 @@ import '../../features/appointments/presentation/cubit/my_appointments_cubit.dar
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
+import '../../features/payments/application/laropay_checkout_launcher.dart';
 import '../../features/payments/data/datasources/laropay_link_remote_data_source.dart';
 import '../../features/payments/data/datasources/laropay_link_remote_data_source_impl.dart';
 import '../../features/payments/data/repositories/laropay_link_repository_impl.dart';
@@ -123,6 +124,12 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<GenerateLaropayLink>(
     () => GenerateLaropayLink(sl<LaropayLinkRepository>()),
+  );
+  sl.registerLazySingleton<LaropayCheckoutLauncher>(
+    () => LaropayCheckoutLauncher(
+      generateLaropayLink: sl<GenerateLaropayLink>(),
+      supabase: sl<SupabaseClient>(),
+    ),
   );
   sl.registerLazySingleton<WorkshopRemoteDataSource>(
     () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),

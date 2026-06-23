@@ -7,13 +7,13 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
-import 'laropay_checkout_page.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({super.key, required this.workshopId});
@@ -253,22 +253,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
   }
 
-  String _appointmentTotalLabel(AppointmentState state, AppLocalizations l10n) {
-    final servicePrice = state.selectedService?.sellingPrice ?? 0;
-    final productsTotal = state.selectedProducts.fold<double>(
-      0,
-      (total, item) =>
-          total + ((item.product.sellingPrice ?? 0) * item.quantity),
-    );
-    final hasPricelessItems =
-        state.selectedService?.sellingPrice == null ||
-        state.selectedProducts.any((item) => item.product.sellingPrice == null);
-
-    return hasPricelessItems
-        ? l10n.appointmentPriceToConfirm
-        : formatProductPrice(servicePrice + productsTotal);
-  }
-
   Future<void> _openGarage(BuildContext context) async {
     final cubit = context.read<AppointmentCubit>();
     await Navigator.of(
@@ -326,23 +310,34 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       if (appointmentId != null) {
         if (submitState.selectedPaymentMethod ==
             AppointmentPaymentMethod.card) {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => LaropayCheckoutPage(
-                appointmentId: appointmentId,
-                amountLabel: _appointmentTotalLabel(submitState, l10n),
-                workshopName: _workshopName(submitState),
-                onClose: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                    return;
-                  }
+          try {
+            await sl<LaropayCheckoutLauncher>().launch(
+              appointmentId: appointmentId,
+              workshopName: _workshopName(submitState),
+            );
 
-                  _goToWorkshopProfileOrHome(context);
-                },
-              ),
-            ),
-          );
+            if (context.mounted) {
+              _goToWorkshopProfileOrHome(context);
+            }
+          } on LaropayCheckoutLaunchException catch (error) {
+            if (context.mounted) {
+              _showAppointmentMessage(
+                context,
+                message: error.message,
+                type: _AppointmentMessageType.error,
+              );
+              _goToWorkshopProfileOrHome(context);
+            }
+          } catch (_) {
+            if (context.mounted) {
+              _showAppointmentMessage(
+                context,
+                message: 'No fue posible iniciar el pago con Laropay.',
+                type: _AppointmentMessageType.error,
+              );
+              _goToWorkshopProfileOrHome(context);
+            }
+          }
         } else {
           _showAppointmentMessage(
             context,
