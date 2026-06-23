@@ -576,7 +576,15 @@ function numberValue(value: unknown) {
 }
 
 function hasStoredValue(value: unknown) {
-  return value !== null && value !== undefined && stringValue(value) !== "";
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.trim() !== "";
+  }
+
+  return typeof value === "number";
 }
 
 function trimOrNull(value: unknown) {
