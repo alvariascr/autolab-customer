@@ -393,7 +393,7 @@
   "serviceDetailAddProductAction": "Agregar producto",
   "serviceDetailScheduleAction": "Agendar servicio",
   "productDetailAvailableLabel": "Disponibles",
-  "productDetailAvailableUnits": "{count} unidades",
+  "productDetailAvailableUnits": "{count, plural, =1{1 unidad} other{{count} unidades}}",
   "@productDetailAvailableUnits": {
     "placeholders": {
       "count": {}

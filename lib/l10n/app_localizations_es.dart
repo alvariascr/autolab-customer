@@ -1209,7 +1209,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String productDetailAvailableUnits(Object count) {
-    return '$count unidades';
+    final countNumber = count is num ? count : num.tryParse('$count') ?? 0;
+
+    return intl.Intl.pluralLogic(
+      countNumber,
+      locale: localeName,
+      one: '1 unidad',
+      other: '$count unidades',
+    );
   }
 
   @override

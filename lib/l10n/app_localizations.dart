@@ -2227,7 +2227,7 @@ abstract class AppLocalizations {
   /// No description provided for @productDetailAvailableUnits.
   ///
   /// In es, this message translates to:
-  /// **'{count} unidades'**
+  /// **'{count, plural, =1{1 unidad} other{{count} unidades}}'**
   String productDetailAvailableUnits(Object count);
 
   /// No description provided for @productDetailQuantityLabel.
