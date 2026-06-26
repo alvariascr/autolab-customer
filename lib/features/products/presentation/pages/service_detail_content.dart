@@ -5,6 +5,8 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../workshops/application/appointment_state.dart';
+import '../../../workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/usecases/get_additional_products_by_workshop.dart';
 import '../widgets/product_image.dart';
@@ -22,6 +24,7 @@ class ServiceDetailContent extends StatefulWidget {
 class _ServiceDetailContentState extends State<ServiceDetailContent> {
   Future<List<Product>>? _relatedProductsFuture;
   final Map<String, int> _selectedQuantities = {};
+  List<Product> _relatedProducts = const [];
   bool _includeProducts = false;
   bool _isFavorite = false;
 
@@ -30,10 +33,12 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
       widget.service.workshopId,
     );
 
-    return result.fold(
+    final products = result.fold(
       (failure) => throw StateError(failure.toString()),
       (products) => products,
     );
+    _relatedProducts = products;
+    return products;
   }
 
   void _ensureRelatedProductsLoaded() {
@@ -171,6 +176,10 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                           onPressed: () {
                             context.push(
                               '/workshops/${service.workshopId}/appointments/new',
+                              extra: WorkshopAppointmentInitialSelection(
+                                service: service,
+                                products: _selectedAppointmentProducts(),
+                              ),
                             );
                           },
                           icon: const Icon(Icons.event_available_outlined),
@@ -205,6 +214,27 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
         _selectedQuantities[product.id] = nextQuantity;
       }
     });
+  }
+
+  List<AppointmentSelectedProduct> _selectedAppointmentProducts() {
+    if (!_includeProducts || _selectedQuantities.isEmpty) {
+      return const [];
+    }
+
+    final productsById = {
+      for (final product in _relatedProducts) product.id: product,
+    };
+
+    return _selectedQuantities.entries
+        .where((entry) => entry.value > 0)
+        .where((entry) => productsById.containsKey(entry.key))
+        .map((entry) {
+          return AppointmentSelectedProduct(
+            product: productsById[entry.key]!,
+            quantity: entry.value,
+          );
+        })
+        .toList(growable: false);
   }
 }
 

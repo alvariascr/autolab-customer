@@ -105,7 +105,15 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return WorkshopAppointmentPage(workshopId: workshopId);
+          final initialSelection =
+              state.extra is WorkshopAppointmentInitialSelection
+              ? state.extra! as WorkshopAppointmentInitialSelection
+              : null;
+
+          return WorkshopAppointmentPage(
+            workshopId: workshopId,
+            initialSelection: initialSelection,
+          );
         },
       ),
       GoRoute(
