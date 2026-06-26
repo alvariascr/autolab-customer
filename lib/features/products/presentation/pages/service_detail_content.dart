@@ -20,16 +20,10 @@ class ServiceDetailContent extends StatefulWidget {
 }
 
 class _ServiceDetailContentState extends State<ServiceDetailContent> {
-  late final Future<List<Product>> _relatedProductsFuture;
+  Future<List<Product>>? _relatedProductsFuture;
   final Map<String, int> _selectedQuantities = {};
   bool _includeProducts = false;
   bool _isFavorite = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _relatedProductsFuture = _loadRelatedProducts();
-  }
 
   Future<List<Product>> _loadRelatedProducts() async {
     final result = await sl<GetAdditionalProductsByWorkshop>()(
@@ -40,6 +34,10 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
       (failure) => throw StateError(failure.toString()),
       (products) => products,
     );
+  }
+
+  void _ensureRelatedProductsLoaded() {
+    _relatedProductsFuture ??= _loadRelatedProducts();
   }
 
   @override
@@ -134,6 +132,9 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                         onChanged: (value) {
                           setState(() {
                             _includeProducts = value;
+                            if (value) {
+                              _ensureRelatedProductsLoaded();
+                            }
                             if (!value) {
                               _selectedQuantities.clear();
                             }
@@ -149,7 +150,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                                   top: AutolabCustomer.spacingSmd,
                                 ),
                                 child: _RelatedProductsList(
-                                  future: _relatedProductsFuture,
+                                  future: _relatedProductsFuture!,
                                   quantities: _selectedQuantities,
                                   onQuantityChanged: _changeQuantity,
                                 ),
