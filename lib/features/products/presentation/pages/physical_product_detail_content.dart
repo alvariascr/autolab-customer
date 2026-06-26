@@ -31,6 +31,7 @@ class _PhysicalProductDetailContentState
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
     final maxWidth = AutolabCustomer.isTabletWidth(context) ? 720.0 : 560.0;
     final hasStock = _availableStock > 0;
+    final productTypeLabel = _localizedItemTypeLabel(product.itemType, l10n);
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
@@ -89,9 +90,7 @@ class _PhysicalProductDetailContentState
                       const SizedBox(height: AutolabCustomer.spacingMd),
                       _PurchaseSummary(
                         availableStock: _availableStock,
-                        typeLabel: product.itemType.trim().isEmpty
-                            ? l10n.productDetailTypeFallback
-                            : product.itemType.trim(),
+                        typeLabel: productTypeLabel,
                       ),
                       const SizedBox(height: AutolabCustomer.spacingLg),
                       _ProductInfoCard(product: product),
@@ -182,6 +181,17 @@ class _PhysicalProductDetailContentState
         ],
       ),
     );
+  }
+
+  String _localizedItemTypeLabel(String itemType, AppLocalizations l10n) {
+    switch (itemType.trim().toLowerCase()) {
+      case 'product':
+        return l10n.productDetailTypeFallback;
+      case 'service':
+        return l10n.mapFilterService;
+      default:
+        return l10n.productDetailTypeFallback;
+    }
   }
 }
 
