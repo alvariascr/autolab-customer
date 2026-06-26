@@ -51,6 +51,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
     final l10n = AppLocalizations.of(context)!;
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
     final maxWidth = AutolabCustomer.isTabletWidth(context) ? 720.0 : 560.0;
+    final workshopId = service.workshopId.trim();
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
@@ -173,15 +174,17 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                         ),
                         child: ElevatedButton.icon(
                           style: AutolabCustomer.primaryButton,
-                          onPressed: () {
-                            context.push(
-                              '/workshops/${service.workshopId}/appointments/new',
-                              extra: WorkshopAppointmentInitialSelection(
-                                service: service,
-                                products: _selectedAppointmentProducts(),
-                              ),
-                            );
-                          },
+                          onPressed: workshopId.isEmpty
+                              ? null
+                              : () {
+                                  context.push(
+                                    '/workshops/$workshopId/appointments/new',
+                                    extra: WorkshopAppointmentInitialSelection(
+                                      service: service,
+                                      products: _selectedAppointmentProducts(),
+                                    ),
+                                  );
+                                },
                           icon: const Icon(Icons.event_available_outlined),
                           label: Text(
                             l10n.serviceDetailScheduleAction,
