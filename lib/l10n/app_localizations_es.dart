@@ -301,7 +301,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Muy pronto podrás revisar tus productos desde aquí.';
 
   @override
-  String get navigationProfile => 'Perfil';
+  String get navigationProfile => 'Mi garaje';
 
   @override
   String get customerOnboardingSlideVehicleTitle =>
@@ -1176,6 +1176,76 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get workshopProfileProductsLoadError =>
       'No fue posible cargar los productos de este taller.';
+
+  @override
+  String get serviceDetailWorkshopFallback => 'Taller Autolab';
+
+  @override
+  String get serviceDetailDescriptionTitle => 'Descripción';
+
+  @override
+  String get serviceDetailDescriptionFallback =>
+      'Consulta los detalles de este servicio directamente con el taller.';
+
+  @override
+  String get serviceDetailAdditionalProductsTitle => 'Productos adicionales';
+
+  @override
+  String get serviceDetailProductsLoadError =>
+      'No fue posible cargar los productos relacionados.';
+
+  @override
+  String get serviceDetailProductsEmpty =>
+      'No encontramos productos relacionados con este servicio.';
+
+  @override
+  String get serviceDetailAddProductAction => 'Agregar producto';
+
+  @override
+  String get serviceDetailScheduleAction => 'Agendar servicio';
+
+  @override
+  String get productDetailAvailableLabel => 'Disponibles';
+
+  @override
+  String productDetailAvailableUnits(Object count) {
+    return '$count unidades';
+  }
+
+  @override
+  String get productDetailQuantityLabel => 'Cantidad';
+
+  @override
+  String get productDetailTypeLabel => 'Tipo';
+
+  @override
+  String get productDetailTypeFallback => 'Producto';
+
+  @override
+  String get productDetailInfoTitle => 'Información del producto';
+
+  @override
+  String get productDetailCategoryLabel => 'Categoría';
+
+  @override
+  String get productDetailBrandLabel => 'Marca';
+
+  @override
+  String get productDetailNotAvailable => 'N/D';
+
+  @override
+  String get productDetailDescriptionFallback =>
+      'Consulta los detalles de este producto directamente con el taller.';
+
+  @override
+  String get productDetailBuyAction => 'Comprar';
+
+  @override
+  String get productDetailAddToCartAction => 'Agregar al carrito';
+
+  @override
+  String get productDetailCartComingSoon =>
+      'El carrito estará disponible próximamente.';
 
   @override
   String get appointmentSelectServiceRequired =>

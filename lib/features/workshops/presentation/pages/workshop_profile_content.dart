@@ -46,8 +46,6 @@ class _WorkshopProfileContent extends StatelessWidget {
                         ),
                         const SizedBox(height: AutolabCustomer.spacingMd),
                         _ProductsSection(workshopId: workshop.id),
-                        const SizedBox(height: AutolabCustomer.spacingMd),
-                        _ScheduleFooterButton(workshopId: workshop.id),
                       ],
                     ),
                   ),
@@ -56,51 +54,6 @@ class _WorkshopProfileContent extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ScheduleFooterButton extends StatelessWidget {
-  const _ScheduleFooterButton({required this.workshopId});
-
-  final String workshopId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return SizedBox(
-      width: double.infinity,
-      height: AutolabCustomer.responsiveDouble(
-        context,
-        compact: 48,
-        regular: 54,
-        tablet: 60,
-      ),
-      child: ElevatedButton(
-        onPressed: () =>
-            context.push(_ProfileActions.appointmentRoute(workshopId)),
-        style: AutolabCustomer.primaryButton.copyWith(
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-            ),
-          ),
-        ),
-        child: Text(
-          l10n.appointmentNextAction,
-          style: AutolabCustomer.h3.copyWith(
-            color: AutolabCustomer.white,
-            fontSize: AutolabCustomer.responsiveDouble(
-              context,
-              compact: 16,
-              regular: 18,
-              tablet: 20,
-            ),
-            fontWeight: FontWeight.w900,
-          ),
-        ),
       ),
     );
   }

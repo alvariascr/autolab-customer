@@ -283,8 +283,15 @@ class _AutolabLogoPainter extends CustomPainter {
   ];
 }
 
-class _ServiceCategories extends StatelessWidget {
+class _ServiceCategories extends StatefulWidget {
   const _ServiceCategories();
+
+  @override
+  State<_ServiceCategories> createState() => _ServiceCategoriesState();
+}
+
+class _ServiceCategoriesState extends State<_ServiceCategories> {
+  int? _selectedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -292,20 +299,35 @@ class _ServiceCategories extends StatelessWidget {
     final colors = _HomeColors.of(context);
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
     final items = [
-      _ServiceCategory(l10n.homeServiceBalance, Icons.car_repair_outlined),
-      _ServiceCategory(l10n.homeServiceTow, Icons.local_shipping_outlined),
-      _ServiceCategory(l10n.homeServiceTires, Icons.tire_repair_outlined),
+      _ServiceCategory(
+        l10n.homeServiceBalance,
+        Icons.car_repair_outlined,
+        assetIcon: 'assets/images/icons/balanceo.png',
+      ),
+      _ServiceCategory(
+        l10n.homeServiceTow,
+        Icons.local_shipping_outlined,
+        assetIcon: 'assets/images/icons/grua.png',
+      ),
+      _ServiceCategory(
+        l10n.homeServiceTires,
+        Icons.tire_repair_outlined,
+        assetIcon: 'assets/images/icons/llantas.png',
+      ),
       _ServiceCategory(
         l10n.homeServiceGeneralReview,
         Icons.oil_barrel_outlined,
+        assetIcon: 'assets/images/icons/revision_general.png',
       ),
       _ServiceCategory(
         l10n.homeServiceElectricMechanic,
         Icons.electric_car_outlined,
+        assetIcon: 'assets/images/icons/mecanica_electrica.png',
       ),
       _ServiceCategory(
         l10n.homeServiceBattery,
-        Icons.battery_charging_full_outlined,
+        Icons.battery_unknown_outlined,
+        assetIcon: 'assets/images/icons/bateria_de_coche.png',
       ),
     ];
     final itemWidth = AutolabCustomer.responsiveDouble(
@@ -342,26 +364,55 @@ class _ServiceCategories extends StatelessWidget {
         separatorBuilder: (_, _) => SizedBox(width: separatorWidth),
         itemBuilder: (context, index) {
           final item = items[index];
+          final isSelected = _selectedIndex == index;
+          final itemColor = isSelected
+              ? AutolabCustomer.primary
+              : AutolabCustomer.customerTextColor(context);
 
-          return SizedBox(
-            width: itemWidth,
-            child: Column(
-              children: [
-                const SizedBox(height: 1),
-                Icon(item.icon, color: AutolabCustomer.primary, size: iconSize),
-                const SizedBox(height: AutolabCustomer.spacingSm),
-                Text(
-                  item.label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AutolabCustomer.caption.copyWith(
-                    color: colors.text,
-                    fontWeight: FontWeight.w500,
-                    height: 1.05,
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              setState(() {
+                _selectedIndex = isSelected ? null : index;
+              });
+            },
+            child: SizedBox(
+              width: itemWidth,
+              child: Column(
+                children: [
+                  const SizedBox(height: 1),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: item.assetIcon != null
+                        ? ImageIcon(
+                            AssetImage(item.assetIcon!),
+                            key: ValueKey('${item.assetIcon}-$isSelected'),
+                            color: itemColor,
+                            size: iconSize,
+                          )
+                        : Icon(
+                            item.icon,
+                            key: ValueKey(isSelected),
+                            color: itemColor,
+                            size: iconSize,
+                          ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: AutolabCustomer.spacingSm),
+                  Text(
+                    item.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AutolabCustomer.caption.copyWith(
+                      color: isSelected ? AutolabCustomer.primary : colors.text,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      height: 1.05,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -371,10 +422,11 @@ class _ServiceCategories extends StatelessWidget {
 }
 
 class _ServiceCategory {
-  const _ServiceCategory(this.label, this.icon);
+  const _ServiceCategory(this.label, this.icon, {this.assetIcon});
 
   final String label;
   final IconData icon;
+  final String? assetIcon;
 }
 
 class _PromotionsSection extends StatelessWidget {
