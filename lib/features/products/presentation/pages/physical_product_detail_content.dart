@@ -114,18 +114,15 @@ class _PhysicalProductDetailContentState
                           tablet: 58,
                         ),
                         child: ElevatedButton.icon(
-                          style: AutolabCustomer.primaryButton,
-                          onPressed: hasStock
-                              ? () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        l10n.productDetailCartComingSoon,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              : null,
+                          style: AutolabCustomer.primaryButton.copyWith(
+                            backgroundColor: const WidgetStatePropertyAll(
+                              AutolabCustomer.primary,
+                            ),
+                            foregroundColor: const WidgetStatePropertyAll(
+                              AutolabCustomer.white,
+                            ),
+                          ),
+                          onPressed: null,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailBuyAction,
@@ -151,17 +148,7 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: hasStock
-                              ? () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        l10n.productDetailCartComingSoon,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              : null,
+                          onPressed: null,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailAddToCartAction,
