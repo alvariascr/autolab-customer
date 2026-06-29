@@ -48,7 +48,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   Future<void> load(
     String workshopId, {
     Product? initialService,
-    List<AppointmentSelectedProduct> initialProducts = const [],
+    List<AppointmentSelectedProduct>? initialProducts,
   }) async {
     emit(
       state.copyWith(
@@ -78,17 +78,19 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
   void _applyInitialSelection({
     Product? initialService,
-    List<AppointmentSelectedProduct> initialProducts = const [],
+    List<AppointmentSelectedProduct>? initialProducts,
   }) {
-    if (initialService == null && initialProducts.isEmpty) {
+    final products = initialProducts ?? const <AppointmentSelectedProduct>[];
+
+    if (initialService == null && products.isEmpty) {
       return;
     }
 
     emit(
       state.copyWith(
         selectedService: initialService,
-        includeProducts: initialProducts.isNotEmpty,
-        selectedProducts: initialProducts,
+        includeProducts: products.isNotEmpty,
+        selectedProducts: products,
         clearSelectedDate: true,
         clearSelectedTime: true,
       ),

@@ -41,7 +41,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         ..load(
           widget.workshopId,
           initialService: widget.initialSelection?.service,
-          initialProducts: widget.initialSelection?.products ?? const [],
+          initialProducts: widget.initialSelection?.products,
         ),
       child: BlocBuilder<AppointmentCubit, AppointmentState>(
         builder: (context, state) {
