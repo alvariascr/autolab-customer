@@ -170,6 +170,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                             _includeProducts = value;
                             if (!value) {
                               _selectedQuantities.clear();
+                              _relatedProductsError = null;
                             }
                           });
                           if (value) {
