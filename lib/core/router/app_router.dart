@@ -70,7 +70,13 @@ class AppRouter {
       ),
       GoRoute(
         path: '/home-customer',
-        builder: (context, state) => const CustomerNavigationShell(),
+        builder: (context, state) {
+          final initialIndex = state.uri.queryParameters['tab'] == 'cart'
+              ? 3
+              : 0;
+
+          return CustomerNavigationShell(initialIndex: initialIndex);
+        },
       ),
       GoRoute(
         path: '/appointments',

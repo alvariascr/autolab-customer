@@ -1208,15 +1208,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get productDetailAvailableLabel => 'Disponibles';
 
   @override
-  String productDetailAvailableUnits(Object count) {
-    final countNumber = count is num ? count : num.tryParse('$count') ?? 0;
-
-    return intl.Intl.pluralLogic(
-      countNumber,
+  String productDetailAvailableUnits(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
       locale: localeName,
-      one: '1 unidad',
       other: '$count unidades',
+      one: '1 unidad',
     );
+    return '$_temp0';
   }
 
   @override

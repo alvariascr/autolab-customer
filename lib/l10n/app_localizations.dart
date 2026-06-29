@@ -2228,7 +2228,7 @@ abstract class AppLocalizations {
   ///
   /// In es, this message translates to:
   /// **'{count, plural, =1{1 unidad} other{{count} unidades}}'**
-  String productDetailAvailableUnits(Object count);
+  String productDetailAvailableUnits(num count);
 
   /// No description provided for @productDetailQuantityLabel.
   ///

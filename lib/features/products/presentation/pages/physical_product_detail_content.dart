@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -121,7 +122,8 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: null,
+                          onPressed: () =>
+                              context.go('/home-customer?tab=cart'),
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailBuyAction,
@@ -147,7 +149,14 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: null,
+                          onPressed: () {
+                            final workshopId = product.workshopId.trim();
+                            context.go(
+                              workshopId.isEmpty
+                                  ? '/home-customer'
+                                  : '/workshops/$workshopId',
+                            );
+                          },
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailAddToCartAction,
