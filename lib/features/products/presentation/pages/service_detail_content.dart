@@ -101,7 +101,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
               horizontalMargin,
               0,
               horizontalMargin,
-              AutolabCustomer.spacingLg,
+              0,
             ),
             sliver: SliverToBoxAdapter(
               child: Center(
@@ -178,63 +178,169 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                           }
                         },
                       ),
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 240),
-                        curve: Curves.easeOutCubic,
-                        child: _includeProducts
-                            ? Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AutolabCustomer.spacingSmd,
-                                ),
-                                child: _RelatedProductsList(
-                                  products: _loadedRelatedProducts,
-                                  isLoading: _relatedProductsFuture != null,
-                                  hasError: _relatedProductsError != null,
-                                  quantities: _selectedQuantities,
-                                  onQuantityChanged: _changeQuantity,
-                                ),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingLg),
-                      SizedBox(
-                        width: double.infinity,
-                        height: AutolabCustomer.responsiveDouble(
-                          context,
-                          compact: 50,
-                          regular: 54,
-                          tablet: 58,
-                        ),
-                        child: ElevatedButton.icon(
-                          style: AutolabCustomer.primaryButton,
-                          onPressed: workshopId.isEmpty
-                              ? null
-                              : () {
-                                  context.push(
-                                    '/workshops/$workshopId/appointments/new',
-                                    extra: WorkshopAppointmentInitialSelection(
-                                      service: service,
-                                      products: _selectedAppointmentProducts(),
-                                    ),
-                                  );
-                                },
-                          icon: const Icon(Icons.event_available_outlined),
-                          label: Text(
-                            l10n.serviceDetailScheduleAction,
-                            style: AutolabCustomer.bodyLarge.copyWith(
-                              color: AutolabCustomer.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
             ),
           ),
+          ..._relatedProductSlivers(context, horizontalMargin, maxWidth),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalMargin,
+              AutolabCustomer.spacingLg,
+              horizontalMargin,
+              AutolabCustomer.spacingLg,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: AutolabCustomer.responsiveDouble(
+                      context,
+                      compact: 50,
+                      regular: 54,
+                      tablet: 58,
+                    ),
+                    child: ElevatedButton.icon(
+                      style: AutolabCustomer.primaryButton,
+                      onPressed: workshopId.isEmpty
+                          ? null
+                          : () {
+                              context.push(
+                                '/workshops/$workshopId/appointments/new',
+                                extra: WorkshopAppointmentInitialSelection(
+                                  service: service,
+                                  products: _selectedAppointmentProducts(),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.event_available_outlined),
+                      label: Text(
+                        l10n.serviceDetailScheduleAction,
+                        style: AutolabCustomer.bodyLarge.copyWith(
+                          color: AutolabCustomer.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  List<Widget> _relatedProductSlivers(
+    BuildContext context,
+    double horizontalMargin,
+    double maxWidth,
+  ) {
+    if (!_includeProducts) {
+      return const [];
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_relatedProductsFuture != null) {
+      return [
+        _relatedProductsMessageSliver(
+          horizontalMargin: horizontalMargin,
+          maxWidth: maxWidth,
+          child: const Padding(
+            padding: EdgeInsets.all(AutolabCustomer.spacingLg),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ),
+      ];
+    }
+
+    if (_relatedProductsError != null) {
+      return [
+        _relatedProductsMessageSliver(
+          horizontalMargin: horizontalMargin,
+          maxWidth: maxWidth,
+          child: _ProductsMessage(
+            icon: Icons.error_outline_rounded,
+            message: l10n.serviceDetailProductsLoadError,
+          ),
+        ),
+      ];
+    }
+
+    final products = _loadedRelatedProducts ?? const <Product>[];
+    if (products.isEmpty) {
+      return [
+        _relatedProductsMessageSliver(
+          horizontalMargin: horizontalMargin,
+          maxWidth: maxWidth,
+          child: _ProductsMessage(
+            icon: Icons.inventory_2_outlined,
+            message: l10n.serviceDetailProductsEmpty,
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          horizontalMargin,
+          AutolabCustomer.spacingSmd,
+          horizontalMargin,
+          0,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final product = products[index];
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index < products.length - 1
+                        ? AutolabCustomer.spacingSm
+                        : 0,
+                  ),
+                  child: _RelatedProductTile(
+                    product: product,
+                    quantity: _selectedQuantities[product.id] ?? 0,
+                    onQuantityChanged: (delta) =>
+                        _changeQuantity(product, delta),
+                  ),
+                ),
+              ),
+            );
+          }, childCount: products.length),
+        ),
+      ),
+    ];
+  }
+
+  Widget _relatedProductsMessageSliver({
+    required double horizontalMargin,
+    required double maxWidth,
+    required Widget child,
+  }) {
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(
+        horizontalMargin,
+        AutolabCustomer.spacingSmd,
+        horizontalMargin,
+        0,
+      ),
+      sliver: SliverToBoxAdapter(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        ),
       ),
     );
   }
@@ -317,64 +423,6 @@ class _AdditionalProductsHeader extends StatelessWidget {
           activeTrackColor: AutolabCustomer.primary,
           onChanged: onChanged,
         ),
-      ],
-    );
-  }
-}
-
-class _RelatedProductsList extends StatelessWidget {
-  const _RelatedProductsList({
-    required this.products,
-    required this.isLoading,
-    required this.hasError,
-    required this.quantities,
-    required this.onQuantityChanged,
-  });
-
-  final List<Product>? products;
-  final bool isLoading;
-  final bool hasError;
-  final Map<String, int> quantities;
-  final void Function(Product product, int delta) onQuantityChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    if (isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(AutolabCustomer.spacingLg),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (hasError) {
-      return _ProductsMessage(
-        icon: Icons.error_outline_rounded,
-        message: l10n.serviceDetailProductsLoadError,
-      );
-    }
-
-    final loadedProducts = products ?? const <Product>[];
-    if (loadedProducts.isEmpty) {
-      return _ProductsMessage(
-        icon: Icons.inventory_2_outlined,
-        message: l10n.serviceDetailProductsEmpty,
-      );
-    }
-
-    return Column(
-      children: [
-        for (var index = 0; index < loadedProducts.length; index++) ...[
-          _RelatedProductTile(
-            product: loadedProducts[index],
-            quantity: quantities[loadedProducts[index].id] ?? 0,
-            onQuantityChanged: (delta) =>
-                onQuantityChanged(loadedProducts[index], delta),
-          ),
-          if (index < loadedProducts.length - 1)
-            const SizedBox(height: AutolabCustomer.spacingSm),
-        ],
       ],
     );
   }
