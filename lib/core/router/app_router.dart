@@ -70,7 +70,13 @@ class AppRouter {
       ),
       GoRoute(
         path: '/home-customer',
-        builder: (context, state) => const CustomerNavigationShell(),
+        builder: (context, state) {
+          final initialIndex = state.uri.queryParameters['tab'] == 'cart'
+              ? 3
+              : 0;
+
+          return CustomerNavigationShell(initialIndex: initialIndex);
+        },
       ),
       GoRoute(
         path: '/appointments',
@@ -105,7 +111,15 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return WorkshopAppointmentPage(workshopId: workshopId);
+          final initialSelection =
+              state.extra is WorkshopAppointmentInitialSelection
+              ? state.extra! as WorkshopAppointmentInitialSelection
+              : null;
+
+          return WorkshopAppointmentPage(
+            workshopId: workshopId,
+            initialSelection: initialSelection,
+          );
         },
       ),
       GoRoute(

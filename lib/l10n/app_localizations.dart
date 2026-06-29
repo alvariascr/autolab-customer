@@ -619,7 +619,7 @@ abstract class AppLocalizations {
   /// No description provided for @navigationProfile.
   ///
   /// In es, this message translates to:
-  /// **'Perfil'**
+  /// **'Mi garaje'**
   String get navigationProfile;
 
   /// No description provided for @customerOnboardingSlideVehicleTitle.
@@ -2169,6 +2169,132 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No fue posible cargar los productos de este taller.'**
   String get workshopProfileProductsLoadError;
+
+  /// No description provided for @serviceDetailWorkshopFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Taller Autolab'**
+  String get serviceDetailWorkshopFallback;
+
+  /// No description provided for @serviceDetailDescriptionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get serviceDetailDescriptionTitle;
+
+  /// No description provided for @serviceDetailDescriptionFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta los detalles de este servicio directamente con el taller.'**
+  String get serviceDetailDescriptionFallback;
+
+  /// No description provided for @serviceDetailAdditionalProductsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos adicionales'**
+  String get serviceDetailAdditionalProductsTitle;
+
+  /// No description provided for @serviceDetailProductsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible cargar los productos relacionados.'**
+  String get serviceDetailProductsLoadError;
+
+  /// No description provided for @serviceDetailProductsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos productos relacionados con este servicio.'**
+  String get serviceDetailProductsEmpty;
+
+  /// No description provided for @serviceDetailAddProductAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar producto'**
+  String get serviceDetailAddProductAction;
+
+  /// No description provided for @serviceDetailScheduleAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agendar servicio'**
+  String get serviceDetailScheduleAction;
+
+  /// No description provided for @productDetailAvailableLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponibles'**
+  String get productDetailAvailableLabel;
+
+  /// No description provided for @productDetailAvailableUnits.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 unidad} other{{count} unidades}}'**
+  String productDetailAvailableUnits(num count);
+
+  /// No description provided for @productDetailQuantityLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantidad'**
+  String get productDetailQuantityLabel;
+
+  /// No description provided for @productDetailTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get productDetailTypeLabel;
+
+  /// No description provided for @productDetailTypeFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto'**
+  String get productDetailTypeFallback;
+
+  /// No description provided for @productDetailInfoTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Información del producto'**
+  String get productDetailInfoTitle;
+
+  /// No description provided for @productDetailCategoryLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get productDetailCategoryLabel;
+
+  /// No description provided for @productDetailBrandLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get productDetailBrandLabel;
+
+  /// No description provided for @productDetailNotAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'N/D'**
+  String get productDetailNotAvailable;
+
+  /// No description provided for @productDetailDescriptionFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta los detalles de este producto directamente con el taller.'**
+  String get productDetailDescriptionFallback;
+
+  /// No description provided for @productDetailBuyAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprar'**
+  String get productDetailBuyAction;
+
+  /// No description provided for @productDetailAddToCartAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar al carrito'**
+  String get productDetailAddToCartAction;
+
+  /// No description provided for @productDetailCartComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'El carrito estará disponible próximamente.'**
+  String get productDetailCartComingSoon;
 
   /// No description provided for @appointmentSelectServiceRequired.
   ///

@@ -45,7 +45,11 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   final BookServiceAppointment _bookServiceAppointment;
   static final _availabilityCalculator = WorkshopAvailabilityCalculator();
 
-  Future<void> load(String workshopId) async {
+  Future<void> load(
+    String workshopId, {
+    Product? initialService,
+    List<AppointmentSelectedProduct>? initialProducts,
+  }) async {
     emit(
       state.copyWith(
         workshopId: workshopId,
@@ -65,6 +69,33 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       _loadVehicles(workshopId),
       _loadUnavailableDatesForMonth(workshopId, DateTime.now()),
     ]);
+
+    _applyInitialSelection(
+      initialService: initialService,
+      initialProducts: initialProducts,
+    );
+  }
+
+  void _applyInitialSelection({
+    Product? initialService,
+    List<AppointmentSelectedProduct>? initialProducts,
+  }) {
+    final products = initialProducts ?? const <AppointmentSelectedProduct>[];
+
+    if (initialService == null && products.isEmpty) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        selectedService: initialService,
+        includeProducts: products.isNotEmpty,
+        selectedProducts: products,
+        clearSelectedDate: true,
+        clearSelectedTime: true,
+      ),
+    );
+    _refreshAvailabilityForFocusedMonth();
   }
 
   Future<void> _loadWorkshop(String workshopId) async {

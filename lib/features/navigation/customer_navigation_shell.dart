@@ -7,7 +7,9 @@ import '../profile/presentation/page/profile_page.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
 class CustomerNavigationShell extends StatefulWidget {
-  const CustomerNavigationShell({super.key});
+  const CustomerNavigationShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<CustomerNavigationShell> createState() =>
@@ -18,6 +20,31 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   final HomeCustomerController _homeController = HomeCustomerController();
   int _navIndex = 0;
   int _pageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _setInitialIndex(widget.initialIndex);
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomerNavigationShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      _setInitialIndex(widget.initialIndex);
+    }
+  }
+
+  void _setInitialIndex(int index) {
+    _navIndex = index;
+    _pageIndex = switch (index) {
+      0 => 0,
+      1 => 1,
+      3 => 3,
+      4 => 2,
+      _ => 0,
+    };
+  }
 
   void _handleNavigation(int index) {
     if (index == 0) {

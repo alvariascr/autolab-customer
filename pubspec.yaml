@@ -69,6 +69,7 @@ flutter:
     - assets/images/splash/
     - assets/images/logo/
     - assets/images/onboarding/
+    - assets/images/icons/
   fonts:
     - family: Waxcel
       fonts:

@@ -25,19 +25,19 @@ class CustomBottomNavbar extends StatelessWidget {
         builder: (context, constraints) {
           final horizontalMargin = AutolabCustomer.responsiveDouble(
             context,
-            compact: AutolabCustomer.spacingSmd,
-            regular: AutolabCustomer.spacingScreen,
+            compact: AutolabCustomer.spacingSm,
+            regular: AutolabCustomer.spacingSmd,
             tablet: AutolabCustomer.spacingXl,
           );
           final itemWidth = AutolabCustomer.responsiveDouble(
             context,
-            compact: 42,
-            regular: 50,
+            compact: 44,
+            regular: 52,
             tablet: 58,
           );
-          final searchWidth = (constraints.maxWidth * 0.34).clamp(
-            86.0,
-            AutolabCustomer.isTabletWidth(context) ? 148.0 : 126.0,
+          final searchWidth = (constraints.maxWidth * 0.28).clamp(
+            76.0,
+            AutolabCustomer.isTabletWidth(context) ? 140.0 : 108.0,
           );
 
           return Padding(
@@ -81,8 +81,9 @@ class CustomBottomNavbar extends StatelessWidget {
                   onTap: () => onTap(3),
                 ),
                 _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  selectedIcon: Icons.person_rounded,
+                  icon: Icons.garage_outlined,
+                  selectedIcon: Icons.garage_rounded,
+                  assetIcon: 'assets/images/icons/garaje_privado.png',
                   label: l10n.navigationProfile,
                   isSelected: currentIndex == 4,
                   width: itemWidth,
@@ -105,10 +106,12 @@ class _NavItem extends StatelessWidget {
     required this.isSelected,
     required this.width,
     required this.onTap,
+    this.assetIcon,
   });
 
   final IconData icon;
   final IconData selectedIcon;
+  final String? assetIcon;
   final String label;
   final bool isSelected;
   final double width;
@@ -121,9 +124,15 @@ class _NavItem extends StatelessWidget {
         : AutolabCustomer.customerTextColor(context);
     final iconSize = AutolabCustomer.responsiveDouble(
       context,
-      compact: AutolabCustomer.iconMd,
-      regular: AutolabCustomer.iconLg - 4,
+      compact: AutolabCustomer.iconSm,
+      regular: AutolabCustomer.iconMd,
       tablet: AutolabCustomer.iconLg,
+    );
+    final labelSize = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 8.5,
+      regular: 9.5,
+      tablet: 11,
     );
 
     return GestureDetector(
@@ -134,11 +143,17 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isSelected ? selectedIcon : icon,
-              color: color,
-              size: iconSize,
-            ),
+            assetIcon != null
+                ? ImageIcon(
+                    AssetImage(assetIcon!),
+                    color: color,
+                    size: iconSize,
+                  )
+                : Icon(
+                    isSelected ? selectedIcon : icon,
+                    color: color,
+                    size: iconSize,
+                  ),
             const SizedBox(height: AutolabCustomer.spacingXs - 1),
             Text(
               label,
@@ -146,7 +161,7 @@ class _NavItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.caption.copyWith(
                 color: color,
-                fontSize: AutolabCustomer.isCompactWidth(context) ? 10 : null,
+                fontSize: labelSize,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
@@ -174,6 +189,12 @@ class _SearchNavItem extends StatelessWidget {
       context,
     );
     final iconColor = AutolabCustomer.customerOnInvertedSurfaceColor(context);
+    final buttonSize = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 40,
+      regular: 44,
+      tablet: AutolabCustomer.spacingXxl,
+    );
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -181,9 +202,16 @@ class _SearchNavItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
-        width: isSelected ? AutolabCustomer.spacingXxl : expandedWidth,
-        height: AutolabCustomer.spacingXxl,
-        margin: const EdgeInsets.only(bottom: AutolabCustomer.spacingMd),
+        width: isSelected ? buttonSize : expandedWidth,
+        height: buttonSize,
+        margin: EdgeInsets.only(
+          bottom: AutolabCustomer.responsiveDouble(
+            context,
+            compact: AutolabCustomer.spacingSmd,
+            regular: AutolabCustomer.spacingSmd,
+            tablet: AutolabCustomer.spacingMd,
+          ),
+        ),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(999),
@@ -192,7 +220,12 @@ class _SearchNavItem extends StatelessWidget {
           child: Icon(
             Icons.search_rounded,
             color: iconColor,
-            size: AutolabCustomer.iconLg - 5,
+            size: AutolabCustomer.responsiveDouble(
+              context,
+              compact: AutolabCustomer.iconSm,
+              regular: AutolabCustomer.iconMd,
+              tablet: AutolabCustomer.iconLg - 5,
+            ),
           ),
         ),
       ),
