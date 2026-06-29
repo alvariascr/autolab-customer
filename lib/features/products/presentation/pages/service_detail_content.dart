@@ -23,8 +23,9 @@ class ServiceDetailContent extends StatefulWidget {
 
 class _ServiceDetailContentState extends State<ServiceDetailContent> {
   Future<List<Product>>? _relatedProductsFuture;
+  List<Product>? _loadedRelatedProducts;
+  Object? _relatedProductsError;
   final Map<String, int> _selectedQuantities = {};
-  List<Product> _relatedProducts = const [];
   bool _includeProducts = false;
   bool _isFavorite = false;
 
@@ -37,12 +38,41 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
       (failure) => throw StateError(failure.toString()),
       (products) => products,
     );
-    _relatedProducts = products;
     return products;
   }
 
   void _ensureRelatedProductsLoaded() {
-    _relatedProductsFuture ??= _loadRelatedProducts();
+    if (_loadedRelatedProducts != null || _relatedProductsFuture != null) {
+      return;
+    }
+
+    setState(() {
+      _relatedProductsError = null;
+      _relatedProductsFuture = _loadRelatedProducts();
+    });
+
+    _relatedProductsFuture!.then<void>(
+      (products) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _loadedRelatedProducts = products;
+          _relatedProductsFuture = null;
+        });
+      },
+      onError: (Object error) {
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _relatedProductsError = error;
+          _relatedProductsFuture = null;
+        });
+      },
+    );
   }
 
   @override
@@ -138,13 +168,13 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                         onChanged: (value) {
                           setState(() {
                             _includeProducts = value;
-                            if (value) {
-                              _ensureRelatedProductsLoaded();
-                            }
                             if (!value) {
                               _selectedQuantities.clear();
                             }
                           });
+                          if (value) {
+                            _ensureRelatedProductsLoaded();
+                          }
                         },
                       ),
                       AnimatedSize(
@@ -156,7 +186,9 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                                   top: AutolabCustomer.spacingSmd,
                                 ),
                                 child: _RelatedProductsList(
-                                  future: _relatedProductsFuture!,
+                                  products: _loadedRelatedProducts,
+                                  isLoading: _relatedProductsFuture != null,
+                                  hasError: _relatedProductsError != null,
                                   quantities: _selectedQuantities,
                                   onQuantityChanged: _changeQuantity,
                                 ),
@@ -225,7 +257,8 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
     }
 
     final productsById = {
-      for (final product in _relatedProducts) product.id: product,
+      for (final product in _loadedRelatedProducts ?? const <Product>[])
+        product.id: product,
     };
 
     return _selectedQuantities.entries
@@ -290,12 +323,16 @@ class _AdditionalProductsHeader extends StatelessWidget {
 
 class _RelatedProductsList extends StatelessWidget {
   const _RelatedProductsList({
-    required this.future,
+    required this.products,
+    required this.isLoading,
+    required this.hasError,
     required this.quantities,
     required this.onQuantityChanged,
   });
 
-  final Future<List<Product>> future;
+  final List<Product>? products;
+  final bool isLoading;
+  final bool hasError;
   final Map<String, int> quantities;
   final void Function(Product product, int delta) onQuantityChanged;
 
@@ -303,46 +340,41 @@ class _RelatedProductsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return FutureBuilder<List<Product>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(AutolabCustomer.spacingLg),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(AutolabCustomer.spacingLg),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-        if (snapshot.hasError) {
-          return _ProductsMessage(
-            icon: Icons.error_outline_rounded,
-            message: l10n.serviceDetailProductsLoadError,
-          );
-        }
+    if (hasError) {
+      return _ProductsMessage(
+        icon: Icons.error_outline_rounded,
+        message: l10n.serviceDetailProductsLoadError,
+      );
+    }
 
-        final products = snapshot.data ?? const <Product>[];
-        if (products.isEmpty) {
-          return _ProductsMessage(
-            icon: Icons.inventory_2_outlined,
-            message: l10n.serviceDetailProductsEmpty,
-          );
-        }
+    final loadedProducts = products ?? const <Product>[];
+    if (loadedProducts.isEmpty) {
+      return _ProductsMessage(
+        icon: Icons.inventory_2_outlined,
+        message: l10n.serviceDetailProductsEmpty,
+      );
+    }
 
-        return Column(
-          children: [
-            for (var index = 0; index < products.length; index++) ...[
-              _RelatedProductTile(
-                product: products[index],
-                quantity: quantities[products[index].id] ?? 0,
-                onQuantityChanged: (delta) =>
-                    onQuantityChanged(products[index], delta),
-              ),
-              if (index < products.length - 1)
-                const SizedBox(height: AutolabCustomer.spacingSm),
-            ],
-          ],
-        );
-      },
+    return Column(
+      children: [
+        for (var index = 0; index < loadedProducts.length; index++) ...[
+          _RelatedProductTile(
+            product: loadedProducts[index],
+            quantity: quantities[loadedProducts[index].id] ?? 0,
+            onQuantityChanged: (delta) =>
+                onQuantityChanged(loadedProducts[index], delta),
+          ),
+          if (index < loadedProducts.length - 1)
+            const SizedBox(height: AutolabCustomer.spacingSm),
+        ],
+      ],
     );
   }
 }
