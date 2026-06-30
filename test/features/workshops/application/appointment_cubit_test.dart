@@ -83,7 +83,7 @@ void main() {
     'submitBooking calls backend transaction with selected service slot',
     () async {
       final service = _product(id: 'service-1', itemType: 'service');
-      final selectedDate = DateTime(2026, 6, 28);
+      final selectedDate = DateTime(2030, 6, 28);
 
       when(
         () => bookServiceAppointment(
@@ -126,7 +126,7 @@ void main() {
         () => bookServiceAppointment(
           workshopId: 'workshop-1',
           inventoryItemId: 'service-1',
-          scheduledDateTime: DateTime(2026, 6, 28, 6, 15),
+          scheduledDateTime: DateTime(2030, 6, 28, 6, 15),
           note: any(named: 'note'),
           vehicleId: null,
           garageVehicleId: null,
@@ -180,7 +180,7 @@ void main() {
         ),
       )
       ..selectService(service)
-      ..selectDate(DateTime(2026, 6, 28))
+      ..selectDate(DateTime(2030, 6, 28))
       ..selectTime('06:15');
 
     final appointmentId = await cubit.submitBooking();
@@ -191,7 +191,7 @@ void main() {
       () => bookServiceAppointment(
         workshopId: 'workshop-1',
         inventoryItemId: 'service-1',
-        scheduledDateTime: DateTime(2026, 6, 28, 6, 15),
+        scheduledDateTime: DateTime(2030, 6, 28, 6, 15),
         note: any(named: 'note'),
         vehicleId: null,
         garageVehicleId: 'garage-vehicle-1',

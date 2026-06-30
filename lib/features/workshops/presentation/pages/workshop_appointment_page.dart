@@ -16,9 +16,14 @@ import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
-  const WorkshopAppointmentPage({super.key, required this.workshopId});
+  const WorkshopAppointmentPage({
+    super.key,
+    required this.workshopId,
+    this.initialSelection,
+  });
 
   final String workshopId;
+  final WorkshopAppointmentInitialSelection? initialSelection;
 
   @override
   State<WorkshopAppointmentPage> createState() =>
@@ -35,7 +40,12 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<AppointmentCubit>()..load(widget.workshopId),
+      create: (_) => sl<AppointmentCubit>()
+        ..load(
+          widget.workshopId,
+          initialService: widget.initialSelection?.service,
+          initialProducts: widget.initialSelection?.products,
+        ),
       child: BlocBuilder<AppointmentCubit, AppointmentState>(
         builder: (context, state) {
           final l10n = AppLocalizations.of(context)!;
@@ -501,6 +511,16 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         ),
       );
   }
+}
+
+class WorkshopAppointmentInitialSelection {
+  const WorkshopAppointmentInitialSelection({
+    required this.service,
+    this.products = const [],
+  });
+
+  final Product service;
+  final List<AppointmentSelectedProduct> products;
 }
 
 enum _AppointmentMessageType { success, warning, error }
