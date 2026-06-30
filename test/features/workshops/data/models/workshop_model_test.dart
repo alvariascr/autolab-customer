@@ -150,5 +150,18 @@ void main() {
       expect(model.longitude, 0);
       expect(model.deliveryRadiusKm, 0);
     });
+
+    test('parsea active_employee_count cuando viene calculado desde RPC', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-3',
+        'name': 'Autolab Nicoya',
+        'business_hours': [],
+        'workshop_service_categories': [],
+        'workshop_payment_methods': [],
+        'active_employee_count': '4',
+      });
+
+      expect(model.activeEmployeeCount, 4);
+    });
   });
 }

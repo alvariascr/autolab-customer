@@ -77,6 +77,8 @@ declare
   v_order_number text;
   v_license_plate text;
   v_product record;
+  v_validated_products jsonb := '[]'::jsonb;
+  v_valid_product_count integer := 0;
   v_service_name text;
   v_is_inspection_service boolean := false;
 
@@ -345,31 +347,56 @@ begin
     select
       ii.id,
       ii.selling_price,
-      greatest(
-        1,
+      product_item.quantity
+    from (
+      select
         coalesce(
-          nullif(product_item.value ->> 'quantity', '')::integer,
-          1
-        )
-      ) as quantity
-    from jsonb_array_elements(p_products) as product_item(value)
+          nullif(value ->> 'inventoryItemId', ''),
+          nullif(value ->> 'inventory_item_id', ''),
+          nullif(value ->> 'id', '')
+        ) as raw_id,
+        case
+          when nullif(value ->> 'quantity', '') is null then 1
+          when (value ->> 'quantity') ~ '^-?[0-9]+$'
+            then (value ->> 'quantity')::integer
+          else 0
+        end as quantity
+      from jsonb_array_elements(p_products) as input(value)
+    ) as product_item
     join public.inventory_items ii
-      on ii.id = coalesce(
-        nullif(product_item.value ->> 'inventoryItemId', ''),
-        nullif(product_item.value ->> 'inventory_item_id', ''),
-        nullif(product_item.value ->> 'id', '')
-      )::uuid
+      on ii.id = case
+        when product_item.raw_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          then product_item.raw_id::uuid
+        else null
+      end
     where ii.workshop_id = p_workshop_id
       and ii.status = 'active'
       and ii.item_type <> 'service'
   loop
+    if v_product.quantity <= 0 then
+      raise exception using message = 'appointment_products_invalid';
+    end if;
+
     if v_product.selling_price is null or v_product.selling_price <= 0 then
       raise exception using message = 'appointment_product_price_required';
     end if;
 
+    v_valid_product_count := v_valid_product_count + 1;
+    v_validated_products :=
+      v_validated_products ||
+      jsonb_build_object(
+        'id', v_product.id,
+        'selling_price', v_product.selling_price,
+        'quantity', v_product.quantity
+      );
+
     v_products_total :=
       v_products_total + (v_product.selling_price * v_product.quantity);
   end loop;
+
+  if v_valid_product_count <> jsonb_array_length(p_products) then
+    raise exception using message = 'appointment_products_invalid';
+  end if;
 
   if jsonb_array_length(p_products) > 0 and v_products_total <= 0 then
     raise exception using message = 'appointment_products_invalid';
@@ -611,25 +638,11 @@ begin
 
   for v_product in
     select
-      ii.id,
-      ii.selling_price,
-      greatest(
-        1,
-        coalesce(
-          nullif(product_item.value ->> 'quantity', '')::integer,
-          1
-        )
-      ) as quantity
-    from jsonb_array_elements(p_products) as product_item(value)
-    join public.inventory_items ii
-      on ii.id = coalesce(
-        nullif(product_item.value ->> 'inventoryItemId', ''),
-        nullif(product_item.value ->> 'inventory_item_id', ''),
-        nullif(product_item.value ->> 'id', '')
-      )::uuid
-    where ii.workshop_id = p_workshop_id
-      and ii.status = 'active'
-      and ii.item_type <> 'service'
+      id,
+      selling_price,
+      quantity
+    from jsonb_to_recordset(v_validated_products)
+      as product_item(id uuid, selling_price numeric, quantity integer)
   loop
     insert into public.order_services (
       order_id,
@@ -666,5 +679,45 @@ begin
   return v_appointment_id;
 end;
 $function$;
+
+REVOKE ALL ON FUNCTION public.book_service_appointment(
+  uuid,
+  uuid,
+  date,
+  time without time zone,
+  jsonb,
+  text,
+  uuid,
+  uuid,
+  text,
+  text,
+  integer,
+  text,
+  fuel_type,
+  transmission_type,
+  text,
+  text
+)
+FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.book_service_appointment(
+  uuid,
+  uuid,
+  date,
+  time without time zone,
+  jsonb,
+  text,
+  uuid,
+  uuid,
+  text,
+  text,
+  integer,
+  text,
+  fuel_type,
+  transmission_type,
+  text,
+  text
+)
+TO authenticated;
 
 notify pgrst, 'reload schema';

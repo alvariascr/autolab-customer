@@ -2434,6 +2434,12 @@ abstract class AppLocalizations {
   /// **'Este taller no tiene productos adicionales disponibles.'**
   String get appointmentProductsEmpty;
 
+  /// No description provided for @appointmentProductsInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Uno o más productos seleccionados ya no están disponibles. Actualiza la selección e intenta nuevamente.'**
+  String get appointmentProductsInvalid;
+
   /// No description provided for @weekdaySunday.
   ///
   /// In es, this message translates to:
@@ -3627,6 +3633,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El pago está en revisión.'**
   String get myPurchasesUnknownMessage;
+
+  /// No description provided for @myPurchasesDefaultTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra de productos'**
+  String get myPurchasesDefaultTitle;
+
+  /// No description provided for @myPurchasesUnknownValue.
+  ///
+  /// In es, this message translates to:
+  /// **'N/D'**
+  String get myPurchasesUnknownValue;
 
   /// No description provided for @myPurchasesAmountLabel.
   ///

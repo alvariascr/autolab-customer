@@ -12,6 +12,7 @@ import '../../features/navigation/customer_navigation_shell.dart';
 import '../../features/onboarding/customer_onboarding_page.dart';
 import '../../features/payments/presentation/pages/my_purchases_page.dart';
 import '../../features/products/domain/entities/product.dart';
+import '../../features/products/domain/repositories/product_repository.dart';
 import '../../features/products/presentation/pages/product_detail_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
@@ -20,6 +21,7 @@ import '../../features/splash/startup_splash_page.dart';
 import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../features/workshops/presentation/pages/workshop_profile_page.dart';
 import '../../l10n/app_localizations.dart';
+import '../di/app_injection.dart';
 import 'app_redirect_guard.dart';
 import 'go_router_refresh_stream.dart';
 
@@ -124,14 +126,20 @@ class AppRouter {
           if (workshopId == null ||
               workshopId.isEmpty ||
               productId == null ||
-              productId.isEmpty ||
-              product == null ||
-              product.workshopId != workshopId ||
-              product.id != productId) {
+              productId.isEmpty) {
             return const _InvalidRoutePage();
           }
 
-          return ProductDetailPage(product: product);
+          if (product != null &&
+              product.workshopId == workshopId &&
+              product.id == productId) {
+            return ProductDetailPage(product: product);
+          }
+
+          return _ProductDetailRoutePage(
+            workshopId: workshopId,
+            productId: productId,
+          );
         },
       ),
       GoRoute(
@@ -154,6 +162,7 @@ class AppRouter {
 
           return WorkshopAppointmentPage(
             workshopId: workshopId,
+            initialServiceId: serviceId,
             initialSelection: initialSelection,
           );
         },
@@ -180,6 +189,48 @@ class AppRouter {
     required AuthSessionState authState,
     required String location,
   }) => _redirectGuard.redirectFor(authState: authState, location: location);
+}
+
+class _ProductDetailRoutePage extends StatelessWidget {
+  const _ProductDetailRoutePage({
+    required this.workshopId,
+    required this.productId,
+  });
+
+  final String workshopId;
+  final String productId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return FutureBuilder(
+      future: sl<ProductRepository>().getActiveProductsByWorkshop(workshopId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final product = snapshot.data?.fold<Product?>(
+          (_) => null,
+          (products) => products
+              .where((item) => item.id == productId)
+              .cast<Product?>()
+              .firstOrNull,
+        );
+
+        if (product == null) {
+          return Scaffold(
+            body: Center(child: Text(l10n.routerInvalidWorkshopId)),
+          );
+        }
+
+        return ProductDetailPage(product: product);
+      },
+    );
+  }
 }
 
 CustomTransitionPage<void> _authTransitionPage({

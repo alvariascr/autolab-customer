@@ -19,10 +19,12 @@ class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({
     super.key,
     required this.workshopId,
+    required this.initialServiceId,
     this.initialSelection,
   });
 
   final String workshopId;
+  final String initialServiceId;
   final WorkshopAppointmentInitialSelection? initialSelection;
 
   @override
@@ -39,6 +41,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       create: (_) => sl<AppointmentCubit>()
         ..load(
           widget.workshopId,
+          initialServiceId: widget.initialServiceId,
           initialService: widget.initialSelection?.service,
           initialProducts: widget.initialSelection?.products,
         ),
@@ -312,6 +315,11 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
             );
+            if (!context.mounted) {
+              return;
+            }
+
+            _goToWorkshopProfileOrHome(context);
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
               return;
@@ -541,6 +549,7 @@ String _appointmentSubmitErrorMessage(
     AppointmentSubmitError.vehicleNotOwned => l10n.appointmentVehicleNotOwned,
     AppointmentSubmitError.vehiclePlateRequiredForBooking =>
       l10n.appointmentVehiclePlateRequiredForBooking,
+    AppointmentSubmitError.productsInvalid => l10n.appointmentProductsInvalid,
     AppointmentSubmitError.bookingConfigurationFailed =>
       l10n.appointmentBookingConfigurationFailed,
     AppointmentSubmitError.bookingFailed => l10n.appointmentCreateFailed,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
@@ -9,6 +8,8 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../domain/entities/laropay_purchase.dart';
+import '../../domain/usecases/get_laropay_purchases.dart';
 
 class MyPurchasesPage extends StatefulWidget {
   const MyPurchasesPage({super.key, this.showBottomNavigation = true});
@@ -20,7 +21,7 @@ class MyPurchasesPage extends StatefulWidget {
 }
 
 class _MyPurchasesPageState extends State<MyPurchasesPage> {
-  late Future<List<_PurchaseRecord>> _future;
+  late Future<List<LaropayPurchase>> _future;
 
   @override
   void initState() {
@@ -36,39 +37,11 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     return nextFuture;
   }
 
-  Future<List<_PurchaseRecord>> _loadPurchases() async {
-    final user = sl<SupabaseClient>().auth.currentUser;
-    if (user == null) {
-      throw const _PurchaseLoadException();
-    }
-
-    final response = await sl<SupabaseClient>()
-        .from('laropay_payment_links')
-        .select('''
-          id,
-          internal_transaction_id,
-          amount,
-          currency_code,
-          detail,
-          link_id,
-          link_url,
-          status,
-          response_code,
-          response_description,
-          reject_reason,
-          auth_response_code,
-          created_at,
-          updated_at,
-          expires_at
-        ''')
-        .eq('user_id', user.id)
-        .order('created_at', ascending: false)
-        .limit(50);
-
-    return response
-        .whereType<Map>()
-        .map((item) => _PurchaseRecord.fromMap(Map<String, dynamic>.from(item)))
-        .toList(growable: false);
+  Future<List<LaropayPurchase>> _loadPurchases() async {
+    final result = await sl<GetLaropayPurchases>()();
+    return result.fold((_) => throw const _PurchaseLoadException(), (items) {
+      return items;
+    });
   }
 
   @override
@@ -100,7 +73,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         ),
       ),
       body: SafeArea(
-        child: FutureBuilder<List<_PurchaseRecord>>(
+        child: FutureBuilder<List<LaropayPurchase>>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -120,7 +93,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
               );
             }
 
-            final purchases = snapshot.data ?? const <_PurchaseRecord>[];
+            final purchases = snapshot.data ?? const <LaropayPurchase>[];
             if (purchases.isEmpty) {
               return _PurchaseMessageState(
                 icon: Icons.shopping_bag_outlined,
@@ -170,7 +143,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     );
   }
 
-  Future<void> _openPurchaseLink(_PurchaseRecord purchase) async {
+  Future<void> _openPurchaseLink(LaropayPurchase purchase) async {
     final linkUrl = purchase.linkUrl;
     final l10n = AppLocalizations.of(context)!;
 
@@ -214,8 +187,8 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 class _PurchaseCard extends StatelessWidget {
   const _PurchaseCard({required this.purchase, required this.onOpenLink});
 
-  final _PurchaseRecord purchase;
-  final ValueChanged<_PurchaseRecord> onOpenLink;
+  final LaropayPurchase purchase;
+  final ValueChanged<LaropayPurchase> onOpenLink;
 
   @override
   Widget build(BuildContext context) {
@@ -250,9 +223,10 @@ class _PurchaseCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        purchase.title,
+                        purchase.title(l10n),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                        textScaler: TextScaler.noScaling,
                         style: AutolabCustomer.bodyLarge.copyWith(
                           color: AutolabCustomer.customerTextColor(context),
                           fontWeight: FontWeight.w800,
@@ -284,12 +258,12 @@ class _PurchaseCard extends StatelessWidget {
             _PurchaseDetailRow(
               icon: Icons.calendar_month_outlined,
               label: l10n.myPurchasesDateLabel,
-              value: purchase.formattedCreatedAt,
+              value: purchase.formattedCreatedAt(l10n),
             ),
             _PurchaseDetailRow(
               icon: Icons.confirmation_number_outlined,
               label: l10n.myPurchasesReferenceLabel,
-              value: purchase.linkId.isEmpty ? purchase.id : purchase.linkId,
+              value: purchase.reference,
             ),
             if (purchase.canReopenLink) ...[
               const SizedBox(height: 14),
@@ -479,7 +453,7 @@ class _PurchaseViewState {
   final IconData icon;
 
   factory _PurchaseViewState.fromPurchase(
-    _PurchaseRecord purchase,
+    LaropayPurchase purchase,
     AppLocalizations l10n,
   ) {
     return switch (purchase.state) {
@@ -491,9 +465,7 @@ class _PurchaseViewState {
       ),
       _PurchaseState.rejected => _PurchaseViewState(
         label: l10n.myPurchasesRejectedStatus,
-        message: purchase.rejectReason.isEmpty
-            ? l10n.myPurchasesRejectedMessage
-            : purchase.rejectReason,
+        message: l10n.myPurchasesRejectedMessage,
         color: AutolabCustomer.error,
         icon: Icons.cancel_outlined,
       ),
@@ -521,36 +493,10 @@ class _PurchaseViewState {
 
 enum _PurchaseState { pending, approved, rejected, expired, unknown }
 
-class _PurchaseRecord {
-  _PurchaseRecord({
-    required this.id,
-    required this.amount,
-    required this.currencyCode,
-    required this.detail,
-    required this.linkId,
-    required this.status,
-    required this.responseCode,
-    required this.responseDescription,
-    required this.rejectReason,
-    required this.createdAt,
-    required this.expiresAt,
-    this.linkUrl,
-  });
-
-  final String id;
-  final double amount;
-  final String currencyCode;
-  final String detail;
-  final String linkId;
-  final String status;
-  final String responseCode;
-  final String responseDescription;
-  final String rejectReason;
-  final DateTime? createdAt;
-  final DateTime? expiresAt;
-  final Uri? linkUrl;
-
-  String get title => detail.isEmpty ? 'Compra de productos' : detail;
+extension _LaropayPurchaseView on LaropayPurchase {
+  String title(AppLocalizations l10n) {
+    return detail.isEmpty ? l10n.myPurchasesDefaultTitle : detail;
+  }
 
   bool get canReopenLink {
     return linkUrl != null && state == _PurchaseState.pending;
@@ -603,45 +549,20 @@ class _PurchaseRecord {
     return formatter.format(amount);
   }
 
-  String get formattedCreatedAt {
+  String formattedCreatedAt(AppLocalizations l10n) {
     final date = createdAt;
     if (date == null) {
-      return 'N/D';
+      return l10n.myPurchasesUnknownValue;
     }
 
     return DateFormat('dd/MM/yyyy h:mm a', 'es_CR').format(date.toLocal());
   }
 
-  factory _PurchaseRecord.fromMap(Map<String, dynamic> map) {
-    return _PurchaseRecord(
-      id: _stringValue(map['id']),
-      amount: _numberValue(map['amount']),
-      currencyCode: _stringValue(map['currency_code']).isEmpty
-          ? 'CRC'
-          : _stringValue(map['currency_code']),
-      detail: _stringValue(map['detail']),
-      linkId: _stringValue(map['link_id']),
-      linkUrl: Uri.tryParse(_stringValue(map['link_url'])),
-      status: _stringValue(map['status']),
-      responseCode: _stringValue(map['response_code']),
-      responseDescription: _stringValue(map['response_description']),
-      rejectReason: _stringValue(map['reject_reason']),
-      createdAt: DateTime.tryParse(_stringValue(map['created_at'])),
-      expiresAt: DateTime.tryParse(_stringValue(map['expires_at'])),
-    );
+  String get reference {
+    return linkId.isEmpty ? id : linkId;
   }
 }
 
 class _PurchaseLoadException implements Exception {
   const _PurchaseLoadException();
-}
-
-String _stringValue(Object? value) => value?.toString().trim() ?? '';
-
-double _numberValue(Object? value) {
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  return double.tryParse(_stringValue(value)) ?? 0;
 }

@@ -4,8 +4,7 @@ class AppointmentServiceClassifier {
   const AppointmentServiceClassifier._();
 
   static bool isInspectionService(Product service) {
-    return isInspectionText(service.name) ||
-        isInspectionText(service.categoryName);
+    return isInspectionText(service.name);
   }
 
   static bool isInspectionText(String value) {

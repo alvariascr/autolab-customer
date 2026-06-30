@@ -50,6 +50,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
   Future<void> load(
     String workshopId, {
+    String initialServiceId = '',
     Product? initialService,
     List<AppointmentSelectedProduct>? initialProducts,
   }) async {
@@ -67,7 +68,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     await Future.wait([
       _loadWorkshop(workshopId),
-      _loadServices(workshopId, serviceId: ''),
+      _loadServices(
+        workshopId,
+        serviceId: initialService?.id ?? initialServiceId,
+      ),
       _loadProducts(workshopId),
       _loadVehicles(workshopId),
       _loadUnavailableDatesForMonth(workshopId, DateTime.now()),
@@ -624,6 +628,14 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       final workshop = state.workshop;
       final selectedService = state.selectedService;
       if (workshop == null || selectedService == null) {
+        emit(
+          state.copyWith(
+            unavailableDates: const [],
+            unavailableTimesByDate: const {},
+            availableTimesByDate: const {},
+            availabilityStatus: AppointmentLoadStatus.initial,
+          ),
+        );
         return;
       }
 
@@ -663,6 +675,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         ),
       );
     } catch (_) {
+      if (requestId != _availabilityRequestId) {
+        return;
+      }
+
       emit(
         state.copyWith(
           unavailableDates: const [],
@@ -805,6 +821,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       AppointmentSubmitError.vehicleNotOwned => 'vehicle_not_owned',
       AppointmentSubmitError.vehiclePlateRequiredForBooking =>
         'vehicle_plate_required',
+      AppointmentSubmitError.productsInvalid => 'products_invalid',
       AppointmentSubmitError.vehiclePlateConflict => 'vehicle_plate_conflict',
       AppointmentSubmitError.bookingConfigurationFailed =>
         'booking_configuration_failed',
@@ -870,6 +887,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     if (rawMessage.contains('appointment_vehicle_required')) {
       return AppointmentSubmitError.vehiclePlateRequiredForBooking;
+    }
+
+    if (rawMessage.contains('appointment_products_invalid')) {
+      return AppointmentSubmitError.productsInvalid;
     }
 
     if (rawMessage.contains('appointment_vehicle_plate_conflict')) {

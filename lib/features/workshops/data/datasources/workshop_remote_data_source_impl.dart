@@ -83,10 +83,15 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
   }
 
   Future<int> _getActiveEmployeeCount(String workshopId) async {
-    final response = await client.rpc(
-      'get_workshop_active_employee_count',
-      params: {'p_workshop_id': workshopId},
-    );
+    Object? response;
+    try {
+      response = await client.rpc(
+        'get_workshop_active_employee_count',
+        params: {'p_workshop_id': workshopId},
+      );
+    } on PostgrestException {
+      return 0;
+    }
 
     if (response is int) {
       return response;

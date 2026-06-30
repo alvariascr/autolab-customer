@@ -1330,6 +1330,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este taller no tiene productos adicionales disponibles.';
 
   @override
+  String get appointmentProductsInvalid =>
+      'Uno o más productos seleccionados ya no están disponibles. Actualiza la selección e intenta nuevamente.';
+
+  @override
   String get weekdaySunday => 'Domingo';
 
   @override
@@ -2002,6 +2006,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesUnknownMessage => 'El pago está en revisión.';
+
+  @override
+  String get myPurchasesDefaultTitle => 'Compra de productos';
+
+  @override
+  String get myPurchasesUnknownValue => 'N/D';
 
   @override
   String get myPurchasesAmountLabel => 'Monto';

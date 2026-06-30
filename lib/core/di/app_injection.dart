@@ -14,11 +14,19 @@ import '../../features/auth/di/auth_injection.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
 import '../../features/payments/application/laropay_checkout_launcher.dart';
+import '../../features/payments/data/datasources/laropay_checkout_remote_data_source.dart';
 import '../../features/payments/data/datasources/laropay_link_remote_data_source.dart';
 import '../../features/payments/data/datasources/laropay_link_remote_data_source_impl.dart';
+import '../../features/payments/data/datasources/laropay_purchase_remote_data_source.dart';
+import '../../features/payments/data/repositories/laropay_checkout_repository_impl.dart';
 import '../../features/payments/data/repositories/laropay_link_repository_impl.dart';
+import '../../features/payments/data/repositories/laropay_purchase_repository_impl.dart';
+import '../../features/payments/domain/repositories/laropay_checkout_repository.dart';
 import '../../features/payments/domain/repositories/laropay_link_repository.dart';
+import '../../features/payments/domain/repositories/laropay_purchase_repository.dart';
 import '../../features/payments/domain/usecases/generate_laropay_link.dart';
+import '../../features/payments/domain/usecases/get_laropay_payment_context.dart';
+import '../../features/payments/domain/usecases/get_laropay_purchases.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
@@ -125,10 +133,34 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<GenerateLaropayLink>(
     () => GenerateLaropayLink(sl<LaropayLinkRepository>()),
   );
+  sl.registerLazySingleton<LaropayCheckoutRemoteDataSource>(
+    () => SupabaseLaropayCheckoutRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<LaropayCheckoutRepository>(
+    () => LaropayCheckoutRepositoryImpl(
+      remoteDataSource: sl<LaropayCheckoutRemoteDataSource>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+    ),
+  );
+  sl.registerLazySingleton<GetLaropayPaymentContext>(
+    () => GetLaropayPaymentContext(sl<LaropayCheckoutRepository>()),
+  );
+  sl.registerLazySingleton<LaropayPurchaseRemoteDataSource>(
+    () => SupabaseLaropayPurchaseRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<LaropayPurchaseRepository>(
+    () => LaropayPurchaseRepositoryImpl(
+      remoteDataSource: sl<LaropayPurchaseRemoteDataSource>(),
+      errorHandler: sl<GlobalErrorHandler>(),
+    ),
+  );
+  sl.registerLazySingleton<GetLaropayPurchases>(
+    () => GetLaropayPurchases(sl<LaropayPurchaseRepository>()),
+  );
   sl.registerLazySingleton<LaropayCheckoutLauncher>(
     () => LaropayCheckoutLauncher(
       generateLaropayLink: sl<GenerateLaropayLink>(),
-      supabase: sl<SupabaseClient>(),
+      getPaymentContext: sl<GetLaropayPaymentContext>(),
     ),
   );
   sl.registerLazySingleton<WorkshopRemoteDataSource>(

@@ -48,6 +48,15 @@ abstract class AppointmentBookingRemoteDataSource {
   });
 }
 
+class AppointmentBookingException implements Exception {
+  const AppointmentBookingException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class SupabaseAppointmentBookingRemoteDataSource
     implements AppointmentBookingRemoteDataSource {
   const SupabaseAppointmentBookingRemoteDataSource(this.client);
@@ -209,6 +218,11 @@ class SupabaseAppointmentBookingRemoteDataSource
     String? fuelType,
     String? transmissionType,
   }) async {
+    await _validateAppointmentProducts(
+      workshopId: workshopId,
+      products: products,
+    );
+
     final response = await client.rpc(
       'book_service_appointment',
       params: {
@@ -239,6 +253,44 @@ class SupabaseAppointmentBookingRemoteDataSource
     );
 
     return response.toString();
+  }
+
+  Future<void> _validateAppointmentProducts({
+    required String workshopId,
+    required List<AppointmentProductSelection> products,
+  }) async {
+    if (products.isEmpty) {
+      return;
+    }
+
+    final ids = products
+        .map((product) => product.inventoryItemId.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+
+    if (ids.length != products.length ||
+        products.any((product) => product.quantity <= 0)) {
+      throw const AppointmentBookingException('appointment_products_invalid');
+    }
+
+    final response = await client
+        .from('inventory_items')
+        .select('id')
+        .eq('workshop_id', workshopId)
+        .eq('status', 'active')
+        .neq('item_type', 'service')
+        .inFilter('id', ids);
+
+    final validIds = response
+        .whereType<Map>()
+        .map((item) => item['id']?.toString())
+        .whereType<String>()
+        .toSet();
+
+    if (validIds.length != ids.length) {
+      throw const AppointmentBookingException('appointment_products_invalid');
+    }
   }
 
   String _formatDate(DateTime dateTime) {
