@@ -1,0 +1,647 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../../core/di/app_injection.dart';
+import '../../../../core/theme/autolab_customer.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../navigation/navigation_handler.dart';
+import '../../../navigation/widgets/custom_bottom_navbar.dart';
+
+class MyPurchasesPage extends StatefulWidget {
+  const MyPurchasesPage({super.key, this.showBottomNavigation = true});
+
+  final bool showBottomNavigation;
+
+  @override
+  State<MyPurchasesPage> createState() => _MyPurchasesPageState();
+}
+
+class _MyPurchasesPageState extends State<MyPurchasesPage> {
+  late Future<List<_PurchaseRecord>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _loadPurchases();
+  }
+
+  Future<void> _reload() {
+    final nextFuture = _loadPurchases();
+    setState(() {
+      _future = nextFuture;
+    });
+    return nextFuture;
+  }
+
+  Future<List<_PurchaseRecord>> _loadPurchases() async {
+    final user = sl<SupabaseClient>().auth.currentUser;
+    if (user == null) {
+      throw const _PurchaseLoadException();
+    }
+
+    final response = await sl<SupabaseClient>()
+        .from('laropay_payment_links')
+        .select('''
+          id,
+          internal_transaction_id,
+          amount,
+          currency_code,
+          detail,
+          link_id,
+          link_url,
+          status,
+          response_code,
+          response_description,
+          reject_reason,
+          auth_response_code,
+          created_at,
+          updated_at,
+          expires_at
+        ''')
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(50);
+
+    return response
+        .whereType<Map>()
+        .map((item) => _PurchaseRecord.fromMap(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Scaffold(
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF06285E),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+              return;
+            }
+
+            context.go('/home-customer');
+          },
+        ),
+        title: Text(
+          l10n.myPurchasesTitle,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ),
+      body: SafeArea(
+        child: FutureBuilder<List<_PurchaseRecord>>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return _PurchaseMessageState(
+                icon: Icons.cloud_off_rounded,
+                title: l10n.myPurchasesLoadErrorTitle,
+                message: snapshot.error is _PurchaseLoadException
+                    ? l10n.authErrorSessionExpired
+                    : l10n.myAppointmentsRetryMessage,
+                color: AutolabCustomer.error,
+                actionLabel: l10n.myPurchasesRetryAction,
+                onAction: _reload,
+              );
+            }
+
+            final purchases = snapshot.data ?? const <_PurchaseRecord>[];
+            if (purchases.isEmpty) {
+              return _PurchaseMessageState(
+                icon: Icons.shopping_bag_outlined,
+                title: l10n.myPurchasesEmptyTitle,
+                message: l10n.myPurchasesEmptyMessage,
+                color: AutolabCustomer.primary,
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: _reload,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Text(
+                      l10n.myPurchasesSubtitle,
+                      textAlign: TextAlign.center,
+                      style: AutolabCustomer.body.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  }
+
+                  return _PurchaseCard(
+                    purchase: purchases[index - 1],
+                    onOpenLink: _openPurchaseLink,
+                  );
+                },
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 14),
+                itemCount: purchases.length + 1,
+              ),
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: widget.showBottomNavigation
+          ? CustomBottomNavbar(
+              currentIndex: 3,
+              onTap: (index) => NavigationHandler.handle(context, index),
+            )
+          : null,
+    );
+  }
+
+  Future<void> _openPurchaseLink(_PurchaseRecord purchase) async {
+    final linkUrl = purchase.linkUrl;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (linkUrl == null || !linkUrl.isScheme('https')) {
+      _showMessage(
+        message: l10n.myPurchasesLinkOpenError,
+        color: AutolabCustomer.error,
+      );
+      return;
+    }
+
+    final opened = await launchUrl(
+      linkUrl,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
+      _showMessage(
+        message: l10n.myPurchasesLinkOpenError,
+        color: AutolabCustomer.error,
+      );
+      return;
+    }
+  }
+
+  void _showMessage({required String message, required Color color}) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: color,
+        content: Text(message),
+      ),
+    );
+  }
+}
+
+class _PurchaseCard extends StatelessWidget {
+  const _PurchaseCard({required this.purchase, required this.onOpenLink});
+
+  final _PurchaseRecord purchase;
+  final ValueChanged<_PurchaseRecord> onOpenLink;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final viewState = _PurchaseViewState.fromPurchase(purchase, l10n);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PurchaseStatusIcon(viewState: viewState),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        purchase.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AutolabCustomer.bodyLarge.copyWith(
+                          color: AutolabCustomer.customerTextColor(context),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        viewState.message,
+                        style: AutolabCustomer.caption.copyWith(
+                          color: AutolabCustomer.customerSecondaryTextColor(
+                            context,
+                          ),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _StatusBadge(viewState: viewState),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _PurchaseDetailRow(
+              icon: Icons.payments_outlined,
+              label: l10n.myPurchasesAmountLabel,
+              value: purchase.formattedAmount,
+            ),
+            _PurchaseDetailRow(
+              icon: Icons.calendar_month_outlined,
+              label: l10n.myPurchasesDateLabel,
+              value: purchase.formattedCreatedAt,
+            ),
+            _PurchaseDetailRow(
+              icon: Icons.confirmation_number_outlined,
+              label: l10n.myPurchasesReferenceLabel,
+              value: purchase.linkId.isEmpty ? purchase.id : purchase.linkId,
+            ),
+            if (purchase.canReopenLink) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => onOpenLink(purchase),
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: Text(l10n.myPurchasesOpenLinkAction),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PurchaseStatusIcon extends StatelessWidget {
+  const _PurchaseStatusIcon({required this.viewState});
+
+  final _PurchaseViewState viewState;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: viewState.color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(viewState.icon, color: viewState.color),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.viewState});
+
+  final _PurchaseViewState viewState;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: viewState.color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Text(
+          viewState.label,
+          style: AutolabCustomer.caption.copyWith(
+            color: viewState.color,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PurchaseDetailRow extends StatelessWidget {
+  const _PurchaseDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: AutolabCustomer.customerSecondaryTextColor(context),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PurchaseMessageState extends StatelessWidget {
+  const _PurchaseMessageState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.color,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final Color color;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(icon, color: color, size: 30),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AutolabCustomer.h3.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.customerSecondaryTextColor(context),
+                height: 1.35,
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 18),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PurchaseViewState {
+  const _PurchaseViewState({
+    required this.label,
+    required this.message,
+    required this.color,
+    required this.icon,
+  });
+
+  final String label;
+  final String message;
+  final Color color;
+  final IconData icon;
+
+  factory _PurchaseViewState.fromPurchase(
+    _PurchaseRecord purchase,
+    AppLocalizations l10n,
+  ) {
+    return switch (purchase.state) {
+      _PurchaseState.approved => _PurchaseViewState(
+        label: l10n.myPurchasesApprovedStatus,
+        message: l10n.myPurchasesApprovedMessage,
+        color: AutolabCustomer.success,
+        icon: Icons.check_circle_outline_rounded,
+      ),
+      _PurchaseState.rejected => _PurchaseViewState(
+        label: l10n.myPurchasesRejectedStatus,
+        message: purchase.rejectReason.isEmpty
+            ? l10n.myPurchasesRejectedMessage
+            : purchase.rejectReason,
+        color: AutolabCustomer.error,
+        icon: Icons.cancel_outlined,
+      ),
+      _PurchaseState.expired => _PurchaseViewState(
+        label: l10n.myPurchasesExpiredStatus,
+        message: l10n.myPurchasesExpiredMessage,
+        color: AutolabCustomer.warning,
+        icon: Icons.hourglass_disabled_outlined,
+      ),
+      _PurchaseState.pending => _PurchaseViewState(
+        label: l10n.myPurchasesPendingStatus,
+        message: l10n.myPurchasesPendingMessage,
+        color: AutolabCustomer.warning,
+        icon: Icons.hourglass_top_rounded,
+      ),
+      _PurchaseState.unknown => _PurchaseViewState(
+        label: l10n.myPurchasesUnknownStatus,
+        message: l10n.myPurchasesUnknownMessage,
+        color: AutolabCustomer.secondary,
+        icon: Icons.help_outline_rounded,
+      ),
+    };
+  }
+}
+
+enum _PurchaseState { pending, approved, rejected, expired, unknown }
+
+class _PurchaseRecord {
+  _PurchaseRecord({
+    required this.id,
+    required this.amount,
+    required this.currencyCode,
+    required this.detail,
+    required this.linkId,
+    required this.status,
+    required this.responseCode,
+    required this.responseDescription,
+    required this.rejectReason,
+    required this.createdAt,
+    required this.expiresAt,
+    this.linkUrl,
+  });
+
+  final String id;
+  final double amount;
+  final String currencyCode;
+  final String detail;
+  final String linkId;
+  final String status;
+  final String responseCode;
+  final String responseDescription;
+  final String rejectReason;
+  final DateTime? createdAt;
+  final DateTime? expiresAt;
+  final Uri? linkUrl;
+
+  String get title => detail.isEmpty ? 'Compra de productos' : detail;
+
+  bool get canReopenLink {
+    return linkUrl != null && state == _PurchaseState.pending;
+  }
+
+  _PurchaseState get state {
+    final normalizedStatus = status.toLowerCase().trim();
+    final normalizedResponse = responseCode.toLowerCase().trim();
+    final normalizedDescription = responseDescription.toLowerCase().trim();
+
+    if (normalizedStatus == 'expired') {
+      return _PurchaseState.expired;
+    }
+
+    if (normalizedStatus == 'paid' ||
+        normalizedStatus == 'approved' ||
+        normalizedStatus == 'completed') {
+      return _PurchaseState.approved;
+    }
+
+    if (normalizedStatus == 'rejected' ||
+        normalizedStatus == 'cancelled' ||
+        normalizedStatus == 'canceled' ||
+        normalizedStatus == 'failed' ||
+        normalizedStatus == 'error' ||
+        (normalizedResponse.isNotEmpty && normalizedResponse != '00') ||
+        normalizedDescription.contains('rechaz')) {
+      return _PurchaseState.rejected;
+    }
+
+    if (normalizedStatus == 'created' ||
+        normalizedStatus == 'pending' ||
+        normalizedStatus.isEmpty) {
+      if (expiresAt != null && expiresAt!.isBefore(DateTime.now().toUtc())) {
+        return _PurchaseState.expired;
+      }
+
+      return _PurchaseState.pending;
+    }
+
+    return _PurchaseState.unknown;
+  }
+
+  String get formattedAmount {
+    final formatter = NumberFormat.currency(
+      locale: 'es_CR',
+      symbol: currencyCode.toUpperCase() == 'USD' ? r'$' : '₡',
+      decimalDigits: 2,
+    );
+    return formatter.format(amount);
+  }
+
+  String get formattedCreatedAt {
+    final date = createdAt;
+    if (date == null) {
+      return 'N/D';
+    }
+
+    return DateFormat('dd/MM/yyyy h:mm a', 'es_CR').format(date.toLocal());
+  }
+
+  factory _PurchaseRecord.fromMap(Map<String, dynamic> map) {
+    return _PurchaseRecord(
+      id: _stringValue(map['id']),
+      amount: _numberValue(map['amount']),
+      currencyCode: _stringValue(map['currency_code']).isEmpty
+          ? 'CRC'
+          : _stringValue(map['currency_code']),
+      detail: _stringValue(map['detail']),
+      linkId: _stringValue(map['link_id']),
+      linkUrl: Uri.tryParse(_stringValue(map['link_url'])),
+      status: _stringValue(map['status']),
+      responseCode: _stringValue(map['response_code']),
+      responseDescription: _stringValue(map['response_description']),
+      rejectReason: _stringValue(map['reject_reason']),
+      createdAt: DateTime.tryParse(_stringValue(map['created_at'])),
+      expiresAt: DateTime.tryParse(_stringValue(map['expires_at'])),
+    );
+  }
+}
+
+class _PurchaseLoadException implements Exception {
+  const _PurchaseLoadException();
+}
+
+String _stringValue(Object? value) => value?.toString().trim() ?? '';
+
+double _numberValue(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  return double.tryParse(_stringValue(value)) ?? 0;
+}

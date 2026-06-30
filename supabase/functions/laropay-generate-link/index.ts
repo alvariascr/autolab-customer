@@ -2,7 +2,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type LaropayLinkRequest = {
   internalTransactionId?: string;
-  idTransaction?: number;
   amount?: number;
   document?: string;
   detail?: string;
@@ -29,7 +28,9 @@ type ExistingLaropayLink = {
 
 type OrderPaymentData = {
   amount: number;
+  idTransaction: number;
   currencyCode: string;
+  workshopId: string;
 };
 
 type AuthenticatedRequestUser = {
@@ -88,7 +89,11 @@ Deno.serve(async (request) => {
       return json({ error: "laropay_link_generation_in_progress" }, 409);
     }
 
-    const callbackUrl = buildCallbackUrl(env.laropayCallbackUrl, reservation.id);
+    const callbackUrl = buildCallbackUrl(
+      env.laropayCallbackUrl,
+      reservation.id,
+      orderPayment.workshopId,
+    );
     const laropayPayload = buildLaropayPayload(
       input,
       env,
@@ -259,7 +264,7 @@ async function loadOrderPaymentData(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, remaining_amount, total_amount, payment_status, customers!inner(user_id)",
+      "id, workshop_id, remaining_amount, total_amount, payment_status, customers!inner(user_id)",
     )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
@@ -274,7 +279,7 @@ async function loadOrderPaymentData(
   }
 
   const order = data as Record<string, unknown>;
-  if (stringValue(order.payment_status).toLowerCase() === "paid") {
+  if (stringValue(order.payment_status).toLowerCase() !== "unpaid") {
     throw new Error("invalid_order_payment_status");
   }
 
@@ -289,7 +294,9 @@ async function loadOrderPaymentData(
 
   return {
     amount,
-    currencyCode: currencyCode(input.idTransaction),
+    idTransaction: env.laropayTransactionType,
+    currencyCode: currencyCode(env.laropayTransactionType),
+    workshopId: stringValue(order.workshop_id),
   };
 }
 
@@ -307,7 +314,7 @@ async function reservePendingLink(
   const { data, error } = await supabase.rpc("reserve_laropay_payment_link", {
     p_user_id: userId,
     p_internal_transaction_id: stringValue(input.internalTransactionId),
-    p_id_transaction: input.idTransaction,
+    p_id_transaction: orderPayment.idTransaction,
     p_amount: orderPayment.amount,
     p_currency_code: orderPayment.currencyCode,
     p_document: trimOrNull(input.document),
@@ -348,10 +355,6 @@ async function reservePendingLink(
 function validate(input: LaropayLinkRequest): string | null {
   if (stringValue(input.internalTransactionId) === "") {
     return "internal_transaction_required";
-  }
-
-  if (![1, 2].includes(input.idTransaction ?? Number.NaN)) {
-    return "transaction_type_required";
   }
 
   if (
@@ -396,7 +399,7 @@ function buildLaropayPayload(
   return {
     idUser: env.laropayIdUser,
     token: env.laropayToken,
-    idTransaction: input.idTransaction,
+    idTransaction: orderPayment.idTransaction,
     amount: orderPayment.amount,
     document: trimOrNull(input.document),
     detail: trimOrNull(input.detail),
@@ -463,7 +466,7 @@ async function persistAttempt(
   const values = {
     user_id: userId,
     internal_transaction_id: stringValue(input.internalTransactionId),
-    id_transaction: input.idTransaction,
+    id_transaction: orderPayment.idTransaction,
     amount: orderPayment.amount,
     currency_code: orderPayment.currencyCode,
     document: trimOrNull(input.document),
@@ -496,9 +499,14 @@ async function persistAttempt(
   }
 }
 
-function buildCallbackUrl(callbackBaseUrl: string, paymentLinkId: string) {
+function buildCallbackUrl(
+  callbackBaseUrl: string,
+  paymentLinkId: string,
+  workshopId: string,
+) {
   const callbackUrl = new URL(callbackBaseUrl);
   callbackUrl.searchParams.set("paymentLinkId", paymentLinkId);
+  callbackUrl.searchParams.set("workshopId", workshopId);
   return callbackUrl.toString();
 }
 
@@ -681,6 +689,11 @@ function loadEnv(): Env {
     throw new Error("missing_env_LAROPAY_CALLBACK_URL");
   }
 
+  const laropayTransactionType = Number(requiredEnv("LAROPAY_TRANSACTION_TYPE"));
+  if (![1, 2].includes(laropayTransactionType)) {
+    throw new Error("missing_env_LAROPAY_TRANSACTION_TYPE");
+  }
+
   return {
     supabaseUrl: requiredEnv("SUPABASE_URL"),
     supabaseAnonKey: requiredEnv("SUPABASE_ANON_KEY"),
@@ -691,6 +704,7 @@ function loadEnv(): Env {
     laropayIdUser: requiredEnv("LAROPAY_ID_USER"),
     laropayToken: requiredEnv("LAROPAY_TOKEN"),
     laropayCallbackUrl,
+    laropayTransactionType,
   };
 }
 
@@ -713,6 +727,7 @@ type Env = {
   laropayIdUser: string;
   laropayToken: string;
   laropayCallbackUrl: string;
+  laropayTransactionType: number;
 };
 
 class LaropayHttpError extends Error {

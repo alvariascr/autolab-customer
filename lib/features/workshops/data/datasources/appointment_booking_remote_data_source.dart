@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/utils/costa_rica_time.dart';
+import '../../domain/entities/appointment_product_selection.dart';
 import '../../domain/entities/appointment_vehicle.dart';
 import '../../domain/entities/booked_appointment_slot.dart';
+import '../../domain/services/appointment_service_classifier.dart';
 
 abstract class AppointmentBookingRemoteDataSource {
   Future<List<AppointmentVehicleRecord>> getCustomerVehicles({
@@ -17,6 +19,8 @@ abstract class AppointmentBookingRemoteDataSource {
   Future<bool> isAppointmentSlotAvailable({
     required String workshopId,
     required DateTime scheduledDateTime,
+    double? serviceDurationHours,
+    bool isInspectionService = false,
   });
 
   Future<List<BookedAppointmentSlot>> getBookedAppointmentSlots({
@@ -29,6 +33,7 @@ abstract class AppointmentBookingRemoteDataSource {
     required String workshopId,
     required String inventoryItemId,
     required DateTime scheduledDateTime,
+    List<AppointmentProductSelection> products = const [],
     String? note,
     String? vehicleId,
     String? garageVehicleId,
@@ -109,26 +114,52 @@ class SupabaseAppointmentBookingRemoteDataSource
   Future<bool> isAppointmentSlotAvailable({
     required String workshopId,
     required DateTime scheduledDateTime,
+    double? serviceDurationHours,
+    bool isInspectionService = false,
   }) async {
-    final slotCapacity = await _slotCapacityFor(
-      workshopId: workshopId,
-      scheduledDateTime: scheduledDateTime,
+    final employeeCapacity = await _activeEmployeeCapacityFor(workshopId);
+    if (employeeCapacity <= 0) {
+      return false;
+    }
+
+    final appointmentEnd = scheduledDateTime.add(
+      _serviceDuration(serviceDurationHours),
     );
+    final startDate = DateTime(
+      scheduledDateTime.year,
+      scheduledDateTime.month,
+      scheduledDateTime.day,
+    );
+    final endDate = startDate.add(const Duration(days: 1));
     final response = await client
         .from('appointments')
         .select(
-          'id, order_services!inner(orders!inner(workshop_id, payment_status, payment_expires_at))',
+          'scheduled_datetime, order_services!inner(inventory_items!inner(name, estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
         )
-        .eq(
+        .gte(
           'scheduled_datetime',
-          costaRicaLocalTimeToUtc(scheduledDateTime).toIso8601String(),
+          costaRicaLocalTimeToUtc(startDate).toIso8601String(),
+        )
+        .lt(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(endDate).toIso8601String(),
         )
         .eq('order_services.orders.workshop_id', workshopId)
         .not('appointment_status', 'in', '(cancelled,no_show)');
 
-    final blockingAppointments = response.where(_isBlockingAppointment).length;
+    final bookedSlots = response
+        .where(_isBlockingAppointment)
+        .map(_bookedAppointmentSlotFromMap)
+        .whereType<BookedAppointmentSlot>()
+        .toList();
 
-    return blockingAppointments < slotCapacity;
+    return _hasCapacityForServiceWindow(
+      slotStart: scheduledDateTime,
+      slotEnd: appointmentEnd,
+      bookedSlots: bookedSlots,
+      capacity: isInspectionService ? employeeCapacity * 2 : employeeCapacity,
+      isInspectionService: isInspectionService,
+    );
   }
 
   @override
@@ -140,7 +171,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     final response = await client
         .from('appointments')
         .select(
-          'scheduled_datetime, order_services!inner(inventory_items!inner(estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
+          'scheduled_datetime, order_services!inner(inventory_items!inner(name, estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
         )
         .gte(
           'scheduled_datetime',
@@ -165,6 +196,7 @@ class SupabaseAppointmentBookingRemoteDataSource
     required String workshopId,
     required String inventoryItemId,
     required DateTime scheduledDateTime,
+    List<AppointmentProductSelection> products = const [],
     String? note,
     String? vehicleId,
     String? garageVehicleId,
@@ -184,6 +216,14 @@ class SupabaseAppointmentBookingRemoteDataSource
         'p_inventory_item_id': inventoryItemId,
         'p_scheduled_date': _formatDate(scheduledDateTime),
         'p_scheduled_time': _formatTime(scheduledDateTime),
+        'p_products': products
+            .map(
+              (product) => {
+                'inventoryItemId': product.inventoryItemId,
+                'quantity': product.quantity,
+              },
+            )
+            .toList(growable: false),
         'p_note': note,
         'p_vehicle_id': vehicleId,
         'p_garage_vehicle_id': garageVehicleId,
@@ -212,31 +252,82 @@ class SupabaseAppointmentBookingRemoteDataSource
         '${dateTime.minute.toString().padLeft(2, '0')}:00';
   }
 
-  Future<int> _slotCapacityFor({
-    required String workshopId,
-    required DateTime scheduledDateTime,
-  }) async {
-    final dayOfWeek = scheduledDateTime.weekday - 1;
-    final response = await client
-        .from('business_hours')
-        .select('slot_capacity')
-        .eq('workshop_id', workshopId)
-        .eq('day_of_week', dayOfWeek)
-        .maybeSingle();
+  Future<int> _activeEmployeeCapacityFor(String workshopId) async {
+    final response = await client.rpc(
+      'get_workshop_active_employee_count',
+      params: {'p_workshop_id': workshopId},
+    );
 
-    if (response == null) {
-      throw StateError(
-        'Missing business_hours configuration for workshop $workshopId '
-        'and day_of_week $dayOfWeek',
-      );
+    if (response is int) {
+      return response;
     }
 
-    final value = response['slot_capacity'];
-    final capacity = value is int
-        ? value
-        : int.tryParse(value?.toString() ?? '');
+    return int.tryParse(response?.toString() ?? '') ?? 0;
+  }
 
-    return capacity == null || capacity <= 0 ? 1 : capacity;
+  Duration _serviceDuration(double? serviceDurationHours) {
+    final minutes =
+        serviceDurationHours == null ||
+            !serviceDurationHours.isFinite ||
+            serviceDurationHours <= 0
+        ? 30
+        : (serviceDurationHours * Duration.minutesPerHour).ceil();
+
+    return Duration(minutes: minutes);
+  }
+
+  bool _hasCapacityForServiceWindow({
+    required DateTime slotStart,
+    required DateTime slotEnd,
+    required List<BookedAppointmentSlot> bookedSlots,
+    required int capacity,
+    required bool isInspectionService,
+  }) {
+    const slotInterval = Duration(minutes: 30);
+
+    if (isInspectionService) {
+      final hourStart = DateTime(
+        slotStart.year,
+        slotStart.month,
+        slotStart.day,
+        slotStart.hour,
+      );
+      final hourEnd = hourStart.add(const Duration(hours: 1));
+      final sameHourInspectionCount = bookedSlots.where((slot) {
+        return slot.isInspectionService &&
+            !slot.start.isBefore(hourStart) &&
+            slot.start.isBefore(hourEnd);
+      }).length;
+
+      return sameHourInspectionCount < capacity;
+    }
+
+    for (
+      var segmentStart = slotStart;
+      segmentStart.isBefore(slotEnd);
+      segmentStart = segmentStart.add(slotInterval)
+    ) {
+      final segmentEnd = segmentStart.add(slotInterval).isAfter(slotEnd)
+          ? slotEnd
+          : segmentStart.add(slotInterval);
+      final overlapping = bookedSlots.where((slot) {
+        if (slot.isInspectionService) {
+          return false;
+        }
+
+        final bookedEnd = slot.start.add(
+          Duration(minutes: slot.durationMinutes ?? 30),
+        );
+        return slot.start.isBefore(segmentEnd) &&
+            bookedEnd.isAfter(segmentStart);
+      }).length;
+
+      if (overlapping >= capacity) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 
@@ -255,12 +346,18 @@ BookedAppointmentSlot? _bookedAppointmentSlotFromMap(Map<String, dynamic> map) {
   final durationHours = inventoryItem is Map<String, dynamic>
       ? _parseDouble(inventoryItem['estimated_duration_hours'])
       : null;
+  final serviceName = inventoryItem is Map<String, dynamic>
+      ? inventoryItem['name']?.toString() ?? ''
+      : '';
 
   return BookedAppointmentSlot(
     start: utcToCostaRicaLocalTime(scheduledDateTime),
     durationMinutes: durationHours == null || durationHours <= 0
         ? null
         : (durationHours * Duration.minutesPerHour).ceil(),
+    isInspectionService: AppointmentServiceClassifier.isInspectionText(
+      serviceName,
+    ),
   );
 }
 

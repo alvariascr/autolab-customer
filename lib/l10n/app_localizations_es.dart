@@ -1613,6 +1613,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este servicio ya no está disponible para agendar.';
 
   @override
+  String get appointmentServiceDurationRequired =>
+      'Este servicio no tiene duración configurada. Contacta al taller para poder agendarlo.';
+
+  @override
+  String get appointmentNoActiveEmployees =>
+      'Este taller no tiene empleados activos disponibles para recibir citas.';
+
+  @override
   String get appointmentVehicleNotOwned =>
       'No pudimos usar ese vehículo con tu usuario.';
 
@@ -1797,6 +1805,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentServiceLabel => 'Servicio';
 
   @override
+  String get appointmentServicePaidAtWorkshop => 'Se paga en taller';
+
+  @override
   String get appointmentPendingService => 'Servicio pendiente';
 
   @override
@@ -1882,6 +1893,15 @@ class AppLocalizationsEs extends AppLocalizations {
       'La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.';
 
   @override
+  String get laropayPaymentStartErrorTitle => 'No fue posible abrir Laropay';
+
+  @override
+  String get laropayRetryAction => 'Reintentar';
+
+  @override
+  String get laropayCancelAction => 'Cancelar';
+
+  @override
   String get appointmentCustomerNameLabel => 'Nombre completo';
 
   @override
@@ -1929,4 +1949,73 @@ class AppLocalizationsEs extends AppLocalizations {
   String appointmentDurationHoursMinutes(Object hours, Object minutes) {
     return '$hours h $minutes min';
   }
+
+  @override
+  String get myPurchasesTitle => 'Mis compras';
+
+  @override
+  String get myPurchasesSubtitle =>
+      'Consulta tus pagos de productos adicionales';
+
+  @override
+  String get myPurchasesEmptyTitle => 'Aún no tienes compras';
+
+  @override
+  String get myPurchasesEmptyMessage =>
+      'Cuando pagues productos adicionales, aparecerán aquí con su estado.';
+
+  @override
+  String get myPurchasesLoadErrorTitle => 'No pudimos cargar tus compras';
+
+  @override
+  String get myPurchasesRetryAction => 'Reintentar';
+
+  @override
+  String get myPurchasesPendingStatus => 'Pendiente';
+
+  @override
+  String get myPurchasesApprovedStatus => 'Procesado';
+
+  @override
+  String get myPurchasesRejectedStatus => 'No procesado';
+
+  @override
+  String get myPurchasesExpiredStatus => 'Vencido';
+
+  @override
+  String get myPurchasesUnknownStatus => 'En revisión';
+
+  @override
+  String get myPurchasesPendingMessage =>
+      'El link fue generado. Esperamos la confirmación de Laropay.';
+
+  @override
+  String get myPurchasesApprovedMessage =>
+      'El pago fue confirmado correctamente.';
+
+  @override
+  String get myPurchasesRejectedMessage => 'El pago no pudo ser procesado.';
+
+  @override
+  String get myPurchasesExpiredMessage =>
+      'El link de pago venció o ya no está disponible.';
+
+  @override
+  String get myPurchasesUnknownMessage => 'El pago está en revisión.';
+
+  @override
+  String get myPurchasesAmountLabel => 'Monto';
+
+  @override
+  String get myPurchasesDateLabel => 'Fecha';
+
+  @override
+  String get myPurchasesReferenceLabel => 'Referencia';
+
+  @override
+  String get myPurchasesOpenLinkAction => 'Reintentar pago';
+
+  @override
+  String get myPurchasesLinkOpenError =>
+      'No fue posible abrir el link de pago.';
 }

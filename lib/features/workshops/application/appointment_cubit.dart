@@ -5,8 +5,10 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/usecases/get_additional_products_by_workshop.dart';
 import '../../products/domain/usecases/get_schedulable_services_by_workshop.dart';
+import '../domain/entities/appointment_product_selection.dart';
 import '../domain/entities/appointment_vehicle.dart';
 import '../domain/repositories/workshop_repository.dart';
+import '../domain/services/appointment_service_classifier.dart';
 import '../domain/services/workshop_availability_calculator.dart';
 import '../domain/usecases/book_service_appointment.dart';
 import '../domain/usecases/get_booked_appointment_slots.dart';
@@ -44,6 +46,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   final GetBookedAppointmentSlots _getBookedAppointmentSlots;
   final BookServiceAppointment _bookServiceAppointment;
   static final _availabilityCalculator = WorkshopAvailabilityCalculator();
+  int _availabilityRequestId = 0;
 
   Future<void> load(
     String workshopId, {
@@ -64,7 +67,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     await Future.wait([
       _loadWorkshop(workshopId),
-      _loadServices(workshopId),
+      _loadServices(workshopId, serviceId: ''),
       _loadProducts(workshopId),
       _loadVehicles(workshopId),
       _loadUnavailableDatesForMonth(workshopId, DateTime.now()),
@@ -114,18 +117,28 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     _refreshAvailabilityForFocusedMonth();
   }
 
-  Future<void> _loadServices(String workshopId) async {
+  Future<void> _loadServices(
+    String workshopId, {
+    required String serviceId,
+  }) async {
     final result = await _getSchedulableServices.call(workshopId);
 
     result.fold(
       (_) =>
           emit(state.copyWith(servicesStatus: AppointmentLoadStatus.failure)),
-      (services) => emit(
-        state.copyWith(
-          services: services,
-          servicesStatus: AppointmentLoadStatus.success,
-        ),
-      ),
+      (services) {
+        final selectedService = services
+            .where((service) => service.id == serviceId)
+            .firstOrNull;
+        emit(
+          state.copyWith(
+            services: services,
+            servicesStatus: AppointmentLoadStatus.success,
+            selectedService: selectedService,
+          ),
+        );
+        _refreshAvailabilityForFocusedMonth();
+      },
     );
   }
 
@@ -347,14 +360,25 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     }
 
     final shouldClearDate = isSameDay(state.selectedDate, date);
+    final focusedDate = state.focusedDate ?? DateTime.now();
+    final shouldFocusSelectedMonth =
+        focusedDate.year != date.year || focusedDate.month != date.month;
 
     emit(
       state.copyWith(
         selectedDate: shouldClearDate ? null : date,
         clearSelectedDate: shouldClearDate,
         clearSelectedTime: true,
+        focusedDate: shouldFocusSelectedMonth ? date : null,
       ),
     );
+
+    if (!shouldClearDate && shouldFocusSelectedMonth) {
+      final workshopId = state.workshopId;
+      if (workshopId.isNotEmpty) {
+        _loadUnavailableDatesForMonth(workshopId, date);
+      }
+    }
   }
 
   void focusDate(DateTime date) {
@@ -367,10 +391,6 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
   void selectTime(String time) {
     emit(state.copyWith(selectedTime: time));
-  }
-
-  void selectPaymentMethod(AppointmentPaymentMethod method) {
-    emit(state.copyWith(selectedPaymentMethod: method));
   }
 
   void updateCustomerNote(String note) {
@@ -403,6 +423,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       final isAvailable = await _isAppointmentSlotAvailable(
         workshopId: workshopId,
         scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
+        serviceDurationHours: selectedService.estimatedDurationHours,
+        isInspectionService: AppointmentServiceClassifier.isInspectionService(
+          selectedService,
+        ),
       );
 
       if (isAvailable) {
@@ -531,6 +555,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         workshopId: workshopId,
         inventoryItemId: selectedService.id,
         scheduledDateTime: _combineDateAndTime(selectedDate, selectedTime),
+        products: _selectedProductsForBooking(),
         note: _buildBookingNote(),
         vehicleId: null,
         garageVehicleId: state.selectedVehicleId,
@@ -594,9 +619,11 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     String workshopId,
     DateTime focusedDate,
   ) async {
+    final requestId = ++_availabilityRequestId;
     try {
       final workshop = state.workshop;
-      if (workshop == null) {
+      final selectedService = state.selectedService;
+      if (workshop == null || selectedService == null) {
         return;
       }
 
@@ -609,11 +636,22 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         startDate: startDate,
         endDate: endDate,
       );
+
+      final currentService = state.selectedService;
+      if (requestId != _availabilityRequestId ||
+          state.workshop?.id != workshop.id ||
+          currentService?.id != selectedService.id) {
+        return;
+      }
+
       final availability = _availabilityCalculator.calculateMonth(
         workshop: workshop,
         month: focusedDate,
         bookedSlots: bookedSlots,
-        serviceDurationHours: state.selectedService?.estimatedDurationHours,
+        serviceDurationHours: selectedService.estimatedDurationHours,
+        isInspectionService: AppointmentServiceClassifier.isInspectionService(
+          selectedService,
+        ),
       );
 
       emit(
@@ -678,7 +716,6 @@ class AppointmentCubit extends Cubit<AppointmentState> {
         'Combustible: ${state.vehicleFuelType}',
       if (state.vehicleTransmissionType != null)
         'Transmision: ${state.vehicleTransmissionType}',
-      'Metodo de pago: ${state.selectedPaymentMethod.noteLabel}',
     ];
 
     final customerNote = state.customerNote.trim();
@@ -699,6 +736,25 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   String? _trimOrNull(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  List<AppointmentProductSelection> _selectedProductsForBooking() {
+    if (!state.includeProducts) {
+      return const [];
+    }
+
+    return state.selectedProducts
+        .where(
+          (selected) =>
+              selected.quantity > 0 && selected.product.id.trim().isNotEmpty,
+        )
+        .map(
+          (selected) => AppointmentProductSelection(
+            inventoryItemId: selected.product.id.trim(),
+            quantity: selected.quantity,
+          ),
+        )
+        .toList(growable: false);
   }
 
   bool _vehicleMatchesInput(AppointmentVehicleRecord vehicle) {
@@ -742,6 +798,9 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       AppointmentSubmitError.workshopClosed => 'workshop_closed',
       AppointmentSubmitError.outsideBusinessHours => 'outside_business_hours',
       AppointmentSubmitError.serviceNotSchedulable => 'service_not_schedulable',
+      AppointmentSubmitError.serviceDurationRequired =>
+        'service_duration_required',
+      AppointmentSubmitError.noActiveEmployees => 'no_active_employees',
       AppointmentSubmitError.slotUnavailable => 'slot_unavailable',
       AppointmentSubmitError.vehicleNotOwned => 'vehicle_not_owned',
       AppointmentSubmitError.vehiclePlateRequiredForBooking =>
@@ -791,6 +850,14 @@ class AppointmentCubit extends Cubit<AppointmentState> {
 
     if (rawMessage.contains('appointment_service_not_schedulable')) {
       return AppointmentSubmitError.serviceNotSchedulable;
+    }
+
+    if (rawMessage.contains('appointment_service_duration_required')) {
+      return AppointmentSubmitError.serviceDurationRequired;
+    }
+
+    if (rawMessage.contains('appointment_no_active_employees')) {
+      return AppointmentSubmitError.noActiveEmployees;
     }
 
     if (rawMessage.contains('appointment_slot_unavailable')) {

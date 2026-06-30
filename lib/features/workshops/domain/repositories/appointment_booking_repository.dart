@@ -1,3 +1,4 @@
+import '../entities/appointment_product_selection.dart';
 import '../entities/appointment_vehicle.dart';
 import '../entities/booked_appointment_slot.dart';
 
@@ -14,6 +15,8 @@ abstract class AppointmentBookingRepository {
   Future<bool> isAppointmentSlotAvailable({
     required String workshopId,
     required DateTime scheduledDateTime,
+    double? serviceDurationHours,
+    bool isInspectionService = false,
   });
 
   Future<List<BookedAppointmentSlot>> getBookedAppointmentSlots({
@@ -26,6 +29,7 @@ abstract class AppointmentBookingRepository {
     required String workshopId,
     required String inventoryItemId,
     required DateTime scheduledDateTime,
+    List<AppointmentProductSelection> products = const [],
     String? note,
     String? vehicleId,
     String? garageVehicleId,

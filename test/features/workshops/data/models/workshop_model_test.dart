@@ -48,6 +48,11 @@ void main() {
             'payment_methods': {'name': 'Efectivo'},
           },
         ],
+        'employees': [
+          {'id': 'employee-1', 'is_active': true},
+          {'id': 'employee-2', 'is_active': false},
+          {'id': 'employee-3', 'is_active': true},
+        ],
       });
 
       expect(model.id, 'workshop-1');
@@ -62,6 +67,7 @@ void main() {
       expect(model.businessHours.last.slotCapacity, 3);
       expect(model.serviceCategories, ['Frenos', 'Mantenimiento']);
       expect(model.paymentMethods, ['Tarjeta', 'Efectivo']);
+      expect(model.activeEmployeeCount, 2);
     });
 
     final invalidSlotCapacities = <String, dynamic>{
@@ -139,6 +145,7 @@ void main() {
       expect(model.businessHours, isEmpty);
       expect(model.serviceCategories, isEmpty);
       expect(model.paymentMethods, isEmpty);
+      expect(model.activeEmployeeCount, 0);
       expect(model.latitude, 0);
       expect(model.longitude, 0);
       expect(model.deliveryRadiusKm, 0);

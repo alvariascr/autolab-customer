@@ -4,7 +4,6 @@ extension LaropayLinkRequestMapper on LaropayLinkRequest {
   Map<String, dynamic> toGatewayJson() {
     return {
       'internalTransactionId': internalTransactionId.trim(),
-      'idTransaction': idTransaction,
       'amount': amount,
       if (_hasValue(document)) 'document': document!.trim(),
       if (_hasValue(detail)) 'detail': detail!.trim(),

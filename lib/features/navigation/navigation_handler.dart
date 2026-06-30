@@ -44,17 +44,7 @@ class NavigationHandler {
         return;
 
       case 3:
-        // Carrito
-
-        // Cuando tengas CartPage, usa esto:
-        /*
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const CartPage(),
-          ),
-        );
-        */
+        context.go('/home-customer?tab=cart');
         return;
 
       case 4:

@@ -10,7 +10,6 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
-import '../../../products/presentation/pages/product_detail_page.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../domain/entities/workshop.dart';

@@ -74,6 +74,24 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
       return null;
     }
 
-    return WorkshopModel.fromMap(response);
+    final activeEmployeeCount = await _getActiveEmployeeCount(id);
+
+    return WorkshopModel.fromMap({
+      ...response,
+      'active_employee_count': activeEmployeeCount,
+    });
+  }
+
+  Future<int> _getActiveEmployeeCount(String workshopId) async {
+    final response = await client.rpc(
+      'get_workshop_active_employee_count',
+      params: {'p_workshop_id': workshopId},
+    );
+
+    if (response is int) {
+      return response;
+    }
+
+    return int.tryParse(response?.toString() ?? '') ?? 0;
   }
 }

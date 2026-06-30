@@ -400,10 +400,9 @@ class _MenuProductTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ProductDetailPage(product: product),
-          ),
+        context.push(
+          '/workshops/${product.workshopId}/products/${product.id}',
+          extra: product,
         );
       },
       child: Container(

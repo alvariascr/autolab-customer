@@ -16,6 +16,7 @@ class WorkshopModel extends Workshop {
     super.businessHours,
     super.serviceCategories,
     super.paymentMethods,
+    super.activeEmployeeCount,
   });
 
   factory WorkshopModel.fromMap(Map<String, dynamic> map) {
@@ -34,6 +35,7 @@ class WorkshopModel extends Workshop {
       businessHours: _businessHoursFromMap(map),
       serviceCategories: _serviceCategoriesFromMap(map),
       paymentMethods: _paymentMethodsFromMap(map),
+      activeEmployeeCount: _activeEmployeeCountFromMap(map),
     );
   }
 
@@ -115,5 +117,25 @@ class WorkshopModel extends Workshop {
         .map((method) => method['name']?.toString() ?? '')
         .where((name) => name.isNotEmpty)
         .toList();
+  }
+
+  static int _activeEmployeeCountFromMap(Map<String, dynamic> map) {
+    final activeEmployeeCount = map['active_employee_count'];
+    final parsedCount = activeEmployeeCount is int
+        ? activeEmployeeCount
+        : int.tryParse(activeEmployeeCount?.toString() ?? '');
+    if (parsedCount != null && parsedCount >= 0) {
+      return parsedCount;
+    }
+
+    final employees = map['employees'];
+
+    if (employees is! List) {
+      return 0;
+    }
+
+    return employees.where((item) {
+      return item is Map<String, dynamic> && item['is_active'] == true;
+    }).length;
   }
 }

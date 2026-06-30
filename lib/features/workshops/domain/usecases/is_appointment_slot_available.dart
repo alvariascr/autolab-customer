@@ -8,10 +8,14 @@ class IsAppointmentSlotAvailable {
   Future<bool> call({
     required String workshopId,
     required DateTime scheduledDateTime,
+    double? serviceDurationHours,
+    bool isInspectionService = false,
   }) {
     return _repository.isAppointmentSlotAvailable(
       workshopId: workshopId,
       scheduledDateTime: scheduledDateTime,
+      serviceDurationHours: serviceDurationHours,
+      isInspectionService: isInspectionService,
     );
   }
 }

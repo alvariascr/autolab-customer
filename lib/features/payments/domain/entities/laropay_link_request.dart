@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 class LaropayLinkRequest {
   const LaropayLinkRequest({
     required this.internalTransactionId,
-    required this.idTransaction,
     required this.amount,
     required this.customerFirstName,
     required this.customerLastName,
@@ -18,7 +17,6 @@ class LaropayLinkRequest {
   });
 
   final String internalTransactionId;
-  final int idTransaction;
   final double amount;
   final String? document;
   final String? detail;

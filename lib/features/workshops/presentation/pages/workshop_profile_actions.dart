@@ -19,19 +19,8 @@ class _ProfileActions extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
-        _ActionPill(
-          key: const ValueKey('workshop-profile-schedule-button'),
-          icon: Icons.calendar_month_outlined,
-          label: l10n.workshopProfileScheduleAction,
-          onTap: () => context.push(appointmentRoute(workshop.id)),
-        ),
       ],
     );
-  }
-
-  static String appointmentRoute(String workshopId) {
-    return '/workshops/$workshopId/appointments/new';
   }
 
   static Future<void> launchPhone(BuildContext context, String phone) async {
@@ -124,48 +113,6 @@ class _PillTab extends StatelessWidget {
             color: selected ? const Color(0xFF181411) : const Color(0xFF6B5F57),
             fontWeight: FontWeight.w800,
             fontSize: 15,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF1F1F1),
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
-              ),
-            ],
           ),
         ),
       ),

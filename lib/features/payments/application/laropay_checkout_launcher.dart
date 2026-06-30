@@ -28,7 +28,6 @@ class LaropayCheckoutLauncher {
     final result = await _generateLaropayLink(
       LaropayLinkRequest(
         internalTransactionId: paymentContext.orderId,
-        idTransaction: 1,
         amount: paymentContext.amount,
         document: paymentContext.orderNumber ?? appointmentId,
         detail: 'Autolab $workshopName',
@@ -48,8 +47,9 @@ class LaropayCheckoutLauncher {
       (link) async {
         final opened = await _launchExternalUrl(link.linkUrl);
         if (!opened) {
-          throw const LaropayCheckoutLaunchException(
+          throw LaropayCheckoutLaunchException(
             'No fue posible abrir el navegador seguro de Laropay.',
+            linkUrl: link.linkUrl,
           );
         }
       },
@@ -87,7 +87,7 @@ class LaropayCheckoutLauncher {
         .single();
 
     final payload = _mapValue(response);
-    final orderService = _mapValue(payload['order_services']);
+    final orderService = _firstMapValue(payload['order_services']);
     final order = _mapValue(orderService['orders']);
     final orderId = _stringValue(orderService['order_id']).isNotEmpty
         ? _stringValue(orderService['order_id'])
@@ -117,7 +117,7 @@ class LaropayCheckoutLauncher {
   }
 
   static double _paymentAmount(Map<String, dynamic> order) {
-    if (_stringValue(order['payment_status']).toLowerCase() == 'paid') {
+    if (_stringValue(order['payment_status']).toLowerCase() != 'unpaid') {
       return double.nan;
     }
 
@@ -160,9 +160,10 @@ class LaropayCheckoutLauncher {
 }
 
 class LaropayCheckoutLaunchException implements Exception {
-  const LaropayCheckoutLaunchException(this.message);
+  const LaropayCheckoutLaunchException(this.message, {this.linkUrl});
 
   final String message;
+  final Uri? linkUrl;
 }
 
 class _LaropayPaymentContext {
@@ -209,6 +210,14 @@ Map<String, dynamic> _mapValue(Object? value) {
   }
 
   return const {};
+}
+
+Map<String, dynamic> _firstMapValue(Object? value) {
+  if (value is List && value.isNotEmpty) {
+    return _mapValue(value.first);
+  }
+
+  return _mapValue(value);
 }
 
 String _stringValue(Object? value) {

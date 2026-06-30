@@ -10,6 +10,9 @@ import '../../features/auth/ui/reset_password_page.dart';
 import '../../features/home/home_page.dart';
 import '../../features/navigation/customer_navigation_shell.dart';
 import '../../features/onboarding/customer_onboarding_page.dart';
+import '../../features/payments/presentation/pages/my_purchases_page.dart';
+import '../../features/products/domain/entities/product.dart';
+import '../../features/products/presentation/pages/product_detail_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
@@ -83,6 +86,10 @@ class AppRouter {
         builder: (context, state) => const MyAppointmentsPage(),
       ),
       GoRoute(
+        path: '/purchases',
+        builder: (context, state) => const MyPurchasesPage(),
+      ),
+      GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfilePage(),
       ),
@@ -106,11 +113,37 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/workshops/:id/products/:productId',
+        builder: (context, state) {
+          final workshopId = state.pathParameters['id']?.trim();
+          final productId = state.pathParameters['productId']?.trim();
+          final product = state.extra is Product
+              ? state.extra! as Product
+              : null;
+
+          if (workshopId == null ||
+              workshopId.isEmpty ||
+              productId == null ||
+              productId.isEmpty ||
+              product == null ||
+              product.workshopId != workshopId ||
+              product.id != productId) {
+            return const _InvalidRoutePage();
+          }
+
+          return ProductDetailPage(product: product);
+        },
+      ),
+      GoRoute(
         path: '/workshops/:id/appointments/new',
         builder: (context, state) {
           final workshopId = state.pathParameters['id']?.trim();
+          final serviceId = state.uri.queryParameters['serviceId']?.trim();
 
-          if (workshopId == null || workshopId.isEmpty) {
+          if (workshopId == null ||
+              workshopId.isEmpty ||
+              serviceId == null ||
+              serviceId.isEmpty) {
             return const _InvalidRoutePage();
           }
 

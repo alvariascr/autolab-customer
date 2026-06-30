@@ -209,8 +209,11 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                       onPressed: workshopId.isEmpty
                           ? null
                           : () {
+                              final serviceId = Uri.encodeComponent(
+                                service.id.trim(),
+                              );
                               context.push(
-                                '/workshops/$workshopId/appointments/new',
+                                '/workshops/$workshopId/appointments/new?serviceId=$serviceId',
                                 extra: WorkshopAppointmentInitialSelection(
                                   service: service,
                                   products: _selectedAppointmentProducts(),

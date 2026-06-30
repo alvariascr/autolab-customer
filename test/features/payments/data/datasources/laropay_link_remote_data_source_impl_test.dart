@@ -45,7 +45,7 @@ void main() {
 
       expect(link.linkId, 'link-1');
       expect(link.linkUrl, Uri.parse('https://pay.test/link-1'));
-      expect(payload['idTransaction'], 1);
+      expect(payload.containsKey('idTransaction'), isFalse);
       expect(payload['amount'], 10);
       expect(payload['customerEmail'], 'cliente@autolab.app');
       expect(payload.containsKey('token'), isFalse);
@@ -213,7 +213,6 @@ void main() {
 LaropayLinkRequest _request() {
   return LaropayLinkRequest(
     internalTransactionId: 'order-1',
-    idTransaction: 1,
     amount: 10,
     document: 'document',
     detail: 'detail',
