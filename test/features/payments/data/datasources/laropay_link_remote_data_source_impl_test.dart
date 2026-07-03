@@ -45,7 +45,7 @@ void main() {
 
       expect(link.linkId, 'link-1');
       expect(link.linkUrl, Uri.parse('https://pay.test/link-1'));
-      expect(payload['idTransaction'], 1);
+      expect(payload.containsKey('idTransaction'), isFalse);
       expect(payload['amount'], 10);
       expect(payload['customerEmail'], 'cliente@autolab.app');
       expect(payload.containsKey('token'), isFalse);
@@ -196,12 +196,26 @@ void main() {
       throwsA(isA<FormatException>()),
     );
   });
+
+  test(
+    'parses gateway response metadata even when response is not successful',
+    () {
+      final model = LaropayLinkModel.fromJson({
+        'response': '99',
+        'responseDescription': 'Rejected',
+        'linkID': 'link-1',
+        'linkURL': 'https://pay.test/link-1',
+      });
+
+      expect(model.response, '99');
+      expect(model.responseDescription, 'Rejected');
+    },
+  );
 }
 
 LaropayLinkRequest _request() {
   return LaropayLinkRequest(
     internalTransactionId: 'order-1',
-    idTransaction: 1,
     amount: 10,
     document: 'document',
     detail: 'detail',
@@ -212,6 +226,5 @@ LaropayLinkRequest _request() {
     customerLocation: 'San Jose',
     expirationType: 'D',
     expirationValue: 2,
-    urlCallback: Uri.parse('https://autolab.test/callback/laropay'),
   );
 }

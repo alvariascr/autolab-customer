@@ -13,6 +13,7 @@ class Workshop {
   final List<WorkshopBusinessHour> businessHours;
   final List<String> serviceCategories;
   final List<String> paymentMethods;
+  final int activeEmployeeCount;
 
   const Workshop({
     required this.id,
@@ -29,6 +30,7 @@ class Workshop {
     this.businessHours = const [],
     this.serviceCategories = const [],
     this.paymentMethods = const [],
+    this.activeEmployeeCount = 0,
   });
 
   bool get hasValidCoordinates {

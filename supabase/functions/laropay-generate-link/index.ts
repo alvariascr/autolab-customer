@@ -2,7 +2,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type LaropayLinkRequest = {
   internalTransactionId?: string;
-  idTransaction?: number;
   amount?: number;
   document?: string;
   detail?: string;
@@ -29,7 +28,9 @@ type ExistingLaropayLink = {
 
 type OrderPaymentData = {
   amount: number;
+  idTransaction: number;
   currencyCode: string;
+  workshopId: string;
 };
 
 type AuthenticatedRequestUser = {
@@ -88,7 +89,17 @@ Deno.serve(async (request) => {
       return json({ error: "laropay_link_generation_in_progress" }, 409);
     }
 
-    const laropayPayload = buildLaropayPayload(input, env, orderPayment);
+    const callbackUrl = buildCallbackUrl(
+      env.laropayCallbackUrl,
+      reservation.id,
+      orderPayment.workshopId,
+    );
+    const laropayPayload = buildLaropayPayload(
+      input,
+      env,
+      orderPayment,
+      callbackUrl,
+    );
     const laropayResponse = await callLaropay(laropayPayload, env).catch(
       async (error) => {
         if (error instanceof LaropayHttpError) {
@@ -105,6 +116,7 @@ Deno.serve(async (request) => {
               body: error.body,
             },
             reservation.id,
+            callbackUrl,
           );
 
           return null;
@@ -122,6 +134,7 @@ Deno.serve(async (request) => {
               responseDescription: "Laropay request timed out",
             },
             reservation.id,
+            callbackUrl,
           );
 
           return null;
@@ -139,6 +152,7 @@ Deno.serve(async (request) => {
             error: safeError(error),
           },
           reservation.id,
+          callbackUrl,
         );
 
         return null;
@@ -152,7 +166,8 @@ Deno.serve(async (request) => {
     const linkID = stringValue(laropayResponse.linkID);
     const linkURL = stringValue(laropayResponse.linkURL);
 
-    if (linkID === "" || !isSecureUrl(linkURL)) {
+    if (stringValue(laropayResponse.response) !== "00" || linkID === "" ||
+      !isSecureUrl(linkURL)) {
       await persistAttempt(
         env,
         user.id,
@@ -161,6 +176,7 @@ Deno.serve(async (request) => {
         laropayPayload,
         laropayResponse,
         reservation.id,
+        callbackUrl,
       );
       return json({ error: "laropay_invalid_response" }, 502);
     }
@@ -173,6 +189,7 @@ Deno.serve(async (request) => {
       laropayPayload,
       laropayResponse,
       reservation.id,
+      callbackUrl,
     );
 
     return json({
@@ -246,7 +263,9 @@ async function loadOrderPaymentData(
   const supabase = userSupabaseClient(env, user.authorization);
   const { data, error } = await supabase
     .from("orders")
-    .select("id, remaining_amount, total_amount, customers!inner(user_id)")
+    .select(
+      "id, workshop_id, remaining_amount, total_amount, payment_status, customers!inner(user_id)",
+    )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
     .maybeSingle();
@@ -259,11 +278,15 @@ async function loadOrderPaymentData(
     throw new Error("transaction_not_found");
   }
 
-  const remainingAmount = numberValue(
-    (data as Record<string, unknown>).remaining_amount,
-  );
-  const totalAmount = numberValue((data as Record<string, unknown>).total_amount);
-  const amount = remainingAmount > 0 ? remainingAmount : totalAmount;
+  const order = data as Record<string, unknown>;
+  if (stringValue(order.payment_status).toLowerCase() !== "unpaid") {
+    throw new Error("invalid_order_payment_status");
+  }
+
+  const rawRemainingAmount = order.remaining_amount;
+  const amount = hasStoredValue(rawRemainingAmount)
+    ? numberValue(rawRemainingAmount)
+    : numberValue(order.total_amount);
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error("invalid_order_amount");
@@ -271,7 +294,9 @@ async function loadOrderPaymentData(
 
   return {
     amount,
-    currencyCode: currencyCode(input.idTransaction),
+    idTransaction: env.laropayTransactionType,
+    currencyCode: currencyCode(env.laropayTransactionType),
+    workshopId: stringValue(order.workshop_id),
   };
 }
 
@@ -289,7 +314,7 @@ async function reservePendingLink(
   const { data, error } = await supabase.rpc("reserve_laropay_payment_link", {
     p_user_id: userId,
     p_internal_transaction_id: stringValue(input.internalTransactionId),
-    p_id_transaction: input.idTransaction,
+    p_id_transaction: orderPayment.idTransaction,
     p_amount: orderPayment.amount,
     p_currency_code: orderPayment.currencyCode,
     p_document: trimOrNull(input.document),
@@ -332,10 +357,6 @@ function validate(input: LaropayLinkRequest): string | null {
     return "internal_transaction_required";
   }
 
-  if (!Number.isInteger(input.idTransaction)) {
-    return "transaction_type_required";
-  }
-
   if (
     typeof input.amount !== "number" ||
     !Number.isFinite(input.amount) ||
@@ -373,11 +394,12 @@ function buildLaropayPayload(
   input: LaropayLinkRequest,
   env: Env,
   orderPayment: OrderPaymentData,
+  callbackUrl: string,
 ) {
   return {
     idUser: env.laropayIdUser,
     token: env.laropayToken,
-    idTransaction: input.idTransaction,
+    idTransaction: orderPayment.idTransaction,
     amount: orderPayment.amount,
     document: trimOrNull(input.document),
     detail: trimOrNull(input.detail),
@@ -388,7 +410,7 @@ function buildLaropayPayload(
     customerLocation: trimOrNull(input.customerLocation),
     expirationType: normalizedExpirationType(input),
     expirationValue: normalizedExpirationValue(input),
-    urlCallback: env.laropayCallbackUrl,
+    urlCallback: callbackUrl,
     securityCode: trimOrNull(input.securityCode),
   };
 }
@@ -430,6 +452,7 @@ async function persistAttempt(
   laropayPayload: Record<string, unknown>,
   laropayResponse: Record<string, unknown>,
   reservationId?: string,
+  callbackUrl = env.laropayCallbackUrl,
 ) {
   const linkID = trimOrNull(laropayResponse.linkID);
   const linkURL = trimOrNull(laropayResponse.linkURL);
@@ -443,7 +466,7 @@ async function persistAttempt(
   const values = {
     user_id: userId,
     internal_transaction_id: stringValue(input.internalTransactionId),
-    id_transaction: input.idTransaction,
+    id_transaction: orderPayment.idTransaction,
     amount: orderPayment.amount,
     currency_code: orderPayment.currencyCode,
     document: trimOrNull(input.document),
@@ -452,7 +475,7 @@ async function persistAttempt(
     expiration_type: normalizedExpirationType(input),
     expiration_value: normalizedExpirationValue(input),
     expires_at: calculateExpiresAt(input).toISOString(),
-    url_callback: env.laropayCallbackUrl,
+    url_callback: callbackUrl,
     link_id: linkID,
     link_url: linkURL,
     status: normalizedStatus(laropayResponse),
@@ -474,6 +497,17 @@ async function persistAttempt(
   if (error !== null) {
     throw error;
   }
+}
+
+function buildCallbackUrl(
+  callbackBaseUrl: string,
+  paymentLinkId: string,
+  workshopId: string,
+) {
+  const callbackUrl = new URL(callbackBaseUrl);
+  callbackUrl.searchParams.set("paymentLinkId", paymentLinkId);
+  callbackUrl.searchParams.set("workshopId", workshopId);
+  return callbackUrl.toString();
 }
 
 function sanitizeJson(value: unknown): unknown {
@@ -521,6 +555,10 @@ function currencyCode(idTransaction?: number) {
 }
 
 function normalizedStatus(response: Record<string, unknown>) {
+  if (stringValue(response.response) !== "00") {
+    return "failed";
+  }
+
   const explicitStatus = stringValue(response.status).toLowerCase();
   if (explicitStatus !== "") {
     return explicitStatus;
@@ -543,6 +581,18 @@ function numberValue(value: unknown) {
   }
 
   return Number.NaN;
+}
+
+function hasStoredValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.trim() !== "";
+  }
+
+  return typeof value === "number";
 }
 
 function trimOrNull(value: unknown) {
@@ -578,6 +628,11 @@ function isSecureUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(value);
 }
 
 function json(body: Record<string, unknown>, status = 200) {
@@ -634,6 +689,11 @@ function loadEnv(): Env {
     throw new Error("missing_env_LAROPAY_CALLBACK_URL");
   }
 
+  const laropayTransactionType = Number(requiredEnv("LAROPAY_TRANSACTION_TYPE"));
+  if (![1, 2].includes(laropayTransactionType)) {
+    throw new Error("missing_env_LAROPAY_TRANSACTION_TYPE");
+  }
+
   return {
     supabaseUrl: requiredEnv("SUPABASE_URL"),
     supabaseAnonKey: requiredEnv("SUPABASE_ANON_KEY"),
@@ -644,6 +704,7 @@ function loadEnv(): Env {
     laropayIdUser: requiredEnv("LAROPAY_ID_USER"),
     laropayToken: requiredEnv("LAROPAY_TOKEN"),
     laropayCallbackUrl,
+    laropayTransactionType,
   };
 }
 
@@ -666,6 +727,7 @@ type Env = {
   laropayIdUser: string;
   laropayToken: string;
   laropayCallbackUrl: string;
+  laropayTransactionType: number;
 };
 
 class LaropayHttpError extends Error {

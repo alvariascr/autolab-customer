@@ -1,3 +1,4 @@
+import '../entities/appointment_product_selection.dart';
 import '../repositories/appointment_booking_repository.dart';
 
 class BookServiceAppointment {
@@ -9,6 +10,7 @@ class BookServiceAppointment {
     required String workshopId,
     required String inventoryItemId,
     required DateTime scheduledDateTime,
+    List<AppointmentProductSelection> products = const [],
     String? note,
     String? vehicleId,
     String? garageVehicleId,
@@ -25,6 +27,7 @@ class BookServiceAppointment {
       workshopId: workshopId,
       inventoryItemId: inventoryItemId,
       scheduledDateTime: scheduledDateTime,
+      products: products,
       note: note,
       vehicleId: vehicleId,
       garageVehicleId: garageVehicleId,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
+import '../payments/presentation/pages/my_purchases_page.dart';
 import '../profile/presentation/page/profile_page.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
@@ -105,70 +105,12 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
           ),
           const MapPage(showBottomNavigation: false),
           const ProfilePage(showBottomNavigation: false),
-          const _ComingSoonTab(),
+          const MyPurchasesPage(showBottomNavigation: false),
         ],
       ),
       bottomNavigationBar: CustomBottomNavbar(
         currentIndex: _navIndex,
         onTap: _handleNavigation,
-      ),
-    );
-  }
-}
-
-class _ComingSoonTab extends StatelessWidget {
-  const _ComingSoonTab();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF050606) : Colors.white;
-    final textColor = isDark
-        ? const Color(0xFFF4E9E9)
-        : const Color(0xFF181411);
-    final secondaryTextColor = isDark
-        ? const Color(0xFFA9A9A9)
-        : const Color(0xFF6B5F57);
-
-    return ColoredBox(
-      color: backgroundColor,
-      child: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.shopping_cart_outlined,
-                  color: Color(0xFFFF281B),
-                  size: 46,
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  l10n.navigationCartComingSoonTitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.navigationCartComingSoonMessage,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

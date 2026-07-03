@@ -2434,6 +2434,12 @@ abstract class AppLocalizations {
   /// **'Este taller no tiene productos adicionales disponibles.'**
   String get appointmentProductsEmpty;
 
+  /// No description provided for @appointmentProductsInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Uno o más productos seleccionados ya no están disponibles. Actualiza la selección e intenta nuevamente.'**
+  String get appointmentProductsInvalid;
+
   /// No description provided for @weekdaySunday.
   ///
   /// In es, this message translates to:
@@ -2914,6 +2920,18 @@ abstract class AppLocalizations {
   /// **'Este servicio ya no está disponible para agendar.'**
   String get appointmentServiceNotSchedulable;
 
+  /// No description provided for @appointmentServiceDurationRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Este servicio no tiene duración configurada. Contacta al taller para poder agendarlo.'**
+  String get appointmentServiceDurationRequired;
+
+  /// No description provided for @appointmentNoActiveEmployees.
+  ///
+  /// In es, this message translates to:
+  /// **'Este taller no tiene empleados activos disponibles para recibir citas.'**
+  String get appointmentNoActiveEmployees;
+
   /// No description provided for @appointmentVehicleNotOwned.
   ///
   /// In es, this message translates to:
@@ -3262,6 +3280,12 @@ abstract class AppLocalizations {
   /// **'Servicio'**
   String get appointmentServiceLabel;
 
+  /// No description provided for @appointmentServicePaidAtWorkshop.
+  ///
+  /// In es, this message translates to:
+  /// **'Se paga en taller'**
+  String get appointmentServicePaidAtWorkshop;
+
   /// No description provided for @appointmentPendingService.
   ///
   /// In es, this message translates to:
@@ -3400,6 +3424,36 @@ abstract class AppLocalizations {
   /// **'Pago'**
   String get appointmentPaymentMethodLabel;
 
+  /// No description provided for @laropayPaymentPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.'**
+  String get laropayPaymentPending;
+
+  /// No description provided for @laropayPaymentStartError.
+  ///
+  /// In es, this message translates to:
+  /// **'La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.'**
+  String get laropayPaymentStartError;
+
+  /// No description provided for @laropayPaymentStartErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible abrir Laropay'**
+  String get laropayPaymentStartErrorTitle;
+
+  /// No description provided for @laropayRetryAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get laropayRetryAction;
+
+  /// No description provided for @laropayCancelAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get laropayCancelAction;
+
   /// No description provided for @appointmentCustomerNameLabel.
   ///
   /// In es, this message translates to:
@@ -3483,6 +3537,144 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{hours} h {minutes} min'**
   String appointmentDurationHoursMinutes(Object hours, Object minutes);
+
+  /// No description provided for @myPurchasesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis compras'**
+  String get myPurchasesTitle;
+
+  /// No description provided for @myPurchasesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta tus pagos de productos adicionales'**
+  String get myPurchasesSubtitle;
+
+  /// No description provided for @myPurchasesEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes compras'**
+  String get myPurchasesEmptyTitle;
+
+  /// No description provided for @myPurchasesEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando pagues productos adicionales, aparecerán aquí con su estado.'**
+  String get myPurchasesEmptyMessage;
+
+  /// No description provided for @myPurchasesLoadErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus compras'**
+  String get myPurchasesLoadErrorTitle;
+
+  /// No description provided for @myPurchasesRetryAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get myPurchasesRetryAction;
+
+  /// No description provided for @myPurchasesPendingStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get myPurchasesPendingStatus;
+
+  /// No description provided for @myPurchasesApprovedStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Procesado'**
+  String get myPurchasesApprovedStatus;
+
+  /// No description provided for @myPurchasesRejectedStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'No procesado'**
+  String get myPurchasesRejectedStatus;
+
+  /// No description provided for @myPurchasesExpiredStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Vencido'**
+  String get myPurchasesExpiredStatus;
+
+  /// No description provided for @myPurchasesUnknownStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'En revisión'**
+  String get myPurchasesUnknownStatus;
+
+  /// No description provided for @myPurchasesPendingMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El link fue generado. Esperamos la confirmación de Laropay.'**
+  String get myPurchasesPendingMessage;
+
+  /// No description provided for @myPurchasesApprovedMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El pago fue confirmado correctamente.'**
+  String get myPurchasesApprovedMessage;
+
+  /// No description provided for @myPurchasesRejectedMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El pago no pudo ser procesado.'**
+  String get myPurchasesRejectedMessage;
+
+  /// No description provided for @myPurchasesExpiredMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El link de pago venció o ya no está disponible.'**
+  String get myPurchasesExpiredMessage;
+
+  /// No description provided for @myPurchasesUnknownMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El pago está en revisión.'**
+  String get myPurchasesUnknownMessage;
+
+  /// No description provided for @myPurchasesDefaultTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra de productos'**
+  String get myPurchasesDefaultTitle;
+
+  /// No description provided for @myPurchasesUnknownValue.
+  ///
+  /// In es, this message translates to:
+  /// **'N/D'**
+  String get myPurchasesUnknownValue;
+
+  /// No description provided for @myPurchasesAmountLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto'**
+  String get myPurchasesAmountLabel;
+
+  /// No description provided for @myPurchasesDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get myPurchasesDateLabel;
+
+  /// No description provided for @myPurchasesReferenceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Referencia'**
+  String get myPurchasesReferenceLabel;
+
+  /// No description provided for @myPurchasesOpenLinkAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar pago'**
+  String get myPurchasesOpenLinkAction;
+
+  /// No description provided for @myPurchasesLinkOpenError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible abrir el link de pago.'**
+  String get myPurchasesLinkOpenError;
 }
 
 class _AppLocalizationsDelegate

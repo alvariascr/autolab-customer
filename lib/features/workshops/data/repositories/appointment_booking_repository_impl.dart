@@ -1,3 +1,4 @@
+import '../../domain/entities/appointment_product_selection.dart';
 import '../../domain/entities/appointment_vehicle.dart';
 import '../../domain/entities/booked_appointment_slot.dart';
 import '../../domain/repositories/appointment_booking_repository.dart';
@@ -30,10 +31,14 @@ class AppointmentBookingRepositoryImpl implements AppointmentBookingRepository {
   Future<bool> isAppointmentSlotAvailable({
     required String workshopId,
     required DateTime scheduledDateTime,
+    double? serviceDurationHours,
+    bool isInspectionService = false,
   }) {
     return _remoteDataSource.isAppointmentSlotAvailable(
       workshopId: workshopId,
       scheduledDateTime: scheduledDateTime,
+      serviceDurationHours: serviceDurationHours,
+      isInspectionService: isInspectionService,
     );
   }
 
@@ -55,6 +60,7 @@ class AppointmentBookingRepositoryImpl implements AppointmentBookingRepository {
     required String workshopId,
     required String inventoryItemId,
     required DateTime scheduledDateTime,
+    List<AppointmentProductSelection> products = const [],
     String? note,
     String? vehicleId,
     String? garageVehicleId,
@@ -71,6 +77,7 @@ class AppointmentBookingRepositoryImpl implements AppointmentBookingRepository {
       workshopId: workshopId,
       inventoryItemId: inventoryItemId,
       scheduledDateTime: scheduledDateTime,
+      products: products,
       note: note,
       vehicleId: vehicleId,
       garageVehicleId: garageVehicleId,

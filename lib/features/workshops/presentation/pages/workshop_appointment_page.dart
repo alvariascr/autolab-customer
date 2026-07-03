@@ -7,22 +7,24 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
-import 'mock_card_payment_page.dart';
 
 class WorkshopAppointmentPage extends StatefulWidget {
   const WorkshopAppointmentPage({
     super.key,
     required this.workshopId,
+    required this.initialServiceId,
     this.initialSelection,
   });
 
   final String workshopId;
+  final String initialServiceId;
   final WorkshopAppointmentInitialSelection? initialSelection;
 
   @override
@@ -33,13 +35,13 @@ class WorkshopAppointmentPage extends StatefulWidget {
 class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   static const ink = AutolabCustomer.secondary;
   static const muted = AutolabCustomer.gray;
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<AppointmentCubit>()
         ..load(
           widget.workshopId,
+          initialServiceId: widget.initialServiceId,
           initialService: widget.initialSelection?.service,
           initialProducts: widget.initialSelection?.products,
         ),
@@ -106,6 +108,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }) {
     final isSubmitting =
         state.submitStatus == AppointmentSubmitStatus.submitting;
+    final isBusy = isSubmitting;
 
     return Stack(
       children: [
@@ -135,13 +138,13 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             _FooterActions(
               canGoBack: state.currentStep > 0,
               isLastStep: state.currentStep == steps.length - 1,
-              isSubmitting: isSubmitting,
+              isSubmitting: isBusy,
               onBack: () => _handleBack(context, state),
               onNext: () => _goNextStep(context, state, steps.length),
             ),
           ],
         ),
-        if (isSubmitting) const _BookingSubmittingOverlay(),
+        if (isBusy) const _BookingSubmittingOverlay(),
       ],
     );
   }
@@ -191,17 +194,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         );
       case 1:
         return _MockStepPanel(
-          icon: Icons.build_circle_outlined,
-          title: steps[state.currentStep].title,
-          child: _ServiceSelectionStep(
-            services: state.services,
-            status: state.servicesStatus,
-            selectedService: state.selectedService,
-            onSelected: context.read<AppointmentCubit>().selectService,
-          ),
-        );
-      case 2:
-        return _MockStepPanel(
           icon: Icons.inventory_2_outlined,
           title: steps[state.currentStep].title,
           child: _ProductsSelectionStep(
@@ -218,7 +210,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                 .changeProductQuantity,
           ),
         );
-      case 3:
+      case 2:
         return _MockStepPanel(
           icon: Icons.event_outlined,
           title: steps[state.currentStep].title,
@@ -235,7 +227,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             onSelected: context.read<AppointmentCubit>().selectTime,
           ),
         );
-      case 4:
+      case 3:
         return _BookingReviewStep(
           workshopName: _workshopName(state),
           service: state.selectedService,
@@ -246,13 +238,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           onNoteChanged: context.read<AppointmentCubit>().updateCustomerNote,
           note: state.customerNote,
         );
-      case 5:
-        return _PaymentStep(
-          service: state.selectedService,
-          products: state.selectedProducts,
-          selectedMethod: state.selectedPaymentMethod,
-          onSelected: context.read<AppointmentCubit>().selectPaymentMethod,
-        );
       default:
         return const SizedBox.shrink();
     }
@@ -261,22 +246,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   String _workshopName(AppointmentState state) {
     final name = state.workshop?.name.trim();
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
-  }
-
-  String _appointmentTotalLabel(AppointmentState state, AppLocalizations l10n) {
-    final servicePrice = state.selectedService?.sellingPrice ?? 0;
-    final productsTotal = state.selectedProducts.fold<double>(
-      0,
-      (total, item) =>
-          total + ((item.product.sellingPrice ?? 0) * item.quantity),
-    );
-    final hasPricelessItems =
-        state.selectedService?.sellingPrice == null ||
-        state.selectedProducts.any((item) => item.product.sellingPrice == null);
-
-    return hasPricelessItems
-        ? l10n.appointmentPriceToConfirm
-        : formatProductPrice(servicePrice + productsTotal);
   }
 
   Future<void> _openGarage(BuildContext context) async {
@@ -334,33 +303,44 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
       final submitState = cubit.state;
       if (appointmentId != null) {
-        if (submitState.selectedPaymentMethod ==
-            AppointmentPaymentMethod.card) {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MockCardPaymentPage(
-                appointmentId: appointmentId,
-                amountLabel: _appointmentTotalLabel(submitState, l10n),
-                workshopName: _workshopName(submitState),
-                onClose: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                    return;
-                  }
-
-                  _goToWorkshopProfileOrHome(context);
-                },
-              ),
-            ),
-          );
-        } else {
+        if (_hasChargeableProducts(submitState)) {
           _showAppointmentMessage(
             context,
-            message: l10n.appointmentCreatedSuccess,
-            type: _AppointmentMessageType.success,
+            message: l10n.laropayPaymentPending,
+            type: _AppointmentMessageType.warning,
           );
-          _goToWorkshopProfileOrHome(context);
+
+          try {
+            await sl<LaropayCheckoutLauncher>().launch(
+              appointmentId: appointmentId,
+              workshopName: _workshopName(submitState),
+            );
+            if (!context.mounted) {
+              return;
+            }
+
+            _goToWorkshopProfileOrHome(context);
+          } on LaropayCheckoutLaunchException catch (_) {
+            if (!context.mounted) {
+              return;
+            }
+
+            _showAppointmentMessage(
+              context,
+              message: l10n.laropayPaymentStartError,
+              type: _AppointmentMessageType.error,
+            );
+            _goToWorkshopProfileOrHome(context);
+          }
+          return;
         }
+
+        _showAppointmentMessage(
+          context,
+          message: l10n.appointmentCreatedSuccess,
+          type: _AppointmentMessageType.success,
+        );
+        _goToWorkshopProfileOrHome(context);
       } else {
         _showAppointmentMessage(
           context,
@@ -389,16 +369,16 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       }
     }
 
-    if (state.currentStep == 1 && state.selectedService == null) {
+    if (state.selectedService == null) {
       _showAppointmentMessage(
         context,
-        message: l10n.appointmentSelectServiceRequired,
+        message: l10n.appointmentNoSchedulableServices,
         type: _AppointmentMessageType.warning,
       );
       return;
     }
 
-    if (state.currentStep == 3) {
+    if (state.currentStep == 2) {
       if (state.selectedDate == null || state.selectedTime == null) {
         _showAppointmentMessage(
           context,
@@ -427,6 +407,16 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     }
 
     context.read<AppointmentCubit>().goNext();
+  }
+
+  bool _hasChargeableProducts(AppointmentState state) {
+    return state.includeProducts &&
+        state.selectedProducts.any(
+          (item) =>
+              item.quantity > 0 &&
+              item.product.sellingPrice != null &&
+              item.product.sellingPrice! > 0,
+        );
   }
 
   void _showAppointmentMessage(
@@ -514,14 +504,12 @@ enum _AppointmentMessageType { success, warning, error }
 List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   return [
     _AppointmentStep(l10n.appointmentStepVehicleInfo, Icons.directions_car),
-    _AppointmentStep(l10n.appointmentStepService, Icons.build_circle_outlined),
     _AppointmentStep(l10n.appointmentStepProducts, Icons.inventory_2_outlined),
     _AppointmentStep(l10n.appointmentStepDateTime, Icons.event_outlined),
     _AppointmentStep(
       l10n.appointmentStepConfirmation,
       Icons.check_circle_outline,
     ),
-    _AppointmentStep(l10n.appointmentStepPayment, Icons.credit_card_outlined),
   ];
 }
 
@@ -554,9 +542,14 @@ String _appointmentSubmitErrorMessage(
       l10n.appointmentOutsideBusinessHours,
     AppointmentSubmitError.serviceNotSchedulable =>
       l10n.appointmentServiceNotSchedulable,
+    AppointmentSubmitError.serviceDurationRequired =>
+      l10n.appointmentServiceDurationRequired,
+    AppointmentSubmitError.noActiveEmployees =>
+      l10n.appointmentNoActiveEmployees,
     AppointmentSubmitError.vehicleNotOwned => l10n.appointmentVehicleNotOwned,
     AppointmentSubmitError.vehiclePlateRequiredForBooking =>
       l10n.appointmentVehiclePlateRequiredForBooking,
+    AppointmentSubmitError.productsInvalid => l10n.appointmentProductsInvalid,
     AppointmentSubmitError.bookingConfigurationFailed =>
       l10n.appointmentBookingConfigurationFailed,
     AppointmentSubmitError.bookingFailed => l10n.appointmentCreateFailed,
@@ -1483,220 +1476,6 @@ String? _localizedVehicleTypeLabel(BuildContext context, String? vehicleType) {
   };
 }
 
-class _ServiceSelectionStep extends StatefulWidget {
-  const _ServiceSelectionStep({
-    required this.services,
-    required this.status,
-    required this.selectedService,
-    required this.onSelected,
-  });
-
-  final List<Product> services;
-  final AppointmentLoadStatus status;
-  final Product? selectedService;
-  final ValueChanged<Product> onSelected;
-
-  @override
-  State<_ServiceSelectionStep> createState() => _ServiceSelectionStepState();
-}
-
-class _ServiceSelectionStepState extends State<_ServiceSelectionStep> {
-  @override
-  Widget build(BuildContext context) {
-    if (widget.status == AppointmentLoadStatus.loading) {
-      return const SizedBox(
-        height: 180,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (widget.services.isEmpty) {
-      return const _EmptyServicesMessage();
-    }
-
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: widget.services.length,
-      itemBuilder: (context, index) {
-        final service = widget.services[index];
-
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: index == widget.services.length - 1 ? 0 : 12,
-          ),
-          child: _ServiceCard(
-            service: service,
-            selected: widget.selectedService?.id == service.id,
-            onTap: () => widget.onSelected(service),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ServiceCard extends StatelessWidget {
-  const _ServiceCard({
-    required this.service,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Product service;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AutolabCustomer.background : Colors.white,
-      elevation: 2,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: selected
-                  ? _appointmentPrimary(context)
-                  : AutolabCustomer.border,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: _appointmentPrimary(context),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.build_circle_outlined,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      service.name,
-                      style: TextStyle(
-                        color: _WorkshopAppointmentPageState.ink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      service.effectiveDescription,
-                      style: TextStyle(
-                        color: _WorkshopAppointmentPageState.muted,
-                        fontSize: 15,
-                        height: 1.3,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        if (service.sellingPrice != null)
-                          _ServiceMetaChip(
-                            icon: Icons.payments_outlined,
-                            label: formatProductPrice(service.sellingPrice),
-                          ),
-                        if (service.estimatedDurationHours != null)
-                          _ServiceMetaChip(
-                            icon: Icons.schedule_rounded,
-                            label:
-                                '${service.estimatedDurationHours!.toStringAsFixed(1)} h',
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ServiceMetaChip extends StatelessWidget {
-  const _ServiceMetaChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: _appointmentPrimary(context)),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: _WorkshopAppointmentPageState.ink,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyServicesMessage extends StatelessWidget {
-  const _EmptyServicesMessage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AutolabCustomer.border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, color: _appointmentPrimary(context)),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              AppLocalizations.of(context)!.appointmentNoSchedulableServices,
-              style: const TextStyle(
-                color: _WorkshopAppointmentPageState.ink,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ProductsSelectionStep extends StatefulWidget {
   const _ProductsSelectionStep({
     required this.products,
@@ -1811,6 +1590,38 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
             ),
         ],
       ],
+    );
+  }
+}
+
+class _ServiceMetaChip extends StatelessWidget {
+  const _ServiceMetaChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: _appointmentPrimary(context)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: _WorkshopAppointmentPageState.ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2006,141 +1817,6 @@ class _QuantityButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PaymentMethodStep extends StatelessWidget {
-  const _PaymentMethodStep({
-    required this.selectedMethod,
-    required this.onSelected,
-  });
-
-  final AppointmentPaymentMethod selectedMethod;
-  final ValueChanged<AppointmentPaymentMethod> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final methods = [
-      _PaymentMethodOption(
-        method: AppointmentPaymentMethod.card,
-        title: l10n.appointmentPaymentCard,
-        subtitle: l10n.appointmentPaymentCardSubtitle,
-        icon: Icons.credit_card_outlined,
-      ),
-    ];
-
-    return Column(
-      children: methods.map((method) {
-        final selected = selectedMethod == method.method;
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _PaymentMethodCard(
-            option: method,
-            selected: selected,
-            onTap: () => onSelected(method.method),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _PaymentMethodCard extends StatelessWidget {
-  const _PaymentMethodCard({
-    required this.option,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _PaymentMethodOption option;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AutolabCustomer.background : Colors.white,
-      elevation: 2,
-      shadowColor: Colors.black26,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: selected
-                  ? _appointmentPrimary(context)
-                  : AutolabCustomer.border,
-              width: selected ? 2 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: _appointmentPrimary(context),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(option.icon, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      option.title,
-                      style: TextStyle(
-                        color: _WorkshopAppointmentPageState.ink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      option.subtitle,
-                      style: TextStyle(
-                        color: _WorkshopAppointmentPageState.muted,
-                        fontSize: 15,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Icon(
-                selected
-                    ? Icons.check_circle_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                color: selected
-                    ? _appointmentPrimary(context)
-                    : AutolabCustomer.gray,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PaymentMethodOption {
-  const _PaymentMethodOption({
-    required this.method,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final AppointmentPaymentMethod method;
-  final String title;
-  final String subtitle;
-  final IconData icon;
 }
 
 class _BookingSubmittingOverlay extends StatelessWidget {
@@ -2918,16 +2594,14 @@ class _BookingReviewStep extends StatelessWidget {
     final dayLabel = date == null
         ? l10n.appointmentPendingDate
         : '${date!.day} de ${_monthName(context, date!)} ${date!.year}';
-    final servicePrice = service?.sellingPrice ?? 0;
     final productsTotal = products.fold<double>(
       0,
       (total, item) =>
           total + ((item.product.sellingPrice ?? 0) * item.quantity),
     );
-    final total = servicePrice + productsTotal;
-    final hasPricelessItems =
-        service?.sellingPrice == null ||
-        products.any((item) => item.product.sellingPrice == null);
+    final hasPricelessItems = products.any(
+      (item) => item.product.sellingPrice == null,
+    );
 
     return Column(
       children: [
@@ -2990,7 +2664,7 @@ class _BookingReviewStep extends StatelessWidget {
               _SummaryRow(
                 label: l10n.appointmentServiceLabel,
                 value: service?.name ?? l10n.appointmentPendingService,
-                trailing: formatProductPrice(service?.sellingPrice),
+                trailing: l10n.appointmentServicePaidAtWorkshop,
               ),
               _SummaryRow(
                 label: l10n.appointmentDateLabel,
@@ -3045,7 +2719,7 @@ class _BookingReviewStep extends StatelessWidget {
                 label: l10n.appointmentTotalToPayLabel,
                 value: hasPricelessItems
                     ? l10n.appointmentPriceToConfirm
-                    : formatProductPrice(total),
+                    : formatProductPrice(productsTotal),
                 emphasize: true,
               ),
               const SizedBox(height: 12),
@@ -3088,116 +2762,6 @@ class _BookingReviewStep extends StatelessWidget {
   }
 }
 
-class _PaymentStep extends StatelessWidget {
-  const _PaymentStep({
-    required this.service,
-    required this.products,
-    required this.selectedMethod,
-    required this.onSelected,
-  });
-
-  final Product? service;
-  final List<AppointmentSelectedProduct> products;
-  final AppointmentPaymentMethod selectedMethod;
-  final ValueChanged<AppointmentPaymentMethod> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final servicePrice = service?.sellingPrice ?? 0;
-    final productsTotal = products.fold<double>(
-      0,
-      (total, item) =>
-          total + ((item.product.sellingPrice ?? 0) * item.quantity),
-    );
-    final total = servicePrice + productsTotal;
-    final hasPricelessItems =
-        service?.sellingPrice == null ||
-        products.any((item) => item.product.sellingPrice == null);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AutolabCustomer.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x15000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: _appointmentPrimary(context),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.credit_card_outlined,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  l10n.appointmentStepPayment,
-                  style: const TextStyle(
-                    color: _WorkshopAppointmentPageState.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          _SummaryRow(
-            label: l10n.appointmentTotalToPayLabel,
-            value: hasPricelessItems
-                ? l10n.appointmentPriceToConfirm
-                : formatProductPrice(total),
-            emphasize: true,
-          ),
-          const Divider(height: 30, color: AutolabCustomer.border),
-          _PaymentMethodStep(
-            selectedMethod: selectedMethod,
-            onSelected: onSelected,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.appointmentPaymentCardSubtitle,
-            style: const TextStyle(
-              color: _WorkshopAppointmentPageState.muted,
-              fontSize: 15,
-              height: 1.35,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            l10n.appointmentConfirmationDeliveryMessage,
-            style: const TextStyle(
-              color: _WorkshopAppointmentPageState.muted,
-              fontSize: 15,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
     required this.label,
@@ -3223,27 +2787,59 @@ class _SummaryRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 92,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: _WorkshopAppointmentPageState.muted,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final shouldStackTrailing =
+              trailing != null && constraints.maxWidth < 330;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 92,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: _WorkshopAppointmentPageState.muted,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(value, style: valueStyle)),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            Text(trailing!, style: valueStyle),
-          ],
-        ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: shouldStackTrailing
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(value, style: valueStyle),
+                          const SizedBox(height: 4),
+                          Text(
+                            trailing!,
+                            style: valueStyle.copyWith(fontSize: 14),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: Text(value, style: valueStyle)),
+                          if (trailing != null) ...[
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                trailing!,
+                                textAlign: TextAlign.right,
+                                style: valueStyle.copyWith(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

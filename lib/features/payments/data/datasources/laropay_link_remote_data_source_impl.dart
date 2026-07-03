@@ -61,7 +61,29 @@ class LaropayLinkRemoteDataSourceImpl implements LaropayLinkRemoteDataSource {
       throw const FormatException('Laropay response must be a JSON object');
     }
 
+    final responseCode = decoded['response']?.toString().trim() ?? '';
+    if (responseCode != '00') {
+      throw LaropayGatewayException(
+        statusCode: response.statusCode,
+        message: _gatewayBusinessErrorMessage(decoded),
+      );
+    }
+
     return LaropayLinkModel.fromJson(decoded);
+  }
+
+  String _gatewayBusinessErrorMessage(Map<String, dynamic> decoded) {
+    final description = decoded['responseDescription']?.toString().trim();
+    if (description != null && description.isNotEmpty) {
+      return description;
+    }
+
+    final rejectReason = decoded['rejectReason']?.toString().trim();
+    if (rejectReason != null && rejectReason.isNotEmpty) {
+      return rejectReason;
+    }
+
+    return 'laropay_gateway_rejected';
   }
 
   String _safeGatewayErrorMessage(http.Response response) {

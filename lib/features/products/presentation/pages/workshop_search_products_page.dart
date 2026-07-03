@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/router/build_context_navigation.dart';
@@ -7,7 +8,6 @@ import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
 import '../widgets/product_image.dart';
 import '../widgets/product_price_text.dart';
-import 'product_detail_page.dart';
 
 enum _ProductSortOption { relevance, lowestPrice, highestPrice, name }
 
@@ -496,10 +496,9 @@ class _SearchProductTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ProductDetailPage(product: product),
-          ),
+        context.push(
+          '/workshops/${product.workshopId}/products/${product.id}',
+          extra: product,
         );
       },
       child: Column(

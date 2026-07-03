@@ -2,12 +2,12 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dartz/dartz.dart' show Either;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
-import '../pages/product_detail_page.dart';
 import 'product_card.dart';
 
 class WorkshopProductsCarousel extends StatefulWidget {
@@ -76,10 +76,9 @@ class _WorkshopProductsCarouselState extends State<WorkshopProductsCarousel> {
               child: ProductCard(
                 product: product,
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ProductDetailPage(product: product),
-                    ),
+                  context.push(
+                    '/workshops/${product.workshopId}/products/${product.id}',
+                    extra: product,
                   );
                 },
               ),

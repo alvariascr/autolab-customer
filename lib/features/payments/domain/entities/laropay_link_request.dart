@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 class LaropayLinkRequest {
   const LaropayLinkRequest({
     required this.internalTransactionId,
-    required this.idTransaction,
     required this.amount,
     required this.customerFirstName,
     required this.customerLastName,
@@ -15,12 +14,9 @@ class LaropayLinkRequest {
     this.customerLocation,
     this.expirationType = 'D',
     this.expirationValue = 1,
-    this.urlCallback,
-    this.securityCode,
   });
 
   final String internalTransactionId;
-  final int idTransaction;
   final double amount;
   final String? document;
   final String? detail;
@@ -31,6 +27,4 @@ class LaropayLinkRequest {
   final String? customerLocation;
   final String expirationType;
   final int expirationValue;
-  final Uri? urlCallback;
-  final String? securityCode;
 }

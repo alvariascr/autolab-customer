@@ -49,8 +49,8 @@ class _ProfileHeroState extends State<_ProfileHero> {
               icon: Icons.arrow_back_ios_new_rounded,
               darkBackground: true,
               onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
+                if (context.canPop()) {
+                  context.pop();
                   return;
                 }
 
@@ -126,13 +126,6 @@ class _ProfileHeroState extends State<_ProfileHero> {
                       '/search/workshops/${workshop.id}/products',
                     );
                   },
-                ),
-                _MenuAction(
-                  icon: Icons.calendar_month_outlined,
-                  title: l10n.workshopProfileScheduleAction,
-                  onTap: () => rootContext.push(
-                    _ProfileActions.appointmentRoute(workshop.id),
-                  ),
                 ),
                 _MenuAction(
                   icon: Icons.call_outlined,

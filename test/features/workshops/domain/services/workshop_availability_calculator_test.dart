@@ -123,7 +123,7 @@ void main() {
     expect(times, ['08:00', '09:00', '09:30']);
   });
 
-  test('blocks only the exact booked slot', () {
+  test('blocks slots that overlap the booked service duration', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
         hours: const [
@@ -147,7 +147,7 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['09:30', '10:00', '10:30', '11:00', '11:30']);
+    expect(times, ['10:30', '11:00', '11:30']);
   });
 
   test('keeps overlapping slots available while capacity remains', () {
@@ -162,6 +162,7 @@ void main() {
             slotCapacity: 2,
           ),
         ],
+        activeEmployeeCount: 2,
       ),
       date: DateTime(2026, 6, 1),
       bookedTimes: const {},
@@ -190,6 +191,7 @@ void main() {
             slotCapacity: 2,
           ),
         ],
+        activeEmployeeCount: 2,
       ),
       date: DateTime(2026, 6, 1),
       bookedTimes: const {},
@@ -207,7 +209,7 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['09:30', '10:00', '10:30']);
+    expect(times, ['10:30']);
   });
 
   test('tracks capacity per exact slot', () {
@@ -222,6 +224,7 @@ void main() {
             slotCapacity: 2,
           ),
         ],
+        activeEmployeeCount: 2,
       ),
       date: DateTime(2026, 6, 1),
       bookedTimes: const {},
@@ -239,7 +242,7 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['09:00', '09:30', '10:00', '10:30']);
+    expect(times, ['09:00', '09:30', '10:00']);
 
     final unavailableTimes = calculator.unavailableTimesForDate(
       workshop: _workshop(
@@ -252,6 +255,7 @@ void main() {
             slotCapacity: 2,
           ),
         ],
+        activeEmployeeCount: 2,
       ),
       date: DateTime(2026, 6, 1),
       bookedTimes: const {},
@@ -269,8 +273,43 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(unavailableTimes, isEmpty);
+    expect(unavailableTimes, {'10:30'});
   });
+
+  test(
+    'allows a service between adjacent appointments while capacity remains',
+    () {
+      final times = calculator.availableTimesForDate(
+        workshop: _workshop(
+          hours: const [
+            WorkshopBusinessHour(
+              dayOfWeek: 0,
+              openTime: '13:00:00',
+              closeTime: '16:00:00',
+              isClosed: false,
+            ),
+          ],
+          activeEmployeeCount: 2,
+        ),
+        date: DateTime(2026, 6, 1),
+        bookedTimes: const {},
+        bookedIntervals: [
+          BookedAppointmentSlot(
+            start: DateTime(2026, 6, 1, 13, 30),
+            durationMinutes: 60,
+          ),
+          BookedAppointmentSlot(
+            start: DateTime(2026, 6, 1, 14, 30),
+            durationMinutes: 60,
+          ),
+        ],
+        serviceDurationHours: 1,
+        now: DateTime(2026, 5, 31),
+      );
+
+      expect(times, contains('14:00'));
+    },
+  );
 
   test('returns full exact slots as unavailable times for visual blocking', () {
     final result = calculator.calculateMonth(
@@ -284,6 +323,7 @@ void main() {
             slotCapacity: 2,
           ),
         ],
+        activeEmployeeCount: 2,
       ),
       month: DateTime(2026, 6),
       bookedSlots: [
@@ -301,8 +341,8 @@ void main() {
     );
 
     final date = DateTime(2026, 6, 1);
-    expect(result.availableTimesByDate[date], ['09:30', '10:00', '10:30']);
-    expect(result.unavailableTimesByDate[date], {'09:00'});
+    expect(result.availableTimesByDate[date], ['10:30']);
+    expect(result.unavailableTimesByDate[date], {'09:00', '09:30', '10:00'});
   });
 
   test('keeps future slots available for the current day', () {
@@ -327,7 +367,71 @@ void main() {
     expect(times.last, '16:30');
   });
 
-  test('uses slot interval when service has no duration', () {
+  test('inspection appointments do not consume normal service capacity', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '07:00:00',
+            closeTime: '08:00:00',
+            isClosed: false,
+          ),
+        ],
+        activeEmployeeCount: 1,
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 7),
+          durationMinutes: 30,
+          isInspectionService: true,
+        ),
+      ],
+      serviceDurationHours: 0.5,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, ['07:00', '07:30']);
+  });
+
+  test('limits inspections to two per active employee per hour', () {
+    final times = calculator.availableTimesForDate(
+      workshop: _workshop(
+        hours: const [
+          WorkshopBusinessHour(
+            dayOfWeek: 0,
+            openTime: '07:00:00',
+            closeTime: '09:00:00',
+            isClosed: false,
+          ),
+        ],
+        activeEmployeeCount: 1,
+      ),
+      date: DateTime(2026, 6, 1),
+      bookedTimes: const {},
+      bookedIntervals: [
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 7),
+          durationMinutes: 30,
+          isInspectionService: true,
+        ),
+        BookedAppointmentSlot(
+          start: DateTime(2026, 6, 1, 7, 30),
+          durationMinutes: 30,
+          isInspectionService: true,
+        ),
+      ],
+      serviceDurationHours: 0.5,
+      isInspectionService: true,
+      now: DateTime(2026, 5, 31),
+    );
+
+    expect(times, ['08:00', '08:30']);
+  });
+
+  test('uses the default service duration when service has no duration', () {
     final times = calculator.availableTimesForDate(
       workshop: _workshop(
         hours: const [
@@ -344,11 +448,14 @@ void main() {
       now: DateTime(2026, 5, 31),
     );
 
-    expect(times, ['07:00', '07:30', '08:00', '08:30']);
+    expect(times, ['07:00', '07:30', '08:00']);
   });
 }
 
-Workshop _workshop({required List<WorkshopBusinessHour> hours}) {
+Workshop _workshop({
+  required List<WorkshopBusinessHour> hours,
+  int activeEmployeeCount = 1,
+}) {
   return Workshop(
     id: 'workshop-1',
     name: 'Workshop',
@@ -360,5 +467,6 @@ Workshop _workshop({required List<WorkshopBusinessHour> hours}) {
     longitude: 0,
     deliveryRadiusKm: 0,
     businessHours: hours,
+    activeEmployeeCount: activeEmployeeCount,
   );
 }

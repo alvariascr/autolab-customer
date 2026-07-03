@@ -200,7 +200,6 @@ LaropayLinkRequest _request({
 }) {
   return LaropayLinkRequest(
     internalTransactionId: 'order-1',
-    idTransaction: 1,
     amount: amount,
     document: 'document',
     detail: 'detail',
@@ -211,7 +210,6 @@ LaropayLinkRequest _request({
     customerLocation: 'San Jose',
     expirationType: expirationType,
     expirationValue: 2,
-    urlCallback: Uri.parse('https://autolab.test/callback/laropay'),
   );
 }
 

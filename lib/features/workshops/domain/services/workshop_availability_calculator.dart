@@ -43,6 +43,7 @@ class WorkshopAvailabilityCalculator {
     required DateTime month,
     required List<BookedAppointmentSlot> bookedSlots,
     double? serviceDurationHours,
+    bool isInspectionService = false,
     DateTime? now,
   }) {
     final startDate = DateTime(month.year, month.month);
@@ -65,6 +66,7 @@ class WorkshopAvailabilityCalculator {
         bookedTimes: bookedByDate[dateKey] ?? const {},
         bookedIntervals: bookedSlotsByDate[dateKey] ?? const [],
         serviceDurationHours: serviceDurationHours,
+        isInspectionService: isInspectionService,
         now: now,
       );
 
@@ -92,6 +94,7 @@ class WorkshopAvailabilityCalculator {
     required Set<String> bookedTimes,
     List<BookedAppointmentSlot> bookedIntervals = const [],
     double? serviceDurationHours,
+    bool isInspectionService = false,
     DateTime? now,
   }) {
     return _timesForDate(
@@ -100,6 +103,7 @@ class WorkshopAvailabilityCalculator {
       bookedTimes: bookedTimes,
       bookedIntervals: bookedIntervals,
       serviceDurationHours: serviceDurationHours,
+      isInspectionService: isInspectionService,
       now: now,
     ).availableTimes;
   }
@@ -110,6 +114,7 @@ class WorkshopAvailabilityCalculator {
     required Set<String> bookedTimes,
     List<BookedAppointmentSlot> bookedIntervals = const [],
     double? serviceDurationHours,
+    bool isInspectionService = false,
     DateTime? now,
   }) {
     return _timesForDate(
@@ -118,6 +123,7 @@ class WorkshopAvailabilityCalculator {
       bookedTimes: bookedTimes,
       bookedIntervals: bookedIntervals,
       serviceDurationHours: serviceDurationHours,
+      isInspectionService: isInspectionService,
       now: now,
     ).unavailableTimes;
   }
@@ -128,6 +134,7 @@ class WorkshopAvailabilityCalculator {
     required Set<String> bookedTimes,
     List<BookedAppointmentSlot> bookedIntervals = const [],
     double? serviceDurationHours,
+    bool isInspectionService = false,
     DateTime? now,
   }) {
     final businessHour = _businessHourForDate(workshop.businessHours, date);
@@ -145,10 +152,16 @@ class WorkshopAvailabilityCalculator {
 
     final currentTime = now ?? DateTime.now();
     final slotInterval = Duration(minutes: slotIntervalMinutes);
-    final bookedSlotCounts = _bookedSlotCounts(
-      bookedTimes: bookedTimes,
-      bookedSlots: bookedIntervals,
+    final serviceDuration = _serviceDuration(
+      serviceDurationHours: serviceDurationHours,
     );
+    final normalCapacity = workshop.activeEmployeeCount;
+    final inspectionCapacity = workshop.activeEmployeeCount * 2;
+    final capacity = isInspectionService ? inspectionCapacity : normalCapacity;
+
+    if (capacity <= 0) {
+      return const _DayAvailability();
+    }
 
     final availableTimes = <String>[];
     final unavailableTimes = <String>{};
@@ -158,17 +171,23 @@ class WorkshopAvailabilityCalculator {
       slotStart = slotStart.add(slotInterval)
     ) {
       final isPast = !slotStart.isAfter(currentTime);
-      final timeKey = _formatTime(slotStart);
-      final capacity = businessHour.slotCapacity <= 0
-          ? 1
-          : businessHour.slotCapacity;
-      final hasCapacity = (bookedSlotCounts[timeKey] ?? 0) < capacity;
+      final slotEnd = slotStart.add(serviceDuration);
+      final fitsBusinessHours = !slotEnd.isAfter(closeTime);
+      final hasCapacity = _hasCapacityForServiceWindow(
+        slotStart: slotStart,
+        slotEnd: slotEnd,
+        slotInterval: slotInterval,
+        bookedTimes: bookedTimes,
+        bookedSlots: bookedIntervals,
+        capacity: capacity,
+        isInspectionService: isInspectionService,
+      );
 
       if (isPast) {
         continue;
       }
 
-      if (hasCapacity) {
+      if (fitsBusinessHours && hasCapacity) {
         availableTimes.add(_formatTime(slotStart));
       } else {
         unavailableTimes.add(_formatTime(slotStart));
@@ -218,6 +237,7 @@ class WorkshopAvailabilityCalculator {
             BookedAppointmentSlot(
               start: slot.start,
               durationMinutes: slot.durationMinutes,
+              isInspectionService: slot.isInspectionService,
             ),
           );
     }
@@ -265,25 +285,95 @@ class WorkshopAvailabilityCalculator {
         '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  Map<String, int> _bookedSlotCounts({
+  Duration _serviceDuration({double? serviceDurationHours}) {
+    final durationMinutes =
+        serviceDurationHours == null ||
+            !serviceDurationHours.isFinite ||
+            serviceDurationHours <= 0
+        ? defaultServiceDurationMinutes
+        : (serviceDurationHours * Duration.minutesPerHour).ceil();
+
+    return Duration(minutes: durationMinutes);
+  }
+
+  bool _hasCapacityForServiceWindow({
+    required DateTime slotStart,
+    required DateTime slotEnd,
+    required Duration slotInterval,
     required Set<String> bookedTimes,
     required List<BookedAppointmentSlot> bookedSlots,
+    required int capacity,
+    required bool isInspectionService,
   }) {
-    final counts = <String, int>{};
+    if (isInspectionService) {
+      final hourStart = DateTime(
+        slotStart.year,
+        slotStart.month,
+        slotStart.day,
+        slotStart.hour,
+      );
+      final hourEnd = hourStart.add(const Duration(hours: 1));
+      final sameHourInspectionCount = bookedSlots.where((slot) {
+        return slot.isInspectionService &&
+            !slot.start.isBefore(hourStart) &&
+            slot.start.isBefore(hourEnd);
+      }).length;
+
+      return sameHourInspectionCount < capacity;
+    }
 
     if (bookedSlots.isEmpty) {
-      for (final time in bookedTimes) {
-        counts.update(time, (count) => count + 1, ifAbsent: () => 1);
-      }
-      return counts;
+      return !bookedTimes.contains(_formatTime(slotStart)) || capacity > 1;
     }
+
+    for (
+      var segmentStart = slotStart;
+      segmentStart.isBefore(slotEnd);
+      segmentStart = segmentStart.add(slotInterval)
+    ) {
+      final segmentEnd = segmentStart.add(slotInterval).isAfter(slotEnd)
+          ? slotEnd
+          : segmentStart.add(slotInterval);
+      final overlapping = _overlappingAppointmentCount(
+        segmentStart: segmentStart,
+        segmentEnd: segmentEnd,
+        bookedSlots: bookedSlots,
+        isInspectionService: isInspectionService,
+      );
+
+      if (overlapping >= capacity) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  int _overlappingAppointmentCount({
+    required DateTime segmentStart,
+    required DateTime segmentEnd,
+    required List<BookedAppointmentSlot> bookedSlots,
+    required bool isInspectionService,
+  }) {
+    var count = 0;
 
     for (final slot in bookedSlots) {
-      final time = _formatTime(slot.start);
-      counts.update(time, (count) => count + 1, ifAbsent: () => 1);
+      if (slot.isInspectionService != isInspectionService) {
+        continue;
+      }
+
+      final bookedEnd = slot.start.add(
+        Duration(
+          minutes: slot.durationMinutes ?? defaultServiceDurationMinutes,
+        ),
+      );
+
+      if (slot.start.isBefore(segmentEnd) && bookedEnd.isAfter(segmentStart)) {
+        count++;
+      }
     }
 
-    return counts;
+    return count;
   }
 }
 
