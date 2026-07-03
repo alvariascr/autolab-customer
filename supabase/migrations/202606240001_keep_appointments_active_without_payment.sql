@@ -29,6 +29,12 @@ after insert on public.appointments
 for each row
 execute function public.keep_appointment_order_active();
 
+create index if not exists appointments_order_service_id_idx
+on public.appointments(order_service_id);
+
+create index if not exists order_services_order_id_idx
+on public.order_services(order_id);
+
 -- Existing appointments must continue blocking their reserved time slots.
 update public.orders o
 set

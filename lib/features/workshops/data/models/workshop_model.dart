@@ -135,7 +135,11 @@ class WorkshopModel extends Workshop {
     }
 
     return employees.where((item) {
-      return item is Map<String, dynamic> && item['is_active'] == true;
+      if (item is! Map) {
+        return false;
+      }
+
+      return item['is_active'] == true;
     }).length;
   }
 }

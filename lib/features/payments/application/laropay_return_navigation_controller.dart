@@ -6,6 +6,10 @@ class LaropayReturnNavigationController {
   static const _scheme = 'autolab';
   static const _host = 'laropay-callback';
   static const _path = '/payment-return';
+  static final _uuidRegex = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
 
   final void Function(String location) _navigate;
 
@@ -28,9 +32,6 @@ class LaropayReturnNavigationController {
   }
 
   bool _isUuid(String value) {
-    return RegExp(
-      r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-      caseSensitive: false,
-    ).hasMatch(value);
+    return _uuidRegex.hasMatch(value);
   }
 }

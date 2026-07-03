@@ -113,12 +113,10 @@ class _LaropayPaymentStatusNotice extends StatelessWidget {
     final message = isPending
         ? l10n.laropayPaymentPending
         : l10n.laropayPaymentStartError;
-    final color = isPending
-        ? const Color(0xFF9A6700)
-        : Theme.of(context).colorScheme.error;
+    final color = isPending ? AutolabCustomer.warning : AutolabCustomer.error;
 
     return Material(
-      color: isPending ? const Color(0xFFFFF4D6) : const Color(0xFFFCE8E6),
+      color: color.withValues(alpha: 0.14),
       child: SafeArea(
         bottom: false,
         child: Padding(

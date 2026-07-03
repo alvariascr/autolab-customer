@@ -163,5 +163,24 @@ void main() {
 
       expect(model.activeEmployeeCount, 4);
     });
+
+    test('calcula empleados activos desde fallback employees flexible', () {
+      final model = WorkshopModel.fromMap({
+        'id': 'workshop-4',
+        'name': 'Autolab Liberia',
+        'business_hours': [],
+        'workshop_service_categories': [],
+        'workshop_payment_methods': [],
+        'employees': <Object?>[
+          {'is_active': true},
+          {'is_active': false},
+          <Object?, Object?>{'is_active': true},
+          {'name': 'Sin estado'},
+          'invalid',
+        ],
+      });
+
+      expect(model.activeEmployeeCount, 2);
+    });
   });
 }

@@ -44,16 +44,9 @@ void main() {
   setUp(() {
     final productRepository = MockProductRepository();
     bookServiceAppointment = MockBookServiceAppointment();
-    cubit = AppointmentCubit(
+    cubit = _createCubit(
+      productRepository: productRepository,
       workshopRepository: MockWorkshopRepository(),
-      getSchedulableServices: GetSchedulableServicesByWorkshop(
-        productRepository,
-      ),
-      getAdditionalProducts: GetAdditionalProductsByWorkshop(productRepository),
-      getCustomerVehicles: MockGetCustomerVehicles(),
-      getCustomerVehicleByPlate: MockGetCustomerVehicleByPlate(),
-      isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
-      getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
       bookServiceAppointment: bookServiceAppointment,
     );
   });
@@ -90,16 +83,9 @@ void main() {
     final additionalProduct = _product(id: 'product-1', itemType: 'product');
     final productRepository = MockProductRepository();
     final workshopRepository = MockWorkshopRepository();
-    final preselectedCubit = AppointmentCubit(
+    final preselectedCubit = _createCubit(
       workshopRepository: workshopRepository,
-      getSchedulableServices: GetSchedulableServicesByWorkshop(
-        productRepository,
-      ),
-      getAdditionalProducts: GetAdditionalProductsByWorkshop(productRepository),
-      getCustomerVehicles: MockGetCustomerVehicles(),
-      getCustomerVehicleByPlate: MockGetCustomerVehicleByPlate(),
-      isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
-      getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
+      productRepository: productRepository,
       bookServiceAppointment: MockBookServiceAppointment(),
     );
     addTearDown(preselectedCubit.close);
@@ -250,70 +236,90 @@ void main() {
     ).called(1);
   });
 
-  test('submitBooking sends selected additional products', () async {
-    final service = _product(id: 'service-1', itemType: 'service');
-    final product = _product(id: 'product-1', itemType: 'product');
+  test(
+    'submitBooking sends selected additional products after quantity increment',
+    () async {
+      final service = _product(id: 'service-1', itemType: 'service');
+      final product = _product(id: 'product-1', itemType: 'product');
 
-    when(
-      () => bookServiceAppointment(
-        workshopId: 'workshop-1',
-        inventoryItemId: 'service-1',
-        scheduledDateTime: any(named: 'scheduledDateTime'),
-        products: any<List<AppointmentProductSelection>>(named: 'products'),
-        note: any(named: 'note'),
-        vehicleId: any(named: 'vehicleId'),
-        garageVehicleId: any(named: 'garageVehicleId'),
-        licensePlate: any(named: 'licensePlate'),
-        vehicleType: any(named: 'vehicleType'),
-        vehicleBrand: any(named: 'vehicleBrand'),
-        vehicleModel: any(named: 'vehicleModel'),
-        vehicleYear: any(named: 'vehicleYear'),
-        vehicleColor: any(named: 'vehicleColor'),
-        fuelType: any(named: 'fuelType'),
-        transmissionType: any(named: 'transmissionType'),
-      ),
-    ).thenAnswer((_) async => 'appointment-1');
+      when(
+        () => bookServiceAppointment(
+          workshopId: 'workshop-1',
+          inventoryItemId: 'service-1',
+          scheduledDateTime: any(named: 'scheduledDateTime'),
+          products: any<List<AppointmentProductSelection>>(named: 'products'),
+          note: any(named: 'note'),
+          vehicleId: any(named: 'vehicleId'),
+          garageVehicleId: any(named: 'garageVehicleId'),
+          licensePlate: any(named: 'licensePlate'),
+          vehicleType: any(named: 'vehicleType'),
+          vehicleBrand: any(named: 'vehicleBrand'),
+          vehicleModel: any(named: 'vehicleModel'),
+          vehicleYear: any(named: 'vehicleYear'),
+          vehicleColor: any(named: 'vehicleColor'),
+          fuelType: any(named: 'fuelType'),
+          transmissionType: any(named: 'transmissionType'),
+        ),
+      ).thenAnswer((_) async => 'appointment-1');
 
-    cubit
-      ..updateVehicleLicensePlate('abc123')
-      ..selectService(service)
-      ..setIncludeProducts(true)
-      ..toggleProduct(product)
-      ..changeProductQuantity(product, 1)
-      ..selectDate(DateTime(2026, 7, 28))
-      ..selectTime('06:15');
+      cubit
+        ..updateVehicleLicensePlate('abc123')
+        ..selectService(service)
+        ..setIncludeProducts(true)
+        ..toggleProduct(product)
+        ..changeProductQuantity(product, 1)
+        ..selectDate(DateTime(2026, 7, 28))
+        ..selectTime('06:15');
 
-    final appointmentId = await cubit.submitBooking();
+      final appointmentId = await cubit.submitBooking();
 
-    expect(appointmentId, 'appointment-1');
+      expect(appointmentId, 'appointment-1');
 
-    final captured =
-        verify(
-              () => bookServiceAppointment(
-                workshopId: 'workshop-1',
-                inventoryItemId: 'service-1',
-                scheduledDateTime: DateTime(2026, 7, 28, 6, 15),
-                products: captureAny<List<AppointmentProductSelection>>(
-                  named: 'products',
+      final captured =
+          verify(
+                () => bookServiceAppointment(
+                  workshopId: 'workshop-1',
+                  inventoryItemId: 'service-1',
+                  scheduledDateTime: DateTime(2026, 7, 28, 6, 15),
+                  products: captureAny<List<AppointmentProductSelection>>(
+                    named: 'products',
+                  ),
+                  note: any(named: 'note'),
+                  vehicleId: null,
+                  garageVehicleId: null,
+                  licensePlate: 'ABC123',
+                  vehicleType: null,
+                  vehicleBrand: null,
+                  vehicleModel: null,
+                  vehicleYear: null,
+                  vehicleColor: null,
+                  fuelType: null,
+                  transmissionType: null,
                 ),
-                note: any(named: 'note'),
-                vehicleId: null,
-                garageVehicleId: null,
-                licensePlate: 'ABC123',
-                vehicleType: null,
-                vehicleBrand: null,
-                vehicleModel: null,
-                vehicleYear: null,
-                vehicleColor: null,
-                fuelType: null,
-                transmissionType: null,
-              ),
-            ).captured.single
-            as List;
+              ).captured.single
+              as List;
 
-    expect(captured.single.inventoryItemId, 'product-1');
-    expect(captured.single.quantity, 2);
-  });
+      expect(captured.single.inventoryItemId, 'product-1');
+      expect(captured.single.quantity, 2);
+    },
+  );
+}
+
+AppointmentCubit _createCubit({
+  required WorkshopRepository workshopRepository,
+  required ProductRepository productRepository,
+  required BookServiceAppointment bookServiceAppointment,
+}) {
+  return AppointmentCubit(
+    workshopRepository: workshopRepository,
+    getSchedulableServices: GetSchedulableServicesByWorkshop(productRepository),
+    getAdditionalProducts: GetAdditionalProductsByWorkshop(productRepository),
+    getCustomerVehicles: MockGetCustomerVehicles(),
+    getCustomerVehicleByPlate: MockGetCustomerVehicleByPlate(),
+    isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
+    getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
+    bookServiceAppointment: bookServiceAppointment,
+  );
 }
 
 Product _product({required String id, required String itemType}) {

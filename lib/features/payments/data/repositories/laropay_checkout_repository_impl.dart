@@ -1,6 +1,5 @@
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/errors/customer_error_catalog.dart';
 import '../../../auth/domain/errors/auth_error_catalog.dart';
@@ -36,14 +35,6 @@ class LaropayCheckoutRepositoryImpl implements LaropayCheckoutRepository {
       return Left(
         ValidationFailure.fromErrorItem(
           CustomerErrorCatalog.laropayInvalidRequest,
-          cause: error,
-          stackTrace: stackTrace,
-        ),
-      );
-    } on PostgrestException catch (error, stackTrace) {
-      return Left(
-        ServerFailure.fromErrorItem(
-          CustomerErrorCatalog.laropayGatewayRejected,
           cause: error,
           stackTrace: stackTrace,
         ),

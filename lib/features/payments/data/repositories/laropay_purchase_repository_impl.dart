@@ -1,6 +1,5 @@
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../domain/entities/laropay_purchase.dart';
@@ -29,8 +28,6 @@ class LaropayPurchaseRepositoryImpl implements LaropayPurchaseRepository {
           stackTrace: stackTrace,
         ),
       );
-    } on PostgrestException catch (error, stackTrace) {
-      return Left(_errorHandler.handle(error, stackTrace));
     } catch (error, stackTrace) {
       return Left(_errorHandler.handle(error, stackTrace));
     }

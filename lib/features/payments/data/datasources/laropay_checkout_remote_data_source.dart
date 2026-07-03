@@ -53,6 +53,11 @@ class SupabaseLaropayCheckoutRemoteDataSource
 
     final orderService = _firstMapValue(response['order_services']);
     final order = _mapValue(orderService['orders']);
+    final customer = _mapValue(order['customers']);
+    if (_stringValue(customer['user_id']) != user.id) {
+      throw const LaropayCheckoutContextException();
+    }
+
     final orderId = _stringValue(orderService['order_id']).isNotEmpty
         ? _stringValue(orderService['order_id'])
         : _stringValue(order['id']);

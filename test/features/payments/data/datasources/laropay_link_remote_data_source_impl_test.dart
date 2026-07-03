@@ -197,17 +197,20 @@ void main() {
     );
   });
 
-  test('throws format exception when Laropay response is not successful', () {
-    expect(
-      () => LaropayLinkModel.fromJson({
+  test(
+    'parses gateway response metadata even when response is not successful',
+    () {
+      final model = LaropayLinkModel.fromJson({
         'response': '99',
         'responseDescription': 'Rejected',
         'linkID': 'link-1',
         'linkURL': 'https://pay.test/link-1',
-      }),
-      throwsA(isA<FormatException>()),
-    );
-  });
+      });
+
+      expect(model.response, '99');
+      expect(model.responseDescription, 'Rejected');
+    },
+  );
 }
 
 LaropayLinkRequest _request() {

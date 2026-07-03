@@ -46,10 +46,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
         .order('created_at', ascending: false)
         .limit(50);
 
-    return response
-        .whereType<Map>()
-        .map((item) => _purchaseFromMap(Map<String, dynamic>.from(item)))
-        .toList(growable: false);
+    return response.map(_purchaseFromMap).toList(growable: false);
   }
 
   LaropayPurchase _purchaseFromMap(Map<String, dynamic> map) {

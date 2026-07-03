@@ -24,6 +24,8 @@ Deno.serve(async (request) => {
 
     const { data: paymentLink, error: paymentLinkError } = await supabase
       .from("laropay_payment_links")
+      // id is the primary key, so this public callback lookup uses an indexed
+      // equality filter even when callers send random UUIDs.
       .select("internal_transaction_id")
       .eq("id", paymentLinkId)
       .maybeSingle();
@@ -53,7 +55,8 @@ Deno.serve(async (request) => {
         location: destination.toString(),
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("laropay_return_failed", safeError(error));
     return new Response("Payment callback unavailable", { status: 500 });
   }
 });
@@ -70,4 +73,8 @@ function requiredEnv(key: string) {
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     .test(value);
+}
+
+function safeError(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
