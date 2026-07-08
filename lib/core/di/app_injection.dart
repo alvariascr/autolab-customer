@@ -27,6 +27,7 @@ import '../../features/payments/domain/repositories/laropay_purchase_repository.
 import '../../features/payments/domain/usecases/generate_laropay_link.dart';
 import '../../features/payments/domain/usecases/get_laropay_payment_context.dart';
 import '../../features/payments/domain/usecases/get_laropay_purchases.dart';
+import '../../features/payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
@@ -156,6 +157,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<GetLaropayPurchases>(
     () => GetLaropayPurchases(sl<LaropayPurchaseRepository>()),
+  );
+  sl.registerLazySingleton<RefreshLaropayPurchaseStatus>(
+    () => RefreshLaropayPurchaseStatus(sl<LaropayPurchaseRepository>()),
   );
   sl.registerLazySingleton<LaropayCheckoutLauncher>(
     () => LaropayCheckoutLauncher(

@@ -32,4 +32,25 @@ class LaropayPurchaseRepositoryImpl implements LaropayPurchaseRepository {
       return Left(_errorHandler.handle(error, stackTrace));
     }
   }
+
+  @override
+  Future<Either<Failure, LaropayPurchase>> refreshPurchaseStatus(
+    String paymentLinkId,
+  ) async {
+    try {
+      return Right(
+        await _remoteDataSource.refreshPurchaseStatus(paymentLinkId),
+      );
+    } on LaropayPurchaseAuthException catch (error, stackTrace) {
+      return Left(
+        AuthFailure.fromErrorItem(
+          AuthErrorCatalog.sessionExpired,
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    } catch (error, stackTrace) {
+      return Left(_errorHandler.handle(error, stackTrace));
+    }
+  }
 }

@@ -1,7 +1,9 @@
 class LaropayReturnNavigationController {
   LaropayReturnNavigationController({
     required void Function(String location) navigate,
-  }) : _navigate = navigate;
+    Future<String?> Function(String paymentLinkId)? refreshPaymentStatus,
+  }) : _navigate = navigate,
+       _refreshPaymentStatus = refreshPaymentStatus;
 
   static const _scheme = 'autolab';
   static const _host = 'laropay-callback';
@@ -12,8 +14,9 @@ class LaropayReturnNavigationController {
   );
 
   final void Function(String location) _navigate;
+  final Future<String?> Function(String paymentLinkId)? _refreshPaymentStatus;
 
-  bool handleAppLink(Uri uri) {
+  Future<bool> handleAppLink(Uri uri) async {
     if (!_isLaropayCallback(uri)) {
       return false;
     }
@@ -23,7 +26,20 @@ class LaropayReturnNavigationController {
       return false;
     }
 
-    _navigate('/workshops/$workshopId?payment=pending');
+    final rawPaymentLinkId = uri.queryParameters['paymentLinkId']?.trim() ?? '';
+    final paymentLinkId = _isUuid(rawPaymentLinkId) ? rawPaymentLinkId : '';
+    final paymentStatus = paymentLinkId.isNotEmpty
+        ? await _resolvePaymentStatus(paymentLinkId)
+        : 'pending';
+    final paymentLinkQuery = paymentLinkId.isEmpty
+        ? ''
+        : '&paymentLinkId=$paymentLinkId';
+
+    _navigate(
+      '/workshops/$workshopId'
+      '?payment=$paymentStatus'
+      '$paymentLinkQuery',
+    );
     return true;
   }
 
@@ -33,5 +49,23 @@ class LaropayReturnNavigationController {
 
   bool _isUuid(String value) {
     return _uuidRegex.hasMatch(value);
+  }
+
+  Future<String> _resolvePaymentStatus(String paymentLinkId) async {
+    try {
+      final status = await _refreshPaymentStatus?.call(paymentLinkId);
+      return _normalizePaymentStatus(status);
+    } catch (_) {
+      return 'pending';
+    }
+  }
+
+  String _normalizePaymentStatus(String? status) {
+    return switch (status?.trim().toLowerCase()) {
+      'paid' || 'approved' || 'completed' => 'paid',
+      'rejected' || 'failed' || 'cancelled' || 'canceled' => 'rejected',
+      'expired' => 'expired',
+      _ => 'pending',
+    };
   }
 }

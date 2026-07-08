@@ -10,6 +10,7 @@ import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../domain/entities/laropay_purchase.dart';
 import '../../domain/usecases/get_laropay_purchases.dart';
+import '../../domain/usecases/refresh_laropay_purchase_status.dart';
 
 class MyPurchasesPage extends StatefulWidget {
   const MyPurchasesPage({super.key, this.showBottomNavigation = true});
@@ -22,6 +23,7 @@ class MyPurchasesPage extends StatefulWidget {
 
 class _MyPurchasesPageState extends State<MyPurchasesPage> {
   late Future<List<LaropayPurchase>> _future;
+  final Set<String> _refreshingPurchaseIds = <String>{};
 
   @override
   void initState() {
@@ -124,6 +126,10 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                   return _PurchaseCard(
                     purchase: purchases[index - 1],
                     onOpenLink: _openPurchaseLink,
+                    onRefreshStatus: _refreshPurchaseStatus,
+                    refreshing: _refreshingPurchaseIds.contains(
+                      purchases[index - 1].id,
+                    ),
                   );
                 },
                 separatorBuilder: (context, index) =>
@@ -169,6 +175,36 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     }
   }
 
+  Future<void> _refreshPurchaseStatus(LaropayPurchase purchase) async {
+    final l10n = AppLocalizations.of(context)!;
+    if (_refreshingPurchaseIds.contains(purchase.id)) {
+      return;
+    }
+
+    setState(() => _refreshingPurchaseIds.add(purchase.id));
+
+    final result = await sl<RefreshLaropayPurchaseStatus>()(purchase.id);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _refreshingPurchaseIds.remove(purchase.id));
+
+    result.fold(
+      (_) => _showMessage(
+        message: l10n.myPurchasesStatusRefreshError,
+        color: AutolabCustomer.error,
+      ),
+      (_) {
+        _showMessage(
+          message: l10n.myPurchasesStatusRefreshSuccess,
+          color: AutolabCustomer.success,
+        );
+        _reload();
+      },
+    );
+  }
+
   void _showMessage({required String message, required Color color}) {
     if (!mounted) {
       return;
@@ -185,10 +221,17 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 }
 
 class _PurchaseCard extends StatelessWidget {
-  const _PurchaseCard({required this.purchase, required this.onOpenLink});
+  const _PurchaseCard({
+    required this.purchase,
+    required this.onOpenLink,
+    required this.onRefreshStatus,
+    required this.refreshing,
+  });
 
   final LaropayPurchase purchase;
   final ValueChanged<LaropayPurchase> onOpenLink;
+  final ValueChanged<LaropayPurchase> onRefreshStatus;
+  final bool refreshing;
 
   @override
   Widget build(BuildContext context) {
@@ -273,6 +316,24 @@ class _PurchaseCard extends StatelessWidget {
                   onPressed: () => onOpenLink(purchase),
                   icon: const Icon(Icons.open_in_new_rounded),
                   label: Text(l10n.myPurchasesOpenLinkAction),
+                ),
+              ),
+            ],
+            if (purchase.canRefreshStatus) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: refreshing
+                      ? null
+                      : () => onRefreshStatus(purchase),
+                  icon: refreshing
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.sync_rounded),
+                  label: Text(l10n.myPurchasesRefreshStatusAction),
                 ),
               ),
             ],
@@ -500,6 +561,10 @@ extension _LaropayPurchaseView on LaropayPurchase {
 
   bool get canReopenLink {
     return linkUrl != null && state == _PurchaseState.pending;
+  }
+
+  bool get canRefreshStatus {
+    return state == _PurchaseState.pending;
   }
 
   _PurchaseState get state {

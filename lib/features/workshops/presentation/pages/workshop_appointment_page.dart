@@ -304,22 +304,11 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       final submitState = cubit.state;
       if (appointmentId != null) {
         if (_hasChargeableProducts(submitState)) {
-          _showAppointmentMessage(
-            context,
-            message: l10n.laropayPaymentPending,
-            type: _AppointmentMessageType.warning,
-          );
-
           try {
             await sl<LaropayCheckoutLauncher>().launch(
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
             );
-            if (!context.mounted) {
-              return;
-            }
-
-            _goToWorkshopProfileOrHome(context);
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
               return;

@@ -29,10 +29,12 @@ class WorkshopProfilePage extends StatefulWidget {
     super.key,
     required this.workshopId,
     this.paymentStatus,
+    this.paymentLinkId,
   });
 
   final String workshopId;
   final String? paymentStatus;
+  final String? paymentLinkId;
 
   @override
   State<WorkshopProfilePage> createState() => _WorkshopProfilePageState();
@@ -40,6 +42,7 @@ class WorkshopProfilePage extends StatefulWidget {
 
 class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
   late Future<Either<Failure, Workshop?>> _workshopFuture;
+  String? _shownPaymentResultKey;
 
   @override
   void initState() {
@@ -47,6 +50,16 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
     _workshopFuture = sl<WorkshopRepository>().getWorkshopById(
       widget.workshopId,
     );
+    _schedulePaymentResultDialog();
+  }
+
+  @override
+  void didUpdateWidget(covariant WorkshopProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.paymentStatus != widget.paymentStatus ||
+        oldWidget.paymentLinkId != widget.paymentLinkId) {
+      _schedulePaymentResultDialog();
+    }
   }
 
   @override
@@ -57,8 +70,6 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       body: Column(
         children: [
-          if (widget.paymentStatus != null)
-            _LaropayPaymentStatusNotice(status: widget.paymentStatus!),
           Expanded(
             child: FutureBuilder<Either<Failure, Workshop?>>(
               future: _workshopFuture,
@@ -99,48 +110,129 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
       ),
     );
   }
-}
 
-class _LaropayPaymentStatusNotice extends StatelessWidget {
-  const _LaropayPaymentStatusNotice({required this.status});
+  void _schedulePaymentResultDialog() {
+    final paymentStatus = widget.paymentStatus?.trim();
+    if (paymentStatus == null || paymentStatus.isEmpty) {
+      return;
+    }
 
-  final String status;
+    final key = '$paymentStatus:${widget.paymentLinkId ?? ''}';
+    if (_shownPaymentResultKey == key) {
+      return;
+    }
+    _shownPaymentResultKey = key;
 
-  @override
-  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      _showPaymentResultDialog(paymentStatus);
+    });
+  }
+
+  Future<void> _showPaymentResultDialog(String paymentStatus) async {
     final l10n = AppLocalizations.of(context)!;
-    final isPending = status == 'pending';
-    final message = isPending
-        ? l10n.laropayPaymentPending
-        : l10n.laropayPaymentStartError;
-    final color = isPending ? AutolabCustomer.warning : AutolabCustomer.error;
+    final notice = _LaropayPaymentNoticeData.fromStatus(paymentStatus, l10n);
 
-    return Material(
-      color: color.withValues(alpha: 0.14),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-          child: Row(
-            children: [
-              Icon(
-                isPending ? Icons.hourglass_top_outlined : Icons.error_outline,
-                color: color,
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            icon: Icon(notice.icon, color: notice.color, size: 42),
+            title: Text(
+              notice.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            content: Text(
+              notice.message,
+              textAlign: TextAlign.center,
+              style: AutolabCustomer.body.copyWith(height: 1.35),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  _clearPaymentQuery();
+                },
+                child: Text(l10n.laropayPaymentResultBackToWorkshopAction),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  context.go('/purchases');
+                },
+                child: Text(l10n.laropayPaymentResultViewPurchasesAction),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  void _clearPaymentQuery() {
+    context.go('/workshops/${widget.workshopId}');
+  }
+}
+
+class _LaropayPaymentNoticeData {
+  const _LaropayPaymentNoticeData({
+    required this.title,
+    required this.message,
+    required this.color,
+    required this.icon,
+  });
+
+  final String title;
+  final String message;
+  final Color color;
+  final IconData icon;
+
+  factory _LaropayPaymentNoticeData.fromStatus(
+    String status,
+    AppLocalizations l10n,
+  ) {
+    return switch (status.trim().toLowerCase()) {
+      'paid' => _LaropayPaymentNoticeData(
+        title: l10n.laropayPaymentResultPaidTitle,
+        message: l10n.laropayPaymentResultPaidMessage,
+        color: AutolabCustomer.success,
+        icon: Icons.check_circle_outline,
+      ),
+      'rejected' => _LaropayPaymentNoticeData(
+        title: l10n.laropayPaymentResultRejectedTitle,
+        message: l10n.laropayPaymentResultRejectedMessage,
+        color: AutolabCustomer.error,
+        icon: Icons.cancel_outlined,
+      ),
+      'expired' => _LaropayPaymentNoticeData(
+        title: l10n.laropayPaymentResultExpiredTitle,
+        message: l10n.laropayPaymentResultExpiredMessage,
+        color: AutolabCustomer.warning,
+        icon: Icons.hourglass_disabled_outlined,
+      ),
+      'pending' => _LaropayPaymentNoticeData(
+        title: l10n.laropayPaymentResultPendingTitle,
+        message: l10n.laropayPaymentResultPendingMessage,
+        color: AutolabCustomer.info,
+        icon: Icons.pending_actions_outlined,
+      ),
+      _ => _LaropayPaymentNoticeData(
+        title: l10n.laropayPaymentResultPendingTitle,
+        message: l10n.laropayPaymentStartError,
+        color: AutolabCustomer.error,
+        icon: Icons.error_outline,
+      ),
+    };
   }
 }
