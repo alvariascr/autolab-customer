@@ -92,6 +92,16 @@ Deno.serve(async (request) => {
       return json({ error: "laropay_status_unavailable" }, 502);
     }
 
+    if (!isSuccessfulLaropayResponse(verifyResponse)) {
+      await persistStatusCheck(env, paymentLink, {
+        status: statusFromLocalExpiration(paymentLink) ?? "pending",
+        verifyResponse,
+        certifierResponse: null,
+        statusCheckError: providerErrorCode("verify", verifyResponse),
+      });
+      return json({ error: "laropay_verify_rejected" }, 502);
+    }
+
     const verifyOutcome = statusFromVerifyResponse(verifyResponse, paymentLink);
     let certifierResponse: Record<string, unknown> | null = null;
     let certifierOutcome: LaropayStatusOutcome | null = null;
@@ -117,6 +127,19 @@ Deno.serve(async (request) => {
 
       if (certifierResponse === null) {
         return json({ error: "laropay_certifier_unavailable" }, 502);
+      }
+
+      if (!isSuccessfulLaropayResponse(certifierResponse)) {
+        await persistStatusCheck(env, paymentLink, {
+          status: statusFromLocalExpiration(paymentLink) ?? "pending",
+          verifyResponse,
+          certifierResponse,
+          statusCheckError: providerErrorCode(
+            "certifier",
+            certifierResponse,
+          ),
+        });
+        return json({ error: "laropay_certifier_rejected" }, 502);
       }
 
       certifierOutcome = statusFromCertifierResponse(certifierResponse);
@@ -370,6 +393,21 @@ function statusFromVerifyResponse(
   }
 
   return "pending";
+}
+
+function isSuccessfulLaropayResponse(response: Record<string, unknown>) {
+  return stringValue(response.response) === "00";
+}
+
+function providerErrorCode(
+  source: "verify" | "certifier",
+  response: Record<string, unknown>,
+) {
+  const code = stringValue(response.response)
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 32);
+  return `${source}_${code === "" ? "invalid_response" : code}`;
 }
 
 function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {

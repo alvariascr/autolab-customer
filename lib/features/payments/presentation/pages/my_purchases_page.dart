@@ -586,9 +586,7 @@ extension _LaropayPurchaseView on LaropayPurchase {
         normalizedStatus == 'cancelled' ||
         normalizedStatus == 'canceled' ||
         normalizedStatus == 'failed' ||
-        normalizedStatus == 'error' ||
-        (normalizedResponse.isNotEmpty && normalizedResponse != '00') ||
-        normalizedDescription.contains('rechaz')) {
+        normalizedStatus == 'error') {
       return _PurchaseState.rejected;
     }
 
@@ -600,6 +598,11 @@ extension _LaropayPurchaseView on LaropayPurchase {
       }
 
       return _PurchaseState.pending;
+    }
+
+    if ((normalizedResponse.isNotEmpty && normalizedResponse != '00') ||
+        normalizedDescription.contains('rechaz')) {
+      return _PurchaseState.rejected;
     }
 
     return _PurchaseState.unknown;
