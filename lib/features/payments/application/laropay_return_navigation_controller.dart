@@ -1,9 +1,7 @@
 class LaropayReturnNavigationController {
   LaropayReturnNavigationController({
     required void Function(String location) navigate,
-    Future<String?> Function(String paymentLinkId)? refreshPaymentStatus,
-  }) : _navigate = navigate,
-       _refreshPaymentStatus = refreshPaymentStatus;
+  }) : _navigate = navigate;
 
   static const _scheme = 'autolab';
   static const _host = 'laropay-callback';
@@ -14,9 +12,8 @@ class LaropayReturnNavigationController {
   );
 
   final void Function(String location) _navigate;
-  final Future<String?> Function(String paymentLinkId)? _refreshPaymentStatus;
 
-  Future<bool> handleAppLink(Uri uri) async {
+  bool handleAppLink(Uri uri) {
     if (!_isLaropayCallback(uri)) {
       return false;
     }
@@ -27,19 +24,11 @@ class LaropayReturnNavigationController {
     }
 
     final rawPaymentLinkId = uri.queryParameters['paymentLinkId']?.trim() ?? '';
-    final paymentLinkId = _isUuid(rawPaymentLinkId) ? rawPaymentLinkId : '';
-    final paymentStatus = paymentLinkId.isNotEmpty
-        ? await _resolvePaymentStatus(paymentLinkId)
-        : 'pending';
-    final paymentLinkQuery = paymentLinkId.isEmpty
-        ? ''
-        : '&paymentLinkId=$paymentLinkId';
+    if (!_isUuid(rawPaymentLinkId)) {
+      return false;
+    }
 
-    _navigate(
-      '/workshops/$workshopId'
-      '?payment=$paymentStatus'
-      '$paymentLinkQuery',
-    );
+    _navigate('/workshops/$workshopId?paymentLinkId=$rawPaymentLinkId');
     return true;
   }
 
@@ -49,23 +38,5 @@ class LaropayReturnNavigationController {
 
   bool _isUuid(String value) {
     return _uuidRegex.hasMatch(value);
-  }
-
-  Future<String> _resolvePaymentStatus(String paymentLinkId) async {
-    try {
-      final status = await _refreshPaymentStatus?.call(paymentLinkId);
-      return _normalizePaymentStatus(status);
-    } catch (_) {
-      return 'pending';
-    }
-  }
-
-  String _normalizePaymentStatus(String? status) {
-    return switch (status?.trim().toLowerCase()) {
-      'paid' || 'approved' || 'completed' => 'paid',
-      'rejected' || 'failed' || 'cancelled' || 'canceled' => 'rejected',
-      'expired' => 'expired',
-      _ => 'pending',
-    };
   }
 }

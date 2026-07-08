@@ -183,26 +183,30 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
     setState(() => _refreshingPurchaseIds.add(purchase.id));
 
-    final result = await sl<RefreshLaropayPurchaseStatus>()(purchase.id);
-    if (!mounted) {
-      return;
+    try {
+      final result = await sl<RefreshLaropayPurchaseStatus>()(purchase.id);
+      if (!mounted) {
+        return;
+      }
+
+      result.fold(
+        (_) => _showMessage(
+          message: l10n.myPurchasesStatusRefreshError,
+          color: AutolabCustomer.error,
+        ),
+        (_) {
+          _showMessage(
+            message: l10n.myPurchasesStatusRefreshSuccess,
+            color: AutolabCustomer.success,
+          );
+          _reload();
+        },
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _refreshingPurchaseIds.remove(purchase.id));
+      }
     }
-
-    setState(() => _refreshingPurchaseIds.remove(purchase.id));
-
-    result.fold(
-      (_) => _showMessage(
-        message: l10n.myPurchasesStatusRefreshError,
-        color: AutolabCustomer.error,
-      ),
-      (_) {
-        _showMessage(
-          message: l10n.myPurchasesStatusRefreshSuccess,
-          color: AutolabCustomer.success,
-        );
-        _reload();
-      },
-    );
   }
 
   void _showMessage({required String message, required Color color}) {

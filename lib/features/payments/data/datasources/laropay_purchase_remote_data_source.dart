@@ -2,6 +2,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/laropay_purchase.dart';
 
+typedef LaropayStatusInvoker =
+    Future<FunctionResponse> Function(String paymentLinkId);
+typedef CurrentUserIdProvider = String? Function();
+
 abstract interface class LaropayPurchaseRemoteDataSource {
   Future<List<LaropayPurchase>> getRecentPurchases();
 
@@ -18,9 +22,16 @@ class LaropayPurchaseStatusException implements Exception {
 
 class SupabaseLaropayPurchaseRemoteDataSource
     implements LaropayPurchaseRemoteDataSource {
-  const SupabaseLaropayPurchaseRemoteDataSource(this._client);
+  const SupabaseLaropayPurchaseRemoteDataSource(
+    this._client, {
+    LaropayStatusInvoker? statusInvoker,
+    CurrentUserIdProvider? currentUserIdProvider,
+  }) : _statusInvoker = statusInvoker,
+       _currentUserIdProvider = currentUserIdProvider;
 
   final SupabaseClient _client;
+  final LaropayStatusInvoker? _statusInvoker;
+  final CurrentUserIdProvider? _currentUserIdProvider;
 
   @override
   Future<List<LaropayPurchase>> getRecentPurchases() async {
@@ -57,8 +68,9 @@ class SupabaseLaropayPurchaseRemoteDataSource
 
   @override
   Future<LaropayPurchase> refreshPurchaseStatus(String paymentLinkId) async {
-    final user = _client.auth.currentUser;
-    if (user == null) {
+    final userId =
+        _currentUserIdProvider?.call() ?? _client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
       throw const LaropayPurchaseAuthException();
     }
 
@@ -67,10 +79,17 @@ class SupabaseLaropayPurchaseRemoteDataSource
       throw const LaropayPurchaseStatusException();
     }
 
-    final response = await _client.functions.invoke(
-      'laropay-check-status',
-      body: {'paymentLinkId': normalizedId},
-    );
+    late final FunctionResponse response;
+    try {
+      response =
+          await _statusInvoker?.call(normalizedId) ??
+          await _client.functions.invoke(
+            'laropay-check-status',
+            body: {'paymentLinkId': normalizedId},
+          );
+    } on FunctionException {
+      throw const LaropayPurchaseStatusException();
+    }
 
     final data = response.data;
     if (response.status < 200 ||

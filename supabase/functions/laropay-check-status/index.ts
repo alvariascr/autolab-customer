@@ -299,23 +299,16 @@ async function persistStatusError(
   code: string,
   error: unknown,
 ) {
-  const supabase = adminSupabaseClient(env);
-  const { error: updateError } = await supabase
-    .from("laropay_payment_links")
-    .update({
-      status_checked_at: new Date().toISOString(),
-      status_check_error: code,
-      verify_payload: sanitizeJson({
-        response: "NETWORK_ERROR",
-        responseDescription: code,
-        error: safeError(error),
-      }),
-    })
-    .eq("id", paymentLink.id);
-
-  if (updateError !== null) {
-    throw updateError;
-  }
+  await persistStatusCheck(env, paymentLink, {
+    status: statusFromLocalExpiration(paymentLink) ?? "pending",
+    verifyResponse: {
+      response: "NETWORK_ERROR",
+      responseDescription: code,
+      error: safeError(error),
+    },
+    certifierResponse: null,
+    statusCheckError: code,
+  });
 }
 
 async function persistStatusCheck(

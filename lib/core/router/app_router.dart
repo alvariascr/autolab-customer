@@ -108,7 +108,6 @@ class AppRouter {
 
           return WorkshopProfilePage(
             workshopId: workshopId,
-            paymentStatus: state.uri.queryParameters['payment'],
             paymentLinkId: state.uri.queryParameters['paymentLinkId'],
           );
         },

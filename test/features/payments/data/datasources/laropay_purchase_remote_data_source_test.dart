@@ -1,0 +1,123 @@
+import 'package:autolab_customer/features/payments/data/datasources/laropay_purchase_remote_data_source.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void main() {
+  late SupabaseClient client;
+
+  setUp(() {
+    client = SupabaseClient('https://project.supabase.co', 'anon-key');
+  });
+
+  test('normalizes payment id and maps a successful response', () async {
+    String? invokedId;
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => 'user-1',
+      statusInvoker: (paymentLinkId) async {
+        invokedId = paymentLinkId;
+        return FunctionResponse(
+          status: 200,
+          data: {
+            'id': 'payment-1',
+            'amount': 12000,
+            'currencyCode': 'CRC',
+            'detail': 'Kit',
+            'linkID': r'$$ABC',
+            'linkURL': 'https://pay.test/link',
+            'status': 'paid',
+            'response': '00',
+            'responseDescription': 'OK',
+            'rejectReason': '',
+            'createdAt': '2026-07-08T12:00:00Z',
+            'expiresAt': '2026-07-09T12:00:00Z',
+          },
+        );
+      },
+    );
+
+    final purchase = await dataSource.refreshPurchaseStatus(' payment-1 ');
+
+    expect(invokedId, 'payment-1');
+    expect(purchase.id, 'payment-1');
+    expect(purchase.status, 'paid');
+    expect(purchase.amount, 12000);
+    expect(purchase.linkUrl, Uri.parse('https://pay.test/link'));
+  });
+
+  test('rejects an empty payment identifier before invoking', () async {
+    var invoked = false;
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => 'user-1',
+      statusInvoker: (_) async {
+        invoked = true;
+        return FunctionResponse(status: 200, data: const {});
+      },
+    );
+
+    await expectLater(
+      dataSource.refreshPurchaseStatus('   '),
+      throwsA(isA<LaropayPurchaseStatusException>()),
+    );
+    expect(invoked, isFalse);
+  });
+
+  test('rejects a non-object response body', () async {
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => 'user-1',
+      statusInvoker: (_) async => FunctionResponse(status: 200, data: []),
+    );
+
+    await expectLater(
+      dataSource.refreshPurchaseStatus('payment-1'),
+      throwsA(isA<LaropayPurchaseStatusException>()),
+    );
+  });
+
+  test('rejects a non-success response status', () async {
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => 'user-1',
+      statusInvoker: (_) async => FunctionResponse(
+        status: 502,
+        data: const {'error': 'laropay_status_unavailable'},
+      ),
+    );
+
+    await expectLater(
+      dataSource.refreshPurchaseStatus('payment-1'),
+      throwsA(isA<LaropayPurchaseStatusException>()),
+    );
+  });
+
+  test('translates function http failures', () async {
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => 'user-1',
+      statusInvoker: (_) async => throw const FunctionException(
+        status: 502,
+        details: {'error': 'laropay_status_unavailable'},
+      ),
+    );
+
+    await expectLater(
+      dataSource.refreshPurchaseStatus('payment-1'),
+      throwsA(isA<LaropayPurchaseStatusException>()),
+    );
+  });
+
+  test('requires an authenticated user', () async {
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => null,
+      statusInvoker: (_) async => FunctionResponse(status: 200, data: const {}),
+    );
+
+    await expectLater(
+      dataSource.refreshPurchaseStatus('payment-1'),
+      throwsA(isA<LaropayPurchaseAuthException>()),
+    );
+  });
+}

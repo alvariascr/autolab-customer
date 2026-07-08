@@ -7,7 +7,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/di/app_injection.dart';
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/app_theme_mode_cubit.dart';
@@ -18,7 +17,6 @@ import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
 import '../features/auth/ui/auth_ui_error_resolver.dart';
 import '../features/payments/application/laropay_return_navigation_controller.dart';
-import '../features/payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../l10n/app_localizations.dart';
 
 class MyApp extends StatefulWidget {
@@ -60,7 +58,6 @@ class _MyAppState extends State<MyApp> {
     );
     _laropayReturnNavigationController = LaropayReturnNavigationController(
       navigate: widget.router.go,
-      refreshPaymentStatus: _refreshLaropayPaymentStatus,
     );
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
@@ -86,16 +83,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _handleAppLink(Uri uri) async {
-    if (await _laropayReturnNavigationController.handleAppLink(uri)) {
+    if (_laropayReturnNavigationController.handleAppLink(uri)) {
       return;
     }
 
     await _authNavigationController.handleAppLink(uri);
-  }
-
-  Future<String?> _refreshLaropayPaymentStatus(String paymentLinkId) async {
-    final result = await sl<RefreshLaropayPurchaseStatus>()(paymentLinkId);
-    return result.fold((_) => null, (purchase) => purchase.status);
   }
 
   @override

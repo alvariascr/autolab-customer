@@ -6,8 +6,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/logging/feature_logger.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/presentation/widgets/product_image.dart';
@@ -28,12 +30,10 @@ class WorkshopProfilePage extends StatefulWidget {
   const WorkshopProfilePage({
     super.key,
     required this.workshopId,
-    this.paymentStatus,
     this.paymentLinkId,
   });
 
   final String workshopId;
-  final String? paymentStatus;
   final String? paymentLinkId;
 
   @override
@@ -41,6 +41,12 @@ class WorkshopProfilePage extends StatefulWidget {
 }
 
 class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
+  static final _uuidRegex = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
+  static const _paymentStatusTimeout = Duration(seconds: 45);
+
   late Future<Either<Failure, Workshop?>> _workshopFuture;
   String? _shownPaymentResultKey;
 
@@ -56,8 +62,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
   @override
   void didUpdateWidget(covariant WorkshopProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.paymentStatus != widget.paymentStatus ||
-        oldWidget.paymentLinkId != widget.paymentLinkId) {
+    if (oldWidget.paymentLinkId != widget.paymentLinkId) {
       _schedulePaymentResultDialog();
     }
   }
@@ -112,24 +117,50 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
   }
 
   void _schedulePaymentResultDialog() {
-    final paymentStatus = widget.paymentStatus?.trim();
-    if (paymentStatus == null || paymentStatus.isEmpty) {
+    final paymentLinkId = widget.paymentLinkId?.trim() ?? '';
+    if (!_uuidRegex.hasMatch(paymentLinkId)) {
       return;
     }
 
-    final key = '$paymentStatus:${widget.paymentLinkId ?? ''}';
-    if (_shownPaymentResultKey == key) {
+    if (_shownPaymentResultKey == paymentLinkId) {
       return;
     }
-    _shownPaymentResultKey = key;
+    _shownPaymentResultKey = paymentLinkId;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
 
-      _showPaymentResultDialog(paymentStatus);
+      _validateAndShowPaymentResult(paymentLinkId);
     });
+  }
+
+  Future<void> _validateAndShowPaymentResult(String paymentLinkId) async {
+    String paymentStatus;
+    try {
+      final result = await sl<RefreshLaropayPurchaseStatus>()(
+        paymentLinkId,
+      ).timeout(_paymentStatusTimeout);
+      paymentStatus = result.fold(
+        (_) => 'error',
+        (purchase) => purchase.status,
+      );
+    } on Exception catch (error, stackTrace) {
+      sl<FeatureLogger>().warn(
+        feature: 'payments',
+        action: 'refresh_laropay_return_status_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      paymentStatus = 'error';
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await _showPaymentResultDialog(paymentStatus);
   }
 
   Future<void> _showPaymentResultDialog(String paymentStatus) async {
@@ -226,6 +257,12 @@ class _LaropayPaymentNoticeData {
         message: l10n.laropayPaymentResultPendingMessage,
         color: AutolabCustomer.info,
         icon: Icons.pending_actions_outlined,
+      ),
+      'error' => _LaropayPaymentNoticeData(
+        title: l10n.laropayPaymentResultPendingTitle,
+        message: l10n.laropayPaymentStartError,
+        color: AutolabCustomer.error,
+        icon: Icons.error_outline,
       ),
       _ => _LaropayPaymentNoticeData(
         title: l10n.laropayPaymentResultPendingTitle,
