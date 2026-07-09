@@ -1889,8 +1889,38 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPaymentMethodLabel => 'Pago';
 
   @override
-  String get laropayPaymentPending =>
-      'Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.';
+  String get laropayPaymentResultPaidTitle => 'Pago confirmado';
+
+  @override
+  String get laropayPaymentResultPaidMessage =>
+      'Tu compra fue aprobada correctamente. Ya puedes revisar el detalle en Mis compras.';
+
+  @override
+  String get laropayPaymentResultRejectedTitle => 'Pago no procesado';
+
+  @override
+  String get laropayPaymentResultRejectedMessage =>
+      'Laropay no pudo procesar la compra. Puedes revisar el estado o intentar nuevamente desde Mis compras.';
+
+  @override
+  String get laropayPaymentResultExpiredTitle => 'Link vencido';
+
+  @override
+  String get laropayPaymentResultExpiredMessage =>
+      'El link de pago ya no está disponible. Genera una nueva compra para continuar.';
+
+  @override
+  String get laropayPaymentResultPendingTitle => 'Pago en revisión';
+
+  @override
+  String get laropayPaymentResultPendingMessage =>
+      'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis compras.';
+
+  @override
+  String get laropayPaymentResultViewPurchasesAction => 'Ver mis compras';
+
+  @override
+  String get laropayPaymentResultBackToWorkshopAction => 'Volver al taller';
 
   @override
   String get laropayPaymentStartError =>
@@ -2024,6 +2054,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesOpenLinkAction => 'Reintentar pago';
+
+  @override
+  String get myPurchasesRefreshStatusAction => 'Actualizar estado';
+
+  @override
+  String get myPurchasesStatusRefreshSuccess => 'Estado de pago actualizado.';
+
+  @override
+  String get myPurchasesStatusRefreshError =>
+      'No fue posible actualizar el estado del pago.';
 
   @override
   String get myPurchasesLinkOpenError =>

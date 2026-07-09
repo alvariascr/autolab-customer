@@ -17,9 +17,20 @@ class LaropayPurchaseRepositoryImpl implements LaropayPurchaseRepository {
   final GlobalErrorHandler _errorHandler;
 
   @override
-  Future<Either<Failure, List<LaropayPurchase>>> getRecentPurchases() async {
+  Future<Either<Failure, List<LaropayPurchase>>> getRecentPurchases() {
+    return _guard(_remoteDataSource.getRecentPurchases);
+  }
+
+  @override
+  Future<Either<Failure, LaropayPurchase>> refreshPurchaseStatus(
+    String paymentLinkId,
+  ) {
+    return _guard(() => _remoteDataSource.refreshPurchaseStatus(paymentLinkId));
+  }
+
+  Future<Either<Failure, T>> _guard<T>(Future<T> Function() action) async {
     try {
-      return Right(await _remoteDataSource.getRecentPurchases());
+      return Right(await action());
     } on LaropayPurchaseAuthException catch (error, stackTrace) {
       return Left(
         AuthFailure.fromErrorItem(

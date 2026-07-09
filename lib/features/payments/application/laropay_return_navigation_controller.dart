@@ -23,7 +23,12 @@ class LaropayReturnNavigationController {
       return false;
     }
 
-    _navigate('/workshops/$workshopId?payment=pending');
+    final rawPaymentLinkId = uri.queryParameters['paymentLinkId']?.trim() ?? '';
+    if (!_isUuid(rawPaymentLinkId)) {
+      return false;
+    }
+
+    _navigate('/workshops/$workshopId?paymentLinkId=$rawPaymentLinkId');
     return true;
   }
 
