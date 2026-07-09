@@ -49,31 +49,34 @@ void main() {
     expect(purchase.linkUrl, Uri.parse('https://pay.test/link'));
   });
 
-  test('rejects active status responses with an invalid payment link', () async {
-    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
-      client,
-      currentUserIdProvider: () => 'user-1',
-      statusInvoker: (_) async => FunctionResponse(
-        status: 200,
-        data: const {
-          'id': 'payment-1',
-          'amount': 12000,
-          'currency_code': 'CRC',
-          'link_id': r'$$ABC',
-          'link_url': 'http://pay.test/link',
-          'status': 'pending',
-          'response_code': '00',
-          'response_description': 'OK',
-          'reject_reason': '',
-        },
-      ),
-    );
+  test(
+    'rejects active status responses with an invalid payment link',
+    () async {
+      final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+        client,
+        currentUserIdProvider: () => 'user-1',
+        statusInvoker: (_) async => FunctionResponse(
+          status: 200,
+          data: const {
+            'id': 'payment-1',
+            'amount': 12000,
+            'currency_code': 'CRC',
+            'link_id': r'$$ABC',
+            'link_url': 'http://pay.test/link',
+            'status': 'pending',
+            'response_code': '00',
+            'response_description': 'OK',
+            'reject_reason': '',
+          },
+        ),
+      );
 
-    await expectLater(
-      dataSource.refreshPurchaseStatus('payment-1'),
-      throwsA(isA<LaropayPurchaseStatusException>()),
-    );
-  });
+      await expectLater(
+        dataSource.refreshPurchaseStatus('payment-1'),
+        throwsA(isA<LaropayPurchaseStatusException>()),
+      );
+    },
+  );
 
   test('rejects an empty payment identifier before invoking', () async {
     var invoked = false;
