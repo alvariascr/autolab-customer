@@ -635,7 +635,16 @@
   "appointmentWorkshopLabel": "Taller",
   "appointmentDurationLabel": "Duración",
   "appointmentPaymentMethodLabel": "Pago",
-  "laropayPaymentPending": "Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.",
+  "laropayPaymentResultPaidTitle": "Pago confirmado",
+  "laropayPaymentResultPaidMessage": "Tu compra fue aprobada correctamente. Ya puedes revisar el detalle en Mis compras.",
+  "laropayPaymentResultRejectedTitle": "Pago no procesado",
+  "laropayPaymentResultRejectedMessage": "Laropay no pudo procesar la compra. Puedes revisar el estado o intentar nuevamente desde Mis compras.",
+  "laropayPaymentResultExpiredTitle": "Link vencido",
+  "laropayPaymentResultExpiredMessage": "El link de pago ya no está disponible. Genera una nueva compra para continuar.",
+  "laropayPaymentResultPendingTitle": "Pago en revisión",
+  "laropayPaymentResultPendingMessage": "Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis compras.",
+  "laropayPaymentResultViewPurchasesAction": "Ver mis compras",
+  "laropayPaymentResultBackToWorkshopAction": "Volver al taller",
   "laropayPaymentStartError": "La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.",
   "laropayPaymentStartErrorTitle": "No fue posible abrir Laropay",
   "laropayRetryAction": "Reintentar",
@@ -692,6 +701,9 @@
   "myPurchasesDateLabel": "Fecha",
   "myPurchasesReferenceLabel": "Referencia",
   "myPurchasesOpenLinkAction": "Reintentar pago",
+  "myPurchasesRefreshStatusAction": "Actualizar estado",
+  "myPurchasesStatusRefreshSuccess": "Estado de pago actualizado.",
+  "myPurchasesStatusRefreshError": "No fue posible actualizar el estado del pago.",
   "myPurchasesLinkOpenError": "No fue posible abrir el link de pago."
 }
 

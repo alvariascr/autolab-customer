@@ -3424,11 +3424,65 @@ abstract class AppLocalizations {
   /// **'Pago'**
   String get appointmentPaymentMethodLabel;
 
-  /// No description provided for @laropayPaymentPending.
+  /// No description provided for @laropayPaymentResultPaidTitle.
   ///
   /// In es, this message translates to:
-  /// **'Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.'**
-  String get laropayPaymentPending;
+  /// **'Pago confirmado'**
+  String get laropayPaymentResultPaidTitle;
+
+  /// No description provided for @laropayPaymentResultPaidMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu compra fue aprobada correctamente. Ya puedes revisar el detalle en Mis compras.'**
+  String get laropayPaymentResultPaidMessage;
+
+  /// No description provided for @laropayPaymentResultRejectedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago no procesado'**
+  String get laropayPaymentResultRejectedTitle;
+
+  /// No description provided for @laropayPaymentResultRejectedMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Laropay no pudo procesar la compra. Puedes revisar el estado o intentar nuevamente desde Mis compras.'**
+  String get laropayPaymentResultRejectedMessage;
+
+  /// No description provided for @laropayPaymentResultExpiredTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Link vencido'**
+  String get laropayPaymentResultExpiredTitle;
+
+  /// No description provided for @laropayPaymentResultExpiredMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El link de pago ya no está disponible. Genera una nueva compra para continuar.'**
+  String get laropayPaymentResultExpiredMessage;
+
+  /// No description provided for @laropayPaymentResultPendingTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago en revisión'**
+  String get laropayPaymentResultPendingTitle;
+
+  /// No description provided for @laropayPaymentResultPendingMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis compras.'**
+  String get laropayPaymentResultPendingMessage;
+
+  /// No description provided for @laropayPaymentResultViewPurchasesAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver mis compras'**
+  String get laropayPaymentResultViewPurchasesAction;
+
+  /// No description provided for @laropayPaymentResultBackToWorkshopAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver al taller'**
+  String get laropayPaymentResultBackToWorkshopAction;
 
   /// No description provided for @laropayPaymentStartError.
   ///
@@ -3669,6 +3723,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Reintentar pago'**
   String get myPurchasesOpenLinkAction;
+
+  /// No description provided for @myPurchasesRefreshStatusAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar estado'**
+  String get myPurchasesRefreshStatusAction;
+
+  /// No description provided for @myPurchasesStatusRefreshSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado de pago actualizado.'**
+  String get myPurchasesStatusRefreshSuccess;
+
+  /// No description provided for @myPurchasesStatusRefreshError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible actualizar el estado del pago.'**
+  String get myPurchasesStatusRefreshError;
 
   /// No description provided for @myPurchasesLinkOpenError.
   ///
