@@ -121,21 +121,27 @@ class SupabaseLaropayPurchaseRemoteDataSource
   }
 
   LaropayPurchase _purchaseFromStatusResponse(Map<String, dynamic> map) {
+    final status = _stringValue(map['status']);
+    final linkUrl = _secureUri(map['link_url']);
+    if (_requiresPaymentLink(status) && linkUrl == null) {
+      throw const LaropayPurchaseStatusException();
+    }
+
     return LaropayPurchase(
       id: _stringValue(map['id']),
       amount: _numberValue(map['amount']),
-      currencyCode: _stringValue(map['currencyCode']).isEmpty
+      currencyCode: _stringValue(map['currency_code']).isEmpty
           ? 'CRC'
-          : _stringValue(map['currencyCode']),
+          : _stringValue(map['currency_code']),
       detail: _stringValue(map['detail']),
-      linkId: _stringValue(map['linkID']),
-      linkUrl: _secureUri(map['linkURL']),
-      status: _stringValue(map['status']),
-      responseCode: _stringValue(map['response']),
-      responseDescription: _stringValue(map['responseDescription']),
-      rejectReason: _stringValue(map['rejectReason']),
-      createdAt: DateTime.tryParse(_stringValue(map['createdAt'])),
-      expiresAt: DateTime.tryParse(_stringValue(map['expiresAt'])),
+      linkId: _stringValue(map['link_id']),
+      linkUrl: linkUrl,
+      status: status,
+      responseCode: _stringValue(map['response_code']),
+      responseDescription: _stringValue(map['response_description']),
+      rejectReason: _stringValue(map['reject_reason']),
+      createdAt: DateTime.tryParse(_stringValue(map['created_at'])),
+      expiresAt: DateTime.tryParse(_stringValue(map['expires_at'])),
     );
   }
 }
@@ -157,4 +163,9 @@ Uri? _secureUri(Object? value) {
   }
 
   return uri;
+}
+
+bool _requiresPaymentLink(String status) {
+  final normalizedStatus = status.trim().toLowerCase();
+  return normalizedStatus == 'created' || normalizedStatus == 'pending';
 }

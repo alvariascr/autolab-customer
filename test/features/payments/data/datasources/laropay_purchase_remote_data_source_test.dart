@@ -21,16 +21,16 @@ void main() {
           data: {
             'id': 'payment-1',
             'amount': 12000,
-            'currencyCode': 'CRC',
+            'currency_code': 'CRC',
             'detail': 'Kit',
-            'linkID': r'$$ABC',
-            'linkURL': 'https://pay.test/link',
+            'link_id': r'$$ABC',
+            'link_url': 'https://pay.test/link',
             'status': 'paid',
-            'response': '00',
-            'responseDescription': 'OK',
-            'rejectReason': '',
-            'createdAt': '2026-07-08T12:00:00Z',
-            'expiresAt': '2026-07-09T12:00:00Z',
+            'response_code': '00',
+            'response_description': 'OK',
+            'reject_reason': '',
+            'created_at': '2026-07-08T12:00:00Z',
+            'expires_at': '2026-07-09T12:00:00Z',
           },
         );
       },
@@ -42,7 +42,37 @@ void main() {
     expect(purchase.id, 'payment-1');
     expect(purchase.status, 'paid');
     expect(purchase.amount, 12000);
+    expect(purchase.currencyCode, 'CRC');
+    expect(purchase.linkId, r'$$ABC');
+    expect(purchase.responseCode, '00');
+    expect(purchase.responseDescription, 'OK');
     expect(purchase.linkUrl, Uri.parse('https://pay.test/link'));
+  });
+
+  test('rejects active status responses with an invalid payment link', () async {
+    final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+      client,
+      currentUserIdProvider: () => 'user-1',
+      statusInvoker: (_) async => FunctionResponse(
+        status: 200,
+        data: const {
+          'id': 'payment-1',
+          'amount': 12000,
+          'currency_code': 'CRC',
+          'link_id': r'$$ABC',
+          'link_url': 'http://pay.test/link',
+          'status': 'pending',
+          'response_code': '00',
+          'response_description': 'OK',
+          'reject_reason': '',
+        },
+      ),
+    );
+
+    await expectLater(
+      dataSource.refreshPurchaseStatus('payment-1'),
+      throwsA(isA<LaropayPurchaseStatusException>()),
+    );
   });
 
   test('rejects an empty payment identifier before invoking', () async {
