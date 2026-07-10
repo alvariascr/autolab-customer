@@ -129,7 +129,11 @@ class _VehiclesPageState extends State<VehiclesPage> {
     await preferences.setString(activeVehicleIdKey, vehicle.id);
   }
 
-  Future<void> _handleVehicleSaved() async {
+  Future<void> _handleVehicleSaved(String? vehicleId) async {
+    if (vehicleId != null && vehicleId.isNotEmpty) {
+      await _moveNewVehicleImage(vehicleId);
+    }
+
     _startNewVehicle();
     await _loadVehicles();
   }
@@ -153,7 +157,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
   Future<void> _loadVehicleImages() async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_newVehicleImageKey);
     final loadedPaths = <String, String>{};
 
     for (final key in preferences.getKeys()) {
@@ -177,6 +180,29 @@ class _VehiclesPageState extends State<VehiclesPage> {
   Future<void> _removeNewVehicleImage() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove(_newVehicleImageKey);
+  }
+
+  Future<void> _moveNewVehicleImage(String vehicleId) async {
+    final preferences = await SharedPreferences.getInstance();
+    final temporaryPath = preferences.getString(_newVehicleImageKey);
+
+    if (temporaryPath == null || temporaryPath.isEmpty) {
+      return;
+    }
+
+    final vehicleImageKey = _vehicleImageKeyById(vehicleId);
+    await preferences.setString(vehicleImageKey, temporaryPath);
+    await preferences.remove(_newVehicleImageKey);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _vehicleImagePaths
+        ..remove(_newVehicleImageKey)
+        ..[vehicleImageKey] = temporaryPath;
+    });
   }
 
   @override
@@ -715,7 +741,7 @@ class _VehicleForm extends StatefulWidget {
   final GarageVehicleRemoteDataSource dataSource;
   final GarageVehicle? initialVehicle;
   final bool embedded;
-  final Future<void> Function()? onSaved;
+  final Future<void> Function(String? vehicleId)? onSaved;
 
   @override
   State<_VehicleForm> createState() => _VehicleFormState();
@@ -773,8 +799,9 @@ class _VehicleFormState extends State<_VehicleForm> {
 
     try {
       final vehicle = widget.initialVehicle;
+      String? savedVehicleId;
       if (vehicle == null) {
-        await widget.dataSource.createVehicle(
+        savedVehicleId = await widget.dataSource.createVehicle(
           licensePlate: _plateController.text,
           vehicleType: _vehicleType,
           brand: _brandController.text,
@@ -801,7 +828,7 @@ class _VehicleFormState extends State<_VehicleForm> {
       if (!mounted) return;
 
       if (widget.onSaved != null) {
-        await widget.onSaved!();
+        await widget.onSaved!(savedVehicleId);
         return;
       }
 
@@ -1218,4 +1245,8 @@ String _vehicleImageKey(GarageVehicle? vehicle) {
   return vehicle == null
       ? _VehiclesPageState._newVehicleImageKey
       : 'garage_vehicle_image_${vehicle.id}';
+}
+
+String _vehicleImageKeyById(String vehicleId) {
+  return 'garage_vehicle_image_$vehicleId';
 }
