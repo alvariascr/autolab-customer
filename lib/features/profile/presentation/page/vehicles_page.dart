@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/app_injection.dart';
@@ -146,13 +147,20 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     if (image == null || !mounted) return;
 
+    final persistedImagePath = await _persistVehicleImage(
+      sourcePath: image.path,
+      key: _vehicleImageKey(_selectedVehicle),
+    );
+
+    if (!mounted) return;
+
     final key = _vehicleImageKey(_selectedVehicle);
     setState(() {
-      _vehicleImagePaths[key] = image.path;
+      _vehicleImagePaths[key] = persistedImagePath;
     });
 
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(key, image.path);
+    await preferences.setString(key, persistedImagePath);
   }
 
   Future<void> _loadVehicleImages() async {
@@ -191,7 +199,11 @@ class _VehiclesPageState extends State<VehiclesPage> {
     }
 
     final vehicleImageKey = _vehicleImageKeyById(vehicleId);
-    await preferences.setString(vehicleImageKey, temporaryPath);
+    final persistedImagePath = await _persistVehicleImage(
+      sourcePath: temporaryPath,
+      key: vehicleImageKey,
+    );
+    await preferences.setString(vehicleImageKey, persistedImagePath);
     await preferences.remove(_newVehicleImageKey);
 
     if (!mounted) {
@@ -201,8 +213,32 @@ class _VehiclesPageState extends State<VehiclesPage> {
     setState(() {
       _vehicleImagePaths
         ..remove(_newVehicleImageKey)
-        ..[vehicleImageKey] = temporaryPath;
+        ..[vehicleImageKey] = persistedImagePath;
     });
+  }
+
+  Future<String> _persistVehicleImage({
+    required String sourcePath,
+    required String key,
+  }) async {
+    final sourceFile = File(sourcePath);
+    final appDirectory = await getApplicationDocumentsDirectory();
+    final imagesDirectory = Directory(
+      '${appDirectory.path}${Platform.pathSeparator}garage_vehicle_images',
+    );
+
+    if (!imagesDirectory.existsSync()) {
+      await imagesDirectory.create(recursive: true);
+    }
+
+    final extension = _fileExtension(sourceFile.path);
+    final fileName =
+        '${key}_${DateTime.now().microsecondsSinceEpoch}$extension';
+    final destinationPath =
+        '${imagesDirectory.path}${Platform.pathSeparator}$fileName';
+
+    final copiedFile = await sourceFile.copy(destinationPath);
+    return copiedFile.path;
   }
 
   @override
@@ -1249,4 +1285,13 @@ String _vehicleImageKey(GarageVehicle? vehicle) {
 
 String _vehicleImageKeyById(String vehicleId) {
   return 'garage_vehicle_image_$vehicleId';
+}
+
+String _fileExtension(String path) {
+  final dotIndex = path.lastIndexOf('.');
+  if (dotIndex == -1 || dotIndex == path.length - 1) {
+    return '.jpg';
+  }
+
+  return path.substring(dotIndex);
 }
