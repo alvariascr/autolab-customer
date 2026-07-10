@@ -1,4 +1,4 @@
-import 'garage_vehicle.dart';
+import '../../domain/entities/garage_vehicle.dart';
 
 String garageVehicleTitle(GarageVehicle vehicle) {
   final title = [

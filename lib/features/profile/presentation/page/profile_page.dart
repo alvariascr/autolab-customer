@@ -16,7 +16,7 @@ import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
-import '../../domain/entities/garage_vehicle_display.dart';
+import '../helpers/garage_vehicle_display.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, this.showBottomNavigation = true});

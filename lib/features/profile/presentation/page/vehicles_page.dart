@@ -11,7 +11,7 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
-import '../../domain/entities/garage_vehicle_display.dart';
+import '../helpers/garage_vehicle_display.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
