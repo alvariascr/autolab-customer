@@ -61,6 +61,6 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrarte los talleres más cercanos a tu posición actual y calcular el tiempo de entrega.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Usamos tu galeria para que puedas seleccionar una foto de perfil.</string>
+	<string>Usamos tu galería para que puedas seleccionar una foto de perfil.</string>
 </dict>
 </plist>
