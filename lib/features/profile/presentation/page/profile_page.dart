@@ -67,6 +67,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final displayName = _currentUserDisplayName();
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
@@ -82,7 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const _GarageHeader(),
             const SizedBox(height: AutolabCustomer.spacingSm),
             Text(
-              'Mi Garaje',
+              l10n.garageTitle,
               style: AutolabCustomer.bodyLarge.copyWith(
                 color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
@@ -102,7 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
             const SizedBox(height: AutolabCustomer.spacingLg),
-            _SectionTitle('Accesos Rápidos'),
+            _SectionTitle(l10n.garageQuickAccessTitle),
             const SizedBox(height: AutolabCustomer.spacingSmd),
             GridView.count(
               crossAxisCount: 2,
@@ -114,70 +115,70 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 _QuickAccessCard(
                   icon: Icons.calendar_month_rounded,
-                  label: 'Mis citas',
+                  label: l10n.profileAppointmentsTitle,
                   onTap: () => context.push('/appointments'),
                 ),
                 _QuickAccessCard(
                   icon: Icons.directions_car_filled_outlined,
-                  label: 'Mis vehículos',
+                  label: l10n.vehiclesTitle,
                   onTap: _openVehiclesPage,
                 ),
-                const _QuickAccessCard(
+                _QuickAccessCard(
                   icon: Icons.inventory_2_outlined,
-                  label: 'Mis pedidos',
+                  label: l10n.garageOrders,
                 ),
-                const _QuickAccessCard(
+                _QuickAccessCard(
                   icon: Icons.receipt_long_outlined,
-                  label: 'Historial',
+                  label: l10n.garageHistory,
                 ),
               ],
             ),
             const SizedBox(height: AutolabCustomer.spacingMd),
-            const _SectionTitle('Gestión'),
+            _SectionTitle(l10n.garageManagementTitle),
             const SizedBox(height: AutolabCustomer.spacingSmd),
-            const _GarageMenuGroup(
+            _GarageMenuGroup(
               children: [
                 _GarageMenuItem(
                   icon: Icons.favorite_border_rounded,
-                  label: 'Favoritos',
+                  label: l10n.garageFavorites,
                 ),
                 _GarageMenuItem(
                   icon: Icons.location_on_outlined,
-                  label: 'Direcciones',
+                  label: l10n.garageAddresses,
                 ),
                 _GarageMenuItem(
                   icon: Icons.credit_card_rounded,
-                  label: 'Métodos de pago',
+                  label: l10n.garagePaymentMethods,
                 ),
                 _GarageMenuItem(
                   icon: Icons.notifications_none_rounded,
-                  label: 'Notificaciones',
+                  label: l10n.myAppointmentsNotificationsTooltip,
                   enabled: false,
                 ),
                 _GarageMenuItem(
                   icon: Icons.settings_outlined,
-                  label: 'Ajustes',
+                  label: l10n.garageSettings,
                   enabled: false,
                 ),
-                _GarageThemeModeItem(showDivider: false),
+                const _GarageThemeModeItem(showDivider: false),
               ],
             ),
             const SizedBox(height: AutolabCustomer.spacingLg),
-            const _SectionTitle('Soporte'),
+            _SectionTitle(l10n.garageSupportTitle),
             const SizedBox(height: AutolabCustomer.spacingSmd),
             _GarageMenuGroup(
-              children: const [
+              children: [
                 _GarageMenuItem(
                   icon: Icons.favorite_border_rounded,
-                  label: 'Centro de ayuda',
+                  label: l10n.garageHelpCenter,
                 ),
                 _GarageMenuItem(
                   icon: Icons.location_on_outlined,
-                  label: 'Contactar soporte',
+                  label: l10n.garageContactSupport,
                 ),
                 _GarageMenuItem(
                   icon: Icons.credit_card_rounded,
-                  label: 'Quienes somos',
+                  label: l10n.garageAboutUs,
                   showDivider: false,
                 ),
               ],
@@ -216,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
       // Supabase may not be initialized in widget tests.
     }
 
-    return 'Cliente Autolab';
+    return AppLocalizations.of(context)!.garageDefaultCustomerName;
   }
 
   String _humanizeEmailName(String value) {
@@ -232,6 +233,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _showChangePhotoDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final shouldPickPhoto = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -259,7 +262,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: AutolabCustomer.spacingMd),
               Text(
-                'Cambiar foto de perfil',
+                l10n.garageChangeProfilePhotoTitle,
                 textAlign: TextAlign.center,
                 style: AutolabCustomer.bodyLarge.copyWith(
                   color: AutolabCustomer.customerTextColor(context),
@@ -273,7 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: AutolabCustomer.primaryButton,
                   onPressed: () => Navigator.of(dialogContext).pop(true),
                   child: Text(
-                    'Elegir de la galería',
+                    l10n.garageChooseFromGallery,
                     style: AutolabCustomer.body.copyWith(
                       color: AutolabCustomer.white,
                       fontWeight: FontWeight.w700,
@@ -287,7 +290,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: Text(
-                    'Cerrar',
+                    l10n.garageCloseAction,
                     style: AutolabCustomer.body.copyWith(
                       color: AutolabCustomer.primary,
                       fontWeight: FontWeight.w700,
@@ -490,6 +493,8 @@ class _GarageUserSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Container(
@@ -511,7 +516,7 @@ class _GarageUserSummary extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      'Hola, $displayName',
+                      l10n.garageGreeting(displayName),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AutolabCustomer.bodyLarge.copyWith(
@@ -526,7 +531,7 @@ class _GarageUserSummary extends StatelessWidget {
               ),
               const SizedBox(height: AutolabCustomer.spacingXs),
               Text(
-                'Bienvenido a tu garaje',
+                l10n.garageWelcomeSubtitle,
                 style: AutolabCustomer.caption.copyWith(
                   color: AutolabCustomer.customerTextColor(context),
                 ),
@@ -603,6 +608,8 @@ class _ActiveVehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
       decoration: BoxDecoration(
@@ -652,7 +659,7 @@ class _ActiveVehicleCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AutolabCustomer.spacingXs),
                     Text(
-                      'Vehículo activo',
+                      l10n.garageActiveVehicle,
                       style: AutolabCustomer.caption.copyWith(
                         color: AutolabCustomer.customerTextColor(context),
                       ),
@@ -943,7 +950,7 @@ class _LogoutCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Soporte',
+            l10n.garageSupportTitle,
             style: AutolabCustomer.bodyLarge.copyWith(
               color: AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w800,

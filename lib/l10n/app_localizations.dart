@@ -964,6 +964,126 @@ abstract class AppLocalizations {
   /// **'Desactivado'**
   String get profileDarkModeDisabled;
 
+  /// No description provided for @garageTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi Garaje'**
+  String get garageTitle;
+
+  /// No description provided for @garageDefaultCustomerName.
+  ///
+  /// In es, this message translates to:
+  /// **'Cliente Autolab'**
+  String get garageDefaultCustomerName;
+
+  /// No description provided for @garageGreeting.
+  ///
+  /// In es, this message translates to:
+  /// **'Hola, {displayName}'**
+  String garageGreeting(Object displayName);
+
+  /// No description provided for @garageWelcomeSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Bienvenido a tu garaje'**
+  String get garageWelcomeSubtitle;
+
+  /// No description provided for @garageChangeProfilePhotoTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar foto de perfil'**
+  String get garageChangeProfilePhotoTitle;
+
+  /// No description provided for @garageChooseFromGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir de la galería'**
+  String get garageChooseFromGallery;
+
+  /// No description provided for @garageCloseAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get garageCloseAction;
+
+  /// No description provided for @garageQuickAccessTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Accesos Rápidos'**
+  String get garageQuickAccessTitle;
+
+  /// No description provided for @garageOrders.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis pedidos'**
+  String get garageOrders;
+
+  /// No description provided for @garageHistory.
+  ///
+  /// In es, this message translates to:
+  /// **'Historial'**
+  String get garageHistory;
+
+  /// No description provided for @garageManagementTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestión'**
+  String get garageManagementTitle;
+
+  /// No description provided for @garageFavorites.
+  ///
+  /// In es, this message translates to:
+  /// **'Favoritos'**
+  String get garageFavorites;
+
+  /// No description provided for @garageAddresses.
+  ///
+  /// In es, this message translates to:
+  /// **'Direcciones'**
+  String get garageAddresses;
+
+  /// No description provided for @garagePaymentMethods.
+  ///
+  /// In es, this message translates to:
+  /// **'Métodos de pago'**
+  String get garagePaymentMethods;
+
+  /// No description provided for @garageSettings.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get garageSettings;
+
+  /// No description provided for @garageSupportTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Soporte'**
+  String get garageSupportTitle;
+
+  /// No description provided for @garageHelpCenter.
+  ///
+  /// In es, this message translates to:
+  /// **'Centro de ayuda'**
+  String get garageHelpCenter;
+
+  /// No description provided for @garageContactSupport.
+  ///
+  /// In es, this message translates to:
+  /// **'Contactar soporte'**
+  String get garageContactSupport;
+
+  /// No description provided for @garageAboutUs.
+  ///
+  /// In es, this message translates to:
+  /// **'Quiénes somos'**
+  String get garageAboutUs;
+
+  /// No description provided for @garageActiveVehicle.
+  ///
+  /// In es, this message translates to:
+  /// **'Vehículo activo'**
+  String get garageActiveVehicle;
+
   /// No description provided for @myAppointmentsTitle.
   ///
   /// In es, this message translates to:
