@@ -395,11 +395,13 @@ class _VehiclesTitleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Expanded(
           child: Text(
-            'Mis vehículos',
+            l10n.vehiclesTitle,
             style: AutolabCustomer.bodyLarge.copyWith(
               color: AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w800,
@@ -415,7 +417,7 @@ class _VehiclesTitleRow extends StatelessWidget {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Text(
-            'Gestionar',
+            l10n.vehiclesManageAction,
             style: AutolabCustomer.caption.copyWith(
               color: AutolabCustomer.primary,
               fontWeight: FontWeight.w700,
@@ -633,6 +635,7 @@ class _VehiclePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasSelectedVehicle = vehicle != null;
     final title = hasSelectedVehicle ? _vehicleTitle(vehicle!) : '';
 
@@ -678,7 +681,7 @@ class _VehiclePreview extends StatelessWidget {
               size: AutolabCustomer.iconSm,
             ),
             label: Text(
-              'Cambiar imagen',
+              l10n.vehiclesChangeImageAction,
               style: AutolabCustomer.caption.copyWith(
                 color: AutolabCustomer.customerSecondaryTextColor(context),
                 fontWeight: FontWeight.w600,
@@ -886,6 +889,7 @@ class _VehicleFormState extends State<_VehicleForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final form = Form(
       key: _formKey,
@@ -895,7 +899,7 @@ class _VehicleFormState extends State<_VehicleForm> {
         children: [
           _VehicleTextField(
             controller: _plateController,
-            hintText: 'Placa',
+            hintText: l10n.vehiclesPlateLabel,
             textCapitalization: TextCapitalization.characters,
             validator: (value) {
               final l10n = AppLocalizations.of(context)!;
@@ -912,24 +916,27 @@ class _VehicleFormState extends State<_VehicleForm> {
           const SizedBox(height: AutolabCustomer.spacingSm),
           _VehicleTextField(
             controller: _brandController,
-            hintText: 'Marca',
+            hintText: l10n.vehiclesBrandLabel,
             suffixIcon: Icons.chevron_right_rounded,
           ),
           const SizedBox(height: AutolabCustomer.spacingSm),
           _VehicleTextField(
             controller: _modelController,
-            hintText: 'Modelo',
+            hintText: l10n.vehiclesModelLabel,
             suffixIcon: Icons.chevron_right_rounded,
           ),
           const SizedBox(height: AutolabCustomer.spacingSm),
           _VehicleTextField(
             controller: _yearController,
-            hintText: 'Año',
+            hintText: l10n.vehiclesYearLabel,
             keyboardType: TextInputType.number,
             suffixIcon: Icons.chevron_right_rounded,
           ),
           const SizedBox(height: AutolabCustomer.spacingSm),
-          _VehicleTextField(controller: _colorController, hintText: 'Color'),
+          _VehicleTextField(
+            controller: _colorController,
+            hintText: l10n.vehiclesColorLabel,
+          ),
           const SizedBox(height: AutolabCustomer.spacingSm),
           _VehicleFuelField(
             value: _fuelType,
@@ -962,7 +969,7 @@ class _VehicleFormState extends State<_VehicleForm> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      'Guardar vehículo',
+                      l10n.vehiclesSaveAction,
                       style: AutolabCustomer.body.copyWith(
                         color: AutolabCustomer.white,
                         fontWeight: FontWeight.w800,
@@ -993,7 +1000,7 @@ class _VehicleFormState extends State<_VehicleForm> {
                 context.go('/profile');
               },
               child: Text(
-                'Siguiente',
+                l10n.vehiclesNextAction,
                 style: AutolabCustomer.body.copyWith(
                   color: AutolabCustomer.customerTextColor(context),
                   fontWeight: FontWeight.w800,
@@ -1042,7 +1049,7 @@ class _VehicleTypeField extends StatelessWidget {
         Icons.chevron_right_rounded,
         color: AutolabCustomer.customerSecondaryTextColor(context),
       ),
-      decoration: _vehicleInputDecoration(context, 'Tipo de vehículo'),
+      decoration: _vehicleInputDecoration(context, l10n.vehiclesTypeLabel),
       style: AutolabCustomer.body.copyWith(
         color: AutolabCustomer.customerTextColor(context),
       ),
@@ -1073,7 +1080,7 @@ class _VehicleFuelField extends StatelessWidget {
 
     return _VehicleDropdownField(
       value: value,
-      hintText: 'Combustible',
+      hintText: l10n.vehiclesFuelLabel,
       items: [
         DropdownMenuItem(
           value: 'gasoline',
@@ -1106,7 +1113,7 @@ class _VehicleTransmissionField extends StatelessWidget {
 
     return _VehicleDropdownField(
       value: value,
-      hintText: 'Transmisión',
+      hintText: l10n.vehiclesTransmissionLabel,
       items: [
         DropdownMenuItem(
           value: 'manual',

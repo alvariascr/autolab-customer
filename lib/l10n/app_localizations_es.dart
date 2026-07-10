@@ -786,6 +786,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vehiclesTitle => 'Mis vehículos';
 
   @override
+  String get vehiclesManageAction => 'Gestionar';
+
+  @override
   String get vehiclesProfileSubtitle =>
       'Administra los vehículos que usas para reservar citas.';
 
@@ -795,6 +798,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vehiclesAddAction => 'Agregar vehículo';
+
+  @override
+  String get vehiclesChangeImageAction => 'Cambiar imagen';
 
   @override
   String get vehiclesEditAction => 'Editar vehículo';
@@ -874,6 +880,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vehiclesSaveAction => 'Guardar vehículo';
+
+  @override
+  String get vehiclesNextAction => 'Siguiente';
 
   @override
   String get vehiclesSaveFailed =>

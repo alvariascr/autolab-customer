@@ -1492,6 +1492,12 @@ abstract class AppLocalizations {
   /// **'Mis vehículos'**
   String get vehiclesTitle;
 
+  /// No description provided for @vehiclesManageAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar'**
+  String get vehiclesManageAction;
+
   /// No description provided for @vehiclesProfileSubtitle.
   ///
   /// In es, this message translates to:
@@ -1509,6 +1515,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Agregar vehículo'**
   String get vehiclesAddAction;
+
+  /// No description provided for @vehiclesChangeImageAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar imagen'**
+  String get vehiclesChangeImageAction;
 
   /// No description provided for @vehiclesEditAction.
   ///
@@ -1665,6 +1677,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Guardar vehículo'**
   String get vehiclesSaveAction;
+
+  /// No description provided for @vehiclesNextAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente'**
+  String get vehiclesNextAction;
 
   /// No description provided for @vehiclesSaveFailed.
   ///
