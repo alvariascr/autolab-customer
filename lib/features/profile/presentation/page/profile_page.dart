@@ -411,7 +411,7 @@ class _GarageLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       width: 76,
       height: 28,
       child: CustomPaint(painter: _GarageLogoPainter()),
@@ -420,10 +420,12 @@ class _GarageLogo extends StatelessWidget {
 }
 
 class _GarageLogoPainter extends CustomPainter {
-  const _GarageLogoPainter();
+  _GarageLogoPainter();
 
   static const _sourceWidth = 622.0;
   static const _sourceHeight = 224.0;
+  final Paint _paint = Paint()..color = AutolabCustomer.primary;
+  final Path _path = Path();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -434,14 +436,19 @@ class _GarageLogoPainter extends CustomPainter {
       ..translate(0, dy)
       ..scale(scale);
 
-    final paint = Paint()..color = AutolabCustomer.primary;
+    _paint.color = AutolabCustomer.primary;
     for (final polygon in _polygons) {
-      final path = Path()..moveTo(polygon.first.dx, polygon.first.dy);
-      for (final point in polygon.skip(1)) {
-        path.lineTo(point.dx, point.dy);
+      _path
+        ..reset()
+        ..moveTo(polygon.first.dx, polygon.first.dy);
+
+      for (var index = 1; index < polygon.length; index++) {
+        final point = polygon[index];
+        _path.lineTo(point.dx, point.dy);
       }
-      path.close();
-      canvas.drawPath(path, paint);
+
+      _path.close();
+      canvas.drawPath(_path, _paint);
     }
 
     canvas.restore();
