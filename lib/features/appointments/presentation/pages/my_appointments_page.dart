@@ -2113,17 +2113,9 @@ class _MessageState extends StatelessWidget {
 }
 
 class _AppointmentStatusVisual {
-  const _AppointmentStatusVisual({
-    required this.label,
-    required this.accent,
-    required this.background,
-    required this.foreground,
-  });
+  const _AppointmentStatusVisual({required this.label});
 
   final String label;
-  final Color accent;
-  final Color background;
-  final Color foreground;
 
   factory _AppointmentStatusVisual.from(
     Appointment appointment,
@@ -2132,85 +2124,44 @@ class _AppointmentStatusVisual {
     final normalized = appointment.status.trim().toLowerCase();
 
     if (_isCanceled(normalized)) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.primary,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.primary,
-      ).copyWith(label: l10n.myAppointmentsStatusCanceled);
+      return _AppointmentStatusVisual(label: l10n.myAppointmentsStatusCanceled);
     }
 
     if (normalized.contains('no_show')) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.primary,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.primary,
-      ).copyWith(label: l10n.myAppointmentsStatusNoShow);
+      return _AppointmentStatusVisual(label: l10n.myAppointmentsStatusNoShow);
     }
 
     if (normalized.contains('complete') || normalized.contains('complet')) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.success,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.success,
-      ).copyWith(label: l10n.myAppointmentsStatusCompleted);
+      return _AppointmentStatusVisual(
+        label: l10n.myAppointmentsStatusCompleted,
+      );
     }
 
     if (normalized.contains('checked_in')) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.info,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.info,
-      ).copyWith(label: l10n.myAppointmentsStatusCheckedIn);
+      return _AppointmentStatusVisual(
+        label: l10n.myAppointmentsStatusCheckedIn,
+      );
     }
 
     if (normalized.contains('in_progress')) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.info,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.info,
-      ).copyWith(label: l10n.myAppointmentsStatusInProgress);
+      return _AppointmentStatusVisual(
+        label: l10n.myAppointmentsStatusInProgress,
+      );
     }
 
     if (appointment.scheduledAt.isBefore(DateTime.now())) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.primary,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.primary,
-      ).copyWith(label: l10n.myAppointmentsStatusExpired);
+      return _AppointmentStatusVisual(label: l10n.myAppointmentsStatusExpired);
     }
 
     if (normalized.contains('confirm') ||
         normalized.contains('scheduled') ||
         normalized.contains('pending')) {
-      return const _AppointmentStatusVisual(
-        label: '',
-        accent: AutolabCustomer.success,
-        background: AutolabCustomer.customerDarkSurface,
-        foreground: AutolabCustomer.success,
-      ).copyWith(label: l10n.myAppointmentsStatusConfirmed);
+      return _AppointmentStatusVisual(
+        label: l10n.myAppointmentsStatusConfirmed,
+      );
     }
 
-    return const _AppointmentStatusVisual(
-      label: '',
-      accent: AutolabCustomer.success,
-      background: AutolabCustomer.customerDarkSurface,
-      foreground: AutolabCustomer.success,
-    ).copyWith(label: l10n.myAppointmentsStatusConfirmed);
-  }
-
-  _AppointmentStatusVisual copyWith({required String label}) {
-    return _AppointmentStatusVisual(
-      label: label,
-      accent: accent,
-      background: background,
-      foreground: foreground,
-    );
+    return _AppointmentStatusVisual(label: l10n.myAppointmentsStatusConfirmed);
   }
 }
 
