@@ -141,14 +141,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 _GarageMenuItem(
                   icon: Icons.favorite_border_rounded,
                   label: l10n.garageFavorites,
+                  enabled: false,
                 ),
                 _GarageMenuItem(
                   icon: Icons.location_on_outlined,
                   label: l10n.garageAddresses,
+                  enabled: false,
                 ),
                 _GarageMenuItem(
                   icon: Icons.credit_card_rounded,
                   label: l10n.garagePaymentMethods,
+                  enabled: false,
                 ),
                 _GarageMenuItem(
                   icon: Icons.notifications_none_rounded,
@@ -171,14 +174,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 _GarageMenuItem(
                   icon: Icons.favorite_border_rounded,
                   label: l10n.garageHelpCenter,
+                  enabled: false,
                 ),
                 _GarageMenuItem(
                   icon: Icons.location_on_outlined,
                   label: l10n.garageContactSupport,
+                  enabled: false,
                 ),
                 _GarageMenuItem(
                   icon: Icons.credit_card_rounded,
                   label: l10n.garageAboutUs,
+                  enabled: false,
                   showDivider: false,
                 ),
               ],
@@ -826,11 +832,12 @@ class _GarageMenuItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: color,
-                  size: AutolabCustomer.iconSm,
-                ),
+                if (enabled)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: color,
+                    size: AutolabCustomer.iconSm,
+                  ),
               ],
             ),
           ),
