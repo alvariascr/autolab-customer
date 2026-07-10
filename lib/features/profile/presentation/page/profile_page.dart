@@ -16,6 +16,7 @@ import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../../domain/entities/garage_vehicle_display.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, this.showBottomNavigation = true});
@@ -635,7 +636,7 @@ class _ActiveVehicleCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _activeVehicleTitle(vehicle),
+                  garageVehicleTitle(vehicle),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AutolabCustomer.body.copyWith(
@@ -645,7 +646,7 @@ class _ActiveVehicleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _activeVehicleSubtitle(vehicle),
+                  garageActiveVehicleSubtitle(vehicle),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AutolabCustomer.caption.copyWith(
@@ -995,20 +996,4 @@ class _LogoutCard extends StatelessWidget {
       ),
     );
   }
-}
-
-String _activeVehicleTitle(GarageVehicle vehicle) {
-  final title = [
-    vehicle.brand,
-    vehicle.model,
-  ].where((part) => part != null && part.trim().isNotEmpty).join(' ');
-
-  return title.isEmpty ? vehicle.licensePlate : title;
-}
-
-String _activeVehicleSubtitle(GarageVehicle vehicle) {
-  return [
-    if (vehicle.year != null) vehicle.year.toString(),
-    vehicle.licensePlate,
-  ].where((part) => part.trim().isNotEmpty).join(' - ');
 }

@@ -11,6 +11,7 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../../domain/entities/garage_vehicle_display.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
@@ -488,7 +489,7 @@ class _VehicleCompactCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _vehicleTitle(vehicle),
+                      garageVehicleTitle(vehicle),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AutolabCustomer.label.copyWith(
@@ -497,7 +498,7 @@ class _VehicleCompactCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _vehicleSubtitle(vehicle),
+                      garageVehicleSelectorSubtitle(vehicle),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AutolabCustomer.caption.copyWith(
@@ -637,7 +638,7 @@ class _VehiclePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final hasSelectedVehicle = vehicle != null;
-    final title = hasSelectedVehicle ? _vehicleTitle(vehicle!) : '';
+    final title = hasSelectedVehicle ? garageVehicleTitle(vehicle!) : '';
 
     return Column(
       children: [
@@ -1266,22 +1267,6 @@ InputDecoration _vehicleInputDecoration(
       borderSide: const BorderSide(color: AutolabCustomer.error),
     ),
   );
-}
-
-String _vehicleTitle(GarageVehicle vehicle) {
-  final title = [
-    vehicle.brand,
-    vehicle.model,
-  ].where((part) => part != null && part.trim().isNotEmpty).join(' ');
-
-  return title.isEmpty ? vehicle.licensePlate : title;
-}
-
-String _vehicleSubtitle(GarageVehicle vehicle) {
-  return [
-    vehicle.model,
-    if (vehicle.year != null) vehicle.year.toString(),
-  ].where((part) => part != null && part.trim().isNotEmpty).join(' - ');
 }
 
 String _vehicleImageKey(GarageVehicle? vehicle) {
