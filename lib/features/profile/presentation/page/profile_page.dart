@@ -1,12 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/app_theme_mode_cubit.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../data/garage_vehicle_remote_data_source.dart';
+import '../../domain/entities/garage_vehicle.dart';
+import '../helpers/garage_vehicle_display.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key, this.showBottomNavigation = true});
@@ -18,7 +28,20 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  static const _profilePhotoPathKey = 'profile_photo_path';
+  static const _activeVehicleIdKey = 'garage_active_vehicle_id';
+
   int _currentIndex = 4;
+  String? _profilePhotoPath;
+  GarageVehicle? _activeVehicle;
+  String? _activeVehicleImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfilePhoto();
+    _loadActiveVehicle();
+  }
 
   void _handleBottomNavigation(int index) {
     if (index == 2) {
@@ -33,171 +56,142 @@ class _ProfilePageState extends State<ProfilePage> {
     NavigationHandler.handle(context, index);
   }
 
+  Future<void> _openVehiclesPage() async {
+    await context.push('/vehicles');
+    if (!mounted) {
+      return;
+    }
+
+    await _loadActiveVehicle();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayName = _currentUserDisplayName();
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark
-        ? const Color(0xFF050606)
-        : const Color(0xFFF8F4EF);
-    final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final textColor = isDark
-        ? const Color(0xFFF4E9E9)
-        : const Color(0xFF181411);
-    final secondaryTextColor = isDark
-        ? const Color(0xFFA9A9A9)
-        : const Color(0xFF6B5F57);
-    final borderColor = isDark
-        ? const Color(0xFF3A3A3A)
-        : const Color(0xFFE9DDD2);
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          l10n.profileTitle,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
-        ),
-      ),
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: EdgeInsets.fromLTRB(
+            AutolabCustomer.responsiveScreenMargin(context),
+            AutolabCustomer.spacingLg,
+            AutolabCustomer.responsiveScreenMargin(context),
+            AutolabCustomer.spacingXxl,
+          ),
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: isDark
-                    ? null
-                    : const [
-                        BoxShadow(
-                          color: Color(0x12000000),
-                          blurRadius: 22,
-                          offset: Offset(0, 10),
-                        ),
-                      ],
-                border: isDark ? Border.all(color: borderColor) : null,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: isDark
-                        ? const Color(0xFFFF281B)
-                        : const Color(0xFF181411),
-                    child: Icon(
-                      Icons.person_outline_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.profileAccountTitle,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.profileAccountSubtitle,
-                    style: TextStyle(
-                      color: secondaryTextColor,
-                      fontSize: 14,
-                      height: 1.45,
-                    ),
-                  ),
-                ],
+            const _GarageHeader(),
+            const SizedBox(height: AutolabCustomer.spacingSm),
+            Text(
+              l10n.garageTitle,
+              style: AutolabCustomer.bodyLarge.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 20),
-            _ProfileMenuCard(
-              leading: const _ProfileActionIcon(
-                icon: Icons.calendar_month_rounded,
-                backgroundColor: Color(0xFFE9F0FF),
-                foregroundColor: Color(0xFF0B5CFF),
-              ),
-              title: l10n.profileAppointmentsTitle,
-              subtitle: l10n.profileAppointmentsSubtitle,
-              borderColor: const Color(0xFF0B5CFF),
-              trailingColor: const Color(0xFF0B5CFF),
-              onTap: () => context.push('/appointments'),
+            const SizedBox(height: AutolabCustomer.spacingLg),
+            _GarageUserSummary(
+              displayName: displayName,
+              profilePhotoPath: _profilePhotoPath,
+              onEditPhotoTap: _showChangePhotoDialog,
             ),
-            const SizedBox(height: 20),
-            _ProfileMenuCard(
-              leading: const _ProfileActionIcon(
-                icon: Icons.directions_car_filled_outlined,
-                backgroundColor: Color(0xFFFFE9E7),
-                foregroundColor: Color(0xFFE32119),
+            if (_activeVehicle != null) ...[
+              const SizedBox(height: AutolabCustomer.spacingLg),
+              _ActiveVehicleCard(
+                vehicle: _activeVehicle!,
+                imagePath: _activeVehicleImagePath,
               ),
-              title: l10n.vehiclesTitle,
-              subtitle: l10n.vehiclesProfileSubtitle,
-              borderColor: borderColor,
-              onTap: () => context.push('/vehicles'),
+            ],
+            const SizedBox(height: AutolabCustomer.spacingLg),
+            _SectionTitle(l10n.garageQuickAccessTitle),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: AutolabCustomer.spacingSmd,
+              mainAxisSpacing: AutolabCustomer.spacingSmd,
+              childAspectRatio: 1.55,
+              children: [
+                _QuickAccessCard(
+                  icon: Icons.calendar_month_rounded,
+                  label: l10n.profileAppointmentsTitle,
+                  onTap: () => context.push('/appointments'),
+                ),
+                _QuickAccessCard(
+                  icon: Icons.directions_car_filled_outlined,
+                  label: l10n.vehiclesTitle,
+                  onTap: _openVehiclesPage,
+                ),
+                _QuickAccessCard(
+                  icon: Icons.inventory_2_outlined,
+                  label: l10n.garageOrders,
+                ),
+                _QuickAccessCard(
+                  icon: Icons.receipt_long_outlined,
+                  label: l10n.garageHistory,
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            const _ThemeModeSwitchCard(),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.profileSessionTitle,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.profileSessionSubtitle,
-                    style: TextStyle(
-                      color: secondaryTextColor,
-                      fontSize: 13,
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: isDark
-                            ? const Color(0xFFFF281B)
-                            : const Color(0xFF181411),
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      onPressed: () {
-                        context.read<AuthSessionCubit>().logout();
-                      },
-                      icon: const Icon(Icons.logout_rounded),
-                      label: Text(l10n.profileLogout),
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: AutolabCustomer.spacingMd),
+            _SectionTitle(l10n.garageManagementTitle),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
+            _GarageMenuGroup(
+              children: [
+                _GarageMenuItem(
+                  icon: Icons.favorite_border_rounded,
+                  label: l10n.garageFavorites,
+                  enabled: false,
+                ),
+                _GarageMenuItem(
+                  icon: Icons.location_on_outlined,
+                  label: l10n.garageAddresses,
+                  enabled: false,
+                ),
+                _GarageMenuItem(
+                  icon: Icons.credit_card_rounded,
+                  label: l10n.garagePaymentMethods,
+                  enabled: false,
+                ),
+                _GarageMenuItem(
+                  icon: Icons.notifications_none_rounded,
+                  label: l10n.myAppointmentsNotificationsTooltip,
+                  enabled: false,
+                ),
+                _GarageMenuItem(
+                  icon: Icons.settings_outlined,
+                  label: l10n.garageSettings,
+                  enabled: false,
+                ),
+                const _GarageThemeModeItem(showDivider: false),
+              ],
             ),
+            const SizedBox(height: AutolabCustomer.spacingLg),
+            _SectionTitle(l10n.garageSupportTitle),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
+            _GarageMenuGroup(
+              children: [
+                _GarageMenuItem(
+                  icon: Icons.favorite_border_rounded,
+                  label: l10n.garageHelpCenter,
+                  enabled: false,
+                ),
+                _GarageMenuItem(
+                  icon: Icons.location_on_outlined,
+                  label: l10n.garageContactSupport,
+                  enabled: false,
+                ),
+                _GarageMenuItem(
+                  icon: Icons.credit_card_rounded,
+                  label: l10n.garageAboutUs,
+                  enabled: false,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: AutolabCustomer.spacingLg),
+            const _LogoutCard(),
           ],
         ),
       ),
@@ -209,165 +203,574 @@ class _ProfilePageState extends State<ProfilePage> {
           : null,
     );
   }
-}
 
-class _ThemeModeSwitchCard extends StatelessWidget {
-  const _ThemeModeSwitchCard();
+  String _currentUserDisplayName() {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      final metadata = user?.userMetadata ?? const <String, dynamic>{};
+      final metadataName =
+          metadata['name'] ?? metadata['full_name'] ?? metadata['display_name'];
+      final name = metadataName?.toString().trim();
 
-  @override
-  Widget build(BuildContext context) {
+      if (name != null && name.isNotEmpty) {
+        return name;
+      }
+
+      final emailName = user?.email?.split('@').first.trim();
+      if (emailName != null && emailName.isNotEmpty) {
+        return _humanizeEmailName(emailName);
+      }
+    } catch (_) {
+      // Supabase may not be initialized in widget tests.
+    }
+
+    return AppLocalizations.of(context)!.garageDefaultCustomerName;
+  }
+
+  String _humanizeEmailName(String value) {
+    return value
+        .replaceAll(RegExp(r'[._-]+'), ' ')
+        .split(' ')
+        .where((part) => part.trim().isNotEmpty)
+        .map((part) {
+          final normalized = part.trim().toLowerCase();
+          return '${normalized[0].toUpperCase()}${normalized.substring(1)}';
+        })
+        .join(' ');
+  }
+
+  Future<void> _showChangePhotoDialog() async {
     final l10n = AppLocalizations.of(context)!;
-    return BlocBuilder<AppThemeModeCubit, ThemeMode>(
-      builder: (context, mode) {
-        final isDark = switch (mode) {
-          ThemeMode.dark => true,
-          ThemeMode.light => false,
-          ThemeMode.system =>
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark,
-        };
-        final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-        final textColor = isDark
-            ? const Color(0xFFF4E9E9)
-            : const Color(0xFF181411);
-        final secondaryTextColor = isDark
-            ? const Color(0xFFA9A9A9)
-            : const Color(0xFF6B5F57);
-        final borderColor = isDark
-            ? const Color(0xFF3A3A3A)
-            : const Color(0xFFE9DDD2);
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
+    final shouldPickPhoto = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AutolabCustomer.radiusMd),
+            side: BorderSide(
+              color: AutolabCustomer.customerBorderColor(context),
+            ),
           ),
-          child: Row(
+          contentPadding: const EdgeInsets.fromLTRB(
+            AutolabCustomer.spacingLg,
+            AutolabCustomer.spacingLg,
+            AutolabCustomer.spacingLg,
+            AutolabCustomer.spacingMd,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _ProfileActionIcon(
-                icon: isDark
-                    ? Icons.dark_mode_outlined
-                    : Icons.light_mode_outlined,
-                backgroundColor: isDark
-                    ? const Color(0xFF3A3A3A)
-                    : const Color(0xFFF4E9E9),
-                foregroundColor: const Color(0xFFE32119),
+              Icon(
+                Icons.add_a_photo_outlined,
+                color: AutolabCustomer.primary,
+                size: AutolabCustomer.iconLg,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.profileDarkModeTitle,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isDark
-                          ? l10n.profileDarkModeEnabled
-                          : l10n.profileDarkModeDisabled,
-                      style: TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 12,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: AutolabCustomer.spacingMd),
+              Text(
+                l10n.garageChangeProfilePhotoTitle,
+                textAlign: TextAlign.center,
+                style: AutolabCustomer.bodyLarge.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              Switch(
-                value: isDark,
-                activeThumbColor: const Color(0xFFFF281B),
-                activeTrackColor: const Color(
-                  0xFFFF281B,
-                ).withValues(alpha: 0.32),
-                onChanged: context.read<AppThemeModeCubit>().setDarkMode,
+              const SizedBox(height: AutolabCustomer.spacingMd),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: AutolabCustomer.primaryButton,
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: Text(
+                    l10n.garageChooseFromGallery,
+                    style: AutolabCustomer.body.copyWith(
+                      color: AutolabCustomer.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AutolabCustomer.spacingSm),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(
+                    l10n.garageCloseAction,
+                    style: AutolabCustomer.body.copyWith(
+                      color: AutolabCustomer.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         );
       },
     );
+
+    if (shouldPickPhoto != true) {
+      return;
+    }
+
+    final image = await ImagePickerPlatform.instance.getImageFromSource(
+      source: ImageSource.gallery,
+      options: const ImagePickerOptions(imageQuality: 85),
+    );
+
+    if (image == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _profilePhotoPath = image.path;
+    });
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_profilePhotoPathKey, image.path);
+  }
+
+  Future<void> _loadProfilePhoto() async {
+    final preferences = await SharedPreferences.getInstance();
+    final path = preferences.getString(_profilePhotoPathKey);
+
+    if (path == null || path.isEmpty || !File(path).existsSync() || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _profilePhotoPath = path;
+    });
+  }
+
+  Future<void> _loadActiveVehicle() async {
+    final preferences = await SharedPreferences.getInstance();
+    final activeVehicleId = preferences.getString(_activeVehicleIdKey);
+
+    if (activeVehicleId == null || activeVehicleId.isEmpty) {
+      return;
+    }
+
+    try {
+      final vehicles = await sl<GarageVehicleRemoteDataSource>().getVehicles();
+      final activeVehicle = vehicles.cast<GarageVehicle?>().firstWhere(
+        (vehicle) => vehicle?.id == activeVehicleId,
+        orElse: () => null,
+      );
+
+      if (activeVehicle == null || !mounted) {
+        return;
+      }
+
+      final imagePath = preferences.getString(
+        'garage_vehicle_image_${activeVehicle.id}',
+      );
+
+      setState(() {
+        _activeVehicle = activeVehicle;
+        _activeVehicleImagePath =
+            imagePath != null && File(imagePath).existsSync()
+            ? imagePath
+            : null;
+      });
+    } catch (_) {
+      // The active vehicle is optional on the garage screen.
+    }
   }
 }
 
-class _ProfileMenuCard extends StatelessWidget {
-  const _ProfileMenuCard({
-    required this.leading,
-    required this.title,
-    required this.subtitle,
-    required this.borderColor,
-    required this.onTap,
-    this.trailingColor = const Color(0xFF6B5F57),
+class _GarageHeader extends StatelessWidget {
+  const _GarageHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const _GarageLogo(),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Icon(
+              Icons.notifications_none_rounded,
+              color: AutolabCustomer.customerTextColor(context),
+              size: AutolabCustomer.iconMd,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GarageLogo extends StatelessWidget {
+  const _GarageLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 76,
+      height: 28,
+      child: CustomPaint(painter: _GarageLogoPainter()),
+    );
+  }
+}
+
+class _GarageLogoPainter extends CustomPainter {
+  _GarageLogoPainter();
+
+  static const _sourceWidth = 622.0;
+  static const _sourceHeight = 224.0;
+  final Paint _paint = Paint()..color = AutolabCustomer.primary;
+  final Path _path = Path();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / _sourceWidth;
+    final dy = (size.height - (_sourceHeight * scale)) / 2;
+    canvas
+      ..save()
+      ..translate(0, dy)
+      ..scale(scale);
+
+    _paint.color = AutolabCustomer.primary;
+    for (final polygon in _polygons) {
+      _path
+        ..reset()
+        ..moveTo(polygon.first.dx, polygon.first.dy);
+
+      for (var index = 1; index < polygon.length; index++) {
+        final point = polygon[index];
+        _path.lineTo(point.dx, point.dy);
+      }
+
+      _path.close();
+      canvas.drawPath(_path, _paint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+
+  static const _polygons = [
+    [
+      Offset(503.87, 7.07),
+      Offset(512.96, 35.05),
+      Offset(542.39, 35.05),
+      Offset(518.58, 52.35),
+      Offset(527.68, 80.34),
+      Offset(503.87, 63.04),
+      Offset(480.07, 80.34),
+      Offset(489.16, 52.35),
+      Offset(465.35, 35.05),
+      Offset(494.78, 35.05),
+    ],
+    [
+      Offset(279.41, 7.07),
+      Offset(404.43, 7.07),
+      Offset(462.51, 109.9),
+      Offset(542.39, 109.9),
+      Offset(603.12, 216.93),
+      Offset(397.95, 216.93),
+    ],
+    [
+      Offset(18.88, 216.93),
+      Offset(51.05, 160),
+      Offset(22.67, 109.9),
+      Offset(79.45, 109.74),
+      Offset(137.46, 7.07),
+      Offset(261.85, 7.07),
+      Offset(380.35, 216.93),
+      Offset(256, 216.93),
+      Offset(199.66, 117.18),
+      Offset(174.43, 161.84),
+      Offset(205.94, 216.93),
+    ],
+  ];
+}
+
+class _GarageUserSummary extends StatelessWidget {
+  const _GarageUserSummary({
+    required this.displayName,
+    required this.onEditPhotoTap,
+    this.profilePhotoPath,
   });
 
-  final Widget leading;
-  final String title;
-  final String subtitle;
-  final Color borderColor;
-  final Color trailingColor;
+  final String displayName;
+  final String? profilePhotoPath;
+  final VoidCallback onEditPhotoTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Row(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: const BoxDecoration(
+            color: AutolabCustomer.primary,
+            shape: BoxShape.circle,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: _ProfilePhotoContent(profilePhotoPath: profilePhotoPath),
+        ),
+        const SizedBox(width: AutolabCustomer.spacingMd),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      l10n.garageGreeting(displayName),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.customerTextColor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AutolabCustomer.spacingSm),
+                  _EditProfilePhotoButton(onTap: onEditPhotoTap),
+                ],
+              ),
+              const SizedBox(height: AutolabCustomer.spacingXs),
+              Text(
+                l10n.garageWelcomeSubtitle,
+                style: AutolabCustomer.caption.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfilePhotoContent extends StatelessWidget {
+  const _ProfilePhotoContent({this.profilePhotoPath});
+
+  final String? profilePhotoPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = profilePhotoPath;
+
+    if (path == null || path.isEmpty) {
+      return const Icon(
+        Icons.person_rounded,
+        color: AutolabCustomer.white,
+        size: 38,
+      );
+    }
+
+    return Image.file(
+      File(path),
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) => const Icon(
+        Icons.person_rounded,
+        color: AutolabCustomer.white,
+        size: 38,
+      ),
+    );
+  }
+}
+
+class _EditProfilePhotoButton extends StatelessWidget {
+  const _EditProfilePhotoButton({required this.onTap});
+
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
-    final textColor = isDark
-        ? const Color(0xFFF4E9E9)
-        : const Color(0xFF181411);
-    final secondaryTextColor = isDark
-        ? const Color(0xFFA9A9A9)
-        : const Color(0xFF6B5F57);
-
     return Material(
-      color: surfaceColor,
-      borderRadius: BorderRadius.circular(24),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: borderColor),
+        customBorder: const CircleBorder(),
+        child: const Padding(
+          padding: EdgeInsets.all(AutolabCustomer.spacingXs),
+          child: Icon(
+            Icons.edit_square,
+            color: AutolabCustomer.primary,
+            size: AutolabCustomer.iconSm,
           ),
-          child: Row(
-            children: [
-              leading,
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveVehicleCard extends StatelessWidget {
+  const _ActiveVehicleCard({required this.vehicle, this.imagePath});
+
+  final GarageVehicle vehicle;
+  final String? imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 92,
+            height: 48,
+            child: _ActiveVehicleImage(imagePath: imagePath),
+          ),
+          const SizedBox(width: AutolabCustomer.spacingMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  garageVehicleTitle(vehicle),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  garageActiveVehicleSubtitle(vehicle),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: AutolabCustomer.primary,
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(width: AutolabCustomer.spacingXs),
                     Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 12,
-                        height: 1.3,
+                      l10n.garageActiveVehicle,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: AutolabCustomer.customerTextColor(context),
                       ),
                     ),
                   ],
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveVehicleImage extends StatelessWidget {
+  const _ActiveVehicleImage({this.imagePath});
+
+  final String? imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath;
+
+    if (path != null && path.isNotEmpty) {
+      return Image.file(
+        File(path),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            const _ActiveVehiclePlaceholder(),
+      );
+    }
+
+    return const _ActiveVehiclePlaceholder();
+  }
+}
+
+class _ActiveVehiclePlaceholder extends StatelessWidget {
+  const _ActiveVehiclePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.directions_car_filled_rounded,
+      color: AutolabCustomer.customerTextColor(context),
+      size: 44,
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: AutolabCustomer.bodyLarge.copyWith(
+        color: AutolabCustomer.customerTextColor(context),
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _QuickAccessCard extends StatelessWidget {
+  const _QuickAccessCard({required this.icon, required this.label, this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AutolabCustomer.customerSurfaceColor(context),
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+        child: Padding(
+          padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: AutolabCustomer.primary, size: 34),
+              const SizedBox(height: AutolabCustomer.spacingSm),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              Icon(Icons.chevron_right_rounded, color: trailingColor),
             ],
           ),
         ),
@@ -376,27 +779,228 @@ class _ProfileMenuCard extends StatelessWidget {
   }
 }
 
-class _ProfileActionIcon extends StatelessWidget {
-  const _ProfileActionIcon({
-    required this.icon,
-    required this.backgroundColor,
-    required this.foregroundColor,
-  });
+class _GarageMenuGroup extends StatelessWidget {
+  const _GarageMenuGroup({required this.children});
 
-  final IconData icon;
-  final Color backgroundColor;
-  final Color foregroundColor;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 42,
-      height: 42,
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
       ),
-      child: Icon(icon, color: foregroundColor),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _GarageMenuItem extends StatelessWidget {
+  const _GarageMenuItem({
+    required this.icon,
+    required this.label,
+    this.enabled = true,
+    this.showDivider = true,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled
+        ? AutolabCustomer.customerTextColor(context)
+        : AutolabCustomer.customerSecondaryTextColor(
+            context,
+          ).withValues(alpha: 0.45);
+
+    return InkWell(
+      onTap: null,
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AutolabCustomer.spacingMd,
+              vertical: AutolabCustomer.spacingSm,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: AutolabCustomer.iconSm),
+                const SizedBox(width: AutolabCustomer.spacingMd),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AutolabCustomer.body.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (enabled)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: color,
+                    size: AutolabCustomer.iconSm,
+                  ),
+              ],
+            ),
+          ),
+          if (showDivider)
+            Divider(
+              height: 1,
+              indent: 48,
+              color: AutolabCustomer.customerBorderColor(context),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GarageThemeModeItem extends StatelessWidget {
+  const _GarageThemeModeItem({this.showDivider = true});
+
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocBuilder<AppThemeModeCubit, ThemeMode>(
+      builder: (context, mode) {
+        final isDark = switch (mode) {
+          ThemeMode.dark => true,
+          ThemeMode.light => false,
+          ThemeMode.system =>
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+        };
+        final textColor = AutolabCustomer.customerTextColor(context);
+        final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+          context,
+        );
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AutolabCustomer.spacingMd,
+                vertical: AutolabCustomer.spacingSm,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isDark
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                    color: textColor,
+                    size: AutolabCustomer.iconSm,
+                  ),
+                  const SizedBox(width: AutolabCustomer.spacingMd),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.profileDarkModeTitle,
+                          style: AutolabCustomer.body.copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isDark
+                              ? l10n.profileDarkModeEnabled
+                              : l10n.profileDarkModeDisabled,
+                          style: AutolabCustomer.caption.copyWith(
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: isDark,
+                    activeThumbColor: AutolabCustomer.primary,
+                    activeTrackColor: AutolabCustomer.primary.withValues(
+                      alpha: 0.32,
+                    ),
+                    onChanged: context.read<AppThemeModeCubit>().setDarkMode,
+                  ),
+                ],
+              ),
+            ),
+            if (showDivider)
+              Divider(
+                height: 1,
+                indent: 48,
+                color: AutolabCustomer.customerBorderColor(context),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LogoutCard extends StatelessWidget {
+  const _LogoutCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.garageSupportTitle,
+            style: AutolabCustomer.bodyLarge.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingXs),
+          Text(
+            l10n.profileSessionSubtitle,
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+            ),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingMd),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AutolabCustomer.primary,
+                foregroundColor: AutolabCustomer.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                ),
+                textStyle: AutolabCustomer.body.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              onPressed: () {
+                context.read<AuthSessionCubit>().logout();
+              },
+              child: Text(l10n.profileLogout),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

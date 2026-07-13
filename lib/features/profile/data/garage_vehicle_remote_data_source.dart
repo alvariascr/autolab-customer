@@ -39,7 +39,7 @@ class GarageVehicleRemoteDataSource {
     return response.map((item) => GarageVehicleModel.fromMap(item)).toList();
   }
 
-  Future<void> createVehicle({
+  Future<String> createVehicle({
     required String licensePlate,
     String? vehicleType,
     String? brand,
@@ -68,18 +68,24 @@ class GarageVehicleRemoteDataSource {
     }
 
     try {
-      await client.from('garage_vehicles').insert({
-        'user_id': userId,
-        'license_plate': normalizedPlate,
-        'vehicle_type': _trimOrNull(vehicleType),
-        'brand': _trimOrNull(brand),
-        'model': _trimOrNull(model),
-        'year': year,
-        'color': _trimOrNull(color),
-        'fuel_type': fuelType,
-        'transmission_type': transmissionType,
-        'is_active': true,
-      });
+      final response = await client
+          .from('garage_vehicles')
+          .insert({
+            'user_id': userId,
+            'license_plate': normalizedPlate,
+            'vehicle_type': _trimOrNull(vehicleType),
+            'brand': _trimOrNull(brand),
+            'model': _trimOrNull(model),
+            'year': year,
+            'color': _trimOrNull(color),
+            'fuel_type': fuelType,
+            'transmission_type': transmissionType,
+            'is_active': true,
+          })
+          .select('id')
+          .single();
+
+      return response['id'].toString();
     } on PostgrestException catch (error) {
       if (error.code == '23505') {
         throw const GarageVehicleAlreadyExistsException();
