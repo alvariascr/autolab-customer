@@ -40,6 +40,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   static const _maximumZoom = 17.5;
   static const _zoomStep = 1.0;
   static const _markerPixelRatio = 3.0;
+  static const _mapLoadingTimeout = Duration(seconds: 6);
   static const _mapStyle = '''
 [
   {
@@ -85,16 +86,20 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   Workshop? _selectedWorkshop;
   bool _expandedSheet = false;
   bool _isMapLoading = true;
+  bool _hasMapLoadTimedOut = false;
+  Timer? _mapLoadingTimer;
 
   @override
   void initState() {
     super.initState();
     _syncSelectedWorkshop();
+    _startMapLoadingTimeout();
     unawaited(_loadMarkerIcons());
   }
 
   @override
   void dispose() {
+    _mapLoadingTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
   }
@@ -112,6 +117,21 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
   void _resetMapFeedbackState() {
     _isMapLoading = true;
+    _hasMapLoadTimedOut = false;
+    _startMapLoadingTimeout();
+  }
+
+  void _startMapLoadingTimeout() {
+    _mapLoadingTimer?.cancel();
+    _mapLoadingTimer = Timer(_mapLoadingTimeout, () {
+      if (!mounted || !_isMapLoading) {
+        return;
+      }
+
+      setState(() {
+        _hasMapLoadTimedOut = true;
+      });
+    });
   }
 
   void _syncSelectedWorkshop() {
@@ -266,6 +286,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   }
 
   void _handleMapCreated(GoogleMapController controller) {
+    _mapLoadingTimer?.cancel();
     _mapController = controller;
     _fitToMarkers();
     if (!mounted) {
@@ -274,6 +295,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
     setState(() {
       _isMapLoading = false;
+      _hasMapLoadTimedOut = false;
     });
   }
 
@@ -596,9 +618,15 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               left: 16,
               right: 16,
               child: _MapStatusCard(
-                icon: Icons.map_outlined,
-                title: l10n.mapLoadingTitle,
-                message: l10n.mapLoadingMessage,
+                icon: _hasMapLoadTimedOut
+                    ? Icons.warning_amber_rounded
+                    : Icons.map_outlined,
+                title: _hasMapLoadTimedOut
+                    ? 'El mapa está tardando en responder'
+                    : l10n.mapLoadingTitle,
+                message: _hasMapLoadTimedOut
+                    ? 'Los talleres ya están disponibles. Si el mapa no aparece, revisa la conexión, permisos de ubicación o la configuración de Google Maps del dispositivo.'
+                    : l10n.mapLoadingMessage,
               ),
             ),
           if (_selectedWorkshop != null && widget.workshops.isNotEmpty)
