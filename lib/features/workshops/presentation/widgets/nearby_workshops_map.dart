@@ -692,6 +692,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     );
 
     final shouldShowResults = query.trim().isNotEmpty;
+    final shouldShowWorkshopList = shouldShowResults || expanded;
     final productWorkshopIds = productResults
         .map((result) => result.workshop.id)
         .toSet();
@@ -745,12 +746,13 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                   ),
                 ),
               ),
-            SizedBox(height: shouldShowResults || expanded ? 14 : 4),
-            if (shouldShowResults)
+            SizedBox(height: shouldShowWorkshopList ? 14 : 4),
+            if (shouldShowWorkshopList)
               _WorkshopResultsList(
                 workshops: workshopResults,
-                productResults: productResults,
-                isLoadingProductResults: isLoadingProductResults,
+                productResults: shouldShowResults ? productResults : const [],
+                isLoadingProductResults:
+                    shouldShowResults && isLoadingProductResults,
                 query: query,
                 currentLocation: currentLocation,
                 onSelected: onWorkshopSelected,
