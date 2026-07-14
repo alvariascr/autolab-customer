@@ -94,6 +94,29 @@ void main() {
         () => remoteDataSource.getActiveProductsByWorkshop('workshop-2'),
       ).called(1);
     });
+
+    test('deduplica llamadas concurrentes de productos por taller', () async {
+      final completer = Completer<List<ProductModel>>();
+      when(
+        () => remoteDataSource.getActiveProductsByWorkshop('workshop-1'),
+      ).thenAnswer((_) => completer.future);
+
+      final firstRequest = repository.getActiveProductsByWorkshop('workshop-1');
+      final secondRequest = repository.getActiveProductsByWorkshop(
+        'workshop-1',
+      );
+
+      completer.complete(_products);
+
+      final firstResult = await firstRequest;
+      final secondResult = await secondRequest;
+
+      verify(
+        () => remoteDataSource.getActiveProductsByWorkshop('workshop-1'),
+      ).called(1);
+      expect(firstResult.getOrElse(() => const []), _products);
+      expect(secondResult.getOrElse(() => const []), _products);
+    });
   });
 }
 

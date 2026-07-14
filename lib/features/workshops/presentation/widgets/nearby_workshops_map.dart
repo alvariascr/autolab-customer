@@ -109,16 +109,9 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workshops != widget.workshops ||
         oldWidget.currentLocation != widget.currentLocation) {
-      _resetMapFeedbackState();
       _syncSelectedWorkshop();
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
     }
-  }
-
-  void _resetMapFeedbackState() {
-    _isMapLoading = true;
-    _hasMapLoadTimedOut = false;
-    _startMapLoadingTimeout();
   }
 
   void _startMapLoadingTimeout() {
@@ -622,10 +615,10 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                     ? Icons.warning_amber_rounded
                     : Icons.map_outlined,
                 title: _hasMapLoadTimedOut
-                    ? 'El mapa está tardando en responder'
+                    ? l10n.mapLoadingTimeoutTitle
                     : l10n.mapLoadingTitle,
                 message: _hasMapLoadTimedOut
-                    ? 'Los talleres ya están disponibles. Si el mapa no aparece, revisa la conexión, permisos de ubicación o la configuración de Google Maps del dispositivo.'
+                    ? l10n.mapLoadingTimeoutMessage
                     : l10n.mapLoadingMessage,
               ),
             ),
@@ -1006,9 +999,9 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.storefront_outlined, size: 18),
-                  label: const Text(
-                    'Ver taller',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                  label: Text(
+                    l10n.mapSheetOpenWorkshopAction,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),

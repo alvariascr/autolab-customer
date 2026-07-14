@@ -103,12 +103,14 @@ void main() {
     test('recalcula ubicacion usando talleres cacheados', () async {
       await cubit.loadWorkshops(_currentLocation);
       await cubit.loadWorkshops(
-        const CurrentLocation(latitude: 9.9340, longitude: -84.0800),
+        const CurrentLocation(latitude: 9.8644, longitude: -83.9194),
       );
 
       expect(getWorkshopsCalls, 1);
       expect(cubit.state, isA<MapLoaded>());
-      expect((cubit.state as MapLoaded).currentLocation?.latitude, 9.9340);
+      final loaded = cubit.state as MapLoaded;
+      expect(loaded.currentLocation?.latitude, 9.8644);
+      expect(loaded.workshops.map((workshop) => workshop.id), ['3']);
     });
 
     test(

@@ -56,7 +56,7 @@ class ProductRepositoryImpl implements ProductRepository {
     final result = await request;
     _activeProductsRequest = null;
     result.fold((_) {}, (products) {
-      _activeProductsCache = Right(products);
+      _activeProductsCache = Right(List<Product>.unmodifiable(products));
     });
     return result;
   }
@@ -93,7 +93,9 @@ class ProductRepositoryImpl implements ProductRepository {
     final result = await request;
     _productsByWorkshopRequests.remove(workshopId);
     result.fold((_) {}, (products) {
-      _productsByWorkshopCache[workshopId] = Right(products);
+      _productsByWorkshopCache[workshopId] = Right(
+        List<Product>.unmodifiable(products),
+      );
     });
     return result;
   }

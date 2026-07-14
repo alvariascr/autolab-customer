@@ -49,7 +49,7 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
     final result = await request;
     _workshopsRequest = null;
     result.fold((_) {}, (workshops) {
-      _workshopsCache = Right(workshops);
+      _workshopsCache = Right(List<Workshop>.unmodifiable(workshops));
     });
     return result;
   }
