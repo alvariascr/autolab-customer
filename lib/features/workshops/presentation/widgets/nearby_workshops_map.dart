@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -89,19 +90,13 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   void initState() {
     super.initState();
     _syncSelectedWorkshop();
+    unawaited(_loadMarkerIcons());
   }
 
   @override
   void dispose() {
     _mapController?.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadMarkerIcons();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
   }
 
   @override

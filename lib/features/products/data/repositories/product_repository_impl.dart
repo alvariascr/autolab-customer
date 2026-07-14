@@ -21,24 +21,81 @@ class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
   final GlobalErrorHandler errorHandler;
   final FeatureLogger featureLogger;
+  Either<Failure, List<Product>>? _activeProductsCache;
+  Future<Either<Failure, List<Product>>>? _activeProductsRequest;
+  final Map<String, Either<Failure, List<Product>>> _productsByWorkshopCache =
+      {};
+  final Map<String, Future<Either<Failure, List<Product>>>>
+  _productsByWorkshopRequests = {};
 
   @override
   Future<Either<Failure, List<Product>>> getActiveProducts() async {
-    return _guard(
+    final cached = _activeProductsCache;
+    if (cached != null) {
+      featureLogger.info(
+        feature: 'products',
+        action: 'get_active_products_succeeded',
+        context: {
+          'count': cached.fold((_) => 0, (products) => products.length),
+          'cached': true,
+        },
+      );
+      return cached;
+    }
+
+    final pendingRequest = _activeProductsRequest;
+    if (pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = _guard(
       action: 'get_active_products',
       loader: remoteDataSource.getActiveProducts,
     );
+    _activeProductsRequest = request;
+    final result = await request;
+    _activeProductsRequest = null;
+    result.fold((_) {}, (products) {
+      _activeProductsCache = Right(products);
+    });
+    return result;
   }
 
   @override
   Future<Either<Failure, List<Product>>> getActiveProductsByWorkshop(
     String workshopId,
   ) async {
-    return _guard(
+    final cached = _productsByWorkshopCache[workshopId];
+    if (cached != null) {
+      featureLogger.info(
+        feature: 'products',
+        action: 'get_active_products_by_workshop_succeeded',
+        context: {
+          'workshopId': workshopId,
+          'count': cached.fold((_) => 0, (products) => products.length),
+          'cached': true,
+        },
+      );
+      return cached;
+    }
+
+    final pendingRequest = _productsByWorkshopRequests[workshopId];
+    if (pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = _guard(
       action: 'get_active_products_by_workshop',
       context: {'workshopId': workshopId},
       loader: () => remoteDataSource.getActiveProductsByWorkshop(workshopId),
     );
+    _productsByWorkshopRequests[workshopId] = request;
+    final result = await request;
+    _productsByWorkshopRequests.remove(workshopId);
+    result.fold((_) {}, (products) {
+      _productsByWorkshopCache[workshopId] = Right(products);
+    });
+    return result;
   }
 
   Future<Either<Failure, List<Product>>> _guard({
