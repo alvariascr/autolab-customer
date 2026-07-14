@@ -707,7 +707,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+        padding: EdgeInsets.fromLTRB(18, 10, 18, expanded ? 18 : 12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.98),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -733,7 +733,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
             const SizedBox(height: 12),
             if (shouldShowResults)
               _SearchResultsHeader(count: resultsCount, query: query)
-            else
+            else if (expanded)
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -745,7 +745,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: 14),
+            SizedBox(height: shouldShowResults || expanded ? 14 : 4),
             if (shouldShowResults)
               _WorkshopResultsList(
                 workshops: workshopResults,
@@ -768,6 +768,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                   expanded: expanded,
                   distance: distance,
                   l10n: l10n,
+                  onOpened: onWorkshopOpened,
                 ),
               ),
           ],
@@ -808,6 +809,7 @@ class _SelectedWorkshopSummary extends StatelessWidget {
     required this.expanded,
     required this.distance,
     required this.l10n,
+    required this.onOpened,
   });
 
   final Workshop workshop;
@@ -815,6 +817,7 @@ class _SelectedWorkshopSummary extends StatelessWidget {
   final bool expanded;
   final double distance;
   final AppLocalizations l10n;
+  final ValueChanged<Workshop> onOpened;
 
   @override
   Widget build(BuildContext context) {
@@ -823,7 +826,7 @@ class _SelectedWorkshopSummary extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _WorkshopCoverThumb(workshop: workshop),
+            _WorkshopCoverThumb(workshop: workshop, size: expanded ? 86 : 62),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -840,6 +843,21 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                       height: 1.2,
                     ),
                   ),
+                  if (!expanded) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      workshop.locationAddress.isNotEmpty
+                          ? workshop.locationAddress
+                          : l10n.mapSheetFallbackAddress,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF8A7C72),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -874,22 +892,6 @@ class _SelectedWorkshopSummary extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            workshop.locationAddress.isNotEmpty
-                ? workshop.locationAddress
-                : l10n.mapSheetFallbackAddress,
-            maxLines: expanded ? 3 : 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF6B5F57),
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
-        ),
         AnimatedCrossFade(
           crossFadeState: expanded
               ? CrossFadeState.showSecond
@@ -898,6 +900,22 @@ class _SelectedWorkshopSummary extends StatelessWidget {
           firstChild: const SizedBox(height: 0),
           secondChild: Column(
             children: [
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  workshop.locationAddress.isNotEmpty
+                      ? workshop.locationAddress
+                      : l10n.mapSheetFallbackAddress,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF6B5F57),
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ),
               const SizedBox(height: 12),
               const Divider(height: 1, color: Color(0xFFF0E2D6)),
               const SizedBox(height: 12),
@@ -931,6 +949,64 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                     color: Color(0xFF5F554E),
                     fontSize: 13,
                     height: 1.5,
+                  ),
+                ),
+              ),
+              if (workshop.serviceCategories.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: workshop.serviceCategories
+                        .take(3)
+                        .map(
+                          (category) => _MapInfoChip(
+                            icon: Icons.handyman_outlined,
+                            label: category,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
+              if (workshop.paymentMethods.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: workshop.paymentMethods
+                        .take(2)
+                        .map(
+                          (method) => _MapInfoChip(
+                            icon: Icons.payments_outlined,
+                            label: method,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: FilledButton.icon(
+                  onPressed: () => onOpened(workshop),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF181411),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.storefront_outlined, size: 18),
+                  label: const Text(
+                    'Ver taller',
+                    style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -1281,9 +1357,10 @@ class _WorkshopResultTile extends StatelessWidget {
 }
 
 class _WorkshopCoverThumb extends StatelessWidget {
-  const _WorkshopCoverThumb({required this.workshop});
+  const _WorkshopCoverThumb({required this.workshop, this.size = 82});
 
   final Workshop workshop;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -1292,8 +1369,8 @@ class _WorkshopCoverThumb extends StatelessWidget {
         : workshop.avatarUrl;
 
     final fallback = Container(
-      width: 82,
-      height: 82,
+      width: size,
+      height: size,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF102A56), Color(0xFF1E4D8F), Color(0xFFEF9C23)],
@@ -1310,8 +1387,8 @@ class _WorkshopCoverThumb extends StatelessWidget {
           ? fallback
           : Image.network(
               imageUrl,
-              width: 82,
-              height: 82,
+              width: size,
+              height: size,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => fallback,
             ),
