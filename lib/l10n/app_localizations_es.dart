@@ -503,6 +503,68 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileDarkModeDisabled => 'Desactivado';
 
   @override
+  String get garageTitle => 'Mi Garaje';
+
+  @override
+  String get garageDefaultCustomerName => 'Cliente Autolab';
+
+  @override
+  String garageGreeting(Object displayName) {
+    return 'Hola, $displayName';
+  }
+
+  @override
+  String get garageWelcomeSubtitle => 'Bienvenido a tu garaje';
+
+  @override
+  String get garageChangeProfilePhotoTitle => 'Cambiar foto de perfil';
+
+  @override
+  String get garageChooseFromGallery => 'Elegir de la galería';
+
+  @override
+  String get garageCloseAction => 'Cerrar';
+
+  @override
+  String get garageQuickAccessTitle => 'Accesos Rápidos';
+
+  @override
+  String get garageOrders => 'Mis pedidos';
+
+  @override
+  String get garageHistory => 'Historial';
+
+  @override
+  String get garageManagementTitle => 'Gestión';
+
+  @override
+  String get garageFavorites => 'Favoritos';
+
+  @override
+  String get garageAddresses => 'Direcciones';
+
+  @override
+  String get garagePaymentMethods => 'Métodos de pago';
+
+  @override
+  String get garageSettings => 'Ajustes';
+
+  @override
+  String get garageSupportTitle => 'Soporte';
+
+  @override
+  String get garageHelpCenter => 'Centro de ayuda';
+
+  @override
+  String get garageContactSupport => 'Contactar soporte';
+
+  @override
+  String get garageAboutUs => 'Quiénes somos';
+
+  @override
+  String get garageActiveVehicle => 'Vehículo activo';
+
+  @override
   String get myAppointmentsTitle => 'Mis citas';
 
   @override
@@ -724,6 +786,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vehiclesTitle => 'Mis vehículos';
 
   @override
+  String get vehiclesManageAction => 'Gestionar';
+
+  @override
   String get vehiclesProfileSubtitle =>
       'Administra los vehículos que usas para reservar citas.';
 
@@ -733,6 +798,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vehiclesAddAction => 'Agregar vehículo';
+
+  @override
+  String get vehiclesChangeImageAction => 'Cambiar imagen';
 
   @override
   String get vehiclesEditAction => 'Editar vehículo';
@@ -812,6 +880,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vehiclesSaveAction => 'Guardar vehículo';
+
+  @override
+  String get vehiclesNextAction => 'Siguiente';
 
   @override
   String get vehiclesSaveFailed =>
@@ -1889,8 +1960,38 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPaymentMethodLabel => 'Pago';
 
   @override
-  String get laropayPaymentPending =>
-      'Tu pago está pendiente de confirmación. Actualizaremos el estado cuando Laropay lo confirme.';
+  String get laropayPaymentResultPaidTitle => 'Pago confirmado';
+
+  @override
+  String get laropayPaymentResultPaidMessage =>
+      'Tu compra fue aprobada correctamente. Ya puedes revisar el detalle en Mis compras.';
+
+  @override
+  String get laropayPaymentResultRejectedTitle => 'Pago no procesado';
+
+  @override
+  String get laropayPaymentResultRejectedMessage =>
+      'Laropay no pudo procesar la compra. Puedes revisar el estado o intentar nuevamente desde Mis compras.';
+
+  @override
+  String get laropayPaymentResultExpiredTitle => 'Link vencido';
+
+  @override
+  String get laropayPaymentResultExpiredMessage =>
+      'El link de pago ya no está disponible. Genera una nueva compra para continuar.';
+
+  @override
+  String get laropayPaymentResultPendingTitle => 'Pago en revisión';
+
+  @override
+  String get laropayPaymentResultPendingMessage =>
+      'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis compras.';
+
+  @override
+  String get laropayPaymentResultViewPurchasesAction => 'Ver mis compras';
+
+  @override
+  String get laropayPaymentResultBackToWorkshopAction => 'Volver al taller';
 
   @override
   String get laropayPaymentStartError =>
@@ -2024,6 +2125,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesOpenLinkAction => 'Reintentar pago';
+
+  @override
+  String get myPurchasesRefreshStatusAction => 'Actualizar estado';
+
+  @override
+  String get myPurchasesStatusRefreshSuccess => 'Estado de pago actualizado.';
+
+  @override
+  String get myPurchasesStatusRefreshError =>
+      'No fue posible actualizar el estado del pago.';
 
   @override
   String get myPurchasesLinkOpenError =>

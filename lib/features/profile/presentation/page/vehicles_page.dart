@@ -1,10 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../helpers/garage_vehicle_display.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
@@ -14,39 +21,43 @@ class VehiclesPage extends StatefulWidget {
 }
 
 class _VehiclesPageState extends State<VehiclesPage> {
+  static const _newVehicleImageKey = 'garage_vehicle_image_new';
+  static const activeVehicleIdKey = 'garage_active_vehicle_id';
+
   late final GarageVehicleRemoteDataSource _dataSource;
   var _status = _VehiclesStatus.loading;
   var _vehicles = <GarageVehicle>[];
+  GarageVehicle? _selectedVehicle;
+  final _vehicleImagePaths = <String, String>{};
+  var _formVersion = 0;
 
   @override
   void initState() {
     super.initState();
     _dataSource = sl<GarageVehicleRemoteDataSource>();
     _loadVehicles();
+    _loadVehicleImages();
   }
 
   Future<void> _loadVehicles() async {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() => _status = _VehiclesStatus.loading);
 
     try {
       final vehicles = await _dataSource.getVehicles();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _vehicles = vehicles;
+        if (_selectedVehicle != null &&
+            vehicles.every((vehicle) => vehicle.id != _selectedVehicle!.id)) {
+          _selectedVehicle = null;
+        }
         _status = _VehiclesStatus.success;
       });
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       setState(() => _status = _VehiclesStatus.failure);
     }
   }
@@ -71,6 +82,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AutolabCustomer.customerSurfaceColor(context),
         title: Text(l10n.vehiclesDeleteTitle),
         content: Text(l10n.vehiclesDeleteMessage(vehicle.licensePlate)),
         actions: [
@@ -86,26 +98,148 @@ class _VehiclesPageState extends State<VehiclesPage> {
       ),
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (confirmed != true) return;
 
     try {
       await _dataSource.deleteVehicle(vehicle.id);
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       await _loadVehicles();
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.vehiclesDeleteFailed)));
     }
+  }
+
+  void _startNewVehicle() {
+    setState(() {
+      _selectedVehicle = null;
+      _vehicleImagePaths.remove(_newVehicleImageKey);
+      _formVersion++;
+    });
+    _removeNewVehicleImage();
+  }
+
+  Future<void> _selectVehicle(GarageVehicle vehicle) async {
+    setState(() {
+      _selectedVehicle = vehicle;
+      _formVersion++;
+    });
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(activeVehicleIdKey, vehicle.id);
+  }
+
+  Future<void> _handleVehicleSaved(String? vehicleId) async {
+    if (vehicleId != null && vehicleId.isNotEmpty) {
+      await _moveNewVehicleImage(vehicleId);
+    }
+
+    _startNewVehicle();
+    await _loadVehicles();
+  }
+
+  Future<void> _pickVehicleImage() async {
+    final image = await ImagePickerPlatform.instance.getImageFromSource(
+      source: ImageSource.gallery,
+      options: const ImagePickerOptions(imageQuality: 85),
+    );
+
+    if (image == null || !mounted) return;
+
+    final persistedImagePath = await _persistVehicleImage(
+      sourcePath: image.path,
+      key: _vehicleImageKey(_selectedVehicle),
+    );
+
+    if (!mounted) return;
+
+    final key = _vehicleImageKey(_selectedVehicle);
+    setState(() {
+      _vehicleImagePaths[key] = persistedImagePath;
+    });
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(key, persistedImagePath);
+  }
+
+  Future<void> _loadVehicleImages() async {
+    final preferences = await SharedPreferences.getInstance();
+    final loadedPaths = <String, String>{};
+
+    for (final key in preferences.getKeys()) {
+      if (!key.startsWith('garage_vehicle_image_')) continue;
+
+      final path = preferences.getString(key);
+      if (path == null || path.isEmpty || !File(path).existsSync()) continue;
+
+      loadedPaths[key] = path;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _vehicleImagePaths
+        ..clear()
+        ..addAll(loadedPaths);
+    });
+  }
+
+  Future<void> _removeNewVehicleImage() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_newVehicleImageKey);
+  }
+
+  Future<void> _moveNewVehicleImage(String vehicleId) async {
+    final preferences = await SharedPreferences.getInstance();
+    final temporaryPath = preferences.getString(_newVehicleImageKey);
+
+    if (temporaryPath == null || temporaryPath.isEmpty) {
+      return;
+    }
+
+    final vehicleImageKey = _vehicleImageKeyById(vehicleId);
+    final persistedImagePath = await _persistVehicleImage(
+      sourcePath: temporaryPath,
+      key: vehicleImageKey,
+    );
+    await preferences.setString(vehicleImageKey, persistedImagePath);
+    await preferences.remove(_newVehicleImageKey);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _vehicleImagePaths
+        ..remove(_newVehicleImageKey)
+        ..[vehicleImageKey] = persistedImagePath;
+    });
+  }
+
+  Future<String> _persistVehicleImage({
+    required String sourcePath,
+    required String key,
+  }) async {
+    final sourceFile = File(sourcePath);
+    final appDirectory = await getApplicationDocumentsDirectory();
+    final imagesDirectory = Directory(
+      '${appDirectory.path}${Platform.pathSeparator}garage_vehicle_images',
+    );
+
+    if (!imagesDirectory.existsSync()) {
+      await imagesDirectory.create(recursive: true);
+    }
+
+    final extension = _fileExtension(sourceFile.path);
+    final fileName =
+        '${key}_${DateTime.now().microsecondsSinceEpoch}$extension';
+    final destinationPath =
+        '${imagesDirectory.path}${Platform.pathSeparator}$fileName';
+
+    final copiedFile = await sourceFile.copy(destinationPath);
+    return copiedFile.path;
   }
 
   @override
@@ -113,51 +247,40 @@ class _VehiclesPageState extends State<VehiclesPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4EF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F4EF),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-              return;
-            }
-
-            context.go('/profile');
-          },
-        ),
-        title: Text(l10n.vehiclesTitle),
-        actions: [
-          IconButton(
-            tooltip: l10n.vehiclesAddAction,
-            onPressed: _openVehicleForm,
-            icon: const Icon(Icons.add_rounded),
-          ),
-        ],
-      ),
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       body: SafeArea(
         child: RefreshIndicator(
+          color: AutolabCustomer.primary,
           onRefresh: _loadVehicles,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            padding: EdgeInsets.fromLTRB(
+              AutolabCustomer.responsiveScreenMargin(context),
+              AutolabCustomer.spacingLg,
+              AutolabCustomer.responsiveScreenMargin(context),
+              AutolabCustomer.spacingXxl,
+            ),
             children: [
-              Text(
-                l10n.vehiclesSubtitle,
-                style: const TextStyle(
-                  color: Color(0xFF6B5F57),
-                  fontSize: 14,
-                  height: 1.45,
+              _VehiclesBackButton(onTap: () => _goBack(context)),
+              const SizedBox(height: AutolabCustomer.spacingMd),
+              _VehiclesTitleRow(onManageTap: () => _openVehicleForm()),
+              const SizedBox(height: AutolabCustomer.spacingMd),
+              SizedBox(
+                height: AutolabCustomer.responsiveDouble(
+                  context,
+                  compact: 112,
+                  regular: 124,
+                  tablet: 136,
                 ),
+                child: _buildVehicleSelector(l10n),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AutolabCustomer.spacingLg),
+              Divider(color: AutolabCustomer.customerBorderColor(context)),
+              const SizedBox(height: AutolabCustomer.spacingLg),
               if (_status == _VehiclesStatus.loading)
                 const Center(
                   child: Padding(
-                    padding: EdgeInsets.all(32),
+                    padding: EdgeInsets.all(AutolabCustomer.spacingXl),
                     child: CircularProgressIndicator(),
                   ),
                 )
@@ -166,33 +289,451 @@ class _VehiclesPageState extends State<VehiclesPage> {
                   icon: Icons.error_outline_rounded,
                   message: l10n.vehiclesLoadFailed,
                 )
-              else if (_vehicles.isEmpty)
-                _VehiclesMessage(
-                  icon: Icons.directions_car_filled_outlined,
-                  message: l10n.vehiclesEmpty,
-                )
-              else
-                ..._vehicles.map(
-                  (vehicle) => _VehicleTile(
-                    vehicle: vehicle,
-                    onEdit: () => _openVehicleForm(vehicle: vehicle),
-                    onDelete: () => _deleteVehicle(vehicle),
-                  ),
+              else ...[
+                _VehiclePreview(
+                  vehicle: _selectedVehicle,
+                  imagePath:
+                      _vehicleImagePaths[_vehicleImageKey(_selectedVehicle)],
+                  onChangeImage: _pickVehicleImage,
                 ),
+                const SizedBox(height: AutolabCustomer.spacingMd),
+                _VehicleForm(
+                  key: ValueKey(
+                    '${_selectedVehicle?.id ?? 'new'}-$_formVersion',
+                  ),
+                  dataSource: _dataSource,
+                  initialVehicle: _selectedVehicle,
+                  embedded: true,
+                  onSaved: _handleVehicleSaved,
+                ),
+              ],
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openVehicleForm,
-        icon: const Icon(Icons.add_rounded),
-        label: Text(l10n.vehiclesAddAction),
+    );
+  }
+
+  Widget _buildVehicleSelector(AppLocalizations l10n) {
+    if (_vehicles.isEmpty) {
+      return Row(
+        children: [
+          Expanded(child: _EmptyVehicleCard(message: l10n.vehiclesEmpty)),
+          const SizedBox(width: AutolabCustomer.spacingMd),
+          _AddVehicleCircleButton(onTap: _startNewVehicle),
+        ],
+      );
+    }
+
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: _vehicles.length + 1,
+      separatorBuilder: (context, index) =>
+          const SizedBox(width: AutolabCustomer.spacingMd),
+      itemBuilder: (context, index) {
+        if (index == _vehicles.length) {
+          return Center(
+            child: _AddVehicleCircleButton(onTap: _startNewVehicle),
+          );
+        }
+
+        final vehicle = _vehicles[index];
+        return _VehicleCompactCard(
+          vehicle: vehicle,
+          selected: _selectedVehicle?.id == vehicle.id,
+          onTap: () => _selectVehicle(vehicle),
+          onEdit: () => _openVehicleForm(vehicle: vehicle),
+          onDelete: () => _deleteVehicle(vehicle),
+        );
+      },
+    );
+  }
+
+  void _goBack(BuildContext context) {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+      return;
+    }
+
+    context.go('/profile');
+  }
+}
+
+enum _VehiclesStatus { loading, success, failure }
+
+class _VehiclesBackButton extends StatelessWidget {
+  const _VehiclesBackButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          onPressed: onTap,
+          style: IconButton.styleFrom(
+            backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+            foregroundColor: AutolabCustomer.customerSecondaryTextColor(
+              context,
+            ),
+          ),
+          icon: const Icon(Icons.arrow_back_rounded, size: 18),
+        ),
       ),
     );
   }
 }
 
-enum _VehiclesStatus { loading, success, failure }
+class _VehiclesTitleRow extends StatelessWidget {
+  const _VehiclesTitleRow({required this.onManageTap});
+
+  final VoidCallback onManageTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            l10n.vehiclesTitle,
+            style: AutolabCustomer.bodyLarge.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: onManageTap,
+          style: TextButton.styleFrom(
+            foregroundColor: AutolabCustomer.primary,
+            padding: EdgeInsets.zero,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            l10n.vehiclesManageAction,
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VehicleCompactCard extends StatelessWidget {
+  const _VehicleCompactCard({
+    required this.vehicle,
+    required this.selected,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final GarageVehicle vehicle;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 80,
+        regular: 92,
+        tablet: 108,
+      ),
+      child: Material(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onEdit,
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+          child: Container(
+            padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+              border: Border.all(
+                color: selected ? AutolabCustomer.primary : Colors.transparent,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Icon(
+                          Icons.directions_car_filled_rounded,
+                          color: AutolabCustomer.customerTextColor(context),
+                          size: AutolabCustomer.responsiveDouble(
+                            context,
+                            compact: 34,
+                            regular: 42,
+                            tablet: 48,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      garageVehicleTitle(vehicle),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AutolabCustomer.label.copyWith(
+                        color: AutolabCustomer.customerTextColor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      garageVehicleSelectorSubtitle(vehicle),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  right: -8,
+                  top: -8,
+                  child: PopupMenuButton<String>(
+                    color: AutolabCustomer.customerSurfaceColor(context),
+                    icon: const Icon(Icons.more_horiz_rounded, size: 16),
+                    iconColor: AutolabCustomer.customerSecondaryTextColor(
+                      context,
+                    ),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        onEdit();
+                        return;
+                      }
+                      onDelete();
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Text(
+                          AppLocalizations.of(context)!.vehiclesEditAction,
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(
+                          AppLocalizations.of(context)!.vehiclesDeleteAction,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Icon(
+                    selected
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    color: selected
+                        ? AutolabCustomer.primary
+                        : AutolabCustomer.customerSecondaryTextColor(context),
+                    size: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyVehicleCard extends StatelessWidget {
+  const _EmptyVehicleCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.directions_car_filled_outlined,
+            color: AutolabCustomer.primary,
+          ),
+          const SizedBox(width: AutolabCustomer.spacingMd),
+          Expanded(
+            child: Text(
+              message,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerSecondaryTextColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddVehicleCircleButton extends StatelessWidget {
+  const _AddVehicleCircleButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 36,
+      height: 36,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          shape: const CircleBorder(),
+          padding: EdgeInsets.zero,
+          foregroundColor: AutolabCustomer.primary,
+          side: const BorderSide(color: AutolabCustomer.primary),
+        ),
+        child: const Icon(Icons.add_rounded, size: AutolabCustomer.iconSm),
+      ),
+    );
+  }
+}
+
+class _VehiclePreview extends StatelessWidget {
+  const _VehiclePreview({
+    required this.vehicle,
+    required this.onChangeImage,
+    this.imagePath,
+  });
+
+  final GarageVehicle? vehicle;
+  final String? imagePath;
+  final VoidCallback onChangeImage;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final hasSelectedVehicle = vehicle != null;
+    final title = hasSelectedVehicle ? garageVehicleTitle(vehicle!) : '';
+
+    return Column(
+      children: [
+        SizedBox(
+          height: AutolabCustomer.responsiveDouble(
+            context,
+            compact: 92,
+            regular: 114,
+            tablet: 136,
+          ),
+          child: _VehiclePreviewImage(imagePath: imagePath),
+        ),
+        if (hasSelectedVehicle) ...[
+          const SizedBox(height: AutolabCustomer.spacingXs),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        const SizedBox(height: AutolabCustomer.spacingSm),
+        SizedBox(
+          height: 36,
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+              foregroundColor: AutolabCustomer.customerSecondaryTextColor(
+                context,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+              ),
+            ),
+            onPressed: onChangeImage,
+            icon: const Icon(
+              Icons.image_outlined,
+              size: AutolabCustomer.iconSm,
+            ),
+            label: Text(
+              l10n.vehiclesChangeImageAction,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerSecondaryTextColor(context),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VehiclePreviewImage extends StatelessWidget {
+  const _VehiclePreviewImage({this.imagePath});
+
+  final String? imagePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = imagePath;
+
+    if (path != null && path.isNotEmpty) {
+      return Image.file(
+        File(path),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            const _VehiclePreviewPlaceholder(),
+      );
+    }
+
+    return const _VehiclePreviewPlaceholder();
+  }
+}
+
+class _VehiclePreviewPlaceholder extends StatelessWidget {
+  const _VehiclePreviewPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.directions_car_filled_rounded,
+      color: AutolabCustomer.customerTextColor(context),
+      size: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 82,
+        regular: 104,
+        tablet: 126,
+      ),
+    );
+  }
+}
 
 class _VehiclesMessage extends StatelessWidget {
   const _VehiclesMessage({required this.icon, required this.message});
@@ -203,21 +744,21 @@ class _VehiclesMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AutolabCustomer.spacingLg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 36, color: const Color(0xFFE32119)),
-          const SizedBox(height: 12),
+          Icon(icon, size: 36, color: AutolabCustomer.primary),
+          const SizedBox(height: AutolabCustomer.spacingSm),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF6B5F57),
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
               fontWeight: FontWeight.w600,
               height: 1.35,
             ),
@@ -228,97 +769,19 @@ class _VehiclesMessage extends StatelessWidget {
   }
 }
 
-class _VehicleTile extends StatelessWidget {
-  const _VehicleTile({
-    required this.vehicle,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final GarageVehicle vehicle;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = [
-      vehicle.brand,
-      vehicle.model,
-    ].where((part) => part != null && part.trim().isNotEmpty).join(' ');
-    final subtitle = [
-      vehicle.licensePlate,
-      if (vehicle.year != null) vehicle.year.toString(),
-      vehicle.color,
-      vehicle.vehicleType,
-    ].where((part) => part != null && part.trim().isNotEmpty).join(' • ');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE9DDD2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE9E7),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.directions_car_filled_outlined,
-              color: Color(0xFFE32119),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.isEmpty ? vehicle.licensePlate : title,
-                  style: const TextStyle(
-                    color: Color(0xFF181411),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6B5F57),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: AppLocalizations.of(context)!.vehiclesEditAction,
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
-          ),
-          IconButton(
-            tooltip: AppLocalizations.of(context)!.vehiclesDeleteAction,
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline_rounded),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _VehicleForm extends StatefulWidget {
-  const _VehicleForm({required this.dataSource, this.initialVehicle});
+  const _VehicleForm({
+    required this.dataSource,
+    this.initialVehicle,
+    this.embedded = false,
+    this.onSaved,
+    super.key,
+  });
 
   final GarageVehicleRemoteDataSource dataSource;
   final GarageVehicle? initialVehicle;
+  final bool embedded;
+  final Future<void> Function(String? vehicleId)? onSaved;
 
   @override
   State<_VehicleForm> createState() => _VehicleFormState();
@@ -337,25 +800,10 @@ class _VehicleFormState extends State<_VehicleForm> {
   String? _errorMessage;
   var _saving = false;
 
-  bool get _isEditing => widget.initialVehicle != null;
-
   @override
   void initState() {
     super.initState();
-
-    final vehicle = widget.initialVehicle;
-    if (vehicle == null) {
-      return;
-    }
-
-    _plateController.text = vehicle.licensePlate;
-    _brandController.text = vehicle.brand ?? '';
-    _modelController.text = vehicle.model ?? '';
-    _yearController.text = vehicle.year?.toString() ?? '';
-    _colorController.text = vehicle.color ?? '';
-    _vehicleType = vehicle.vehicleType;
-    _fuelType = vehicle.fuelType;
-    _transmissionType = vehicle.transmissionType;
+    _loadInitialVehicle();
   }
 
   @override
@@ -368,11 +816,21 @@ class _VehicleFormState extends State<_VehicleForm> {
     super.dispose();
   }
 
+  void _loadInitialVehicle() {
+    final vehicle = widget.initialVehicle;
+    _plateController.text = vehicle?.licensePlate ?? '';
+    _brandController.text = vehicle?.brand ?? '';
+    _modelController.text = vehicle?.model ?? '';
+    _yearController.text = vehicle?.year?.toString() ?? '';
+    _colorController.text = vehicle?.color ?? '';
+    _vehicleType = vehicle?.vehicleType;
+    _fuelType = vehicle?.fuelType;
+    _transmissionType = vehicle?.transmissionType;
+  }
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context)!;
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _saving = true;
@@ -381,8 +839,9 @@ class _VehicleFormState extends State<_VehicleForm> {
 
     try {
       final vehicle = widget.initialVehicle;
+      String? savedVehicleId;
       if (vehicle == null) {
-        await widget.dataSource.createVehicle(
+        savedVehicleId = await widget.dataSource.createVehicle(
           licensePlate: _plateController.text,
           vehicleType: _vehicleType,
           brand: _brandController.text,
@@ -406,25 +865,22 @@ class _VehicleFormState extends State<_VehicleForm> {
         );
       }
 
-      if (!mounted) {
+      if (!mounted) return;
+
+      if (widget.onSaved != null) {
+        await widget.onSaved!(savedVehicleId);
         return;
       }
 
       Navigator.pop(context, true);
     } on GarageVehicleAlreadyExistsException {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       setState(() {
         _saving = false;
         _errorMessage = l10n.vehiclesPlateAlreadyExists;
       });
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       setState(() {
         _saving = false;
         _errorMessage = l10n.vehiclesSaveFailed;
@@ -436,192 +892,398 @@ class _VehicleFormState extends State<_VehicleForm> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final form = Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _VehicleTextField(
+            controller: _plateController,
+            hintText: l10n.vehiclesPlateLabel,
+            textCapitalization: TextCapitalization.characters,
+            validator: (value) {
+              final l10n = AppLocalizations.of(context)!;
+              return value == null || value.trim().isEmpty
+                  ? l10n.vehiclesPlateRequired
+                  : null;
+            },
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleTypeField(
+            value: _vehicleType,
+            onChanged: (value) => setState(() => _vehicleType = value),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleTextField(
+            controller: _brandController,
+            hintText: l10n.vehiclesBrandLabel,
+            suffixIcon: Icons.chevron_right_rounded,
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleTextField(
+            controller: _modelController,
+            hintText: l10n.vehiclesModelLabel,
+            suffixIcon: Icons.chevron_right_rounded,
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleTextField(
+            controller: _yearController,
+            hintText: l10n.vehiclesYearLabel,
+            keyboardType: TextInputType.number,
+            suffixIcon: Icons.chevron_right_rounded,
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleTextField(
+            controller: _colorController,
+            hintText: l10n.vehiclesColorLabel,
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleFuelField(
+            value: _fuelType,
+            onChanged: (value) => setState(() => _fuelType = value),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          _VehicleTransmissionField(
+            value: _transmissionType,
+            onChanged: (value) => setState(() => _transmissionType = value),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingLg),
+          if (_errorMessage != null) ...[
+            _VehicleErrorMessage(message: _errorMessage!),
+            const SizedBox(height: AutolabCustomer.spacingMd),
+          ],
+          SizedBox(
+            width: double.infinity,
+            height: AutolabCustomer.responsiveDouble(
+              context,
+              compact: 48,
+              regular: 54,
+              tablet: 58,
+            ),
+            child: ElevatedButton(
+              style: AutolabCustomer.primaryButton,
+              onPressed: _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      l10n.vehiclesSaveAction,
+                      style: AutolabCustomer.body.copyWith(
+                        color: AutolabCustomer.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingMd),
+          SizedBox(
+            width: double.infinity,
+            height: AutolabCustomer.responsiveDouble(
+              context,
+              compact: 48,
+              regular: 54,
+              tablet: 58,
+            ),
+            child: OutlinedButton(
+              style: AutolabCustomer.secondaryButton.copyWith(
+                foregroundColor: WidgetStatePropertyAll(
+                  AutolabCustomer.customerTextColor(context),
+                ),
+              ),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                  return;
+                }
+                context.go('/profile');
+              },
+              child: Text(
+                l10n.vehiclesNextAction,
+                style: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (widget.embedded) {
+      return form;
+    }
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 18, 20, 20 + bottomInset),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      padding: EdgeInsets.fromLTRB(
+        AutolabCustomer.spacingLg,
+        AutolabCustomer.spacingLg,
+        AutolabCustomer.spacingLg,
+        AutolabCustomer.spacingLg + bottomInset,
       ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _isEditing
-                    ? l10n.vehiclesEditFormTitle
-                    : l10n.vehiclesFormTitle,
-                style: const TextStyle(
-                  color: Color(0xFF181411),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 18),
-              TextFormField(
-                controller: _plateController,
-                textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(labelText: l10n.vehiclesPlateLabel),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? l10n.vehiclesPlateRequired
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _vehicleType,
-                decoration: InputDecoration(labelText: l10n.vehiclesTypeLabel),
-                items: [
-                  DropdownMenuItem(
-                    value: 'car',
-                    child: Text(l10n.vehiclesTypeCar),
-                  ),
-                  DropdownMenuItem(
-                    value: 'motorcycle',
-                    child: Text(l10n.vehiclesTypeMotorcycle),
-                  ),
-                  DropdownMenuItem(
-                    value: 'pickup',
-                    child: Text(l10n.vehiclesTypePickup),
-                  ),
-                  DropdownMenuItem(
-                    value: 'suv',
-                    child: Text(l10n.vehiclesTypeSuv),
-                  ),
-                  DropdownMenuItem(
-                    value: 'truck',
-                    child: Text(l10n.vehiclesTypeTruck),
-                  ),
-                ],
-                onChanged: (value) => setState(() => _vehicleType = value),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _brandController,
-                decoration: InputDecoration(labelText: l10n.vehiclesBrandLabel),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _modelController,
-                decoration: InputDecoration(labelText: l10n.vehiclesModelLabel),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _yearController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: l10n.vehiclesYearLabel,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _colorController,
-                      decoration: InputDecoration(
-                        labelText: l10n.vehiclesColorLabel,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _fuelType,
-                decoration: InputDecoration(labelText: l10n.vehiclesFuelLabel),
-                items: [
-                  DropdownMenuItem(
-                    value: 'gasoline',
-                    child: Text(l10n.vehiclesFuelGasoline),
-                  ),
-                  DropdownMenuItem(
-                    value: 'diesel',
-                    child: Text(l10n.vehiclesFuelDiesel),
-                  ),
-                  DropdownMenuItem(
-                    value: 'electric',
-                    child: Text(l10n.vehiclesFuelElectric),
-                  ),
-                  DropdownMenuItem(
-                    value: 'hybrid',
-                    child: Text(l10n.vehiclesFuelHybrid),
-                  ),
-                ],
-                onChanged: (value) => setState(() => _fuelType = value),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _transmissionType,
-                decoration: InputDecoration(
-                  labelText: l10n.vehiclesTransmissionLabel,
-                ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'manual',
-                    child: Text(l10n.vehiclesTransmissionManual),
-                  ),
-                  DropdownMenuItem(
-                    value: 'automatic',
-                    child: Text(l10n.vehiclesTransmissionAutomatic),
-                  ),
-                ],
-                onChanged: (value) => setState(() => _transmissionType = value),
-              ),
-              const SizedBox(height: 20),
-              if (_errorMessage != null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3F2),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFFB7B2)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.info_outline_rounded,
-                        color: Color(0xFFE32119),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(
-                            color: Color(0xFF7A1E18),
-                            fontWeight: FontWeight.w700,
-                            height: 1.25,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _saving ? null : _save,
-                  child: _saving
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.vehiclesSaveAction),
-                ),
-              ),
-            ],
-          ),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerBackgroundColor(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SingleChildScrollView(child: form),
+    );
+  }
+}
+
+class _VehicleTypeField extends StatelessWidget {
+  const _VehicleTypeField({required this.value, required this.onChanged});
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      dropdownColor: AutolabCustomer.customerSurfaceColor(context),
+      icon: Icon(
+        Icons.chevron_right_rounded,
+        color: AutolabCustomer.customerSecondaryTextColor(context),
+      ),
+      decoration: _vehicleInputDecoration(context, l10n.vehiclesTypeLabel),
+      style: AutolabCustomer.body.copyWith(
+        color: AutolabCustomer.customerTextColor(context),
+      ),
+      items: [
+        DropdownMenuItem(value: 'car', child: Text(l10n.vehiclesTypeCar)),
+        DropdownMenuItem(
+          value: 'motorcycle',
+          child: Text(l10n.vehiclesTypeMotorcycle),
+        ),
+        DropdownMenuItem(value: 'pickup', child: Text(l10n.vehiclesTypePickup)),
+        DropdownMenuItem(value: 'suv', child: Text(l10n.vehiclesTypeSuv)),
+        DropdownMenuItem(value: 'truck', child: Text(l10n.vehiclesTypeTruck)),
+      ],
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _VehicleFuelField extends StatelessWidget {
+  const _VehicleFuelField({required this.value, required this.onChanged});
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return _VehicleDropdownField(
+      value: value,
+      hintText: l10n.vehiclesFuelLabel,
+      items: [
+        DropdownMenuItem(
+          value: 'gasoline',
+          child: Text(l10n.vehiclesFuelGasoline),
+        ),
+        DropdownMenuItem(value: 'diesel', child: Text(l10n.vehiclesFuelDiesel)),
+        DropdownMenuItem(
+          value: 'electric',
+          child: Text(l10n.vehiclesFuelElectric),
+        ),
+        DropdownMenuItem(value: 'hybrid', child: Text(l10n.vehiclesFuelHybrid)),
+      ],
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _VehicleTransmissionField extends StatelessWidget {
+  const _VehicleTransmissionField({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return _VehicleDropdownField(
+      value: value,
+      hintText: l10n.vehiclesTransmissionLabel,
+      items: [
+        DropdownMenuItem(
+          value: 'manual',
+          child: Text(l10n.vehiclesTransmissionManual),
+        ),
+        DropdownMenuItem(
+          value: 'automatic',
+          child: Text(l10n.vehiclesTransmissionAutomatic),
+        ),
+      ],
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _VehicleDropdownField extends StatelessWidget {
+  const _VehicleDropdownField({
+    required this.value,
+    required this.hintText,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String? value;
+  final String hintText;
+  final List<DropdownMenuItem<String>> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      dropdownColor: AutolabCustomer.customerSurfaceColor(context),
+      icon: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: AutolabCustomer.customerSecondaryTextColor(context),
+      ),
+      decoration: _vehicleInputDecoration(context, hintText),
+      style: AutolabCustomer.body.copyWith(
+        color: AutolabCustomer.customerTextColor(context),
+      ),
+      items: items,
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _VehicleTextField extends StatelessWidget {
+  const _VehicleTextField({
+    required this.controller,
+    required this.hintText,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.validator,
+    this.suffixIcon,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final String? Function(String?)? validator;
+  final IconData? suffixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      validator: validator,
+      style: AutolabCustomer.body.copyWith(
+        color: AutolabCustomer.customerTextColor(context),
+      ),
+      decoration: _vehicleInputDecoration(
+        context,
+        hintText,
+        suffixIcon: suffixIcon,
+      ),
+    );
+  }
+}
+
+class _VehicleErrorMessage extends StatelessWidget {
+  const _VehicleErrorMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.error.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+        border: Border.all(color: AutolabCustomer.error),
+      ),
+      child: Text(
+        message,
+        style: AutolabCustomer.caption.copyWith(
+          color: AutolabCustomer.error,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
+}
+
+InputDecoration _vehicleInputDecoration(
+  BuildContext context,
+  String hintText, {
+  IconData? suffixIcon,
+}) {
+  return InputDecoration(
+    hintText: hintText,
+    hintStyle: AutolabCustomer.body.copyWith(
+      color: AutolabCustomer.customerSecondaryTextColor(context),
+    ),
+    filled: true,
+    fillColor: AutolabCustomer.customerSurfaceColor(context),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: AutolabCustomer.spacingMd,
+      vertical: AutolabCustomer.spacingSm,
+    ),
+    suffixIcon: suffixIcon == null
+        ? null
+        : Icon(
+            suffixIcon,
+            color: AutolabCustomer.customerSecondaryTextColor(context),
+          ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      borderSide: const BorderSide(color: AutolabCustomer.primary),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      borderSide: const BorderSide(color: AutolabCustomer.error),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      borderSide: const BorderSide(color: AutolabCustomer.error),
+    ),
+  );
+}
+
+String _vehicleImageKey(GarageVehicle? vehicle) {
+  return vehicle == null
+      ? _VehiclesPageState._newVehicleImageKey
+      : 'garage_vehicle_image_${vehicle.id}';
+}
+
+String _vehicleImageKeyById(String vehicleId) {
+  return 'garage_vehicle_image_$vehicleId';
+}
+
+String _fileExtension(String path) {
+  final dotIndex = path.lastIndexOf('.');
+  if (dotIndex == -1 || dotIndex == path.length - 1) {
+    return '.jpg';
+  }
+
+  return path.substring(dotIndex);
 }

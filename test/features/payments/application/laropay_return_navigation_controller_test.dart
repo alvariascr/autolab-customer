@@ -5,7 +5,7 @@ void main() {
   const workshopId = '590baf3e-7af5-4d50-bf53-900292a0a786';
   const paymentLinkId = '8b5d3a5e-1234-5678-abcd-900292a0a123';
 
-  test('navigates to the selected workshop for a valid Laropay callback', () {
+  test('navigates immediately with the payment link identifier', () {
     String? destination;
     final controller = LaropayReturnNavigationController(
       navigate: (location) => destination = location,
@@ -18,7 +18,23 @@ void main() {
     );
 
     expect(handled, isTrue);
-    expect(destination, '/workshops/$workshopId?payment=pending');
+    expect(destination, '/workshops/$workshopId?paymentLinkId=$paymentLinkId');
+  });
+
+  test('ignores a callback without a valid payment link identifier', () {
+    String? destination;
+    final controller = LaropayReturnNavigationController(
+      navigate: (location) => destination = location,
+    );
+
+    final handled = controller.handleAppLink(
+      Uri.parse(
+        'autolab://laropay-callback/payment-return?workshopId=$workshopId&paymentLinkId=invalid',
+      ),
+    );
+
+    expect(handled, isFalse);
+    expect(destination, isNull);
   });
 
   test('ignores a callback with an invalid workshop identifier', () {
@@ -28,7 +44,9 @@ void main() {
     );
 
     final handled = controller.handleAppLink(
-      Uri.parse('autolab://laropay-callback/payment-return?workshopId=invalid'),
+      Uri.parse(
+        'autolab://laropay-callback/payment-return?workshopId=invalid&paymentLinkId=$paymentLinkId',
+      ),
     );
 
     expect(handled, isFalse);
