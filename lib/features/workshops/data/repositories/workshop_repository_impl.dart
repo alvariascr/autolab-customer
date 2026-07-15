@@ -21,9 +21,44 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
   final WorkshopRemoteDataSource remoteDataSource;
   final GlobalErrorHandler errorHandler;
   final FeatureLogger featureLogger;
+  Either<Failure, List<Workshop>>? _workshopsCache;
+  Future<Either<Failure, List<Workshop>>>? _workshopsRequest;
 
   @override
   Future<Either<Failure, List<Workshop>>> getWorkshops() async {
+    final cached = _workshopsCache;
+    if (cached != null) {
+      featureLogger.info(
+        feature: 'workshops',
+        action: 'get_workshops_succeeded',
+        context: {
+          'count': cached.fold((_) => 0, (workshops) => workshops.length),
+          'cached': true,
+        },
+      );
+      return cached;
+    }
+
+    final pendingRequest = _workshopsRequest;
+    if (pendingRequest != null) {
+      return pendingRequest;
+    }
+
+    final request = _loadWorkshops();
+    _workshopsRequest = request;
+    final Either<Failure, List<Workshop>> result;
+    try {
+      result = await request;
+    } finally {
+      _workshopsRequest = null;
+    }
+    result.fold((_) {}, (workshops) {
+      _workshopsCache = Right(List<Workshop>.unmodifiable(workshops));
+    });
+    return result;
+  }
+
+  Future<Either<Failure, List<Workshop>>> _loadWorkshops() async {
     try {
       featureLogger.info(feature: 'workshops', action: 'get_workshops_started');
       final workshops = await remoteDataSource.getWorkshops();

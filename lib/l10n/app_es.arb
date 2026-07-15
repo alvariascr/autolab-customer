@@ -492,6 +492,8 @@
   "mapFilterTopRated": "Mejor calificado",
   "mapLoadingTitle": "Cargando mapa",
   "mapLoadingMessage": "Estamos preparando el mapa y los talleres cercanos para ti.",
+  "mapLoadingTimeoutTitle": "El mapa está tardando en responder",
+  "mapLoadingTimeoutMessage": "Los talleres ya están disponibles. Si el mapa no aparece, revisa la conexión, permisos de ubicación o la configuración de Google Maps del dispositivo.",
   "mapAttributionOpenStreetMap": "OpenStreetMap contributors",
   "mapWorkshopsLoadError": "No fue posible cargar los talleres en este momento.",
   "mapWorkshopsNetworkError": "Revisa tu conexión para consultar los talleres cercanos.",
@@ -528,6 +530,7 @@
   "mapSheetNoSearchResults": "No encontramos talleres para esa búsqueda.",
   "mapSheetProductsLabel": "Productos",
   "mapSheetViewOnMapTooltip": "Ver en mapa",
+  "mapSheetOpenWorkshopAction": "Ver taller",
   "mapSheetProductSearchResults": "{count} resultados para \"{query}\"",
   "@mapSheetProductSearchResults": {
     "placeholders": {

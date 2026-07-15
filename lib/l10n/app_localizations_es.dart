@@ -1486,6 +1486,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Estamos preparando el mapa y los talleres cercanos para ti.';
 
   @override
+  String get mapLoadingTimeoutTitle => 'El mapa está tardando en responder';
+
+  @override
+  String get mapLoadingTimeoutMessage =>
+      'Los talleres ya están disponibles. Si el mapa no aparece, revisa la conexión, permisos de ubicación o la configuración de Google Maps del dispositivo.';
+
+  @override
   String get mapAttributionOpenStreetMap => 'OpenStreetMap contributors';
 
   @override
@@ -1558,6 +1565,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mapSheetViewOnMapTooltip => 'Ver en mapa';
+
+  @override
+  String get mapSheetOpenWorkshopAction => 'Ver taller';
 
   @override
   String mapSheetProductSearchResults(Object count, Object query) {

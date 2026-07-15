@@ -89,14 +89,33 @@ class MapCubit extends Cubit<MapState> {
       return;
     }
 
-    final loadToken = ++_currentLoadToken;
-
-    _lastUserLocation = userLocation;
+    final requestLocation = userLocation;
+    _lastUserLocation = requestLocation;
     _featureLogger.info(
       feature: 'map',
       action: 'load_workshops_started',
-      context: {'hasUserLocation': userLocation != null},
+      context: {'hasUserLocation': requestLocation != null},
     );
+
+    final cachedWorkshops = _allWorkshops;
+    if (cachedWorkshops != null) {
+      final visibleWorkshops = _emitLoaded(cachedWorkshops, requestLocation);
+      _featureLogger.info(
+        feature: 'map',
+        action: 'load_workshops_succeeded',
+        context: {
+          'totalWorkshops': cachedWorkshops.length,
+          'nearbyWorkshops': visibleWorkshops.length,
+          'usingFallbackLocation': _searchLocationResolver.isUsingFallback(
+            requestLocation,
+          ),
+          'cached': true,
+        },
+      );
+      return;
+    }
+
+    final loadToken = ++_currentLoadToken;
 
     if (_allWorkshops == null && !isClosed) {
       emit(const MapLoading());
@@ -131,8 +150,8 @@ class MapCubit extends Cubit<MapState> {
       },
       (workshops) {
         _allWorkshops = workshops;
-        final nearbyWorkshops = _emitLoaded(workshops, userLocation);
-        unawaited(_loadProductsIfNeeded());
+        final effectiveLocation = requestLocation;
+        final nearbyWorkshops = _emitLoaded(workshops, effectiveLocation);
 
         _featureLogger.info(
           feature: 'map',
@@ -141,7 +160,7 @@ class MapCubit extends Cubit<MapState> {
             'totalWorkshops': workshops.length,
             'nearbyWorkshops': nearbyWorkshops.length,
             'usingFallbackLocation': _searchLocationResolver.isUsingFallback(
-              userLocation,
+              effectiveLocation,
             ),
           },
         );
@@ -160,6 +179,10 @@ class MapCubit extends Cubit<MapState> {
       currentLocation: searchLocation,
     );
     final trimmedQuery = query.trim();
+    if (trimmedQuery.isNotEmpty && !_hasLoadedProducts && !_isLoadingProducts) {
+      unawaited(_loadProductsIfNeeded());
+    }
+
     final workshopResults = trimmedQuery.isEmpty
         ? nearbyWorkshops
         : _textSearchFilter.filter(workshops: nearbyWorkshops, query: query);
