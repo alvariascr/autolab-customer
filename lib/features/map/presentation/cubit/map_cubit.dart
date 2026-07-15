@@ -89,16 +89,17 @@ class MapCubit extends Cubit<MapState> {
       return;
     }
 
-    _lastUserLocation = userLocation;
+    final requestLocation = userLocation;
+    _lastUserLocation = requestLocation;
     _featureLogger.info(
       feature: 'map',
       action: 'load_workshops_started',
-      context: {'hasUserLocation': userLocation != null},
+      context: {'hasUserLocation': requestLocation != null},
     );
 
     final cachedWorkshops = _allWorkshops;
     if (cachedWorkshops != null) {
-      final visibleWorkshops = _emitLoaded(cachedWorkshops, userLocation);
+      final visibleWorkshops = _emitLoaded(cachedWorkshops, requestLocation);
       _featureLogger.info(
         feature: 'map',
         action: 'load_workshops_succeeded',
@@ -106,7 +107,7 @@ class MapCubit extends Cubit<MapState> {
           'totalWorkshops': cachedWorkshops.length,
           'nearbyWorkshops': visibleWorkshops.length,
           'usingFallbackLocation': _searchLocationResolver.isUsingFallback(
-            userLocation,
+            requestLocation,
           ),
           'cached': true,
         },
@@ -149,7 +150,7 @@ class MapCubit extends Cubit<MapState> {
       },
       (workshops) {
         _allWorkshops = workshops;
-        final effectiveLocation = _lastUserLocation;
+        final effectiveLocation = requestLocation;
         final nearbyWorkshops = _emitLoaded(workshops, effectiveLocation);
 
         _featureLogger.info(

@@ -816,6 +816,8 @@ class _SelectedWorkshopSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
         Row(
@@ -904,8 +906,8 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                       : l10n.mapSheetFallbackAddress,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF6B5F57),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -940,8 +942,8 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                   workshop.description.isNotEmpty
                       ? workshop.description
                       : l10n.mapSheetFallbackDescription,
-                  style: const TextStyle(
-                    color: Color(0xFF5F554E),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 13,
                     height: 1.5,
                   ),

@@ -46,8 +46,12 @@ class WorkshopRepositoryImpl implements WorkshopRepository {
 
     final request = _loadWorkshops();
     _workshopsRequest = request;
-    final result = await request;
-    _workshopsRequest = null;
+    final Either<Failure, List<Workshop>> result;
+    try {
+      result = await request;
+    } finally {
+      _workshopsRequest = null;
+    }
     result.fold((_) {}, (workshops) {
       _workshopsCache = Right(List<Workshop>.unmodifiable(workshops));
     });

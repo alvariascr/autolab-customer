@@ -35,6 +35,16 @@ void main() {
           context: any(named: 'context'),
         ),
       ).thenReturn(null);
+      when(
+        () => featureLogger.error(
+          feature: any(named: 'feature'),
+          action: any(named: 'action'),
+          code: any(named: 'code'),
+          context: any(named: 'context'),
+          error: any(named: 'error'),
+          stackTrace: any(named: 'stackTrace'),
+        ),
+      ).thenReturn(null);
 
       repository = WorkshopRepositoryImpl(
         remoteDataSource: remoteDataSource,
@@ -73,6 +83,31 @@ void main() {
       verify(() => remoteDataSource.getWorkshops()).called(1);
       expect(firstResult.getOrElse(() => const []), _workshops);
       expect(secondResult.getOrElse(() => const []), _workshops);
+    });
+
+    test('limpia la peticion activa si falla y permite reintentos', () async {
+      const failure = ServerFailure(message: 'No se pudo cargar talleres');
+      var callCount = 0;
+
+      when(() => errorHandler.handle(any(), any())).thenReturn(failure);
+      when(() => remoteDataSource.getWorkshops()).thenAnswer((_) {
+        callCount += 1;
+        if (callCount == 1) {
+          return Future<List<WorkshopModel>>.error(
+            Exception('Fallo de conexion'),
+          );
+        }
+
+        return Future.value(_workshops);
+      });
+
+      final firstResult = await repository.getWorkshops();
+      final secondResult = await repository.getWorkshops();
+
+      expect(firstResult.isLeft(), isTrue);
+      expect(secondResult.getOrElse(() => const []), _workshops);
+      verify(() => remoteDataSource.getWorkshops()).called(2);
+      verify(() => errorHandler.handle(any(), any())).called(1);
     });
   });
 }
