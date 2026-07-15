@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -40,6 +41,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   static const _maximumZoom = 17.5;
   static const _zoomStep = 1.0;
   static const _markerPixelRatio = 3.0;
+  static const _mapLoadingTimeout = Duration(seconds: 6);
   static const _mapStyle = '''
 [
   {
@@ -120,24 +122,22 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   Workshop? _selectedWorkshop;
   bool _expandedSheet = false;
   bool _isMapLoading = true;
+  bool _hasMapLoadTimedOut = false;
+  Timer? _mapLoadingTimer;
 
   @override
   void initState() {
     super.initState();
     _syncSelectedWorkshop();
+    _startMapLoadingTimeout();
+    unawaited(_loadMarkerIcons());
   }
 
   @override
   void dispose() {
+    _mapLoadingTimer?.cancel();
     _mapController?.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadMarkerIcons();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
   }
 
   @override
@@ -145,14 +145,22 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.workshops != widget.workshops ||
         oldWidget.currentLocation != widget.currentLocation) {
-      _resetMapFeedbackState();
       _syncSelectedWorkshop();
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
     }
   }
 
-  void _resetMapFeedbackState() {
-    _isMapLoading = true;
+  void _startMapLoadingTimeout() {
+    _mapLoadingTimer?.cancel();
+    _mapLoadingTimer = Timer(_mapLoadingTimeout, () {
+      if (!mounted || !_isMapLoading) {
+        return;
+      }
+
+      setState(() {
+        _hasMapLoadTimedOut = true;
+      });
+    });
   }
 
   void _syncSelectedWorkshop() {
@@ -307,6 +315,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   }
 
   void _handleMapCreated(GoogleMapController controller) {
+    _mapLoadingTimer?.cancel();
     _mapController = controller;
     _fitToMarkers();
     if (!mounted) {
@@ -315,6 +324,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
     setState(() {
       _isMapLoading = false;
+      _hasMapLoadTimedOut = false;
     });
   }
 
@@ -669,9 +679,15 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
               left: 16,
               right: 16,
               child: _MapStatusCard(
-                icon: Icons.map_outlined,
-                title: l10n.mapLoadingTitle,
-                message: l10n.mapLoadingMessage,
+                icon: _hasMapLoadTimedOut
+                    ? Icons.warning_amber_rounded
+                    : Icons.map_outlined,
+                title: _hasMapLoadTimedOut
+                    ? l10n.mapLoadingTimeoutTitle
+                    : l10n.mapLoadingTitle,
+                message: _hasMapLoadTimedOut
+                    ? l10n.mapLoadingTimeoutMessage
+                    : l10n.mapLoadingMessage,
               ),
             ),
           if (_selectedWorkshop != null && widget.workshops.isNotEmpty)
@@ -742,6 +758,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     );
 
     final shouldShowResults = query.trim().isNotEmpty;
+    final shouldShowWorkshopList = shouldShowResults || expanded;
     final productWorkshopIds = productResults
         .map((result) => result.workshop.id)
         .toSet();
@@ -761,7 +778,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
           AutolabCustomer.responsiveScreenMargin(context),
           AutolabCustomer.spacingSm,
           AutolabCustomer.responsiveScreenMargin(context),
-          AutolabCustomer.spacingMd,
+          expanded ? AutolabCustomer.spacingMd : AutolabCustomer.spacingSmd,
         ),
         decoration: BoxDecoration(
           color: AutolabCustomer.customerElevatedSurfaceColor(
@@ -792,7 +809,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
             const SizedBox(height: AutolabCustomer.spacingSmd),
             if (shouldShowResults)
               _SearchResultsHeader(count: resultsCount, query: query)
-            else
+            else if (expanded)
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -803,12 +820,17 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(height: AutolabCustomer.spacingSmd),
-            if (shouldShowResults)
+            SizedBox(
+              height: shouldShowWorkshopList
+                  ? AutolabCustomer.spacingSmd
+                  : AutolabCustomer.spacingXs,
+            ),
+            if (shouldShowWorkshopList)
               _WorkshopResultsList(
                 workshops: workshopResults,
-                productResults: productResults,
-                isLoadingProductResults: isLoadingProductResults,
+                productResults: shouldShowResults ? productResults : const [],
+                isLoadingProductResults:
+                    shouldShowResults && isLoadingProductResults,
                 query: query,
                 currentLocation: currentLocation,
                 onSelected: onWorkshopSelected,
@@ -826,6 +848,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
                   expanded: expanded,
                   distance: distance,
                   l10n: l10n,
+                  onOpened: onWorkshopOpened,
                 ),
               ),
           ],
@@ -865,6 +888,7 @@ class _SelectedWorkshopSummary extends StatelessWidget {
     required this.expanded,
     required this.distance,
     required this.l10n,
+    required this.onOpened,
   });
 
   final Workshop workshop;
@@ -872,6 +896,7 @@ class _SelectedWorkshopSummary extends StatelessWidget {
   final bool expanded;
   final double distance;
   final AppLocalizations l10n;
+  final ValueChanged<Workshop> onOpened;
 
   @override
   Widget build(BuildContext context) {
@@ -880,7 +905,7 @@ class _SelectedWorkshopSummary extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _WorkshopCoverThumb(workshop: workshop),
+            _WorkshopCoverThumb(workshop: workshop, size: expanded ? 86 : 62),
             const SizedBox(width: AutolabCustomer.spacingSmd),
             Expanded(
               child: Column(
@@ -896,6 +921,22 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                       height: 1.2,
                     ),
                   ),
+                  if (!expanded) ...[
+                    const SizedBox(height: AutolabCustomer.spacingXs),
+                    Text(
+                      workshop.locationAddress.isNotEmpty
+                          ? workshop.locationAddress
+                          : l10n.mapSheetFallbackAddress,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AutolabCustomer.spacingSm),
                   Wrap(
                     spacing: 8,
@@ -930,21 +971,6 @@ class _SelectedWorkshopSummary extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AutolabCustomer.spacingSmd),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            workshop.locationAddress.isNotEmpty
-                ? workshop.locationAddress
-                : l10n.mapSheetFallbackAddress,
-            maxLines: expanded ? 3 : 1,
-            overflow: TextOverflow.ellipsis,
-            style: AutolabCustomer.caption.copyWith(
-              color: AutolabCustomer.customerSecondaryTextColor(context),
-              height: 1.4,
-            ),
-          ),
-        ),
         AnimatedCrossFade(
           crossFadeState: expanded
               ? CrossFadeState.showSecond
@@ -953,6 +979,21 @@ class _SelectedWorkshopSummary extends StatelessWidget {
           firstChild: const SizedBox(height: 0),
           secondChild: Column(
             children: [
+              const SizedBox(height: AutolabCustomer.spacingSmd),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  workshop.locationAddress.isNotEmpty
+                      ? workshop.locationAddress
+                      : l10n.mapSheetFallbackAddress,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.customerSecondaryTextColor(context),
+                    height: 1.4,
+                  ),
+                ),
+              ),
               const SizedBox(height: AutolabCustomer.spacingSmd),
               Divider(
                 height: 1,
@@ -988,6 +1029,64 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                   style: AutolabCustomer.caption.copyWith(
                     color: AutolabCustomer.customerSecondaryTextColor(context),
                     height: 1.5,
+                  ),
+                ),
+              ),
+              if (workshop.serviceCategories.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: workshop.serviceCategories
+                        .take(3)
+                        .map(
+                          (category) => _MapInfoChip(
+                            icon: Icons.handyman_outlined,
+                            label: category,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
+              if (workshop.paymentMethods.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: workshop.paymentMethods
+                        .take(2)
+                        .map(
+                          (method) => _MapInfoChip(
+                            icon: Icons.payments_outlined,
+                            label: method,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: FilledButton.icon(
+                  onPressed: () => onOpened(workshop),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF181411),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.storefront_outlined, size: 18),
+                  label: Text(
+                    l10n.mapSheetOpenWorkshopAction,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -1344,25 +1443,20 @@ class _WorkshopResultTile extends StatelessWidget {
 }
 
 class _WorkshopCoverThumb extends StatelessWidget {
-  const _WorkshopCoverThumb({required this.workshop});
+  const _WorkshopCoverThumb({required this.workshop, this.size = 82});
 
   final Workshop workshop;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final imageUrl = workshop.coverUrl.isNotEmpty
         ? workshop.coverUrl
         : workshop.avatarUrl;
-    final imageSize = AutolabCustomer.responsiveDouble(
-      context,
-      compact: 68,
-      regular: 76,
-      tablet: 88,
-    );
 
     final fallback = Container(
-      width: imageSize,
-      height: imageSize,
+      width: size,
+      height: size,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -1392,8 +1486,8 @@ class _WorkshopCoverThumb extends StatelessWidget {
           ? fallback
           : Image.network(
               imageUrl,
-              width: imageSize,
-              height: imageSize,
+              width: size,
+              height: size,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => fallback,
             ),

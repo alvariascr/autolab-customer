@@ -2728,6 +2728,18 @@ abstract class AppLocalizations {
   /// **'Estamos preparando el mapa y los talleres cercanos para ti.'**
   String get mapLoadingMessage;
 
+  /// No description provided for @mapLoadingTimeoutTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'El mapa está tardando en responder'**
+  String get mapLoadingTimeoutTitle;
+
+  /// No description provided for @mapLoadingTimeoutMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Los talleres ya están disponibles. Si el mapa no aparece, revisa la conexión, permisos de ubicación o la configuración de Google Maps del dispositivo.'**
+  String get mapLoadingTimeoutMessage;
+
   /// No description provided for @mapAttributionOpenStreetMap.
   ///
   /// In es, this message translates to:
@@ -2853,6 +2865,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver en mapa'**
   String get mapSheetViewOnMapTooltip;
+
+  /// No description provided for @mapSheetOpenWorkshopAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver taller'**
+  String get mapSheetOpenWorkshopAction;
 
   /// No description provided for @mapSheetProductSearchResults.
   ///
