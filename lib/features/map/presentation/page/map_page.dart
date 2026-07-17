@@ -336,10 +336,9 @@ class _MapSearchBar extends StatelessWidget {
                   color: AutolabCustomer.authPlaceholder,
                 ),
                 suffixIcon: value.text.trim().isEmpty
-                    ? IconButton(
-                        tooltip: l10n.mapSearchFiltersTooltip,
-                        onPressed: () {},
-                        icon: const Icon(
+                    ? const Padding(
+                        padding: EdgeInsetsDirectional.only(end: 12),
+                        child: Icon(
                           Icons.tune_rounded,
                           color: AutolabCustomer.authPlaceholder,
                         ),
