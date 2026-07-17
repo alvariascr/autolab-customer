@@ -2075,6 +2075,7 @@ class _AppointmentFlowHeader extends StatelessWidget {
                 child: _AppointmentCircleButton(
                   icon: Icons.chevron_left_rounded,
                   onPressed: onBack,
+                  tooltip: AppLocalizations.of(context)!.appointmentBackAction,
                 ),
               ),
               const _AutolabLogo(),
@@ -2105,10 +2106,15 @@ class _AppointmentFlowHeader extends StatelessWidget {
 }
 
 class _AppointmentCircleButton extends StatelessWidget {
-  const _AppointmentCircleButton({required this.icon, required this.onPressed});
+  const _AppointmentCircleButton({
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+  });
 
   final IconData icon;
   final VoidCallback onPressed;
+  final String tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -2116,6 +2122,7 @@ class _AppointmentCircleButton extends StatelessWidget {
       width: 32,
       height: 32,
       child: IconButton(
+        tooltip: tooltip,
         padding: EdgeInsets.zero,
         onPressed: onPressed,
         style: IconButton.styleFrom(
