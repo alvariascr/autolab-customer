@@ -577,6 +577,31 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       tablet: 94,
     );
     final sheetReservedHeight = _sheetReservedHeight(context);
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final mapTopPadding =
+        safeTop +
+        AutolabCustomer.responsiveDouble(
+          context,
+          compact: 146,
+          regular: 158,
+          tablet: 172,
+        );
+    final zoomControlsTop =
+        safeTop +
+        AutolabCustomer.responsiveDouble(
+          context,
+          compact: 182,
+          regular: 194,
+          tablet: 216,
+        );
+    final locationControlTop =
+        safeTop +
+        AutolabCustomer.responsiveDouble(
+          context,
+          compact: 286,
+          regular: 304,
+          tablet: 336,
+        );
     final markers = <Marker>{
       Marker(
         markerId: const MarkerId('current-location'),
@@ -629,24 +654,14 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             compassEnabled: false,
             padding: EdgeInsets.fromLTRB(
               0,
-              AutolabCustomer.responsiveDouble(
-                context,
-                compact: 146,
-                regular: 158,
-                tablet: 172,
-              ),
+              mapTopPadding,
               0,
               sheetBottomOffset + sheetReservedHeight,
             ),
           ),
           Positioned(
             right: AutolabCustomer.spacingMd,
-            top: AutolabCustomer.responsiveDouble(
-              context,
-              compact: 182,
-              regular: 194,
-              tablet: 216,
-            ),
+            top: zoomControlsTop,
             child: _ZoomControls(
               onZoomIn: _zoomIn,
               onZoomOut: _zoomOut,
@@ -655,12 +670,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
           ),
           Positioned(
             right: AutolabCustomer.spacingMd,
-            top: AutolabCustomer.responsiveDouble(
-              context,
-              compact: 286,
-              regular: 304,
-              tablet: 336,
-            ),
+            top: locationControlTop,
             child: IgnorePointer(
               child: _MapFloatingBadge(
                 icon: Icons.my_location_rounded,
