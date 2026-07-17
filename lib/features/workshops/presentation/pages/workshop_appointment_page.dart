@@ -2329,7 +2329,10 @@ class _AppointmentCalendar extends StatelessWidget {
             ),
             titleTextFormatter: (date, locale) {
               final month = DateFormat.MMMM(locale).format(date);
-              return '${month[0].toUpperCase()}${month.substring(1)} de ${date.year}';
+              return l10n.appointmentMonthYearTitle(
+                _capitalize(month),
+                date.year,
+              );
             },
             headerPadding: const EdgeInsets.only(bottom: 6),
           ),
@@ -2518,7 +2521,7 @@ class _AvailableHoursPanel extends StatelessWidget {
         ),
         const SizedBox(height: AutolabCustomer.spacingXs),
         Text(
-          'PICK UP:',
+          l10n.appointmentPickupLabel,
           style: AutolabCustomer.label.copyWith(
             color: AutolabCustomer.primary,
             fontWeight: FontWeight.w700,
@@ -2655,7 +2658,7 @@ class _AppointmentNoteInput extends StatelessWidget {
         color: AutolabCustomer.customerTextColor(context),
       ),
       decoration: InputDecoration(
-        hintText: 'Nota',
+        hintText: AppLocalizations.of(context)!.appointmentNoteHint,
         hintStyle: AutolabCustomer.caption.copyWith(
           color: AutolabCustomer.customerSecondaryTextColor(context),
         ),
@@ -2708,7 +2711,11 @@ class _BookingReviewStep extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final dayLabel = date == null
         ? l10n.appointmentPendingDate
-        : '${date!.day} de ${_monthName(context, date!)} ${date!.year}';
+        : l10n.appointmentFullDate(
+            date!.day,
+            _monthName(context, date!),
+            date!.year,
+          );
     final productsTotal = products.fold<double>(
       0,
       (total, item) =>
@@ -2790,7 +2797,7 @@ class _BookingReviewStep extends StatelessWidget {
                 value: service?.name ?? l10n.appointmentPendingService,
               ),
               _SummaryRow(
-                label: 'Costo',
+                label: l10n.appointmentCostLabel,
                 value: servicePrice == null
                     ? l10n.appointmentPriceToConfirm
                     : formatProductPrice(servicePrice),
@@ -2835,13 +2842,13 @@ class _BookingReviewStep extends StatelessWidget {
                 ...products.map((item) => _ProductSummaryRow(item: item)),
               const SizedBox(height: AutolabCustomer.spacingLg),
               _SummaryRow(
-                label: 'Subtotal',
+                label: l10n.appointmentSubtotalLabel,
                 value: hasPriceToConfirm
                     ? l10n.appointmentPriceToConfirm
                     : formatProductPrice(subtotal),
               ),
               _SummaryRow(
-                label: 'IVA',
+                label: l10n.appointmentTaxLabel,
                 value: hasPriceToConfirm
                     ? l10n.appointmentPriceToConfirm
                     : formatProductPrice(iva),
@@ -2850,7 +2857,9 @@ class _BookingReviewStep extends StatelessWidget {
                 label: l10n.appointmentTotalToPayLabel,
                 value: hasPriceToConfirm
                     ? l10n.appointmentPriceToConfirm
-                    : '${formatProductPrice(total)} ivi',
+                    : l10n.appointmentPriceWithTaxSuffix(
+                        formatProductPrice(total),
+                      ),
                 emphasize: true,
               ),
               const SizedBox(height: AutolabCustomer.spacingSm),
@@ -2939,6 +2948,12 @@ class _SummaryRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _capitalize(String value) {
+  if (value.isEmpty) return value;
+
+  return '${value[0].toUpperCase()}${value.substring(1)}';
 }
 
 class _ProductSummaryRow extends StatelessWidget {

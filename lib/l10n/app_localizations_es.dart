@@ -1866,6 +1866,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentAvailableHoursTitle => 'Horas disponibles';
 
   @override
+  String get appointmentPickupLabel => 'PICK UP:';
+
+  @override
   String get appointmentAvailableHoursLoading =>
       'Estamos consultando los horarios disponibles.';
 
@@ -1876,6 +1879,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get appointmentAvailableHoursEmpty =>
       'No hay horarios disponibles para este día.';
+
+  @override
+  String appointmentMonthYearTitle(Object month, Object year) {
+    return '$month de $year';
+  }
+
+  @override
+  String appointmentFullDate(Object day, Object month, Object year) {
+    return '$day de $month $year';
+  }
 
   @override
   String get appointmentPendingDate => 'fecha pendiente';
@@ -2035,6 +2048,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentOptionalNoteLabel => 'Nota opcional';
 
   @override
+  String get appointmentNoteHint => 'Nota';
+
+  @override
   String get appointmentOptionalNoteHint =>
       'Agrega detalles importantes para el taller.';
 
@@ -2045,7 +2061,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentNoAdditionalProducts => 'Sin productos adicionales.';
 
   @override
+  String get appointmentCostLabel => 'Costo';
+
+  @override
+  String get appointmentSubtotalLabel => 'Subtotal';
+
+  @override
+  String get appointmentTaxLabel => 'IVA';
+
+  @override
   String get appointmentTotalToPayLabel => 'Total a pagar';
+
+  @override
+  String appointmentPriceWithTaxSuffix(Object price) {
+    return '$price IVA';
+  }
 
   @override
   String get appointmentPriceToConfirm => 'Por confirmar';
