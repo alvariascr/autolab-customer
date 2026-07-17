@@ -810,13 +810,32 @@ class _SelectedWorkshopSheet extends StatelessWidget {
             if (shouldShowResults)
               _SearchResultsHeader(count: resultsCount, query: query)
             else if (expanded)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.mapSheetNearbyWorkshopsTitle,
-                  style: AutolabCustomer.h3.copyWith(
-                    color: AutolabCustomer.customerTextColor(context),
-                    fontWeight: FontWeight.w900,
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AutolabCustomer.spacingXs,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.mapSheetNearbyWorkshopsTitle,
+                          style: AutolabCustomer.h3.copyWith(
+                            color: AutolabCustomer.customerTextColor(context),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        size: AutolabCustomer.iconLg,
+                      ),
+                    ],
                   ),
                 ),
               ),
