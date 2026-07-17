@@ -570,6 +570,13 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       widget.currentLocation!.latitude,
       widget.currentLocation!.longitude,
     );
+    final sheetBottomOffset = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 76,
+      regular: 82,
+      tablet: 94,
+    );
+    final sheetReservedHeight = _sheetReservedHeight(context);
     final markers = <Marker>{
       Marker(
         markerId: const MarkerId('current-location'),
@@ -629,12 +636,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                 tablet: 172,
               ),
               0,
-              AutolabCustomer.responsiveDouble(
-                context,
-                compact: 214,
-                regular: 236,
-                tablet: 268,
-              ),
+              sheetBottomOffset + sheetReservedHeight,
             ),
           ),
           Positioned(
@@ -694,12 +696,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: AutolabCustomer.responsiveDouble(
-                context,
-                compact: 76,
-                regular: 82,
-                tablet: 94,
-              ),
+              bottom: sheetBottomOffset,
               child: _SelectedWorkshopSheet(
                 workshop: _selectedWorkshop!,
                 currentLocation: widget.currentLocation!,
@@ -717,6 +714,27 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             ),
         ],
       ),
+    );
+  }
+
+  double _sheetReservedHeight(BuildContext context) {
+    final hasSearchResults = widget.query.trim().isNotEmpty;
+    final isExpanded = _expandedSheet || hasSearchResults;
+
+    if (!isExpanded) {
+      return AutolabCustomer.responsiveDouble(
+        context,
+        compact: 172,
+        regular: 190,
+        tablet: 220,
+      );
+    }
+
+    return AutolabCustomer.responsiveDouble(
+      context,
+      compact: 372,
+      regular: 420,
+      tablet: 512,
     );
   }
 }
@@ -1171,9 +1189,9 @@ class _WorkshopResultsList extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: AutolabCustomer.responsiveDouble(
           context,
-          compact: 284,
-          regular: 330,
-          tablet: 420,
+          compact: 274,
+          regular: 318,
+          tablet: 396,
         ),
       ),
       child: ListView.separated(
