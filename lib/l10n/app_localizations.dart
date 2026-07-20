@@ -3394,6 +3394,12 @@ abstract class AppLocalizations {
   /// **'Horas disponibles'**
   String get appointmentAvailableHoursTitle;
 
+  /// No description provided for @appointmentPickupLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'PICK UP:'**
+  String get appointmentPickupLabel;
+
   /// No description provided for @appointmentAvailableHoursLoading.
   ///
   /// In es, this message translates to:
@@ -3411,6 +3417,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No hay horarios disponibles para este día.'**
   String get appointmentAvailableHoursEmpty;
+
+  /// No description provided for @appointmentMonthYearTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{month} de {year}'**
+  String appointmentMonthYearTitle(Object month, Object year);
+
+  /// No description provided for @appointmentFullDate.
+  ///
+  /// In es, this message translates to:
+  /// **'{day} de {month} {year}'**
+  String appointmentFullDate(Object day, Object month, Object year);
 
   /// No description provided for @appointmentPendingDate.
   ///
@@ -3700,6 +3718,12 @@ abstract class AppLocalizations {
   /// **'Nota opcional'**
   String get appointmentOptionalNoteLabel;
 
+  /// No description provided for @appointmentNoteHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota'**
+  String get appointmentNoteHint;
+
   /// No description provided for @appointmentOptionalNoteHint.
   ///
   /// In es, this message translates to:
@@ -3718,11 +3742,35 @@ abstract class AppLocalizations {
   /// **'Sin productos adicionales.'**
   String get appointmentNoAdditionalProducts;
 
+  /// No description provided for @appointmentCostLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Costo'**
+  String get appointmentCostLabel;
+
+  /// No description provided for @appointmentSubtotalLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Subtotal'**
+  String get appointmentSubtotalLabel;
+
+  /// No description provided for @appointmentTaxLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'IVA'**
+  String get appointmentTaxLabel;
+
   /// No description provided for @appointmentTotalToPayLabel.
   ///
   /// In es, this message translates to:
   /// **'Total a pagar'**
   String get appointmentTotalToPayLabel;
+
+  /// No description provided for @appointmentPriceWithTaxSuffix.
+  ///
+  /// In es, this message translates to:
+  /// **'{price} IVA'**
+  String appointmentPriceWithTaxSuffix(Object price);
 
   /// No description provided for @appointmentPriceToConfirm.
   ///

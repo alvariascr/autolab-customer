@@ -635,9 +635,25 @@
   "appointmentAvailableDayLegend": "Día disponible",
   "appointmentOccupiedDayLegend": "Día ocupado",
   "appointmentAvailableHoursTitle": "Horas disponibles",
+  "appointmentPickupLabel": "PICK UP:",
   "appointmentAvailableHoursLoading": "Estamos consultando los horarios disponibles.",
   "appointmentAvailableHoursFailed": "No pudimos cargar la disponibilidad. Inténtalo nuevamente.",
   "appointmentAvailableHoursEmpty": "No hay horarios disponibles para este día.",
+  "appointmentMonthYearTitle": "{month} de {year}",
+  "@appointmentMonthYearTitle": {
+    "placeholders": {
+      "month": {},
+      "year": {}
+    }
+  },
+  "appointmentFullDate": "{day} de {month} {year}",
+  "@appointmentFullDate": {
+    "placeholders": {
+      "day": {},
+      "month": {},
+      "year": {}
+    }
+  },
   "appointmentPendingDate": "fecha pendiente",
   "appointmentConfirmationReadyTitle": "Cita lista para confirmar",
   "appointmentPendingPlate": "Placa pendiente",
@@ -686,10 +702,20 @@
   "appointmentCustomerIdentificationLabel": "Cédula",
   "appointmentCustomerFiscalIdTypeLabel": "Tipo de identificación",
   "appointmentOptionalNoteLabel": "Nota opcional",
+  "appointmentNoteHint": "Nota",
   "appointmentOptionalNoteHint": "Agrega detalles importantes para el taller.",
   "appointmentProductsLabel": "Productos",
   "appointmentNoAdditionalProducts": "Sin productos adicionales.",
+  "appointmentCostLabel": "Costo",
+  "appointmentSubtotalLabel": "Subtotal",
+  "appointmentTaxLabel": "IVA",
   "appointmentTotalToPayLabel": "Total a pagar",
+  "appointmentPriceWithTaxSuffix": "{price} IVA",
+  "@appointmentPriceWithTaxSuffix": {
+    "placeholders": {
+      "price": {}
+    }
+  },
   "appointmentPriceToConfirm": "Por confirmar",
   "appointmentDurationMinutes": "{minutes} min",
   "@appointmentDurationMinutes": {

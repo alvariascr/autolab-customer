@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/location/location_cubit.dart';
 import '../../../../core/location/location_state.dart';
+import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
@@ -97,7 +98,7 @@ class _MapPageViewState extends State<_MapPageView> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE9EEF2),
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       extendBody: true,
       body: BlocListener<LocationCubit, LocationState>(
         listenWhen: (previous, current) =>
@@ -206,7 +207,9 @@ class _MapBody extends StatelessWidget {
               l10n: AppLocalizations.of(context)!,
             ),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF6B5F57)),
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+            ),
           ),
         ),
       ),
@@ -255,8 +258,15 @@ class _MapDiscoveryOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: EdgeInsets.fromLTRB(
+        horizontalMargin,
+        AutolabCustomer.spacingSmd,
+        horizontalMargin,
+        0,
+      ),
       child: Column(
         children: [
           _MapSearchBar(
@@ -264,9 +274,9 @@ class _MapDiscoveryOverlay extends StatelessWidget {
             onChanged: onChanged,
             onClear: onClear,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AutolabCustomer.spacingSmd),
           const _MapFilterChips(),
-          const SizedBox(height: 14),
+          const SizedBox(height: AutolabCustomer.spacingSmd),
           _MapTopPill(label: countLabel),
         ],
       ),
@@ -293,34 +303,44 @@ class _MapSearchBar extends StatelessWidget {
       valueListenable: controller,
       builder: (context, value, child) {
         return Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
+          color: AutolabCustomer.authFieldBackground,
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
           elevation: 8,
-          shadowColor: const Color(0x24000000),
+          shadowColor: AutolabCustomer.secondary.withValues(alpha: 0.18),
           child: SizedBox(
-            height: 52,
+            height: AutolabCustomer.responsiveDouble(
+              context,
+              compact: 44,
+              regular: 48,
+              tablet: 52,
+            ),
             child: TextField(
               controller: controller,
               onChanged: onChanged,
               textInputAction: TextInputAction.search,
+              cursorColor: AutolabCustomer.primary,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.authFieldText,
+                fontWeight: FontWeight.w700,
+              ),
               decoration: InputDecoration(
+                filled: true,
+                fillColor: AutolabCustomer.authFieldBackground,
                 hintText: l10n.mapSearchHint,
-                hintStyle: const TextStyle(
-                  color: Color(0xFF6D757C),
-                  fontSize: 16,
+                hintStyle: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.authPlaceholder,
                   fontWeight: FontWeight.w700,
                 ),
                 prefixIcon: const Icon(
                   Icons.search_rounded,
-                  color: Color(0xFF5F676D),
+                  color: AutolabCustomer.authPlaceholder,
                 ),
                 suffixIcon: value.text.trim().isEmpty
-                    ? IconButton(
-                        tooltip: l10n.mapSearchFiltersTooltip,
-                        onPressed: () {},
-                        icon: const Icon(
+                    ? const Padding(
+                        padding: EdgeInsetsDirectional.only(end: 12),
+                        child: Icon(
                           Icons.tune_rounded,
-                          color: Color(0xFF181411),
+                          color: AutolabCustomer.authPlaceholder,
                         ),
                       )
                     : IconButton(
@@ -328,11 +348,13 @@ class _MapSearchBar extends StatelessWidget {
                         onPressed: onClear,
                         icon: const Icon(
                           Icons.cancel_rounded,
-                          color: Color(0xFF9AA1A8),
+                          color: AutolabCustomer.authPlaceholder,
                         ),
                       ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: AutolabCustomer.spacingSmd,
+                ),
               ),
             ),
           ),
@@ -350,7 +372,7 @@ class _MapFilterChips extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return SizedBox(
-      height: 42,
+      height: 38,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -358,12 +380,12 @@ class _MapFilterChips extends StatelessWidget {
             icon: Icons.local_offer_outlined,
             label: l10n.mapFilterOffers,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AutolabCustomer.spacingSm),
           _FilterChipPill(
             icon: Icons.build_circle_outlined,
             label: l10n.mapFilterService,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AutolabCustomer.spacingSm),
           _FilterChipPill(
             icon: Icons.star_rounded,
             label: l10n.mapFilterTopRated,
@@ -384,28 +406,31 @@ class _FilterChipPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AutolabCustomer.customerInvertedSurfaceColor(context),
         borderRadius: BorderRadius.circular(999),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x18000000),
+            color: AutolabCustomer.secondary.withValues(alpha: 0.09),
             blurRadius: 14,
             offset: Offset(0, 5),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF181411)),
-            const SizedBox(width: 7),
+            Icon(
+              icon,
+              size: 15,
+              color: AutolabCustomer.customerOnInvertedSurfaceColor(context),
+            ),
+            const SizedBox(width: AutolabCustomer.spacingXs),
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF181411),
-                fontSize: 13,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerOnInvertedSurfaceColor(context),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -425,26 +450,25 @@ class _MapTopPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF181411),
+        color: AutolabCustomer.secondary,
         borderRadius: BorderRadius.circular(999),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x26000000),
+            color: AutolabCustomer.secondary.withValues(alpha: 0.15),
             blurRadius: 14,
             offset: Offset(0, 6),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.white,
                 fontWeight: FontWeight.w800,
               ),
             ),
