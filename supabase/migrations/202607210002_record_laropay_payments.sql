@@ -22,6 +22,7 @@ declare
   v_updated_order_count integer;
   v_card_payment_method_id integer;
   v_payment_reference text;
+  v_total_paid numeric;
 begin
   if p_status not in ('paid', 'pending', 'rejected', 'expired', 'failed') then
     raise exception 'invalid_laropay_status';
@@ -65,17 +66,17 @@ begin
   end if;
 
   if v_effective_status = 'paid' then
-    if v_payment_link.internal_transaction_id !~
-      '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
-    then
-      raise exception 'invalid_internal_transaction_id';
-    end if;
+    begin
+      v_order_id := v_payment_link.internal_transaction_id::uuid;
+    exception
+      when invalid_text_representation then
+        raise exception 'invalid_internal_transaction_id';
+    end;
 
     if v_payment_link.amount <= 0 then
       raise exception 'invalid_laropay_payment_amount';
     end if;
 
-    v_order_id := v_payment_link.internal_transaction_id::uuid;
     v_payment_reference := 'LAROPAY:' || v_payment_link.id::text;
 
     select pm.id
@@ -86,44 +87,35 @@ begin
         'card',
         'credito',
         'crédito',
+        'tarjeta credito',
+        'tarjeta crédito',
         'tarjeta de credito',
-        'tarjeta de crédito'
+        'tarjeta de crédito',
+        'tarjeta debito',
+        'tarjeta débito',
+        'tarjeta de debito',
+        'tarjeta de débito'
       )
       or lower(coalesce(pm.name, '')) like '%tarjeta%'
       or lower(coalesce(pm.name, '')) like '%card%'
     order by
       case
         when lower(coalesce(pm.name, '')) = 'tarjeta' then 0
-        when pm.id = 2 then 1
         else 2
       end,
       pm.id
     limit 1;
 
     if v_card_payment_method_id is null then
-      select pm.id
-      into v_card_payment_method_id
-      from public.payment_methods pm
-      where pm.id = 2
-      limit 1;
-    end if;
-
-    if v_card_payment_method_id is null then
       raise exception 'laropay_card_payment_method_not_found';
     end if;
 
-    -- Customer-created order totals are product-only for online payment.
-    -- Once Laropay pays the link amount, that online balance is settled.
-    update public.orders
-    set
-      payment_status = 'paid',
-      paid_amount = v_payment_link.amount,
-      remaining_amount = 0,
-      updated_at = now()
-    where id = v_order_id;
+    perform 1
+    from public.orders o
+    where o.id = v_order_id
+    for update;
 
-    get diagnostics v_updated_order_count = row_count;
-    if v_updated_order_count <> 1 then
+    if not found then
       raise exception 'payment_order_not_found';
     end if;
 
@@ -152,6 +144,29 @@ begin
       where p.order_id = v_order_id
         and p.reference_number = v_payment_reference
     );
+
+    select coalesce(sum(p.amount), 0)
+    into v_total_paid
+    from public.payments p
+    where p.order_id = v_order_id;
+
+    -- Customer-created order totals are product-only for online payment.
+    -- Recalculate from payments so Laropay retries never overwrite later payments.
+    update public.orders o
+    set
+      payment_status = case
+        when v_total_paid >= coalesce(o.total_amount, 0) then 'paid'
+        else 'unpaid'
+      end,
+      paid_amount = v_total_paid,
+      remaining_amount = greatest(coalesce(o.total_amount, 0) - v_total_paid, 0),
+      updated_at = now()
+    where o.id = v_order_id;
+
+    get diagnostics v_updated_order_count = row_count;
+    if v_updated_order_count <> 1 then
+      raise exception 'payment_order_not_found';
+    end if;
   end if;
 
   return to_jsonb(v_payment_link);

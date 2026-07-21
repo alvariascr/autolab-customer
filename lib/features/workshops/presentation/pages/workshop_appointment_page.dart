@@ -327,8 +327,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           return;
         }
 
-        await _showAppointmentCreatedDialog(context);
-        if (!context.mounted) {
+        final shouldReturnToWorkshop = await _showAppointmentCreatedDialog(
+          context,
+        );
+        if (!context.mounted || !shouldReturnToWorkshop) {
           return;
         }
         _goToWorkshopProfileOrHome(context);
@@ -410,10 +412,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         );
   }
 
-  Future<void> _showAppointmentCreatedDialog(BuildContext context) {
+  Future<bool> _showAppointmentCreatedDialog(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
 
-    return showDialog<void>(
+    final shouldReturnToWorkshop = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -441,7 +443,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             actionsAlignment: MainAxisAlignment.center,
             actions: [
               FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: Text(l10n.laropayPaymentResultBackToWorkshopAction),
               ),
             ],
@@ -449,6 +451,8 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         );
       },
     );
+
+    return shouldReturnToWorkshop ?? false;
   }
 
   void _showAppointmentMessage(
