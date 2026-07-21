@@ -9,7 +9,7 @@ create table if not exists public.laropay_runtime_config (
 alter table public.laropay_runtime_config enable row level security;
 
 revoke all on public.laropay_runtime_config from public, anon, authenticated;
-grant all on public.laropay_runtime_config to service_role;
+grant select, insert, update on public.laropay_runtime_config to service_role;
 
 create table if not exists public.laropay_token_refresh_audit (
   id uuid primary key default gen_random_uuid(),
