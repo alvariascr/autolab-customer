@@ -224,8 +224,6 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   void _returnToServiceSummary() {
     setState(() {
       _showProductsStep = false;
-      _includeProducts = false;
-      _selectedQuantities.clear();
     });
   }
 
