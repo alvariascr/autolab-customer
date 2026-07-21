@@ -102,7 +102,13 @@ export async function refreshLaropayToken(
     responseCode,
     responseDescription: stringValue(response.responseDescription),
     errorCode: null,
-  }).catch(() => undefined);
+  }).catch((error) => {
+    console.error("laropay_token_refresh_audit_failed", {
+      source,
+      responseCode,
+      errorCode: safeErrorCode(error instanceof Error ? error.message : ""),
+    });
+  });
 
   return newToken;
 }

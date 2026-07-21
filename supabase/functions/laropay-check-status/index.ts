@@ -127,6 +127,14 @@ Deno.serve(async (request) => {
         if (verifyResponse === null) {
           return json({ error: "laropay_status_unavailable" }, 502);
         }
+      } else {
+        await persistStatusCheck(env, paymentLink, {
+          status: statusFromLocalExpiration(paymentLink) ?? "pending",
+          verifyResponse: tokenRefreshFailurePayload("verify"),
+          certifierResponse: null,
+          statusCheckError: "verify_token_refresh_failed",
+        });
+        return json({ error: "laropay_token_refresh_failed" }, 502);
       }
     }
 
@@ -199,6 +207,14 @@ Deno.serve(async (request) => {
           if (certifierResponse === null) {
             return json({ error: "laropay_certifier_unavailable" }, 502);
           }
+        } else {
+          await persistStatusCheck(env, paymentLink, {
+            status: statusFromLocalExpiration(paymentLink) ?? "pending",
+            verifyResponse,
+            certifierResponse: tokenRefreshFailurePayload("certifier"),
+            statusCheckError: "certifier_token_refresh_failed",
+          });
+          return json({ error: "laropay_token_refresh_failed" }, 502);
         }
       }
 
@@ -475,6 +491,13 @@ function providerErrorCode(
     .replace(/[^a-z0-9_-]/g, "")
     .slice(0, 32);
   return `${source}_${code === "" ? "invalid_response" : code}`;
+}
+
+function tokenRefreshFailurePayload(source: "verify" | "certifier") {
+  return {
+    response: "TOKEN_REFRESH_FAILED",
+    responseDescription: `Laropay token refresh failed before ${source} retry`,
+  };
 }
 
 function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {
