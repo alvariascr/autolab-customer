@@ -633,6 +633,24 @@ class _RelatedProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = quantity > 0;
+    final imageWidth = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 48,
+      regular: 54,
+      tablet: 64,
+    );
+    final imageHeight = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 56,
+      regular: 62,
+      tablet: 72,
+    );
+    final horizontalGap = AutolabCustomer.responsiveDouble(
+      context,
+      compact: AutolabCustomer.spacingSm,
+      regular: AutolabCustomer.spacingSmd,
+      tablet: AutolabCustomer.spacingMd,
+    );
 
     return Container(
       padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
@@ -648,16 +666,16 @@ class _RelatedProductTile extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 54,
-            height: 62,
+            width: imageWidth,
+            height: imageHeight,
             child: ProductImage(
               imageUrl: product.primaryImageUrl,
-              height: 62,
+              height: imageHeight,
               borderRadius: BorderRadius.circular(AutolabCustomer.radiusChip),
               placeholderIconSize: AutolabCustomer.iconMd,
             ),
           ),
-          const SizedBox(width: AutolabCustomer.spacingSmd),
+          SizedBox(width: horizontalGap),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -691,7 +709,7 @@ class _RelatedProductTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AutolabCustomer.spacingSm),
+          SizedBox(width: AutolabCustomer.spacingXs),
           if (!selected)
             IconButton(
               tooltip: AppLocalizations.of(
@@ -770,7 +788,16 @@ class _QuantityButton extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(AutolabCustomer.spacingXs),
-        child: Icon(icon, color: AutolabCustomer.primary, size: 14),
+        child: Icon(
+          icon,
+          color: AutolabCustomer.primary,
+          size: AutolabCustomer.responsiveDouble(
+            context,
+            compact: 13,
+            regular: 14,
+            tablet: 16,
+          ),
+        ),
       ),
     );
   }

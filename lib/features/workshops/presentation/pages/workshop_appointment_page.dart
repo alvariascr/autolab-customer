@@ -111,6 +111,27 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     final isSubmitting =
         state.submitStatus == AppointmentSubmitStatus.submitting;
     final isBusy = isSubmitting;
+    final horizontalPadding = isDesktop
+        ? AutolabCustomer.responsiveDouble(
+            context,
+            compact: 56,
+            regular: 72,
+            tablet: 92,
+          )
+        : AutolabCustomer.responsiveScreenMargin(context);
+    final topPadding = isDesktop
+        ? AutolabCustomer.responsiveDouble(
+            context,
+            compact: 56,
+            regular: 72,
+            tablet: 96,
+          )
+        : AutolabCustomer.responsiveDouble(
+            context,
+            compact: AutolabCustomer.spacingSmd,
+            regular: AutolabCustomer.spacingLg,
+            tablet: AutolabCustomer.spacingXl,
+          );
 
     return Stack(
       children: [
@@ -119,9 +140,9 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
-                  isDesktop ? 92 : 28,
-                  isDesktop ? 96 : 22,
-                  isDesktop ? 92 : 28,
+                  horizontalPadding,
+                  topPadding,
+                  horizontalPadding,
                   32,
                 ),
                 child: Center(
@@ -197,7 +218,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       case 1:
         return _DateTimeMock(
           title: steps[state.currentStep].title,
-          onBack: () => _handleBack(context, state),
           selectedDate: state.selectedDate,
           selectedTime: state.selectedTime,
           focusedDate: state.focusedDate ?? DateTime.now(),
@@ -212,7 +232,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       case 2:
         return _BookingReviewStep(
           title: steps[state.currentStep].title,
-          onBack: () => _handleBack(context, state),
           workshopName: _workshopName(state),
           service: state.selectedService,
           licensePlate: state.vehicleLicensePlate,
@@ -1880,9 +1899,17 @@ class _FooterActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final horizontalPadding = isDesktop
+        ? AutolabCustomer.spacingXl
+        : AutolabCustomer.responsiveScreenMargin(context);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(28, 10, 28, isDesktop ? 36 : 22),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        AutolabCustomer.spacingSm,
+        horizontalPadding,
+        isDesktop ? AutolabCustomer.spacingXl : AutolabCustomer.spacingLg,
+      ),
       child: Column(
         children: [
           ConstrainedBox(
@@ -1985,14 +2012,9 @@ class _OutlineActionButton extends StatelessWidget {
 }
 
 class _AppointmentFlowHeader extends StatelessWidget {
-  const _AppointmentFlowHeader({
-    required this.title,
-    required this.onBack,
-    this.subtitle,
-  });
+  const _AppointmentFlowHeader({required this.title, this.subtitle});
 
   final String title;
-  final VoidCallback onBack;
   final String? subtitle;
 
   @override
@@ -2004,17 +2026,7 @@ class _AppointmentFlowHeader extends StatelessWidget {
           height: 48,
           child: Stack(
             alignment: Alignment.center,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _AppointmentCircleButton(
-                  icon: Icons.chevron_left_rounded,
-                  onPressed: onBack,
-                  tooltip: AppLocalizations.of(context)!.appointmentBackAction,
-                ),
-              ),
-              const _AutolabLogo(),
-            ],
+            children: [const _AutolabLogo()],
           ),
         ),
         const SizedBox(height: AutolabCustomer.spacingMd),
@@ -2040,40 +2052,9 @@ class _AppointmentFlowHeader extends StatelessWidget {
   }
 }
 
-class _AppointmentCircleButton extends StatelessWidget {
-  const _AppointmentCircleButton({
-    required this.icon,
-    required this.onPressed,
-    required this.tooltip,
-  });
-
-  final IconData icon;
-  final VoidCallback onPressed;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 32,
-      height: 32,
-      child: IconButton(
-        tooltip: tooltip,
-        padding: EdgeInsets.zero,
-        onPressed: onPressed,
-        style: IconButton.styleFrom(
-          backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-          foregroundColor: AutolabCustomer.customerSecondaryTextColor(context),
-        ),
-        icon: Icon(icon, size: AutolabCustomer.iconSm),
-      ),
-    );
-  }
-}
-
 class _DateTimeMock extends StatelessWidget {
   const _DateTimeMock({
     required this.title,
-    required this.onBack,
     required this.selectedDate,
     required this.selectedTime,
     required this.focusedDate,
@@ -2087,7 +2068,6 @@ class _DateTimeMock extends StatelessWidget {
   });
 
   final String title;
-  final VoidCallback onBack;
   final DateTime? selectedDate;
   final String? selectedTime;
   final DateTime focusedDate;
@@ -2104,7 +2084,7 @@ class _DateTimeMock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _AppointmentFlowHeader(title: title, onBack: onBack),
+        _AppointmentFlowHeader(title: title),
         const SizedBox(height: AutolabCustomer.spacingMd),
         _AppointmentCalendar(
           selectedDate: selectedDate,
@@ -2619,7 +2599,6 @@ class _AppointmentNoteInput extends StatelessWidget {
 class _BookingReviewStep extends StatelessWidget {
   const _BookingReviewStep({
     required this.title,
-    required this.onBack,
     required this.workshopName,
     required this.service,
     required this.licensePlate,
@@ -2631,7 +2610,6 @@ class _BookingReviewStep extends StatelessWidget {
   });
 
   final String title;
-  final VoidCallback onBack;
   final String workshopName;
   final Product? service;
   final String licensePlate;
@@ -2671,7 +2649,6 @@ class _BookingReviewStep extends StatelessWidget {
         _AppointmentFlowHeader(
           title: title,
           subtitle: l10n.appointmentConfirmationReadyTitle,
-          onBack: onBack,
         ),
         const SizedBox(height: AutolabCustomer.spacingLg),
         Container(
@@ -2864,11 +2841,20 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final valueStyle = TextStyle(
-      color: emphasize
-          ? AutolabCustomer.customerTextColor(context)
-          : AutolabCustomer.customerTextColor(context),
-      fontSize: emphasize ? 13 : 12,
+    final labelWidth = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 92,
+      regular: 110,
+      tablet: 132,
+    );
+    final valueStyle = AutolabCustomer.caption.copyWith(
+      color: AutolabCustomer.customerTextColor(context),
+      fontSize: AutolabCustomer.responsiveDouble(
+        context,
+        compact: emphasize ? 12 : 11,
+        regular: emphasize ? 13 : 12,
+        tablet: emphasize ? 14 : 13,
+      ),
       fontWeight: emphasize ? FontWeight.w800 : FontWeight.w500,
     );
 
@@ -2878,9 +2864,11 @@ class _SummaryRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 110,
+            width: labelWidth,
             child: Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.caption.copyWith(
                 color: labelColor ?? AutolabCustomer.customerTextColor(context),
                 fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
@@ -2888,7 +2876,9 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AutolabCustomer.spacingSm),
-          Expanded(child: Text(value, style: valueStyle)),
+          Expanded(
+            child: Text(value, textAlign: TextAlign.right, style: valueStyle),
+          ),
         ],
       ),
     );
@@ -2922,6 +2912,8 @@ class _ProductSummaryRow extends StatelessWidget {
               children: [
                 Text(
                   item.product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: AutolabCustomer.body.copyWith(
                     color: AutolabCustomer.customerTextColor(context),
                     fontWeight: FontWeight.w800,
@@ -2930,6 +2922,8 @@ class _ProductSummaryRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${formatProductPrice(price)} x ${item.quantity}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AutolabCustomer.caption.copyWith(
                     color: AutolabCustomer.customerTextColor(context),
                     fontWeight: FontWeight.w600,
@@ -2938,14 +2932,19 @@ class _ProductSummaryRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            subtotal == null
-                ? AppLocalizations.of(context)!.appointmentPriceToConfirm
-                : formatProductPrice(subtotal),
-            style: AutolabCustomer.body.copyWith(
-              color: AutolabCustomer.customerTextColor(context),
-              fontWeight: FontWeight.w900,
+          const SizedBox(width: AutolabCustomer.spacingSm),
+          Flexible(
+            flex: 0,
+            child: Text(
+              subtotal == null
+                  ? AppLocalizations.of(context)!.appointmentPriceToConfirm
+                  : formatProductPrice(subtotal),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
