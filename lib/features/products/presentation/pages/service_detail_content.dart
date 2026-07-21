@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../workshops/application/appointment_state.dart';
 import '../../../workshops/presentation/pages/workshop_appointment_page.dart';
@@ -27,6 +29,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   Object? _relatedProductsError;
   final Map<String, int> _selectedQuantities = {};
   bool _includeProducts = false;
+  bool _showProductsStep = false;
   bool _isFavorite = false;
 
   Future<List<Product>> _loadRelatedProducts() async {
@@ -82,161 +85,146 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
     final maxWidth = AutolabCustomer.isTabletWidth(context) ? 720.0 : 560.0;
     final workshopId = service.workshopId.trim();
+    final safePadding = MediaQuery.paddingOf(context);
+    final scheduleButtonHeight = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 50,
+      regular: 54,
+      tablet: 58,
+    );
 
-    return Scaffold(
-      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: ProductDetailHero(
-              product: service,
-              isFavorite: _isFavorite,
-              onFavoriteTap: () {
-                setState(() => _isFavorite = !_isFavorite);
-              },
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalMargin,
-              0,
-              horizontalMargin,
-              0,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: Column(
-                    children: [
-                      Text(
-                        service.name,
-                        textAlign: TextAlign.center,
-                        style: AutolabCustomer.h3.copyWith(
-                          color: AutolabCustomer.customerTextColor(context),
-                          fontWeight: FontWeight.w800,
+    return PopScope(
+      canPop: !_showProductsStep,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || !_showProductsStep) {
+          return;
+        }
+
+        _returnToServiceSummary();
+      },
+      child: Scaffold(
+        backgroundColor: AutolabCustomer.customerBackgroundColor(context),
+        body: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                if (!_showProductsStep)
+                  SliverToBoxAdapter(
+                    child: ProductDetailHero(
+                      product: service,
+                      isFavorite: _isFavorite,
+                      onFavoriteTap: () {
+                        setState(() => _isFavorite = !_isFavorite);
+                      },
+                    ),
+                  ),
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalMargin,
+                    _showProductsStep
+                        ? safePadding.top + AutolabCustomer.spacingLg
+                        : 0,
+                    horizontalMargin,
+                    0,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: _ServiceDetailSummary(
+                          service: service,
+                          showProductsStep: _showProductsStep,
+                          l10n: l10n,
+                          onProductsBack: _returnToServiceSummary,
                         ),
                       ),
-                      const SizedBox(height: AutolabCustomer.spacingXs),
-                      Text(
-                        service.workshopName.trim().isEmpty
-                            ? l10n.serviceDetailWorkshopFallback
-                            : service.workshopName.trim(),
-                        textAlign: TextAlign.center,
-                        style: AutolabCustomer.caption.copyWith(
-                          color: AutolabCustomer.customerSecondaryTextColor(
-                            context,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingXs),
-                      ProductPriceText(
-                        price: service.sellingPrice,
-                        style: AutolabCustomer.bodyLarge.copyWith(
-                          color: AutolabCustomer.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingSmd),
-                      const Divider(),
-                      const SizedBox(height: AutolabCustomer.spacingSm),
-                      Text(
-                        l10n.serviceDetailDescriptionTitle,
-                        style: AutolabCustomer.bodyLarge.copyWith(
-                          color: AutolabCustomer.customerTextColor(context),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingSm),
-                      Text(
-                        service.description.trim().isEmpty
-                            ? l10n.serviceDetailDescriptionFallback
-                            : service.description.trim(),
-                        textAlign: TextAlign.center,
-                        style: AutolabCustomer.caption.copyWith(
-                          color: AutolabCustomer.customerSecondaryTextColor(
-                            context,
-                          ),
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingLg),
-                      const Divider(),
-                      const SizedBox(height: AutolabCustomer.spacingSm),
-                      _AdditionalProductsHeader(
-                        value: _includeProducts,
-                        onChanged: (value) {
-                          setState(() {
-                            _includeProducts = value;
-                            if (!value) {
-                              _selectedQuantities.clear();
-                              _relatedProductsError = null;
-                            }
-                          });
-                          if (value) {
-                            _ensureRelatedProductsLoaded();
-                          }
-                        },
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          ..._relatedProductSlivers(context, horizontalMargin, maxWidth),
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              horizontalMargin,
-              AutolabCustomer.spacingLg,
-              horizontalMargin,
-              AutolabCustomer.spacingLg,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: AutolabCustomer.responsiveDouble(
-                      context,
-                      compact: 50,
-                      regular: 54,
-                      tablet: 58,
+                ..._relatedProductSlivers(context, horizontalMargin, maxWidth),
+                if (!_showProductsStep)
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalMargin,
+                      AutolabCustomer.spacingLg,
+                      horizontalMargin,
+                      AutolabCustomer.spacingLg,
                     ),
-                    child: ElevatedButton.icon(
-                      style: AutolabCustomer.primaryButton,
-                      onPressed: workshopId.isEmpty
-                          ? null
-                          : () {
-                              final serviceId = Uri.encodeComponent(
-                                service.id.trim(),
-                              );
-                              context.push(
-                                '/workshops/$workshopId/appointments/new?serviceId=$serviceId',
-                                extra: WorkshopAppointmentInitialSelection(
-                                  service: service,
-                                  products: _selectedAppointmentProducts(),
-                                ),
-                              );
+                    sliver: SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth),
+                          child: _ServiceStepActions(
+                            workshopId: workshopId,
+                            onNext: () {
+                              setState(() {
+                                _showProductsStep = true;
+                                _includeProducts = true;
+                              });
+                              _ensureRelatedProductsLoaded();
                             },
-                      icon: const Icon(Icons.event_available_outlined),
-                      label: Text(
-                        l10n.serviceDetailScheduleAction,
-                        style: AutolabCustomer.bodyLarge.copyWith(
-                          color: AutolabCustomer.white,
-                          fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_showProductsStep)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          scheduleButtonHeight +
+                          safePadding.bottom +
+                          AutolabCustomer.spacingXxl,
+                    ),
+                  ),
+              ],
+            ),
+            if (_showProductsStep)
+              Positioned(
+                left: horizontalMargin,
+                right: horizontalMargin,
+                bottom: safePadding.bottom + AutolabCustomer.spacingMd,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: scheduleButtonHeight,
+                      child: ElevatedButton.icon(
+                        style: AutolabCustomer.primaryButton,
+                        onPressed: workshopId.isEmpty
+                            ? null
+                            : () => _openAppointmentFlow(
+                                context,
+                                service,
+                                workshopId,
+                              ),
+                        icon: const Icon(
+                          Icons.event_available_outlined,
+                          size: AutolabCustomer.iconMd,
+                        ),
+                        label: Text(
+                          l10n.serviceDetailScheduleAction,
+                          style: AutolabCustomer.bodyLarge.copyWith(
+                            color: AutolabCustomer.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  void _returnToServiceSummary() {
+    setState(() {
+      _showProductsStep = false;
+    });
   }
 
   List<Widget> _relatedProductSlivers(
@@ -244,7 +232,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
     double horizontalMargin,
     double maxWidth,
   ) {
-    if (!_includeProducts) {
+    if (!_showProductsStep) {
       return const [];
     }
 
@@ -325,6 +313,21 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
     ];
   }
 
+  void _openAppointmentFlow(
+    BuildContext context,
+    Product service,
+    String workshopId,
+  ) {
+    final serviceId = Uri.encodeComponent(service.id.trim());
+    context.push(
+      '/workshops/$workshopId/appointments/new?serviceId=$serviceId',
+      extra: WorkshopAppointmentInitialSelection(
+        service: service,
+        products: _selectedAppointmentProducts(),
+      ),
+    );
+  }
+
   Widget _relatedProductsMessageSliver({
     required double horizontalMargin,
     required double maxWidth,
@@ -384,14 +387,162 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   }
 }
 
-class _AdditionalProductsHeader extends StatelessWidget {
-  const _AdditionalProductsHeader({
-    required this.value,
-    required this.onChanged,
+class _ServiceDetailSummary extends StatelessWidget {
+  const _ServiceDetailSummary({
+    required this.service,
+    required this.showProductsStep,
+    required this.l10n,
+    required this.onProductsBack,
   });
 
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final Product service;
+  final bool showProductsStep;
+  final AppLocalizations l10n;
+  final VoidCallback onProductsBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        if (showProductsStep) ...[
+          _ProductsStepBackButton(onPressed: onProductsBack),
+          const SizedBox(height: AutolabCustomer.spacingXs),
+          const _ProductsStepLogo(),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+        ],
+        Text(
+          service.name,
+          textAlign: TextAlign.center,
+          style: AutolabCustomer.h3.copyWith(
+            color: AutolabCustomer.customerTextColor(context),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: AutolabCustomer.spacingXs),
+        Text(
+          service.workshopName.trim().isEmpty
+              ? l10n.serviceDetailWorkshopFallback
+              : service.workshopName.trim(),
+          textAlign: TextAlign.center,
+          style: AutolabCustomer.caption.copyWith(
+            color: AutolabCustomer.customerSecondaryTextColor(context),
+          ),
+        ),
+        const SizedBox(height: AutolabCustomer.spacingXs),
+        ProductPriceText(
+          price: service.sellingPrice,
+          style: AutolabCustomer.bodyLarge.copyWith(
+            color: AutolabCustomer.primary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: AutolabCustomer.spacingSmd),
+        const Divider(),
+        const SizedBox(height: AutolabCustomer.spacingSm),
+        if (!showProductsStep) ...[
+          Text(
+            l10n.serviceDetailDescriptionTitle,
+            style: AutolabCustomer.bodyLarge.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          Text(
+            service.description.trim().isEmpty
+                ? l10n.serviceDetailDescriptionFallback
+                : service.description.trim(),
+            textAlign: TextAlign.center,
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+              height: 1.4,
+            ),
+          ),
+        ] else ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              l10n.serviceDetailAdditionalProductsTitle,
+              style: AutolabCustomer.bodyLarge.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: AutolabCustomer.spacingXs),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              l10n.appointmentProductsSwitchLabel,
+              style: AutolabCustomer.label.copyWith(
+                color: AutolabCustomer.primary,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ProductsStepBackButton extends StatelessWidget {
+  const _ProductsStepBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+            foregroundColor: AutolabCustomer.customerTextColor(context),
+            shape: const CircleBorder(),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: AutolabCustomer.iconXs,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductsStepLogo extends StatelessWidget {
+  const _ProductsStepLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return AutolabLogoMark(
+      width: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 76,
+        regular: 88,
+        tablet: 104,
+      ),
+      height: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 30,
+        regular: 34,
+        tablet: 40,
+      ),
+    );
+  }
+}
+
+class _ServiceStepActions extends StatelessWidget {
+  const _ServiceStepActions({required this.workshopId, required this.onNext});
+
+  final String workshopId;
+  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -400,31 +551,68 @@ class _AdditionalProductsHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.serviceDetailAdditionalProductsTitle,
-                style: AutolabCustomer.bodyLarge.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: AutolabCustomer.spacingXs),
-              Text(
-                l10n.appointmentProductsSwitchLabel,
-                style: AutolabCustomer.label.copyWith(
+          child: SizedBox(
+            height: AutolabCustomer.responsiveDouble(
+              context,
+              compact: 46,
+              regular: 50,
+              tablet: 54,
+            ),
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: AutolabCustomer.customerTextColor(context),
+                side: const BorderSide(
                   color: AutolabCustomer.primary,
+                  width: 1.2,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
                 ),
               ),
-            ],
+              onPressed: () => context.popOrGo(
+                workshopId.isEmpty
+                    ? '/home-customer'
+                    : '/workshops/$workshopId',
+              ),
+              child: Text(
+                l10n.appointmentBackAction,
+                style: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
           ),
         ),
-        Switch(
-          value: value,
-          activeThumbColor: AutolabCustomer.white,
-          activeTrackColor: AutolabCustomer.primary,
-          onChanged: onChanged,
+        const SizedBox(width: AutolabCustomer.spacingSm),
+        Expanded(
+          child: SizedBox(
+            height: AutolabCustomer.responsiveDouble(
+              context,
+              compact: 46,
+              regular: 50,
+              tablet: 54,
+            ),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AutolabCustomer.primary,
+                foregroundColor: AutolabCustomer.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                ),
+              ),
+              onPressed: onNext,
+              child: Text(
+                l10n.appointmentNextAction,
+                style: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -445,6 +633,24 @@ class _RelatedProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = quantity > 0;
+    final imageWidth = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 48,
+      regular: 54,
+      tablet: 64,
+    );
+    final imageHeight = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 56,
+      regular: 62,
+      tablet: 72,
+    );
+    final horizontalGap = AutolabCustomer.responsiveDouble(
+      context,
+      compact: AutolabCustomer.spacingSm,
+      regular: AutolabCustomer.spacingSmd,
+      tablet: AutolabCustomer.spacingMd,
+    );
 
     return Container(
       padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
@@ -460,16 +666,16 @@ class _RelatedProductTile extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 54,
-            height: 62,
+            width: imageWidth,
+            height: imageHeight,
             child: ProductImage(
               imageUrl: product.primaryImageUrl,
-              height: 62,
+              height: imageHeight,
               borderRadius: BorderRadius.circular(AutolabCustomer.radiusChip),
               placeholderIconSize: AutolabCustomer.iconMd,
             ),
           ),
-          const SizedBox(width: AutolabCustomer.spacingSmd),
+          SizedBox(width: horizontalGap),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,7 +709,7 @@ class _RelatedProductTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AutolabCustomer.spacingSm),
+          SizedBox(width: AutolabCustomer.spacingXs),
           if (!selected)
             IconButton(
               tooltip: AppLocalizations.of(
@@ -582,7 +788,16 @@ class _QuantityButton extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(AutolabCustomer.spacingXs),
-        child: Icon(icon, color: AutolabCustomer.primary, size: 14),
+        child: Icon(
+          icon,
+          color: AutolabCustomer.primary,
+          size: AutolabCustomer.responsiveDouble(
+            context,
+            compact: 13,
+            regular: 14,
+            tablet: 16,
+          ),
+        ),
       ),
     );
   }

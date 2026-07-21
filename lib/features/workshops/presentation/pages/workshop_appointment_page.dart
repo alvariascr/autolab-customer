@@ -6,6 +6,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../products/domain/entities/product.dart';
@@ -78,7 +79,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                     )
                   : Column(
                       children: [
-                        if (state.currentStep < 2)
+                        if (state.currentStep == 0)
                           _MobileHeader(
                             steps: steps,
                             currentStep: state.currentStep,
@@ -110,6 +111,27 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     final isSubmitting =
         state.submitStatus == AppointmentSubmitStatus.submitting;
     final isBusy = isSubmitting;
+    final horizontalPadding = isDesktop
+        ? AutolabCustomer.responsiveDouble(
+            context,
+            compact: 56,
+            regular: 72,
+            tablet: 92,
+          )
+        : AutolabCustomer.responsiveScreenMargin(context);
+    final topPadding = isDesktop
+        ? AutolabCustomer.responsiveDouble(
+            context,
+            compact: 56,
+            regular: 72,
+            tablet: 96,
+          )
+        : AutolabCustomer.responsiveDouble(
+            context,
+            compact: AutolabCustomer.spacingSmd,
+            regular: AutolabCustomer.spacingLg,
+            tablet: AutolabCustomer.spacingXl,
+          );
 
     return Stack(
       children: [
@@ -118,9 +140,9 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
-                  isDesktop ? 92 : 28,
-                  isDesktop ? 96 : 22,
-                  isDesktop ? 92 : 28,
+                  horizontalPadding,
+                  topPadding,
+                  horizontalPadding,
                   32,
                 ),
                 child: Center(
@@ -194,27 +216,8 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           isDesktop: isDesktop,
         );
       case 1:
-        return _MockStepPanel(
-          icon: Icons.inventory_2_outlined,
-          title: steps[state.currentStep].title,
-          child: _ProductsSelectionStep(
-            products: state.products,
-            status: state.productsStatus,
-            includeProducts: state.includeProducts,
-            selectedProducts: state.selectedProducts,
-            onIncludeChanged: context
-                .read<AppointmentCubit>()
-                .setIncludeProducts,
-            onProductToggled: context.read<AppointmentCubit>().toggleProduct,
-            onQuantityChanged: context
-                .read<AppointmentCubit>()
-                .changeProductQuantity,
-          ),
-        );
-      case 2:
         return _DateTimeMock(
           title: steps[state.currentStep].title,
-          onBack: () => _handleBack(context, state),
           selectedDate: state.selectedDate,
           selectedTime: state.selectedTime,
           focusedDate: state.focusedDate ?? DateTime.now(),
@@ -226,10 +229,9 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           onFocusedDateChanged: context.read<AppointmentCubit>().focusDate,
           onSelected: context.read<AppointmentCubit>().selectTime,
         );
-      case 3:
+      case 2:
         return _BookingReviewStep(
           title: steps[state.currentStep].title,
-          onBack: () => _handleBack(context, state),
           workshopName: _workshopName(state),
           service: state.selectedService,
           licensePlate: state.vehicleLicensePlate,
@@ -368,7 +370,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       return;
     }
 
-    if (state.currentStep == 2) {
+    if (state.currentStep == 1) {
       if (state.selectedDate == null || state.selectedTime == null) {
         _showAppointmentMessage(
           context,
@@ -494,7 +496,6 @@ enum _AppointmentMessageType { success, warning, error }
 List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   return [
     _AppointmentStep(l10n.appointmentStepVehicleInfo, Icons.directions_car),
-    _AppointmentStep(l10n.appointmentStepProducts, Icons.inventory_2_outlined),
     _AppointmentStep(l10n.appointmentStepDateTime, Icons.event_outlined),
     _AppointmentStep(
       l10n.appointmentStepConfirmation,
@@ -1898,9 +1899,17 @@ class _FooterActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final horizontalPadding = isDesktop
+        ? AutolabCustomer.spacingXl
+        : AutolabCustomer.responsiveScreenMargin(context);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(28, 10, 28, isDesktop ? 36 : 22),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        AutolabCustomer.spacingSm,
+        horizontalPadding,
+        isDesktop ? AutolabCustomer.spacingXl : AutolabCustomer.spacingLg,
+      ),
       child: Column(
         children: [
           ConstrainedBox(
@@ -2002,62 +2011,10 @@ class _OutlineActionButton extends StatelessWidget {
   }
 }
 
-class _MockStepPanel extends StatelessWidget {
-  const _MockStepPanel({
-    required this.icon,
-    required this.title,
-    required this.child,
-  });
-
-  final IconData icon;
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: _appointmentPrimary(context),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: Colors.white),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: _appointmentPrimary(context),
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        child,
-      ],
-    );
-  }
-}
-
 class _AppointmentFlowHeader extends StatelessWidget {
-  const _AppointmentFlowHeader({
-    required this.title,
-    required this.onBack,
-    this.subtitle,
-  });
+  const _AppointmentFlowHeader({required this.title, this.subtitle});
 
   final String title;
-  final VoidCallback onBack;
   final String? subtitle;
 
   @override
@@ -2069,17 +2026,7 @@ class _AppointmentFlowHeader extends StatelessWidget {
           height: 48,
           child: Stack(
             alignment: Alignment.center,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _AppointmentCircleButton(
-                  icon: Icons.chevron_left_rounded,
-                  onPressed: onBack,
-                  tooltip: AppLocalizations.of(context)!.appointmentBackAction,
-                ),
-              ),
-              const _AutolabLogo(),
-            ],
+            children: [const _AutolabLogo()],
           ),
         ),
         const SizedBox(height: AutolabCustomer.spacingMd),
@@ -2105,40 +2052,9 @@ class _AppointmentFlowHeader extends StatelessWidget {
   }
 }
 
-class _AppointmentCircleButton extends StatelessWidget {
-  const _AppointmentCircleButton({
-    required this.icon,
-    required this.onPressed,
-    required this.tooltip,
-  });
-
-  final IconData icon;
-  final VoidCallback onPressed;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 32,
-      height: 32,
-      child: IconButton(
-        tooltip: tooltip,
-        padding: EdgeInsets.zero,
-        onPressed: onPressed,
-        style: IconButton.styleFrom(
-          backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-          foregroundColor: AutolabCustomer.customerSecondaryTextColor(context),
-        ),
-        icon: Icon(icon, size: AutolabCustomer.iconSm),
-      ),
-    );
-  }
-}
-
 class _DateTimeMock extends StatelessWidget {
   const _DateTimeMock({
     required this.title,
-    required this.onBack,
     required this.selectedDate,
     required this.selectedTime,
     required this.focusedDate,
@@ -2152,7 +2068,6 @@ class _DateTimeMock extends StatelessWidget {
   });
 
   final String title;
-  final VoidCallback onBack;
   final DateTime? selectedDate;
   final String? selectedTime;
   final DateTime focusedDate;
@@ -2169,7 +2084,7 @@ class _DateTimeMock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _AppointmentFlowHeader(title: title, onBack: onBack),
+        _AppointmentFlowHeader(title: title),
         const SizedBox(height: AutolabCustomer.spacingMd),
         _AppointmentCalendar(
           selectedDate: selectedDate,
@@ -2684,7 +2599,6 @@ class _AppointmentNoteInput extends StatelessWidget {
 class _BookingReviewStep extends StatelessWidget {
   const _BookingReviewStep({
     required this.title,
-    required this.onBack,
     required this.workshopName,
     required this.service,
     required this.licensePlate,
@@ -2696,7 +2610,6 @@ class _BookingReviewStep extends StatelessWidget {
   });
 
   final String title;
-  final VoidCallback onBack;
   final String workshopName;
   final Product? service;
   final String licensePlate;
@@ -2736,7 +2649,6 @@ class _BookingReviewStep extends StatelessWidget {
         _AppointmentFlowHeader(
           title: title,
           subtitle: l10n.appointmentConfirmationReadyTitle,
-          onBack: onBack,
         ),
         const SizedBox(height: AutolabCustomer.spacingLg),
         Container(
@@ -2765,8 +2677,18 @@ class _BookingReviewStep extends StatelessWidget {
             children: [
               Center(
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: AutolabCustomer.responsiveDouble(
+                    context,
+                    compact: 56,
+                    regular: 62,
+                    tablet: 72,
+                  ),
+                  height: AutolabCustomer.responsiveDouble(
+                    context,
+                    compact: 56,
+                    regular: 62,
+                    tablet: 72,
+                  ),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
@@ -2777,7 +2699,7 @@ class _BookingReviewStep extends StatelessWidget {
                   child: const Icon(
                     Icons.check_rounded,
                     color: AutolabCustomer.primary,
-                    size: 30,
+                    size: 38,
                   ),
                 ),
               ),
@@ -2919,11 +2841,20 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final valueStyle = TextStyle(
-      color: emphasize
-          ? AutolabCustomer.customerTextColor(context)
-          : AutolabCustomer.customerTextColor(context),
-      fontSize: emphasize ? 13 : 12,
+    final labelWidth = AutolabCustomer.responsiveDouble(
+      context,
+      compact: 92,
+      regular: 110,
+      tablet: 132,
+    );
+    final valueStyle = AutolabCustomer.caption.copyWith(
+      color: AutolabCustomer.customerTextColor(context),
+      fontSize: AutolabCustomer.responsiveDouble(
+        context,
+        compact: emphasize ? 12 : 11,
+        regular: emphasize ? 13 : 12,
+        tablet: emphasize ? 14 : 13,
+      ),
       fontWeight: emphasize ? FontWeight.w800 : FontWeight.w500,
     );
 
@@ -2933,9 +2864,11 @@ class _SummaryRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 110,
+            width: labelWidth,
             child: Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.caption.copyWith(
                 color: labelColor ?? AutolabCustomer.customerTextColor(context),
                 fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
@@ -2943,7 +2876,9 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AutolabCustomer.spacingSm),
-          Expanded(child: Text(value, style: valueStyle)),
+          Expanded(
+            child: Text(value, textAlign: TextAlign.right, style: valueStyle),
+          ),
         ],
       ),
     );
@@ -2977,33 +2912,39 @@ class _ProductSummaryRow extends StatelessWidget {
               children: [
                 Text(
                   item.product.name,
-                  style: TextStyle(
-                    color: _WorkshopAppointmentPageState.ink,
-                    fontSize: 16,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${formatProductPrice(price)} x ${item.quantity}',
-                  style: TextStyle(
-                    color: _WorkshopAppointmentPageState.muted,
-                    fontSize: 14,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Text(
-            subtotal == null
-                ? AppLocalizations.of(context)!.appointmentPriceToConfirm
-                : formatProductPrice(subtotal),
-            style: TextStyle(
-              color: _WorkshopAppointmentPageState.ink,
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
+          const SizedBox(width: AutolabCustomer.spacingSm),
+          Flexible(
+            flex: 0,
+            child: Text(
+              subtotal == null
+                  ? AppLocalizations.of(context)!.appointmentPriceToConfirm
+                  : formatProductPrice(subtotal),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -3019,23 +2960,7 @@ class _AutolabLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: large ? 260 : 86,
-      height: large ? 118 : 42,
-      child: ClipRect(
-        child: Align(
-          alignment: const Alignment(0, 0.48),
-          widthFactor: 0.52,
-          heightFactor: 0.3,
-          child: Image.asset(
-            'assets/images/virtual/Mesa de trabajo 11@2x.png',
-            width: large ? 620 : 220,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.high,
-          ),
-        ),
-      ),
-    );
+    return AutolabLogoMark(width: large ? 260 : 88, height: large ? 118 : 34);
   }
 }
 
