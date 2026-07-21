@@ -576,7 +576,7 @@ class _ServiceStepActions extends StatelessWidget {
                     : '/workshops/$workshopId',
               ),
               child: Text(
-                _capitalize(l10n.appointmentBackAction.toLowerCase()),
+                l10n.appointmentBackAction,
                 style: AutolabCustomer.body.copyWith(
                   color: AutolabCustomer.customerTextColor(context),
                   fontWeight: FontWeight.w800,
@@ -605,7 +605,7 @@ class _ServiceStepActions extends StatelessWidget {
               ),
               onPressed: onNext,
               child: Text(
-                _capitalize(l10n.appointmentNextAction.toLowerCase()),
+                l10n.appointmentNextAction,
                 style: AutolabCustomer.body.copyWith(
                   color: AutolabCustomer.white,
                   fontWeight: FontWeight.w800,
@@ -807,10 +807,4 @@ class _ProductsMessage extends StatelessWidget {
       ),
     );
   }
-}
-
-String _capitalize(String value) {
-  if (value.isEmpty) return value;
-
-  return '${value[0].toUpperCase()}${value.substring(1)}';
 }
