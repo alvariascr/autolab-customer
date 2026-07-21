@@ -11,6 +11,16 @@ alter table public.laropay_runtime_config enable row level security;
 revoke all on public.laropay_runtime_config from public, anon, authenticated;
 grant select, insert, update on public.laropay_runtime_config to service_role;
 
+drop policy if exists "service role can manage laropay runtime config"
+  on public.laropay_runtime_config;
+
+create policy "service role can manage laropay runtime config"
+  on public.laropay_runtime_config
+  for all
+  to service_role
+  using (true)
+  with check (true);
+
 create table if not exists public.laropay_token_refresh_audit (
   id uuid primary key default gen_random_uuid(),
   source text not null,
@@ -32,5 +42,15 @@ create index if not exists laropay_token_refresh_audit_created_at_idx
 
 revoke all on public.laropay_token_refresh_audit from public, anon, authenticated;
 grant insert, select on public.laropay_token_refresh_audit to service_role;
+
+drop policy if exists "service role can read and write laropay token refresh audit"
+  on public.laropay_token_refresh_audit;
+
+create policy "service role can read and write laropay token refresh audit"
+  on public.laropay_token_refresh_audit
+  for all
+  to service_role
+  using (true)
+  with check (true);
 
 notify pgrst, 'reload schema';

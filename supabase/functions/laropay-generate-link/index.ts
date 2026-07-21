@@ -232,6 +232,18 @@ Deno.serve(async (request) => {
         if (laropayResponse === null) {
           return json({ error: "laropay_gateway_rejected" }, 502);
         }
+      } else {
+        await persistAttempt(
+          env,
+          user.id,
+          input,
+          orderPayment,
+          laropayPayload,
+          tokenRefreshFailurePayload(),
+          reservation.id,
+          callbackUrl,
+        );
+        return json({ error: "laropay_token_refresh_failed" }, 502);
       }
     }
 
@@ -645,6 +657,13 @@ function normalizedStatus(response: Record<string, unknown>) {
   }
 
   return stringValue(response.linkID) === "" ? "failed" : "created";
+}
+
+function tokenRefreshFailurePayload() {
+  return {
+    response: "TOKEN_REFRESH_FAILED",
+    responseDescription: "Laropay token refresh failed before link retry",
+  };
 }
 
 function stringValue(value: unknown) {
