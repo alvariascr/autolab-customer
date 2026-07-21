@@ -494,20 +494,21 @@ class _ProductsStepBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: Material(
-        color: AutolabCustomer.customerSurfaceColor(context),
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onPressed,
-          child: SizedBox(
-            width: 34,
-            height: 34,
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: AutolabCustomer.customerTextColor(context),
-              size: AutolabCustomer.iconXs,
-            ),
+      child: SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: onPressed,
+          style: IconButton.styleFrom(
+            backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+            foregroundColor: AutolabCustomer.customerTextColor(context),
+            shape: const CircleBorder(),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: AutolabCustomer.iconXs,
           ),
         ),
       ),
