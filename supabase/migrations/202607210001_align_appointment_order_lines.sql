@@ -1,5 +1,27 @@
 -- Align customer-created order lines with MiTaller Business:
 -- services stay in order_services, additional products go to order_products.
+CREATE OR REPLACE FUNCTION public.is_inspection_service_name(p_name text)
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $function$
+  select position(
+      'inspeccion' in lower(
+        translate(coalesce(p_name, ''), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU')
+      )
+    ) > 0
+    or position('inspection' in lower(coalesce(p_name, ''))) > 0
+    or position(
+      'revision' in lower(
+        translate(coalesce(p_name, ''), 'áéíóúÁÉÍÓÚ', 'aeiouAEIOU')
+      )
+    ) > 0;
+$function$;
+
+REVOKE ALL ON FUNCTION public.is_inspection_service_name(text)
+FROM PUBLIC, anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.book_service_appointment(
   p_workshop_id uuid,
   p_inventory_item_id uuid,
@@ -126,25 +148,7 @@ begin
   end if;
 
   v_is_inspection_service :=
-    position(
-      'inspeccion' in lower(
-        translate(
-          coalesce(v_service_name, ''),
-          'áéíóúÁÉÍÓÚ',
-          'aeiouAEIOU'
-        )
-      )
-    ) > 0
-    or position('inspection' in lower(coalesce(v_service_name, ''))) > 0
-    or position(
-      'revision' in lower(
-        translate(
-          coalesce(v_service_name, ''),
-          'áéíóúÁÉÍÓÚ',
-          'aeiouAEIOU'
-        )
-      )
-    ) > 0;
+    public.is_inspection_service_name(v_service_name);
 
   v_duration_interval :=
     make_interval(secs => (v_duration_hours * 3600)::double precision);
@@ -210,27 +214,7 @@ begin
       join public.inventory_items ii on ii.id = os.inventory_item_id
       where o.workshop_id = p_workshop_id
         and a.appointment_status not in ('cancelled', 'no_show')
-        and (
-          position(
-            'inspeccion' in lower(
-              translate(
-                coalesce(ii.name, ''),
-                'áéíóúÁÉÍÓÚ',
-                'aeiouAEIOU'
-              )
-            )
-          ) > 0
-          or position('inspection' in lower(coalesce(ii.name, ''))) > 0
-          or position(
-            'revision' in lower(
-              translate(
-                coalesce(ii.name, ''),
-                'áéíóúÁÉÍÓÚ',
-                'aeiouAEIOU'
-              )
-            )
-          ) > 0
-        )
+        and public.is_inspection_service_name(ii.name)
         and a.scheduled_datetime >= date_trunc('hour', v_scheduled_datetime)
         and a.scheduled_datetime < date_trunc('hour', v_scheduled_datetime) + interval '1 hour'
     ) >= (v_employee_capacity * 2) then
@@ -266,27 +250,7 @@ begin
       join public.inventory_items ii on ii.id = os.inventory_item_id
       where o.workshop_id = p_workshop_id
         and a.appointment_status not in ('cancelled', 'no_show')
-        and not (
-          position(
-            'inspeccion' in lower(
-              translate(
-                coalesce(ii.name, ''),
-                'áéíóúÁÉÍÓÚ',
-                'aeiouAEIOU'
-              )
-            )
-          ) > 0
-          or position('inspection' in lower(coalesce(ii.name, ''))) > 0
-          or position(
-            'revision' in lower(
-              translate(
-                coalesce(ii.name, ''),
-                'áéíóúÁÉÍÓÚ',
-                'aeiouAEIOU'
-              )
-            )
-          ) > 0
-        )
+        and not public.is_inspection_service_name(ii.name)
     ),
     segment_occupancy as (
       select
