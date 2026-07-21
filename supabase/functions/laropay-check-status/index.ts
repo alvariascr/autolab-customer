@@ -1,4 +1,10 @@
+// deno-lint-ignore-file no-import-prefix
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  isTokenExpiredResponse,
+  loadLaropayRuntimeToken,
+  refreshLaropayToken,
+} from "../_shared/laropay-token.ts";
 
 type AuthenticatedRequestUser = {
   id: string;
@@ -74,10 +80,12 @@ Deno.serve(async (request) => {
       return json({ error: "payment_link_missing_laropay_id" }, 409);
     }
 
-    const verifyResponse = await callLaropayStatus(
+    let laropayToken = await loadLaropayRuntimeToken(env);
+    let verifyResponse = await callLaropayStatus(
       "VerifySecureLink",
       linkID,
       env,
+      laropayToken,
     ).catch(async (error) => {
       await persistStatusError(
         env,
@@ -90,6 +98,44 @@ Deno.serve(async (request) => {
 
     if (verifyResponse === null) {
       return json({ error: "laropay_status_unavailable" }, 502);
+    }
+
+    if (isTokenExpiredResponse(verifyResponse)) {
+      const refreshedToken = await refreshLaropayToken(
+        env,
+        laropayToken,
+        "check_status_verify",
+      );
+
+      if (refreshedToken !== null) {
+        laropayToken = refreshedToken;
+        verifyResponse = await callLaropayStatus(
+          "VerifySecureLink",
+          linkID,
+          env,
+          laropayToken,
+        ).catch(async (error) => {
+          await persistStatusError(
+            env,
+            paymentLink,
+            "verify_secure_link_retry_failed",
+            error,
+          );
+          return null;
+        });
+
+        if (verifyResponse === null) {
+          return json({ error: "laropay_status_unavailable" }, 502);
+        }
+      } else {
+        await persistStatusCheck(env, paymentLink, {
+          status: statusFromLocalExpiration(paymentLink) ?? "pending",
+          verifyResponse: tokenRefreshFailurePayload("verify"),
+          certifierResponse: null,
+          statusCheckError: "verify_token_refresh_failed",
+        });
+        return json({ error: "laropay_token_refresh_failed" }, 502);
+      }
     }
 
     if (!isSuccessfulLaropayResponse(verifyResponse)) {
@@ -111,6 +157,7 @@ Deno.serve(async (request) => {
         "ConsultTransactionInCertifier",
         linkID,
         env,
+        laropayToken,
       ).catch(async (error) => {
         await persistStatusCheck(env, paymentLink, {
           status: statusFromLocalExpiration(paymentLink) ?? "pending",
@@ -127,6 +174,48 @@ Deno.serve(async (request) => {
 
       if (certifierResponse === null) {
         return json({ error: "laropay_certifier_unavailable" }, 502);
+      }
+
+      if (isTokenExpiredResponse(certifierResponse)) {
+        const refreshedToken = await refreshLaropayToken(
+          env,
+          laropayToken,
+          "check_status_certifier",
+        );
+
+        if (refreshedToken !== null) {
+          laropayToken = refreshedToken;
+          certifierResponse = await callLaropayStatus(
+            "ConsultTransactionInCertifier",
+            linkID,
+            env,
+            laropayToken,
+          ).catch(async (error) => {
+            await persistStatusCheck(env, paymentLink, {
+              status: statusFromLocalExpiration(paymentLink) ?? "pending",
+              verifyResponse,
+              certifierResponse: {
+                response: "NETWORK_ERROR",
+                responseDescription: "Laropay certifier retry request failed",
+                error: safeError(error),
+              },
+              statusCheckError: "certifier_retry_unavailable",
+            });
+            return null;
+          });
+
+          if (certifierResponse === null) {
+            return json({ error: "laropay_certifier_unavailable" }, 502);
+          }
+        } else {
+          await persistStatusCheck(env, paymentLink, {
+            status: statusFromLocalExpiration(paymentLink) ?? "pending",
+            verifyResponse,
+            certifierResponse: tokenRefreshFailurePayload("certifier"),
+            statusCheckError: "certifier_token_refresh_failed",
+          });
+          return json({ error: "laropay_token_refresh_failed" }, 502);
+        }
       }
 
       if (!isSuccessfulLaropayResponse(certifierResponse)) {
@@ -259,10 +348,11 @@ async function callLaropayStatus(
   endpoint: "VerifySecureLink" | "ConsultTransactionInCertifier",
   linkID: string,
   env: Env,
+  laropayToken = env.laropayToken,
 ) {
   const url = new URL(`${env.laropayBaseUrl}/api/${endpoint}`);
   url.searchParams.set("IDUser", env.laropayIdUser);
-  url.searchParams.set("Token", env.laropayToken);
+  url.searchParams.set("Token", laropayToken);
   url.searchParams.set("LinkID", linkID);
 
   const controller = new AbortController();
@@ -401,6 +491,13 @@ function providerErrorCode(
     .replace(/[^a-z0-9_-]/g, "")
     .slice(0, 32);
   return `${source}_${code === "" ? "invalid_response" : code}`;
+}
+
+function tokenRefreshFailurePayload(source: "verify" | "certifier") {
+  return {
+    response: "TOKEN_REFRESH_FAILED",
+    responseDescription: `Laropay token refresh failed before ${source} retry`,
+  };
 }
 
 function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {

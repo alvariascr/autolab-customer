@@ -1,4 +1,10 @@
+// deno-lint-ignore-file no-import-prefix
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  isTokenExpiredResponse,
+  loadLaropayRuntimeToken,
+  refreshLaropayToken,
+} from "../_shared/laropay-token.ts";
 
 type LaropayLinkRequest = {
   internalTransactionId?: string;
@@ -94,13 +100,15 @@ Deno.serve(async (request) => {
       reservation.id,
       orderPayment.workshopId,
     );
-    const laropayPayload = buildLaropayPayload(
+    const laropayToken = await loadLaropayRuntimeToken(env);
+    let laropayPayload = buildLaropayPayload(
       input,
       env,
       orderPayment,
       callbackUrl,
+      laropayToken,
     );
-    const laropayResponse = await callLaropay(laropayPayload, env).catch(
+    let laropayResponse = await callLaropay(laropayPayload, env).catch(
       async (error) => {
         if (error instanceof LaropayHttpError) {
           await persistAttempt(
@@ -163,11 +171,89 @@ Deno.serve(async (request) => {
       return json({ error: "laropay_gateway_rejected" }, 502);
     }
 
+    if (isTokenExpiredResponse(laropayResponse)) {
+      const refreshedToken = await refreshLaropayToken(
+        env,
+        laropayToken,
+        "generate_link",
+      );
+
+      if (refreshedToken !== null) {
+        laropayPayload = buildLaropayPayload(
+          input,
+          env,
+          orderPayment,
+          callbackUrl,
+          refreshedToken,
+        );
+        laropayResponse = await callLaropay(laropayPayload, env).catch(
+          async (error) => {
+            if (error instanceof LaropayHttpError) {
+              await persistAttempt(
+                env,
+                user.id,
+                input,
+                orderPayment,
+                laropayPayload,
+                {
+                  response: "HTTP_ERROR",
+                  responseDescription: "Laropay rejected the retry request",
+                  statusCode: error.status,
+                  body: error.body,
+                },
+                reservation.id,
+                callbackUrl,
+              );
+
+              return null;
+            }
+
+            await persistAttempt(
+              env,
+              user.id,
+              input,
+              orderPayment,
+              laropayPayload,
+              {
+                response: isAbortError(error) ? "TIMEOUT" : "NETWORK_ERROR",
+                responseDescription: isAbortError(error)
+                  ? "Laropay retry request timed out"
+                  : "Laropay retry request failed before response",
+                error: safeError(error),
+              },
+              reservation.id,
+              callbackUrl,
+            );
+
+            return null;
+          },
+        );
+
+        if (laropayResponse === null) {
+          return json({ error: "laropay_gateway_rejected" }, 502);
+        }
+      } else {
+        await persistAttempt(
+          env,
+          user.id,
+          input,
+          orderPayment,
+          laropayPayload,
+          tokenRefreshFailurePayload(),
+          reservation.id,
+          callbackUrl,
+        );
+        return json({ error: "laropay_token_refresh_failed" }, 502);
+      }
+    }
+
     const linkID = stringValue(laropayResponse.linkID);
     const linkURL = stringValue(laropayResponse.linkURL);
 
-    if (stringValue(laropayResponse.response) !== "00" || linkID === "" ||
-      !isSecureUrl(linkURL)) {
+    if (
+      stringValue(laropayResponse.response) !== "00" || linkID === "" ||
+      !isSecureUrl(linkURL)
+    ) {
       await persistAttempt(
         env,
         user.id,
@@ -248,7 +334,9 @@ async function parseJson(request: Request): Promise<LaropayLinkRequest> {
     throw new Error("invalid_json");
   }
 
-  if (decoded === null || typeof decoded !== "object" || Array.isArray(decoded)) {
+  if (
+    decoded === null || typeof decoded !== "object" || Array.isArray(decoded)
+  ) {
     throw new Error("invalid_json");
   }
 
@@ -395,10 +483,11 @@ function buildLaropayPayload(
   env: Env,
   orderPayment: OrderPaymentData,
   callbackUrl: string,
+  laropayToken = env.laropayToken,
 ) {
   return {
     idUser: env.laropayIdUser,
-    token: env.laropayToken,
+    token: laropayToken,
     idTransaction: orderPayment.idTransaction,
     amount: orderPayment.amount,
     document: trimOrNull(input.document),
@@ -425,9 +514,11 @@ async function callLaropay(payload: Record<string, unknown>, env: Env) {
       headers: {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": `Basic ${btoa(
-          `${env.laropayBasicUser}:${env.laropayBasicPassword}`,
-        )}`,
+        "authorization": `Basic ${
+          btoa(
+            `${env.laropayBasicUser}:${env.laropayBasicPassword}`,
+          )
+        }`,
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -531,9 +622,10 @@ function sanitizeJson(value: unknown): unknown {
 }
 
 function isSensitiveKey(key: string) {
-  return ["iduser", "token", "newtoken", "authorization", "securitycode"].includes(
-    key.toLowerCase(),
-  );
+  return ["iduser", "token", "newtoken", "authorization", "securitycode"]
+    .includes(
+      key.toLowerCase(),
+    );
 }
 
 function authSupabaseClient(env: Env) {
@@ -565,6 +657,13 @@ function normalizedStatus(response: Record<string, unknown>) {
   }
 
   return stringValue(response.linkID) === "" ? "failed" : "created";
+}
+
+function tokenRefreshFailurePayload() {
+  return {
+    response: "TOKEN_REFRESH_FAILED",
+    responseDescription: "Laropay token refresh failed before link retry",
+  };
 }
 
 function stringValue(value: unknown) {
@@ -630,11 +729,6 @@ function isSecureUrl(value: string) {
   }
 }
 
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    .test(value);
-}
-
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -689,7 +783,9 @@ function loadEnv(): Env {
     throw new Error("missing_env_LAROPAY_CALLBACK_URL");
   }
 
-  const laropayTransactionType = Number(requiredEnv("LAROPAY_TRANSACTION_TYPE"));
+  const laropayTransactionType = Number(
+    requiredEnv("LAROPAY_TRANSACTION_TYPE"),
+  );
   if (![1, 2].includes(laropayTransactionType)) {
     throw new Error("missing_env_LAROPAY_TRANSACTION_TYPE");
   }
