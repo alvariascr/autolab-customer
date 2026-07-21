@@ -93,128 +93,140 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
       tablet: 58,
     );
 
-    return Scaffold(
-      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              if (!_showProductsStep)
-                SliverToBoxAdapter(
-                  child: ProductDetailHero(
-                    product: service,
-                    isFavorite: _isFavorite,
-                    onFavoriteTap: () {
-                      setState(() => _isFavorite = !_isFavorite);
-                    },
-                  ),
-                ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalMargin,
-                  _showProductsStep
-                      ? safePadding.top + AutolabCustomer.spacingLg
-                      : 0,
-                  horizontalMargin,
-                  0,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxWidth),
-                      child: _ServiceDetailSummary(
-                        service: service,
-                        showProductsStep: _showProductsStep,
-                        l10n: l10n,
-                        onProductsBack: () {
-                          setState(() {
-                            _showProductsStep = false;
-                            _includeProducts = false;
-                            _selectedQuantities.clear();
-                          });
-                        },
-                      ),
+    return PopScope(
+      canPop: !_showProductsStep,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || !_showProductsStep) {
+          return;
+        }
+
+        _returnToServiceSummary();
+      },
+      child: Scaffold(
+        backgroundColor: AutolabCustomer.customerBackgroundColor(context),
+        body: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                if (!_showProductsStep)
+                  SliverToBoxAdapter(
+                    child: ProductDetailHero(
+                      product: service,
+                      isFavorite: _isFavorite,
+                      onFavoriteTap: () {
+                        setState(() => _isFavorite = !_isFavorite);
+                      },
                     ),
                   ),
-                ),
-              ),
-              ..._relatedProductSlivers(context, horizontalMargin, maxWidth),
-              if (!_showProductsStep)
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                     horizontalMargin,
-                    AutolabCustomer.spacingLg,
+                    _showProductsStep
+                        ? safePadding.top + AutolabCustomer.spacingLg
+                        : 0,
                     horizontalMargin,
-                    AutolabCustomer.spacingLg,
+                    0,
                   ),
                   sliver: SliverToBoxAdapter(
                     child: Center(
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: maxWidth),
-                        child: _ServiceStepActions(
-                          workshopId: workshopId,
-                          onNext: () {
-                            setState(() {
-                              _showProductsStep = true;
-                              _includeProducts = true;
-                            });
-                            _ensureRelatedProductsLoaded();
-                          },
+                        child: _ServiceDetailSummary(
+                          service: service,
+                          showProductsStep: _showProductsStep,
+                          l10n: l10n,
+                          onProductsBack: _returnToServiceSummary,
                         ),
                       ),
                     ),
                   ),
                 ),
-              if (_showProductsStep)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height:
-                        scheduleButtonHeight +
-                        safePadding.bottom +
-                        AutolabCustomer.spacingXxl,
-                  ),
-                ),
-            ],
-          ),
-          if (_showProductsStep)
-            Positioned(
-              left: horizontalMargin,
-              right: horizontalMargin,
-              bottom: safePadding.bottom + AutolabCustomer.spacingMd,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: scheduleButtonHeight,
-                    child: ElevatedButton.icon(
-                      style: AutolabCustomer.primaryButton,
-                      onPressed: workshopId.isEmpty
-                          ? null
-                          : () => _openAppointmentFlow(
-                              context,
-                              service,
-                              workshopId,
-                            ),
-                      icon: const Icon(
-                        Icons.event_available_outlined,
-                        size: AutolabCustomer.iconMd,
+                ..._relatedProductSlivers(context, horizontalMargin, maxWidth),
+                if (!_showProductsStep)
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalMargin,
+                      AutolabCustomer.spacingLg,
+                      horizontalMargin,
+                      AutolabCustomer.spacingLg,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth),
+                          child: _ServiceStepActions(
+                            workshopId: workshopId,
+                            onNext: () {
+                              setState(() {
+                                _showProductsStep = true;
+                                _includeProducts = true;
+                              });
+                              _ensureRelatedProductsLoaded();
+                            },
+                          ),
+                        ),
                       ),
-                      label: Text(
-                        l10n.serviceDetailScheduleAction,
-                        style: AutolabCustomer.bodyLarge.copyWith(
-                          color: AutolabCustomer.white,
-                          fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                if (_showProductsStep)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          scheduleButtonHeight +
+                          safePadding.bottom +
+                          AutolabCustomer.spacingXxl,
+                    ),
+                  ),
+              ],
+            ),
+            if (_showProductsStep)
+              Positioned(
+                left: horizontalMargin,
+                right: horizontalMargin,
+                bottom: safePadding.bottom + AutolabCustomer.spacingMd,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: scheduleButtonHeight,
+                      child: ElevatedButton.icon(
+                        style: AutolabCustomer.primaryButton,
+                        onPressed: workshopId.isEmpty
+                            ? null
+                            : () => _openAppointmentFlow(
+                                context,
+                                service,
+                                workshopId,
+                              ),
+                        icon: const Icon(
+                          Icons.event_available_outlined,
+                          size: AutolabCustomer.iconMd,
+                        ),
+                        label: Text(
+                          l10n.serviceDetailScheduleAction,
+                          style: AutolabCustomer.bodyLarge.copyWith(
+                            color: AutolabCustomer.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  void _returnToServiceSummary() {
+    setState(() {
+      _showProductsStep = false;
+      _includeProducts = false;
+      _selectedQuantities.clear();
+    });
   }
 
   List<Widget> _relatedProductSlivers(
