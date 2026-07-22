@@ -327,11 +327,12 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           return;
         }
 
-        _showAppointmentMessage(
+        final shouldReturnToWorkshop = await _showAppointmentCreatedDialog(
           context,
-          message: l10n.appointmentCreatedSuccess,
-          type: _AppointmentMessageType.success,
         );
+        if (!context.mounted || !shouldReturnToWorkshop) {
+          return;
+        }
         _goToWorkshopProfileOrHome(context);
       } else {
         _showAppointmentMessage(
@@ -409,6 +410,49 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
               item.product.sellingPrice != null &&
               item.product.sellingPrice! > 0,
         );
+  }
+
+  Future<bool> _showAppointmentCreatedDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final shouldReturnToWorkshop = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            icon: const Icon(
+              Icons.check_circle_outline,
+              color: AutolabCustomer.success,
+              size: 42,
+            ),
+            title: Text(
+              l10n.appointmentCreatedSuccess,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            content: Text(
+              l10n.appointmentConfirmationDeliveryMessage,
+              textAlign: TextAlign.center,
+              style: AutolabCustomer.body.copyWith(height: 1.35),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(l10n.laropayPaymentResultBackToWorkshopAction),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return shouldReturnToWorkshop ?? false;
   }
 
   void _showAppointmentMessage(
