@@ -76,7 +76,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   WorkshopDiscoveryQueryStore? _queryStore;
   GarageVehicleController? _garageVehicleController;
   GarageVehicle? _activeVehicle;
-  String? _activeVehicleImagePath;
   int _activeVehicleLoadGeneration = 0;
 
   int _currentIndex = 0;
@@ -140,8 +139,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       if (!mounted || generation != _activeVehicleLoadGeneration) return;
 
       setState(() {
-        _activeVehicle = activeVehicle?.vehicle;
-        _activeVehicleImagePath = activeVehicle?.localImagePath;
+        _activeVehicle = activeVehicle;
       });
     } catch (_) {
       // The home page remains usable if the optional vehicle cannot be loaded.
@@ -354,7 +352,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
           return HomeCustomerContent(
             activeVehicle: _activeVehicle,
-            activeVehicleImagePath: _activeVehicleImagePath,
             workshops: workshops,
             isWorkshopsLoading:
                 snapshot.connectionState == ConnectionState.waiting,

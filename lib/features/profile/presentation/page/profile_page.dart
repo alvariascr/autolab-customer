@@ -40,7 +40,6 @@ class _ProfilePageState extends State<ProfilePage> {
   int _currentIndex = 4;
   String? _profilePhotoPath;
   GarageVehicle? _activeVehicle;
-  String? _activeVehicleImagePath;
   int _activeVehicleLoadGeneration = 0;
 
   @override
@@ -125,12 +124,9 @@ class _ProfilePageState extends State<ProfilePage> {
               profilePhotoPath: _profilePhotoPath,
               onEditPhotoTap: _showChangePhotoDialog,
             ),
-            if (_activeVehicle != null) ...[
+            if (_activeVehicle case final activeVehicle?) ...[
               const SizedBox(height: AutolabCustomer.spacingLg),
-              _ActiveVehicleCard(
-                vehicle: _activeVehicle!,
-                imagePath: _activeVehicleImagePath,
-              ),
+              _ActiveVehicleCard(vehicle: activeVehicle),
             ],
             const SizedBox(height: AutolabCustomer.spacingLg),
             _SectionTitle(l10n.garageQuickAccessTitle),
@@ -387,14 +383,12 @@ class _ProfilePageState extends State<ProfilePage> {
       if (activeVehicle == null) {
         setState(() {
           _activeVehicle = null;
-          _activeVehicleImagePath = null;
         });
         return;
       }
 
       setState(() {
-        _activeVehicle = activeVehicle.vehicle;
-        _activeVehicleImagePath = activeVehicle.localImagePath;
+        _activeVehicle = activeVehicle;
       });
     } catch (_) {
       // The active vehicle is optional on the garage screen.
@@ -636,10 +630,9 @@ class _EditProfilePhotoButton extends StatelessWidget {
 }
 
 class _ActiveVehicleCard extends StatelessWidget {
-  const _ActiveVehicleCard({required this.vehicle, this.imagePath});
+  const _ActiveVehicleCard({required this.vehicle});
 
   final GarageVehicle vehicle;
-  final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -656,10 +649,7 @@ class _ActiveVehicleCard extends StatelessWidget {
           SizedBox(
             width: 92,
             height: 48,
-            child: _ActiveVehicleImage(
-              imagePath: imagePath,
-              imageUrl: vehicle.imageUrl,
-            ),
+            child: _ActiveVehicleImage(imageUrl: vehicle.imageUrl),
           ),
           const SizedBox(width: AutolabCustomer.spacingMd),
           Expanded(
@@ -714,24 +704,12 @@ class _ActiveVehicleCard extends StatelessWidget {
 }
 
 class _ActiveVehicleImage extends StatelessWidget {
-  const _ActiveVehicleImage({this.imagePath, this.imageUrl});
+  const _ActiveVehicleImage({this.imageUrl});
 
-  final String? imagePath;
   final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
-    final path = imagePath;
-
-    if (path != null && path.isNotEmpty) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) =>
-            const _ActiveVehiclePlaceholder(),
-      );
-    }
-
     final url = imageUrl;
     if (url != null && url.isNotEmpty) {
       return Image.network(

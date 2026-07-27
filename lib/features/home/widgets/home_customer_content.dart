@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,7 +32,6 @@ class HomeCustomerContent extends StatelessWidget {
     required this.onViewAllWorkshopsTap,
     required this.onViewAllVehiclesTap,
     this.activeVehicle,
-    this.activeVehicleImagePath,
     this.onSearchQueryChanged,
     this.workshopFailure,
     this.productRepository,
@@ -56,7 +53,6 @@ class HomeCustomerContent extends StatelessWidget {
   final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
   final GarageVehicle? activeVehicle;
-  final String? activeVehicleImagePath;
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
 
@@ -128,7 +124,6 @@ class HomeCustomerContent extends StatelessWidget {
                               ),
                               child: _HomeActiveVehicleCard(
                                 vehicle: vehicle,
-                                localImagePath: activeVehicleImagePath,
                                 onViewAllTap: onViewAllVehiclesTap,
                               ),
                             ),
@@ -186,17 +181,14 @@ class _HomeActiveVehicleCard extends StatelessWidget {
   const _HomeActiveVehicleCard({
     required this.vehicle,
     required this.onViewAllTap,
-    this.localImagePath,
   });
 
   final GarageVehicle vehicle;
-  final String? localImagePath;
   final VoidCallback onViewAllTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = _HomeColors.of(context);
-    final localImagePath = this.localImagePath;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -209,14 +201,7 @@ class _HomeActiveVehicleCard extends StatelessWidget {
           SizedBox(
             width: 66,
             height: 42,
-            child: localImagePath != null
-                ? Image.file(
-                    File(localImagePath),
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) =>
-                        _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
-                  )
-                : _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
+            child: _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
           ),
           const SizedBox(width: 12),
           Expanded(
