@@ -120,15 +120,15 @@ class HomeCustomerContent extends StatelessWidget {
                           ),
                           const SizedBox(height: AutolabCustomer.spacingMd),
                           const _ServiceCategories(),
-                          if (activeVehicle != null) ...[
+                          if (activeVehicle case final vehicle?) ...[
                             const SizedBox(height: AutolabCustomer.spacingMd),
                             Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: horizontalMargin,
                               ),
                               child: _HomeActiveVehicleCard(
-                                vehicle: activeVehicle!,
-                                imagePath: activeVehicleImagePath,
+                                vehicle: vehicle,
+                                localImagePath: activeVehicleImagePath,
                                 onViewAllTap: onViewAllVehiclesTap,
                               ),
                             ),
@@ -186,16 +186,17 @@ class _HomeActiveVehicleCard extends StatelessWidget {
   const _HomeActiveVehicleCard({
     required this.vehicle,
     required this.onViewAllTap,
-    this.imagePath,
+    this.localImagePath,
   });
 
   final GarageVehicle vehicle;
-  final String? imagePath;
+  final String? localImagePath;
   final VoidCallback onViewAllTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = _HomeColors.of(context);
+    final localImagePath = this.localImagePath;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -208,9 +209,9 @@ class _HomeActiveVehicleCard extends StatelessWidget {
           SizedBox(
             width: 66,
             height: 42,
-            child: imagePath != null
+            child: localImagePath != null
                 ? Image.file(
-                    File(imagePath!),
+                    File(localImagePath),
                     fit: BoxFit.contain,
                     errorBuilder: (_, _, _) =>
                         _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
