@@ -220,6 +220,7 @@ void _registerFeatureDependencies() {
     () => GarageVehicleImageService(
       sl<GarageVehicleRepository>(),
       sl<SharedPreferences>(),
+      sl<FeatureLogger>(),
     ),
   );
   sl.registerLazySingleton<AppointmentRemoteDataSource>(

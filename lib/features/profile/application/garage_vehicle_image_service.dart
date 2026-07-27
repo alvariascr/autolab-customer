@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/logging/feature_logger.dart';
 import '../domain/entities/garage_vehicle.dart';
 import '../domain/repositories/garage_vehicle_repository.dart';
 
@@ -17,13 +18,18 @@ class GarageVehicleMovedImage {
 }
 
 class GarageVehicleImageService {
-  const GarageVehicleImageService(this._repository, this._preferences);
+  const GarageVehicleImageService(
+    this._repository,
+    this._preferences,
+    this._featureLogger,
+  );
 
   static const imageKeyPrefix = 'garage_vehicle_image_';
   static const newVehicleImageKey = '${imageKeyPrefix}new';
 
   final GarageVehicleRepository _repository;
   final SharedPreferences _preferences;
+  final FeatureLogger _featureLogger;
 
   Future<Map<String, String>> loadLocalImages() async {
     final loadedPaths = <String, String>{};
@@ -113,7 +119,13 @@ class GarageVehicleImageService {
         uploadedAny = true;
       } on UnsupportedError {
         await _preferences.remove(preferenceKey);
-      } catch (_) {
+      } catch (error, stackTrace) {
+        _featureLogger.warn(
+          feature: 'garage_vehicles',
+          action: 'legacy_image_upload_failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
         // Keep the local path so migration can retry on the next load.
       }
     }
