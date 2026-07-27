@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/garage_vehicle_controller.dart';
+import '../../application/garage_vehicle_image_service.dart';
 import '../../domain/entities/garage_vehicle.dart';
 import '../../domain/repositories/garage_vehicle_repository.dart';
 import '../helpers/garage_vehicle_display.dart';
@@ -22,8 +21,10 @@ class VehiclesPage extends StatefulWidget {
 }
 
 class _VehiclesPageState extends State<VehiclesPage> {
-  static const _newVehicleImageKey = 'garage_vehicle_image_new';
+  static const _newVehicleImageKey =
+      GarageVehicleImageService.newVehicleImageKey;
   late final GarageVehicleRepository _repository;
+  late final GarageVehicleImageService _imageService;
   GarageVehicleController? _garageVehicleController;
   var _status = _VehiclesStatus.loading;
   var _vehicles = <GarageVehicle>[];
@@ -35,6 +36,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   void initState() {
     super.initState();
     _repository = sl<GarageVehicleRepository>();
+    _imageService = sl<GarageVehicleImageService>();
     _garageVehicleController = sl.isRegistered<GarageVehicleController>()
         ? sl<GarageVehicleController>()
         : null;
@@ -49,7 +51,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     try {
       var vehicles = await _repository.getVehicles();
-      if (await _uploadLegacyVehicleImages(vehicles)) {
+      if (await _imageService.uploadLegacyImages(vehicles)) {
         vehicles = await _repository.getVehicles();
       }
       final defaultVehicle = vehicles
@@ -136,7 +138,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       _vehicleImagePaths.remove(_newVehicleImageKey);
       _formVersion++;
     });
-    _removeNewVehicleImage();
+    _imageService.removeNewVehicleImage();
   }
 
   Future<void> _selectVehicle(GarageVehicle vehicle) async {
@@ -165,7 +167,19 @@ class _VehiclesPageState extends State<VehiclesPage> {
   Future<void> _handleVehicleSaved(String? vehicleId) async {
     if (vehicleId != null && vehicleId.isNotEmpty) {
       try {
-        await _moveNewVehicleImage(vehicleId);
+        final movedImage = await _imageService.moveAndUploadNewVehicleImage(
+          vehicleId,
+        );
+        if (movedImage != null) {
+          _garageVehicleController?.notifyVehiclesChanged();
+          if (mounted) {
+            setState(() {
+              _vehicleImagePaths
+                ..remove(_newVehicleImageKey)
+                ..[movedImage.preferenceKey] = movedImage.localPath;
+            });
+          }
+        }
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -197,28 +211,26 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     if (image == null || !mounted) return;
 
-    final persistedImagePath = await _persistVehicleImage(
+    final key = _vehicleImageKey(_selectedVehicle);
+    final persistedImagePath = await _imageService.persistImage(
       sourcePath: image.path,
-      key: _vehicleImageKey(_selectedVehicle),
+      preferenceKey: key,
     );
 
     if (!mounted) return;
 
-    final key = _vehicleImageKey(_selectedVehicle);
     setState(() {
       _vehicleImagePaths[key] = persistedImagePath;
     });
 
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(key, persistedImagePath);
     final selectedVehicleId = _selectedVehicle?.id;
     if (selectedVehicleId != null) {
       try {
-        await _repository.uploadVehicleImage(
-          garageVehicleId: selectedVehicleId,
-          localFilePath: persistedImagePath,
+        await _imageService.uploadPersistedImage(
+          vehicleId: selectedVehicleId,
+          localPath: persistedImagePath,
+          preferenceKey: key,
         );
-        await preferences.remove(key);
         await _loadVehicles();
         _garageVehicleController?.notifyVehiclesChanged();
       } catch (_) {
@@ -233,17 +245,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   }
 
   Future<void> _loadVehicleImages() async {
-    final preferences = await SharedPreferences.getInstance();
-    final loadedPaths = <String, String>{};
-
-    for (final key in preferences.getKeys()) {
-      if (!key.startsWith('garage_vehicle_image_')) continue;
-
-      final path = preferences.getString(key);
-      if (path == null || path.isEmpty || !File(path).existsSync()) continue;
-
-      loadedPaths[key] = path;
-    }
+    final loadedPaths = await _imageService.loadLocalImages();
 
     if (!mounted) return;
 
@@ -252,102 +254,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
         ..clear()
         ..addAll(loadedPaths);
     });
-  }
-
-  Future<void> _removeNewVehicleImage() async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_newVehicleImageKey);
-  }
-
-  Future<void> _moveNewVehicleImage(String vehicleId) async {
-    final preferences = await SharedPreferences.getInstance();
-    final temporaryPath = preferences.getString(_newVehicleImageKey);
-
-    if (temporaryPath == null || temporaryPath.isEmpty) {
-      return;
-    }
-
-    final vehicleImageKey = _vehicleImageKeyById(vehicleId);
-    final persistedImagePath = await _persistVehicleImage(
-      sourcePath: temporaryPath,
-      key: vehicleImageKey,
-    );
-    await preferences.setString(vehicleImageKey, persistedImagePath);
-    await preferences.remove(_newVehicleImageKey);
-    await _repository.uploadVehicleImage(
-      garageVehicleId: vehicleId,
-      localFilePath: persistedImagePath,
-    );
-    await preferences.remove(vehicleImageKey);
-    _garageVehicleController?.notifyVehiclesChanged();
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _vehicleImagePaths
-        ..remove(_newVehicleImageKey)
-        ..[vehicleImageKey] = persistedImagePath;
-    });
-  }
-
-  Future<bool> _uploadLegacyVehicleImages(List<GarageVehicle> vehicles) async {
-    if (vehicles.isEmpty) return false;
-
-    final preferences = await SharedPreferences.getInstance();
-    var uploadedAny = false;
-
-    for (final vehicle in vehicles.where(
-      (vehicle) => vehicle.imagePath == null || vehicle.imagePath!.isEmpty,
-    )) {
-      final key = _vehicleImageKeyById(vehicle.id);
-      final localPath = preferences.getString(key);
-      if (localPath == null ||
-          localPath.isEmpty ||
-          !File(localPath).existsSync()) {
-        continue;
-      }
-
-      try {
-        await _repository.uploadVehicleImage(
-          garageVehicleId: vehicle.id,
-          localFilePath: localPath,
-        );
-        await preferences.remove(key);
-        uploadedAny = true;
-      } on UnsupportedError {
-        await preferences.remove(key);
-      } catch (_) {
-        // Keep the local path so migration can retry on the next load.
-      }
-    }
-
-    return uploadedAny;
-  }
-
-  Future<String> _persistVehicleImage({
-    required String sourcePath,
-    required String key,
-  }) async {
-    final sourceFile = File(sourcePath);
-    final appDirectory = await getApplicationDocumentsDirectory();
-    final imagesDirectory = Directory(
-      '${appDirectory.path}${Platform.pathSeparator}garage_vehicle_images',
-    );
-
-    if (!imagesDirectory.existsSync()) {
-      await imagesDirectory.create(recursive: true);
-    }
-
-    final extension = _fileExtension(sourceFile.path);
-    final fileName =
-        '${key}_${DateTime.now().microsecondsSinceEpoch}$extension';
-    final destinationPath =
-        '${imagesDirectory.path}${Platform.pathSeparator}$fileName';
-
-    final copiedFile = await sourceFile.copy(destinationPath);
-    return copiedFile.path;
   }
 
   @override
@@ -1436,18 +1342,5 @@ InputDecoration _vehicleInputDecoration(
 String _vehicleImageKey(GarageVehicle? vehicle) {
   return vehicle == null
       ? _VehiclesPageState._newVehicleImageKey
-      : 'garage_vehicle_image_${vehicle.id}';
-}
-
-String _vehicleImageKeyById(String vehicleId) {
-  return 'garage_vehicle_image_$vehicleId';
-}
-
-String _fileExtension(String path) {
-  final dotIndex = path.lastIndexOf('.');
-  if (dotIndex == -1 || dotIndex == path.length - 1) {
-    return '.jpg';
-  }
-
-  return path.substring(dotIndex);
+      : GarageVehicleImageService.vehicleImageKey(vehicle.id);
 }
