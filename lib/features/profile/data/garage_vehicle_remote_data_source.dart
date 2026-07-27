@@ -196,7 +196,7 @@ class GarageVehicleRemoteDataSource {
           ),
         );
 
-    await client
+    final updatedVehicle = await client
         .from('garage_vehicles')
         .update({
           'image_path': objectPath,
@@ -204,7 +204,18 @@ class GarageVehicleRemoteDataSource {
         })
         .eq('id', garageVehicleId)
         .eq('user_id', userId)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .select('id')
+        .maybeSingle();
+
+    if (updatedVehicle == null) {
+      try {
+        await client.storage.from(_vehicleImagesBucket).remove([objectPath]);
+      } on StorageException {
+        // Preserve the persistence error even if orphan cleanup also fails.
+      }
+      throw StateError('Active garage vehicle was not found');
+    }
   }
 
   Future<GarageVehicleModel> _vehicleFromMap(Map<String, dynamic> map) async {
