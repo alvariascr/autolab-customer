@@ -786,9 +786,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vehiclesTitle => 'Mis vehículos';
 
   @override
-  String get vehiclesManageAction => 'Gestionar';
-
-  @override
   String get vehiclesViewAllAction => 'Ver todos';
 
   @override

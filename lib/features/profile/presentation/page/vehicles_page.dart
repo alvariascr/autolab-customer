@@ -280,7 +280,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
             children: [
               _VehiclesBackButton(onTap: () => _goBack(context)),
               const SizedBox(height: AutolabCustomer.spacingMd),
-              _VehiclesTitleRow(onManageTap: () => _openVehicleForm()),
+              const _VehiclesTitleRow(),
               const SizedBox(height: AutolabCustomer.spacingMd),
               SizedBox(
                 height: AutolabCustomer.responsiveDouble(
@@ -408,42 +408,18 @@ class _VehiclesBackButton extends StatelessWidget {
 }
 
 class _VehiclesTitleRow extends StatelessWidget {
-  const _VehiclesTitleRow({required this.onManageTap});
-
-  final VoidCallback onManageTap;
+  const _VehiclesTitleRow();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.vehiclesTitle,
-            style: AutolabCustomer.bodyLarge.copyWith(
-              color: AutolabCustomer.customerTextColor(context),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: onManageTap,
-          style: TextButton.styleFrom(
-            foregroundColor: AutolabCustomer.primary,
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            l10n.vehiclesManageAction,
-            style: AutolabCustomer.caption.copyWith(
-              color: AutolabCustomer.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      l10n.vehiclesTitle,
+      style: AutolabCustomer.bodyLarge.copyWith(
+        color: AutolabCustomer.customerTextColor(context),
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }
@@ -521,6 +497,20 @@ class _VehicleCompactCard extends StatelessWidget {
                         fontSize: 9,
                       ),
                     ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(
+                        selected
+                            ? Icons.check_circle_outline_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: selected
+                            ? AutolabCustomer.primary
+                            : AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
+                        size: 10,
+                      ),
+                    ),
                   ],
                 ),
                 Positioned(
@@ -564,19 +554,6 @@ class _VehicleCompactCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Icon(
-                    selected
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: selected
-                        ? AutolabCustomer.primary
-                        : AutolabCustomer.customerSecondaryTextColor(context),
-                    size: 14,
                   ),
                 ),
               ],
