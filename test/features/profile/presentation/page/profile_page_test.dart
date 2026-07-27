@@ -5,7 +5,8 @@ import 'package:autolab_customer/features/appointments/presentation/cubit/my_app
 import 'package:autolab_customer/features/appointments/presentation/pages/my_appointments_page.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
-import 'package:autolab_customer/features/profile/data/garage_vehicle_remote_data_source.dart';
+import 'package:autolab_customer/features/profile/domain/repositories/garage_vehicle_repository.dart';
+import 'package:autolab_customer/features/profile/domain/usecases/get_garage_vehicles.dart';
 import 'package:autolab_customer/features/profile/presentation/page/profile_page.dart';
 import 'package:autolab_customer/features/profile/presentation/page/vehicles_page.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
@@ -24,19 +25,19 @@ class _MockAuthSessionCubit extends MockCubit<AuthSessionState>
 class _MockAppointmentRepository extends Mock
     implements AppointmentRepository {}
 
-class _MockGarageVehicleRemoteDataSource extends Mock
-    implements GarageVehicleRemoteDataSource {}
+class _MockGarageVehicleRepository extends Mock
+    implements GarageVehicleRepository {}
 
 void main() {
   group('ProfilePage navigation', () {
     late _MockAuthSessionCubit authSessionCubit;
     late _MockAppointmentRepository appointmentRepository;
-    late _MockGarageVehicleRemoteDataSource vehicleDataSource;
+    late _MockGarageVehicleRepository vehicleRepository;
 
     setUp(() {
       authSessionCubit = _MockAuthSessionCubit();
       appointmentRepository = _MockAppointmentRepository();
-      vehicleDataSource = _MockGarageVehicleRemoteDataSource();
+      vehicleRepository = _MockGarageVehicleRepository();
 
       when(
         () => authSessionCubit.state,
@@ -45,15 +46,19 @@ void main() {
       when(
         () => appointmentRepository.getCustomerAppointments(),
       ).thenAnswer((_) async => const Right([]));
-      when(() => vehicleDataSource.getVehicles()).thenAnswer((_) async => []);
+      when(() => vehicleRepository.getVehicles()).thenAnswer((_) async => []);
 
       sl.registerFactory(() => MyAppointmentsCubit(appointmentRepository));
-      sl.registerSingleton<GarageVehicleRemoteDataSource>(vehicleDataSource);
+      sl.registerSingleton<GetGarageVehicles>(
+        GetGarageVehicles(vehicleRepository),
+      );
+      sl.registerSingleton<GarageVehicleRepository>(vehicleRepository);
     });
 
     tearDown(() async {
       await sl.unregister<MyAppointmentsCubit>();
-      await sl.unregister<GarageVehicleRemoteDataSource>();
+      await sl.unregister<GetGarageVehicles>();
+      await sl.unregister<GarageVehicleRepository>();
     });
 
     testWidgets('abre mis citas manteniendo perfil en el stack', (

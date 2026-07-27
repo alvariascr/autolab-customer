@@ -3,11 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../domain/repositories/garage_vehicle_repository.dart';
 import 'models/garage_vehicle_model.dart';
-
-class GarageVehicleAlreadyExistsException implements Exception {
-  const GarageVehicleAlreadyExistsException();
-}
 
 class GarageVehicleRemoteDataSource {
   const GarageVehicleRemoteDataSource(this.client);

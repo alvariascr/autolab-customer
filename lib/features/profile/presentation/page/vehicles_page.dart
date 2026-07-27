@@ -10,8 +10,8 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/garage_vehicle_controller.dart';
-import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../../domain/repositories/garage_vehicle_repository.dart';
 import '../helpers/garage_vehicle_display.dart';
 
 class VehiclesPage extends StatefulWidget {
@@ -23,7 +23,7 @@ class VehiclesPage extends StatefulWidget {
 
 class _VehiclesPageState extends State<VehiclesPage> {
   static const _newVehicleImageKey = 'garage_vehicle_image_new';
-  late final GarageVehicleRemoteDataSource _dataSource;
+  late final GarageVehicleRepository _repository;
   GarageVehicleController? _garageVehicleController;
   var _status = _VehiclesStatus.loading;
   var _vehicles = <GarageVehicle>[];
@@ -34,7 +34,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   @override
   void initState() {
     super.initState();
-    _dataSource = sl<GarageVehicleRemoteDataSource>();
+    _repository = sl<GarageVehicleRepository>();
     _garageVehicleController = sl.isRegistered<GarageVehicleController>()
         ? sl<GarageVehicleController>()
         : null;
@@ -48,9 +48,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
     setState(() => _status = _VehiclesStatus.loading);
 
     try {
-      var vehicles = await _dataSource.getVehicles();
+      var vehicles = await _repository.getVehicles();
       if (await _uploadLegacyVehicleImages(vehicles)) {
-        vehicles = await _dataSource.getVehicles();
+        vehicles = await _repository.getVehicles();
       }
       final defaultVehicle = vehicles
           .where((vehicle) => vehicle.isDefault)
@@ -86,7 +86,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) =>
-          _VehicleForm(dataSource: _dataSource, initialVehicle: vehicle),
+          _VehicleForm(repository: _repository, initialVehicle: vehicle),
     );
 
     if (saved == true && mounted) {
@@ -118,7 +118,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
     if (confirmed != true) return;
 
     try {
-      await _dataSource.deleteVehicle(vehicle.id);
+      await _repository.deleteVehicle(vehicle.id);
       _garageVehicleController?.notifyVehiclesChanged();
       if (!mounted) return;
       await _loadVehicles();
@@ -144,7 +144,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       if (_garageVehicleController != null) {
         await _garageVehicleController!.setDefaultVehicle(vehicle.id);
       } else {
-        await _dataSource.setDefaultGarageVehicle(vehicle.id);
+        await _repository.setDefaultVehicle(vehicle.id);
       }
       if (!mounted) return;
       setState(() {
@@ -214,7 +214,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
     final selectedVehicleId = _selectedVehicle?.id;
     if (selectedVehicleId != null) {
       try {
-        await _dataSource.uploadVehicleImage(
+        await _repository.uploadVehicleImage(
           garageVehicleId: selectedVehicleId,
           localFilePath: persistedImagePath,
         );
@@ -274,7 +274,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
     );
     await preferences.setString(vehicleImageKey, persistedImagePath);
     await preferences.remove(_newVehicleImageKey);
-    await _dataSource.uploadVehicleImage(
+    await _repository.uploadVehicleImage(
       garageVehicleId: vehicleId,
       localFilePath: persistedImagePath,
     );
@@ -310,7 +310,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       }
 
       try {
-        await _dataSource.uploadVehicleImage(
+        await _repository.uploadVehicleImage(
           garageVehicleId: vehicle.id,
           localFilePath: localPath,
         );
@@ -408,7 +408,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                   key: ValueKey(
                     '${_selectedVehicle?.id ?? 'new'}-$_formVersion',
                   ),
-                  dataSource: _dataSource,
+                  repository: _repository,
                   initialVehicle: _selectedVehicle,
                   embedded: true,
                   onSaved: _handleVehicleSaved,
@@ -933,14 +933,14 @@ class _VehiclesMessage extends StatelessWidget {
 
 class _VehicleForm extends StatefulWidget {
   const _VehicleForm({
-    required this.dataSource,
+    required this.repository,
     this.initialVehicle,
     this.embedded = false,
     this.onSaved,
     super.key,
   });
 
-  final GarageVehicleRemoteDataSource dataSource;
+  final GarageVehicleRepository repository;
   final GarageVehicle? initialVehicle;
   final bool embedded;
   final Future<void> Function(String? vehicleId)? onSaved;
@@ -1003,7 +1003,7 @@ class _VehicleFormState extends State<_VehicleForm> {
       final vehicle = widget.initialVehicle;
       String? savedVehicleId;
       if (vehicle == null) {
-        savedVehicleId = await widget.dataSource.createVehicle(
+        savedVehicleId = await widget.repository.createVehicle(
           licensePlate: _plateController.text,
           vehicleType: _vehicleType,
           brand: _brandController.text,
@@ -1014,7 +1014,7 @@ class _VehicleFormState extends State<_VehicleForm> {
           transmissionType: _transmissionType,
         );
       } else {
-        await widget.dataSource.updateVehicle(
+        await widget.repository.updateVehicle(
           id: vehicle.id,
           licensePlate: _plateController.text,
           vehicleType: _vehicleType,

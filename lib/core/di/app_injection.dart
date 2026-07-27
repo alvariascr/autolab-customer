@@ -36,6 +36,10 @@ import '../../features/products/domain/usecases/get_additional_products_by_works
 import '../../features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import '../../features/profile/application/garage_vehicle_controller.dart';
 import '../../features/profile/data/garage_vehicle_remote_data_source.dart';
+import '../../features/profile/data/repositories/garage_vehicle_repository_impl.dart';
+import '../../features/profile/domain/repositories/garage_vehicle_repository.dart';
+import '../../features/profile/domain/usecases/get_garage_vehicles.dart';
+import '../../features/profile/domain/usecases/set_default_garage_vehicle.dart';
 import '../../features/workshops/application/appointment_cubit.dart';
 import '../../features/workshops/application/workshop_discovery_query_store.dart';
 import '../../features/workshops/data/datasources/appointment_booking_remote_data_source.dart';
@@ -199,8 +203,17 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<GarageVehicleRemoteDataSource>(
     () => GarageVehicleRemoteDataSource(sl<SupabaseClient>()),
   );
+  sl.registerLazySingleton<GarageVehicleRepository>(
+    () => GarageVehicleRepositoryImpl(sl<GarageVehicleRemoteDataSource>()),
+  );
+  sl.registerLazySingleton<GetGarageVehicles>(
+    () => GetGarageVehicles(sl<GarageVehicleRepository>()),
+  );
+  sl.registerLazySingleton<SetDefaultGarageVehicle>(
+    () => SetDefaultGarageVehicle(sl<GarageVehicleRepository>()),
+  );
   sl.registerLazySingleton<GarageVehicleController>(
-    () => GarageVehicleController(sl<GarageVehicleRemoteDataSource>()),
+    () => GarageVehicleController(sl<SetDefaultGarageVehicle>()),
   );
   sl.registerLazySingleton<AppointmentRemoteDataSource>(
     () => AppointmentRemoteDataSourceImpl(sl<SupabaseClient>()),

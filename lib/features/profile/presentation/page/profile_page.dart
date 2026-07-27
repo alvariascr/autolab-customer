@@ -16,8 +16,8 @@ import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../application/active_garage_vehicle_loader.dart';
 import '../../application/garage_vehicle_controller.dart';
-import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../../domain/usecases/get_garage_vehicles.dart';
 import '../helpers/garage_vehicle_display.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -359,7 +359,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadActiveVehicle() async {
     try {
       final activeVehicle = await loadActiveGarageVehicle(
-        sl<GarageVehicleRemoteDataSource>(),
+        sl<GetGarageVehicles>(),
       );
 
       if (!mounted) {

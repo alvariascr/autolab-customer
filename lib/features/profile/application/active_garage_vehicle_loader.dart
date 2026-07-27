@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../data/garage_vehicle_remote_data_source.dart';
 import '../domain/entities/garage_vehicle.dart';
+import '../domain/usecases/get_garage_vehicles.dart';
 
 class ActiveGarageVehicle {
   const ActiveGarageVehicle({required this.vehicle, this.localImagePath});
@@ -13,9 +13,9 @@ class ActiveGarageVehicle {
 }
 
 Future<ActiveGarageVehicle?> loadActiveGarageVehicle(
-  GarageVehicleRemoteDataSource dataSource,
+  GetGarageVehicles getGarageVehicles,
 ) async {
-  final vehicles = await dataSource.getVehicles();
+  final vehicles = await getGarageVehicles();
   GarageVehicle? vehicle;
   for (final item in vehicles) {
     if (item.isDefault) {

@@ -1,18 +1,18 @@
 import 'package:flutter/foundation.dart';
 
-import '../data/garage_vehicle_remote_data_source.dart';
+import '../domain/usecases/set_default_garage_vehicle.dart';
 
 /// Updates garage vehicle state and tells visible screens to reload Supabase.
 class GarageVehicleController extends ChangeNotifier {
-  GarageVehicleController(this._dataSource);
+  GarageVehicleController(this._setDefaultGarageVehicle);
 
-  final GarageVehicleRemoteDataSource _dataSource;
+  final SetDefaultGarageVehicle _setDefaultGarageVehicle;
 
   Future<void> setDefaultVehicle(String vehicleId) async {
     final normalizedId = vehicleId.trim();
     if (normalizedId.isEmpty) return;
 
-    await _dataSource.setDefaultGarageVehicle(normalizedId);
+    await _setDefaultGarageVehicle(normalizedId);
     notifyListeners();
   }
 

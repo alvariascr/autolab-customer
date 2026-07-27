@@ -14,8 +14,8 @@ import '../navigation/widgets/custom_bottom_navbar.dart';
 import '../products/domain/repositories/product_repository.dart';
 import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
-import '../profile/data/garage_vehicle_remote_data_source.dart';
 import '../profile/domain/entities/garage_vehicle.dart';
+import '../profile/domain/usecases/get_garage_vehicles.dart';
 import '../workshops/application/workshop_discovery_query_store.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
@@ -127,7 +127,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   Future<void> _loadActiveVehicle() async {
     try {
       final activeVehicle = await loadActiveGarageVehicle(
-        sl<GarageVehicleRemoteDataSource>(),
+        sl<GetGarageVehicles>(),
       );
       if (!mounted) return;
 
