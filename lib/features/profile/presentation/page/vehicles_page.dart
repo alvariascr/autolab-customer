@@ -583,16 +583,7 @@ class _VehicleCompactCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Center(
-                        child: Icon(
-                          Icons.directions_car_filled_rounded,
-                          color: AutolabCustomer.customerTextColor(context),
-                          size: AutolabCustomer.responsiveDouble(
-                            context,
-                            compact: 34,
-                            regular: 42,
-                            tablet: 48,
-                          ),
-                        ),
+                        child: _VehicleCompactImage(vehicle: vehicle),
                       ),
                     ),
                     Text(
@@ -626,9 +617,20 @@ class _VehicleCompactCard extends StatelessWidget {
                   top: -8,
                   child: PopupMenuButton<String>(
                     color: AutolabCustomer.customerSurfaceColor(context),
-                    icon: const Icon(Icons.more_horiz_rounded, size: 16),
-                    iconColor: AutolabCustomer.customerSecondaryTextColor(
-                      context,
+                    icon: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 3,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AutolabCustomer.white.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Icon(
+                        Icons.more_horiz_rounded,
+                        size: 16,
+                        color: AutolabCustomer.secondary,
+                      ),
                     ),
                     onSelected: (value) {
                       if (value == 'edit') {
@@ -669,6 +671,42 @@ class _VehicleCompactCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VehicleCompactImage extends StatelessWidget {
+  const _VehicleCompactImage({required this.vehicle});
+
+  final GarageVehicle vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = vehicle.imageUrl;
+    final placeholder = Icon(
+      Icons.directions_car_filled_rounded,
+      color: AutolabCustomer.customerTextColor(context),
+      size: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 34,
+        regular: 42,
+        tablet: 48,
+      ),
+    );
+
+    if (imageUrl == null || imageUrl.isEmpty) return placeholder;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      child: SizedBox.expand(
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => placeholder,
+          loadingBuilder: (context, child, loadingProgress) =>
+              loadingProgress == null ? child : placeholder,
         ),
       ),
     );
