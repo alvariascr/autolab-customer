@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -182,8 +181,7 @@ class GarageVehicleRemoteDataSource {
       throw StateError('Authenticated user is required');
     }
 
-    final file = File(localFilePath);
-    final bytes = await file.readAsBytes();
+    final bytes = await XFile(localFilePath).readAsBytes();
     final objectPath = '$userId/$garageVehicleId/vehicle-image';
 
     await client.storage
