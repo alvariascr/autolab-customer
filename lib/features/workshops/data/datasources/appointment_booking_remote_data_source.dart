@@ -72,7 +72,8 @@ class SupabaseAppointmentBookingRemoteDataSource
     year,
     color,
     fuel_type,
-    transmission_type
+    transmission_type,
+    is_default
   ''';
 
   @override
@@ -455,5 +456,6 @@ AppointmentVehicleRecord _appointmentVehicleFromMap(Map<String, dynamic> map) {
     color: map['color']?.toString(),
     fuelType: map['fuel_type']?.toString(),
     transmissionType: map['transmission_type']?.toString(),
+    isDefault: map['is_default'] == true,
   );
 }

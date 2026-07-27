@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart' show Either, Right;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/di/app_injection.dart';
 import '../../core/location/location_cubit.dart';
@@ -11,6 +15,9 @@ import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
 import '../products/domain/repositories/product_repository.dart';
+import '../profile/application/garage_vehicle_controller.dart';
+import '../profile/data/garage_vehicle_remote_data_source.dart';
+import '../profile/domain/entities/garage_vehicle.dart';
 import '../workshops/application/workshop_discovery_query_store.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
@@ -67,6 +74,9 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
   final TextEditingController _searchController = TextEditingController();
   WorkshopDiscoveryQueryStore? _queryStore;
+  GarageVehicleController? _garageVehicleController;
+  GarageVehicle? _activeVehicle;
+  String? _activeVehicleImagePath;
 
   int _currentIndex = 0;
   bool _showSearchBar = false;
@@ -75,6 +85,11 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   void initState() {
     super.initState();
+    if (sl.isRegistered<GarageVehicleController>()) {
+      _garageVehicleController = sl<GarageVehicleController>()
+        ..addListener(_loadActiveVehicle);
+      _loadActiveVehicle();
+    }
     widget.controller?._attach(this);
     _currentIndex = widget.initialIndex;
     _showSearchBar = widget.initialShowSearchBar;
@@ -104,10 +119,37 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   @override
   void dispose() {
+    _garageVehicleController?.removeListener(_loadActiveVehicle);
     widget.controller?._detach(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadActiveVehicle() async {
+    try {
+      final vehicles = await sl<GarageVehicleRemoteDataSource>().getVehicles();
+      final vehicle = vehicles.where((item) => item.isDefault).firstOrNull;
+      if (!mounted) return;
+
+      final imagePath = sl<SharedPreferences>().getString(
+        'garage_vehicle_image_${vehicle?.id}',
+      );
+      setState(() {
+        _activeVehicle = vehicle;
+        _activeVehicleImagePath =
+            imagePath != null && File(imagePath).existsSync()
+            ? imagePath
+            : null;
+      });
+    } catch (_) {
+      // The home page remains usable if the optional vehicle cannot be loaded.
+    }
+  }
+
+  Future<void> _openVehiclesPage() async {
+    await context.push('/vehicles');
+    if (mounted) await _loadActiveVehicle();
   }
 
   @override
@@ -310,6 +352,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
           );
 
           return HomeCustomerContent(
+            activeVehicle: _activeVehicle,
+            activeVehicleImagePath: _activeVehicleImagePath,
             workshops: workshops,
             isWorkshopsLoading:
                 snapshot.connectionState == ConnectionState.waiting,
@@ -320,6 +364,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             onLocationTap: _showLocationOptions,
             onSearchClose: _closeSearch,
             onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
+            onViewAllVehiclesTap: _openVehiclesPage,
             productRepository: sl.isRegistered<ProductRepository>()
                 ? sl<ProductRepository>()
                 : null,

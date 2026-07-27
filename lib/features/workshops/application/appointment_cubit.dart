@@ -171,6 +171,12 @@ class AppointmentCubit extends Cubit<AppointmentState> {
           vehiclesStatus: AppointmentLoadStatus.success,
         ),
       );
+      final defaultVehicle = vehicles
+          .where((vehicle) => vehicle.isDefault)
+          .firstOrNull;
+      if (defaultVehicle != null) {
+        selectExistingVehicle(defaultVehicle);
+      }
     } catch (_) {
       emit(state.copyWith(vehiclesStatus: AppointmentLoadStatus.failure));
     }

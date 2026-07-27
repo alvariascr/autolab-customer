@@ -14,6 +14,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../application/garage_vehicle_controller.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
 import '../helpers/garage_vehicle_display.dart';
@@ -29,18 +30,27 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   static const _profilePhotoPathKey = 'profile_photo_path';
-  static const _activeVehicleIdKey = 'garage_active_vehicle_id';
-
   int _currentIndex = 4;
   String? _profilePhotoPath;
   GarageVehicle? _activeVehicle;
   String? _activeVehicleImagePath;
+  GarageVehicleController? _garageVehicleController;
 
   @override
   void initState() {
     super.initState();
+    if (sl.isRegistered<GarageVehicleController>()) {
+      _garageVehicleController = sl<GarageVehicleController>()
+        ..addListener(_loadActiveVehicle);
+    }
     _loadProfilePhoto();
     _loadActiveVehicle();
+  }
+
+  @override
+  void dispose() {
+    _garageVehicleController?.removeListener(_loadActiveVehicle);
+    super.dispose();
   }
 
   void _handleBottomNavigation(int index) {
@@ -347,20 +357,21 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadActiveVehicle() async {
     final preferences = await SharedPreferences.getInstance();
-    final activeVehicleId = preferences.getString(_activeVehicleIdKey);
-
-    if (activeVehicleId == null || activeVehicleId.isEmpty) {
-      return;
-    }
 
     try {
       final vehicles = await sl<GarageVehicleRemoteDataSource>().getVehicles();
-      final activeVehicle = vehicles.cast<GarageVehicle?>().firstWhere(
-        (vehicle) => vehicle?.id == activeVehicleId,
-        orElse: () => null,
-      );
+      final activeVehicle = vehicles
+          .where((vehicle) => vehicle.isDefault)
+          .firstOrNull;
 
-      if (activeVehicle == null || !mounted) {
+      if (!mounted) {
+        return;
+      }
+      if (activeVehicle == null) {
+        setState(() {
+          _activeVehicle = null;
+          _activeVehicleImagePath = null;
+        });
         return;
       }
 
@@ -635,7 +646,10 @@ class _ActiveVehicleCard extends StatelessWidget {
           SizedBox(
             width: 92,
             height: 48,
-            child: _ActiveVehicleImage(imagePath: imagePath),
+            child: _ActiveVehicleImage(
+              imagePath: imagePath,
+              imageUrl: vehicle.imageUrl,
+            ),
           ),
           const SizedBox(width: AutolabCustomer.spacingMd),
           Expanded(
@@ -690,9 +704,10 @@ class _ActiveVehicleCard extends StatelessWidget {
 }
 
 class _ActiveVehicleImage extends StatelessWidget {
-  const _ActiveVehicleImage({this.imagePath});
+  const _ActiveVehicleImage({this.imagePath, this.imageUrl});
 
   final String? imagePath;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -701,6 +716,16 @@ class _ActiveVehicleImage extends StatelessWidget {
     if (path != null && path.isNotEmpty) {
       return Image.file(
         File(path),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            const _ActiveVehiclePlaceholder(),
+      );
+    }
+
+    final url = imageUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) =>
             const _ActiveVehiclePlaceholder(),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +9,8 @@ import '../../../core/location/location_state.dart';
 import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../products/domain/repositories/product_repository.dart';
+import '../../profile/domain/entities/garage_vehicle.dart';
+import '../../profile/presentation/helpers/garage_vehicle_display.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
 import '../../workshops/domain/services/workshop_search_location_resolver.dart';
@@ -28,6 +32,9 @@ class HomeCustomerContent extends StatelessWidget {
     required this.onLocationTap,
     required this.onSearchClose,
     required this.onViewAllWorkshopsTap,
+    required this.onViewAllVehiclesTap,
+    this.activeVehicle,
+    this.activeVehicleImagePath,
     this.onSearchQueryChanged,
     this.workshopFailure,
     this.productRepository,
@@ -43,10 +50,13 @@ class HomeCustomerContent extends StatelessWidget {
   final ValueChanged<LocationState> onLocationTap;
   final VoidCallback onSearchClose;
   final VoidCallback onViewAllWorkshopsTap;
+  final VoidCallback onViewAllVehiclesTap;
   final ProductRepository? productRepository;
   final RecentSearchesStore? recentSearchesStore;
   final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
+  final GarageVehicle? activeVehicle;
+  final String? activeVehicleImagePath;
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
 
@@ -110,6 +120,19 @@ class HomeCustomerContent extends StatelessWidget {
                           ),
                           const SizedBox(height: AutolabCustomer.spacingMd),
                           const _ServiceCategories(),
+                          if (activeVehicle != null) ...[
+                            const SizedBox(height: AutolabCustomer.spacingMd),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalMargin,
+                              ),
+                              child: _HomeActiveVehicleCard(
+                                vehicle: activeVehicle!,
+                                imagePath: activeVehicleImagePath,
+                                onViewAllTap: onViewAllVehiclesTap,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: AutolabCustomer.spacingScreen),
                           WorkshopsSection(
                             workshops: workshops,
@@ -155,6 +178,135 @@ class HomeCustomerContent extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _HomeActiveVehicleCard extends StatelessWidget {
+  const _HomeActiveVehicleCard({
+    required this.vehicle,
+    required this.onViewAllTap,
+    this.imagePath,
+  });
+
+  final GarageVehicle vehicle;
+  final String? imagePath;
+  final VoidCallback onViewAllTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _HomeColors.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 66,
+            height: 42,
+            child: imagePath != null
+                ? Image.file(
+                    File(imagePath!),
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) =>
+                        _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
+                  )
+                : _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  garageVehicleTitle(vehicle),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.body.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  garageActiveVehicleSubtitle(vehicle),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.caption.copyWith(color: colors.text),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AutolabCustomer.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      AppLocalizations.of(context)!.garageActiveVehicle,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: colors.text,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onViewAllTap,
+            style: TextButton.styleFrom(
+              foregroundColor: AutolabCustomer.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              AppLocalizations.of(context)!.workshopsSectionViewAll,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 9,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeVehicleNetworkImage extends StatelessWidget {
+  const _HomeVehicleNetworkImage({this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl;
+    if (url == null || url.isEmpty) {
+      return const Icon(
+        Icons.directions_car_filled_rounded,
+        color: AutolabCustomer.primary,
+        size: 36,
+      );
+    }
+
+    return Image.network(
+      url,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const Icon(
+        Icons.directions_car_filled_rounded,
+        color: AutolabCustomer.primary,
+        size: 36,
+      ),
     );
   }
 }

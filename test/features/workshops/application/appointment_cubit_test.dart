@@ -104,6 +104,39 @@ void main() {
     expect(preselectedCubit.state.products, [additionalProduct]);
   });
 
+  test('load preselects the database default garage vehicle', () async {
+    final getCustomerVehicles = MockGetCustomerVehicles();
+    final productRepository = MockProductRepository();
+    final workshopRepository = MockWorkshopRepository();
+    final defaultVehicle = const AppointmentVehicleRecord(
+      id: 'default-vehicle',
+      licensePlate: 'DEF123',
+      isDefault: true,
+    );
+    final defaultVehicleCubit = _createCubit(
+      workshopRepository: workshopRepository,
+      productRepository: productRepository,
+      bookServiceAppointment: MockBookServiceAppointment(),
+      getCustomerVehicles: getCustomerVehicles,
+    );
+    addTearDown(defaultVehicleCubit.close);
+
+    when(
+      () => productRepository.getActiveProductsByWorkshop('workshop-1'),
+    ).thenAnswer((_) async => const Right([]));
+    when(
+      () => workshopRepository.getWorkshopById('workshop-1'),
+    ).thenAnswer((_) async => const Right(null));
+    when(
+      () => getCustomerVehicles(workshopId: 'workshop-1'),
+    ).thenAnswer((_) async => [defaultVehicle]);
+
+    await defaultVehicleCubit.load('workshop-1');
+
+    expect(defaultVehicleCubit.state.selectedVehicleId, 'default-vehicle');
+    expect(defaultVehicleCubit.state.vehicleLicensePlate, 'DEF123');
+  });
+
   test(
     'submitBooking calls backend transaction with selected service slot',
     () async {
@@ -309,12 +342,13 @@ AppointmentCubit _createCubit({
   required WorkshopRepository workshopRepository,
   required ProductRepository productRepository,
   required BookServiceAppointment bookServiceAppointment,
+  GetCustomerVehicles? getCustomerVehicles,
 }) {
   return AppointmentCubit(
     workshopRepository: workshopRepository,
     getSchedulableServices: GetSchedulableServicesByWorkshop(productRepository),
     getAdditionalProducts: GetAdditionalProductsByWorkshop(productRepository),
-    getCustomerVehicles: MockGetCustomerVehicles(),
+    getCustomerVehicles: getCustomerVehicles ?? MockGetCustomerVehicles(),
     getCustomerVehicleByPlate: MockGetCustomerVehicleByPlate(),
     isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
     getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
