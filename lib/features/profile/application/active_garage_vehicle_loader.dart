@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/entities/garage_vehicle.dart';
-import '../domain/usecases/get_garage_vehicles.dart';
+import '../domain/usecases/get_default_garage_vehicle.dart';
 
 class ActiveGarageVehicle {
   const ActiveGarageVehicle({required this.vehicle, this.localImagePath});
@@ -13,16 +13,9 @@ class ActiveGarageVehicle {
 }
 
 Future<ActiveGarageVehicle?> loadActiveGarageVehicle(
-  GetGarageVehicles getGarageVehicles,
+  GetDefaultGarageVehicle getDefaultGarageVehicle,
 ) async {
-  final vehicles = await getGarageVehicles();
-  GarageVehicle? vehicle;
-  for (final item in vehicles) {
-    if (item.isDefault) {
-      vehicle = item;
-      break;
-    }
-  }
+  final vehicle = await getDefaultGarageVehicle();
   if (vehicle == null) return null;
 
   final preferences = await SharedPreferences.getInstance();

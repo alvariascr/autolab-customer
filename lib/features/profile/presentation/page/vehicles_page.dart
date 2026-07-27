@@ -11,6 +11,7 @@ import '../../application/garage_vehicle_controller.dart';
 import '../../application/garage_vehicle_image_service.dart';
 import '../../domain/entities/garage_vehicle.dart';
 import '../../domain/repositories/garage_vehicle_repository.dart';
+import '../../domain/usecases/get_garage_vehicles.dart';
 import '../helpers/garage_vehicle_display.dart';
 
 class VehiclesPage extends StatefulWidget {
@@ -24,6 +25,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   static const _newVehicleImageKey =
       GarageVehicleImageService.newVehicleImageKey;
   late final GarageVehicleRepository _repository;
+  late final GetGarageVehicles _getGarageVehicles;
   late final GarageVehicleImageService _imageService;
   GarageVehicleController? _garageVehicleController;
   var _status = _VehiclesStatus.loading;
@@ -36,6 +38,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
   void initState() {
     super.initState();
     _repository = sl<GarageVehicleRepository>();
+    _getGarageVehicles = sl<GetGarageVehicles>();
     _imageService = sl<GarageVehicleImageService>();
     _garageVehicleController = sl.isRegistered<GarageVehicleController>()
         ? sl<GarageVehicleController>()
@@ -50,9 +53,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
     setState(() => _status = _VehiclesStatus.loading);
 
     try {
-      var vehicles = await _repository.getVehicles();
+      var vehicles = await _getGarageVehicles();
       if (await _imageService.uploadLegacyImages(vehicles)) {
-        vehicles = await _repository.getVehicles();
+        vehicles = await _getGarageVehicles();
       }
       final defaultVehicle = vehicles
           .where((vehicle) => vehicle.isDefault)

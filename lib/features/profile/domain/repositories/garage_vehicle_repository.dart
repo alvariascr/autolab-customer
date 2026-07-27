@@ -7,6 +7,8 @@ class GarageVehicleAlreadyExistsException implements Exception {
 abstract interface class GarageVehicleRepository {
   Future<List<GarageVehicle>> getVehicles();
 
+  Future<GarageVehicle?> getDefaultVehicle();
+
   Future<String> createVehicle({
     required String licensePlate,
     String? vehicleType,

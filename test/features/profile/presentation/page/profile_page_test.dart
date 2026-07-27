@@ -7,6 +7,7 @@ import 'package:autolab_customer/features/auth/application/auth_session_cubit.da
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
 import 'package:autolab_customer/features/profile/application/garage_vehicle_image_service.dart';
 import 'package:autolab_customer/features/profile/domain/repositories/garage_vehicle_repository.dart';
+import 'package:autolab_customer/features/profile/domain/usecases/get_default_garage_vehicle.dart';
 import 'package:autolab_customer/features/profile/domain/usecases/get_garage_vehicles.dart';
 import 'package:autolab_customer/features/profile/presentation/page/profile_page.dart';
 import 'package:autolab_customer/features/profile/presentation/page/vehicles_page.dart';
@@ -54,6 +55,9 @@ void main() {
       ).thenAnswer((_) async => const Right([]));
       when(() => vehicleRepository.getVehicles()).thenAnswer((_) async => []);
       when(
+        () => vehicleRepository.getDefaultVehicle(),
+      ).thenAnswer((_) async => null);
+      when(
         () => vehicleImageService.loadLocalImages(),
       ).thenAnswer((_) async => {});
       when(
@@ -64,6 +68,9 @@ void main() {
       sl.registerSingleton<GetGarageVehicles>(
         GetGarageVehicles(vehicleRepository),
       );
+      sl.registerSingleton<GetDefaultGarageVehicle>(
+        GetDefaultGarageVehicle(vehicleRepository),
+      );
       sl.registerSingleton<GarageVehicleRepository>(vehicleRepository);
       sl.registerSingleton<GarageVehicleImageService>(vehicleImageService);
     });
@@ -71,6 +78,7 @@ void main() {
     tearDown(() async {
       await sl.unregister<MyAppointmentsCubit>();
       await sl.unregister<GetGarageVehicles>();
+      await sl.unregister<GetDefaultGarageVehicle>();
       await sl.unregister<GarageVehicleRepository>();
       await sl.unregister<GarageVehicleImageService>();
     });

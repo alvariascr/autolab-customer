@@ -41,6 +41,22 @@ class GarageVehicleRemoteDataSource {
     return Future.wait(response.map(_vehicleFromMap));
   }
 
+  Future<GarageVehicleModel?> getDefaultVehicle() async {
+    final userId = client.auth.currentUser?.id;
+    if (userId == null) return null;
+
+    final response = await client
+        .from('garage_vehicles')
+        .select(_select)
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .eq('is_default', true)
+        .limit(1)
+        .maybeSingle();
+
+    return response == null ? null : _vehicleFromMap(response);
+  }
+
   Future<String> createVehicle({
     required String licensePlate,
     String? vehicleType,

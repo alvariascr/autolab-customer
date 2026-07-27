@@ -39,6 +39,7 @@ import '../../features/profile/application/garage_vehicle_image_service.dart';
 import '../../features/profile/data/garage_vehicle_remote_data_source.dart';
 import '../../features/profile/data/repositories/garage_vehicle_repository_impl.dart';
 import '../../features/profile/domain/repositories/garage_vehicle_repository.dart';
+import '../../features/profile/domain/usecases/get_default_garage_vehicle.dart';
 import '../../features/profile/domain/usecases/get_garage_vehicles.dart';
 import '../../features/profile/domain/usecases/set_default_garage_vehicle.dart';
 import '../../features/workshops/application/appointment_cubit.dart';
@@ -209,6 +210,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<GetGarageVehicles>(
     () => GetGarageVehicles(sl<GarageVehicleRepository>()),
+  );
+  sl.registerLazySingleton<GetDefaultGarageVehicle>(
+    () => GetDefaultGarageVehicle(sl<GarageVehicleRepository>()),
   );
   sl.registerLazySingleton<SetDefaultGarageVehicle>(
     () => SetDefaultGarageVehicle(sl<GarageVehicleRepository>()),

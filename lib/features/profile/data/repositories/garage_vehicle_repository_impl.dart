@@ -11,6 +11,10 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
   Future<List<GarageVehicle>> getVehicles() => _remoteDataSource.getVehicles();
 
   @override
+  Future<GarageVehicle?> getDefaultVehicle() =>
+      _remoteDataSource.getDefaultVehicle();
+
+  @override
   Future<String> createVehicle({
     required String licensePlate,
     String? vehicleType,

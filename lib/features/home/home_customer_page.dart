@@ -17,7 +17,7 @@ import '../products/domain/repositories/product_repository.dart';
 import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
 import '../profile/domain/entities/garage_vehicle.dart';
-import '../profile/domain/usecases/get_garage_vehicles.dart';
+import '../profile/domain/usecases/get_default_garage_vehicle.dart';
 import '../workshops/application/workshop_discovery_query_store.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
@@ -135,7 +135,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     final generation = ++_activeVehicleLoadGeneration;
     try {
       final activeVehicle = await loadActiveGarageVehicle(
-        sl<GetGarageVehicles>(),
+        sl<GetDefaultGarageVehicle>(),
       );
       if (!mounted || generation != _activeVehicleLoadGeneration) return;
 
