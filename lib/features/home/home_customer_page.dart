@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart' show Either, Right;
 import 'package:flutter/material.dart';
@@ -75,6 +77,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   GarageVehicleController? _garageVehicleController;
   GarageVehicle? _activeVehicle;
   String? _activeVehicleImagePath;
+  int _activeVehicleLoadGeneration = 0;
 
   int _currentIndex = 0;
   bool _showSearchBar = false;
@@ -85,8 +88,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     super.initState();
     if (sl.isRegistered<GarageVehicleController>()) {
       _garageVehicleController = sl<GarageVehicleController>()
-        ..addListener(_loadActiveVehicle);
-      _loadActiveVehicle();
+        ..addListener(_onGarageVehiclesChanged);
+      unawaited(_loadActiveVehicle());
     }
     widget.controller?._attach(this);
     _currentIndex = widget.initialIndex;
@@ -117,19 +120,24 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   @override
   void dispose() {
-    _garageVehicleController?.removeListener(_loadActiveVehicle);
+    _garageVehicleController?.removeListener(_onGarageVehiclesChanged);
     widget.controller?._detach(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onGarageVehiclesChanged() {
+    unawaited(_loadActiveVehicle());
+  }
+
   Future<void> _loadActiveVehicle() async {
+    final generation = ++_activeVehicleLoadGeneration;
     try {
       final activeVehicle = await loadActiveGarageVehicle(
         sl<GetGarageVehicles>(),
       );
-      if (!mounted) return;
+      if (!mounted || generation != _activeVehicleLoadGeneration) return;
 
       setState(() {
         _activeVehicle = activeVehicle?.vehicle;

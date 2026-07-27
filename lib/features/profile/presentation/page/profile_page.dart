@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -36,22 +37,27 @@ class _ProfilePageState extends State<ProfilePage> {
   GarageVehicle? _activeVehicle;
   String? _activeVehicleImagePath;
   GarageVehicleController? _garageVehicleController;
+  int _activeVehicleLoadGeneration = 0;
 
   @override
   void initState() {
     super.initState();
     if (sl.isRegistered<GarageVehicleController>()) {
       _garageVehicleController = sl<GarageVehicleController>()
-        ..addListener(_loadActiveVehicle);
+        ..addListener(_onGarageVehiclesChanged);
     }
     _loadProfilePhoto();
-    _loadActiveVehicle();
+    unawaited(_loadActiveVehicle());
   }
 
   @override
   void dispose() {
-    _garageVehicleController?.removeListener(_loadActiveVehicle);
+    _garageVehicleController?.removeListener(_onGarageVehiclesChanged);
     super.dispose();
+  }
+
+  void _onGarageVehiclesChanged() {
+    unawaited(_loadActiveVehicle());
   }
 
   void _handleBottomNavigation(int index) {
@@ -357,12 +363,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadActiveVehicle() async {
+    final generation = ++_activeVehicleLoadGeneration;
     try {
       final activeVehicle = await loadActiveGarageVehicle(
         sl<GetGarageVehicles>(),
       );
 
-      if (!mounted) {
+      if (!mounted || generation != _activeVehicleLoadGeneration) {
         return;
       }
       if (activeVehicle == null) {
