@@ -174,7 +174,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
           vehicleId,
         );
         if (movedImage != null) {
-          _garageVehicleController?.notifyVehiclesChanged();
           if (mounted) {
             setState(() {
               _vehicleImagePaths
@@ -196,6 +195,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     _startNewVehicle();
     await _loadVehicles();
+    _garageVehicleController?.notifyVehiclesChanged();
     if (vehicleId != null &&
         vehicleId.isNotEmpty &&
         !_vehicles.any((vehicle) => vehicle.isDefault)) {

@@ -86,11 +86,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _openVehiclesPage() async {
     await context.push('/vehicles');
-    if (!mounted) {
-      return;
-    }
-
-    await _loadActiveVehicle();
   }
 
   @override

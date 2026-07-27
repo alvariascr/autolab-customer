@@ -148,7 +148,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   Future<void> _openVehiclesPage() async {
     await context.push('/vehicles');
-    if (mounted) await _loadActiveVehicle();
   }
 
   @override
