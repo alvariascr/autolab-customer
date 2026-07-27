@@ -181,6 +181,7 @@ class GarageVehicleRemoteDataSource {
       throw StateError('Authenticated user is required');
     }
 
+    final contentType = _imageContentType(path.extension(localFilePath));
     final bytes = await XFile(localFilePath).readAsBytes();
     final objectPath = '$userId/$garageVehicleId/vehicle-image';
 
@@ -191,7 +192,7 @@ class GarageVehicleRemoteDataSource {
           bytes,
           fileOptions: FileOptions(
             upsert: true,
-            contentType: _imageContentType(path.extension(localFilePath)),
+            contentType: contentType,
             cacheControl: '3600',
           ),
         );
@@ -236,10 +237,13 @@ class GarageVehicleRemoteDataSource {
 
 String _imageContentType(String extension) {
   return switch (extension.toLowerCase()) {
+    '.jpg' || '.jpeg' => 'image/jpeg',
     '.png' => 'image/png',
     '.webp' => 'image/webp',
     '.heic' => 'image/heic',
-    _ => 'image/jpeg',
+    _ => throw UnsupportedError(
+      'Unsupported garage vehicle image extension: $extension',
+    ),
   };
 }
 

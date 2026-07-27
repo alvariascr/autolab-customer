@@ -316,6 +316,8 @@ class _VehiclesPageState extends State<VehiclesPage> {
         );
         await preferences.remove(key);
         uploadedAny = true;
+      } on UnsupportedError {
+        await preferences.remove(key);
       } catch (_) {
         // Keep the local path so migration can retry on the next load.
       }
