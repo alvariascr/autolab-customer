@@ -1498,6 +1498,12 @@ abstract class AppLocalizations {
   /// **'Gestionar'**
   String get vehiclesManageAction;
 
+  /// No description provided for @vehiclesViewAllAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get vehiclesViewAllAction;
+
   /// No description provided for @vehiclesProfileSubtitle.
   ///
   /// In es, this message translates to:

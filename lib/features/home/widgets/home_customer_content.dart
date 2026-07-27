@@ -269,7 +269,7 @@ class _HomeActiveVehicleCard extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              AppLocalizations.of(context)!.workshopsSectionViewAll,
+              AppLocalizations.of(context)!.vehiclesViewAllAction,
               style: AutolabCustomer.caption.copyWith(
                 color: AutolabCustomer.primary,
                 fontWeight: FontWeight.w700,
