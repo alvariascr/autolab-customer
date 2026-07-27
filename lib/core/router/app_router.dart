@@ -14,12 +14,14 @@ import '../../features/payments/presentation/pages/my_purchases_page.dart';
 import '../../features/products/domain/entities/product.dart';
 import '../../features/products/presentation/pages/product_detail_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
+import '../../features/profile/application/garage_vehicle_controller.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
 import '../../features/splash/startup_splash_page.dart';
 import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../features/workshops/presentation/pages/workshop_profile_page.dart';
 import '../../l10n/app_localizations.dart';
+import '../di/app_injection.dart';
 import 'app_redirect_guard.dart';
 import 'go_router_refresh_stream.dart';
 
@@ -91,7 +93,8 @@ class AppRouter {
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) => const ProfilePage(),
+        builder: (context, state) =>
+            ProfilePage(garageVehicleController: sl<GarageVehicleController>()),
       ),
       GoRoute(
         path: '/vehicles',

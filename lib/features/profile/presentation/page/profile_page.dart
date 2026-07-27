@@ -22,9 +22,14 @@ import '../../domain/usecases/get_garage_vehicles.dart';
 import '../helpers/garage_vehicle_display.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, this.showBottomNavigation = true});
+  const ProfilePage({
+    super.key,
+    this.showBottomNavigation = true,
+    this.garageVehicleController,
+  });
 
   final bool showBottomNavigation;
+  final GarageVehicleController? garageVehicleController;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -36,23 +41,30 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _profilePhotoPath;
   GarageVehicle? _activeVehicle;
   String? _activeVehicleImagePath;
-  GarageVehicleController? _garageVehicleController;
   int _activeVehicleLoadGeneration = 0;
 
   @override
   void initState() {
     super.initState();
-    if (sl.isRegistered<GarageVehicleController>()) {
-      _garageVehicleController = sl<GarageVehicleController>()
-        ..addListener(_onGarageVehiclesChanged);
-    }
+    widget.garageVehicleController?.addListener(_onGarageVehiclesChanged);
     _loadProfilePhoto();
     unawaited(_loadActiveVehicle());
   }
 
   @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.garageVehicleController != widget.garageVehicleController) {
+      oldWidget.garageVehicleController?.removeListener(
+        _onGarageVehiclesChanged,
+      );
+      widget.garageVehicleController?.addListener(_onGarageVehiclesChanged);
+    }
+  }
+
+  @override
   void dispose() {
-    _garageVehicleController?.removeListener(_onGarageVehiclesChanged);
+    widget.garageVehicleController?.removeListener(_onGarageVehiclesChanged);
     super.dispose();
   }
 
