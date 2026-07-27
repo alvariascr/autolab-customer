@@ -1,11 +1,8 @@
-import 'dart:io';
-
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart' show Either, Right;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/di/app_injection.dart';
 import '../../core/location/location_cubit.dart';
@@ -15,6 +12,7 @@ import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
 import '../products/domain/repositories/product_repository.dart';
+import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
 import '../profile/data/garage_vehicle_remote_data_source.dart';
 import '../profile/domain/entities/garage_vehicle.dart';
@@ -128,19 +126,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   Future<void> _loadActiveVehicle() async {
     try {
-      final vehicles = await sl<GarageVehicleRemoteDataSource>().getVehicles();
-      final vehicle = vehicles.where((item) => item.isDefault).firstOrNull;
+      final activeVehicle = await loadActiveGarageVehicle(
+        sl<GarageVehicleRemoteDataSource>(),
+      );
       if (!mounted) return;
 
-      final imagePath = sl<SharedPreferences>().getString(
-        'garage_vehicle_image_${vehicle?.id}',
-      );
       setState(() {
-        _activeVehicle = vehicle;
-        _activeVehicleImagePath =
-            imagePath != null && File(imagePath).existsSync()
-            ? imagePath
-            : null;
+        _activeVehicle = activeVehicle?.vehicle;
+        _activeVehicleImagePath = activeVehicle?.localImagePath;
       });
     } catch (_) {
       // The home page remains usable if the optional vehicle cannot be loaded.

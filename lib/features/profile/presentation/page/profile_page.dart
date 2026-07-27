@@ -14,6 +14,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../application/active_garage_vehicle_loader.dart';
 import '../../application/garage_vehicle_controller.dart';
 import '../../data/garage_vehicle_remote_data_source.dart';
 import '../../domain/entities/garage_vehicle.dart';
@@ -356,13 +357,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadActiveVehicle() async {
-    final preferences = await SharedPreferences.getInstance();
-
     try {
-      final vehicles = await sl<GarageVehicleRemoteDataSource>().getVehicles();
-      final activeVehicle = vehicles
-          .where((vehicle) => vehicle.isDefault)
-          .firstOrNull;
+      final activeVehicle = await loadActiveGarageVehicle(
+        sl<GarageVehicleRemoteDataSource>(),
+      );
 
       if (!mounted) {
         return;
@@ -375,16 +373,9 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final imagePath = preferences.getString(
-        'garage_vehicle_image_${activeVehicle.id}',
-      );
-
       setState(() {
-        _activeVehicle = activeVehicle;
-        _activeVehicleImagePath =
-            imagePath != null && File(imagePath).existsSync()
-            ? imagePath
-            : null;
+        _activeVehicle = activeVehicle.vehicle;
+        _activeVehicleImagePath = activeVehicle.localImagePath;
       });
     } catch (_) {
       // The active vehicle is optional on the garage screen.
