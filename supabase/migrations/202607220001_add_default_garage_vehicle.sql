@@ -59,6 +59,17 @@ begin
     raise exception 'garage_vehicle_not_found_or_not_owned';
   end if;
 
+  if exists (
+    select 1
+    from public.garage_vehicles
+    where id = p_garage_vehicle_id
+      and user_id = v_user_id
+      and is_active = true
+      and is_default = true
+  ) then
+    return;
+  end if;
+
   update public.garage_vehicles
   set is_default = false,
       updated_at = now()
