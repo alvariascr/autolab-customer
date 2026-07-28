@@ -198,9 +198,22 @@ class GarageVehicleRemoteDataSource {
       throw StateError('Authenticated user is required');
     }
 
+    final existingVehicle = await client
+        .from('garage_vehicles')
+        .select('image_path')
+        .eq('id', garageVehicleId)
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle();
+    if (existingVehicle == null) {
+      throw StateError('Active garage vehicle was not found');
+    }
+
     final contentType = _imageContentType(path.extension(localFilePath));
     final bytes = await XFile(localFilePath).readAsBytes();
-    final objectPath = '$userId/$garageVehicleId/vehicle-image';
+    final previousObjectPath = existingVehicle['image_path']?.toString().trim();
+    final imageVersion = DateTime.now().toUtc().microsecondsSinceEpoch;
+    final objectPath = '$userId/$garageVehicleId/vehicle-image-$imageVersion';
 
     await client.storage
         .from(_vehicleImagesBucket)
@@ -208,7 +221,7 @@ class GarageVehicleRemoteDataSource {
           objectPath,
           bytes,
           fileOptions: FileOptions(
-            upsert: true,
+            upsert: false,
             contentType: contentType,
             cacheControl: '3600',
           ),
@@ -233,6 +246,18 @@ class GarageVehicleRemoteDataSource {
         // Preserve the persistence error even if orphan cleanup also fails.
       }
       throw StateError('Active garage vehicle was not found');
+    }
+
+    if (previousObjectPath != null &&
+        previousObjectPath.isNotEmpty &&
+        previousObjectPath != objectPath) {
+      try {
+        await client.storage.from(_vehicleImagesBucket).remove([
+          previousObjectPath,
+        ]);
+      } on StorageException {
+        // The new image is already persisted; stale-object cleanup can retry.
+      }
     }
   }
 
