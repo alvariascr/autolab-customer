@@ -38,7 +38,7 @@ class GarageVehicleRemoteDataSource {
         .eq('is_active', true)
         .order('updated_at', ascending: false);
 
-    return Future.wait(response.map(_vehicleFromMap));
+    return _vehiclesFromMaps(response);
   }
 
   Future<GarageVehicleModel?> getDefaultVehicle() async {
@@ -54,7 +54,8 @@ class GarageVehicleRemoteDataSource {
         .limit(1)
         .maybeSingle();
 
-    return response == null ? null : _vehicleFromMap(response);
+    if (response == null) return null;
+    return (await _vehiclesFromMaps([response])).single;
   }
 
   Future<String> createVehicle({
@@ -235,19 +236,39 @@ class GarageVehicleRemoteDataSource {
     }
   }
 
-  Future<GarageVehicleModel> _vehicleFromMap(Map<String, dynamic> map) async {
-    final imagePath = map['image_path']?.toString().trim();
-    String? imageUrl;
-    if (imagePath != null && imagePath.isNotEmpty) {
+  Future<List<GarageVehicleModel>> _vehiclesFromMaps(
+    List<Map<String, dynamic>> maps,
+  ) async {
+    final imagePaths = maps
+        .map((map) => map['image_path']?.toString().trim())
+        .whereType<String>()
+        .where((imagePath) => imagePath.isNotEmpty)
+        .toSet()
+        .toList();
+    final signedUrlsByPath = <String, String>{};
+
+    if (imagePaths.isNotEmpty) {
       try {
-        imageUrl = await client.storage
+        final signedUrls = await client.storage
             .from(_vehicleImagesBucket)
-            .createSignedUrl(imagePath, 3600);
+            .createSignedUrls(imagePaths, 3600);
+        for (final signedUrl in signedUrls) {
+          if (signedUrl.path.isNotEmpty && signedUrl.signedUrl.isNotEmpty) {
+            signedUrlsByPath[signedUrl.path] = signedUrl.signedUrl;
+          }
+        }
       } on StorageException {
-        // A missing image must not prevent the garage from loading.
+        // Missing images must not prevent the garage from loading.
       }
     }
-    return GarageVehicleModel.fromMap(map, imageUrl: imageUrl);
+
+    return maps.map((map) {
+      final imagePath = map['image_path']?.toString().trim();
+      return GarageVehicleModel.fromMap(
+        map,
+        imageUrl: imagePath == null ? null : signedUrlsByPath[imagePath],
+      );
+    }).toList();
   }
 }
 
