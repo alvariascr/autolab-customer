@@ -108,6 +108,10 @@ void main() {
     final getCustomerVehicles = MockGetCustomerVehicles();
     final productRepository = MockProductRepository();
     final workshopRepository = MockWorkshopRepository();
+    final firstVehicle = const AppointmentVehicleRecord(
+      id: 'first-vehicle',
+      licensePlate: 'FIRST1',
+    );
     final defaultVehicle = const AppointmentVehicleRecord(
       id: 'default-vehicle',
       licensePlate: 'DEF123',
@@ -129,13 +133,49 @@ void main() {
     ).thenAnswer((_) async => const Right(null));
     when(
       () => getCustomerVehicles(workshopId: 'workshop-1'),
-    ).thenAnswer((_) async => [defaultVehicle]);
+    ).thenAnswer((_) async => [firstVehicle, defaultVehicle]);
 
     await defaultVehicleCubit.load('workshop-1');
 
     expect(defaultVehicleCubit.state.selectedVehicleId, 'default-vehicle');
     expect(defaultVehicleCubit.state.vehicleLicensePlate, 'DEF123');
   });
+
+  test(
+    'load keeps vehicle selection empty when no vehicle is default',
+    () async {
+      final getCustomerVehicles = MockGetCustomerVehicles();
+      final productRepository = MockProductRepository();
+      final workshopRepository = MockWorkshopRepository();
+      final noDefaultVehicleCubit = _createCubit(
+        workshopRepository: workshopRepository,
+        productRepository: productRepository,
+        bookServiceAppointment: MockBookServiceAppointment(),
+        getCustomerVehicles: getCustomerVehicles,
+      );
+      addTearDown(noDefaultVehicleCubit.close);
+
+      when(
+        () => productRepository.getActiveProductsByWorkshop('workshop-1'),
+      ).thenAnswer((_) async => const Right([]));
+      when(
+        () => workshopRepository.getWorkshopById('workshop-1'),
+      ).thenAnswer((_) async => const Right(null));
+      when(() => getCustomerVehicles(workshopId: 'workshop-1')).thenAnswer(
+        (_) async => const [
+          AppointmentVehicleRecord(
+            id: 'vehicle-without-default',
+            licensePlate: 'LEGACY1',
+          ),
+        ],
+      );
+
+      await noDefaultVehicleCubit.load('workshop-1');
+
+      expect(noDefaultVehicleCubit.state.selectedVehicleId, isNull);
+      expect(noDefaultVehicleCubit.state.vehicleLicensePlate, isEmpty);
+    },
+  );
 
   test(
     'submitBooking calls backend transaction with selected service slot',
