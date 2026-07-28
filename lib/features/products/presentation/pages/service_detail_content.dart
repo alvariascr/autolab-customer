@@ -560,7 +560,7 @@ class _ServiceStepActions extends StatelessWidget {
             ),
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.transparent,
+                backgroundColor: AutolabCustomer.transparent,
                 foregroundColor: AutolabCustomer.customerTextColor(context),
                 side: const BorderSide(
                   color: AutolabCustomer.primary,

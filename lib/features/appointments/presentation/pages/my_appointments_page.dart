@@ -174,7 +174,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AutolabCustomer.transparent,
       builder: (sheetContext) {
         return BlocProvider.value(
           value: cubit,
@@ -202,7 +202,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     final scheduledAt = await showModalBottomSheet<DateTime>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AutolabCustomer.transparent,
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.82,
       ),
@@ -252,7 +252,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     final request = await showModalBottomSheet<_CancelAppointmentRequest>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AutolabCustomer.transparent,
       builder: (_) => _CancelReasonSheet(appointment: appointment),
     );
     if (request == null || !context.mounted) {
@@ -568,7 +568,7 @@ class _TabButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             backgroundColor: selected
                 ? AutolabCustomer.primary
-                : Colors.transparent,
+                : AutolabCustomer.transparent,
             foregroundColor: selected
                 ? AutolabCustomer.white
                 : AutolabCustomer.customerTextColor(context),
@@ -735,7 +735,7 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        color: AutolabCustomer.transparent,
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
         border: Border.all(color: AutolabCustomer.primary),
       ),
@@ -989,7 +989,10 @@ class _AppointmentDetailSheet extends StatelessWidget {
                   ),
                   child: Text(
                     l10n.myAppointmentRescheduleAction,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      fontFamily: AutolabCustomer.primaryFont,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
@@ -1017,7 +1020,10 @@ class _AppointmentDetailSheet extends StatelessWidget {
                         )
                       : Text(
                           l10n.myAppointmentCancelAction,
-                          style: const TextStyle(fontWeight: FontWeight.w900),
+                          style: const TextStyle(
+                            fontFamily: AutolabCustomer.primaryFont,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                 ),
               ),
@@ -1329,7 +1335,10 @@ class _RescheduleAppointmentSheetState
                   )
                 : Text(
                     l10n.myAppointmentRescheduleConfirm,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      fontFamily: AutolabCustomer.primaryFont,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
           ),
         ],
@@ -1377,7 +1386,7 @@ class _RescheduleCalendarDay extends StatelessWidget {
         ? AutolabCustomer.primary
         : today
         ? AutolabCustomer.primary.withValues(alpha: 0.14)
-        : Colors.transparent;
+        : AutolabCustomer.transparent;
 
     return Center(
       child: Container(
@@ -1387,7 +1396,11 @@ class _RescheduleCalendarDay extends StatelessWidget {
         child: Center(
           child: Text(
             '${day.day}',
-            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ),
@@ -1432,7 +1445,10 @@ class _RescheduleTimeButton extends StatelessWidget {
           fit: BoxFit.scaleDown,
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w900),
+            style: const TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
       ),
@@ -1607,7 +1623,10 @@ class _CancelReasonSheetState extends State<_CancelReasonSheet> {
             ),
             child: Text(
               l10n.myAppointmentCancelContinue,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -1673,7 +1692,7 @@ class _CancelConfirmationDialog extends StatelessWidget {
 
     return AlertDialog(
       backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AutolabCustomer.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       icon: const Icon(
         Icons.warning_amber_rounded,
@@ -1770,7 +1789,7 @@ class _CancelSuccessDialog extends StatelessWidget {
 
     return AlertDialog(
       backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AutolabCustomer.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       icon: const Icon(
         Icons.check_circle_outline_rounded,
@@ -1811,7 +1830,10 @@ class _CancelSuccessDialog extends StatelessWidget {
             ),
             child: Text(
               l10n.myAppointmentCancelSuccessAction,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ),
@@ -1831,7 +1853,7 @@ class _RescheduleSuccessDialog extends StatelessWidget {
 
     return AlertDialog(
       backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AutolabCustomer.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       icon: const Icon(
         Icons.check_circle_outline_rounded,
@@ -1872,7 +1894,10 @@ class _RescheduleSuccessDialog extends StatelessWidget {
             ),
             child: Text(
               l10n.myAppointmentRescheduleSuccessAction,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ),

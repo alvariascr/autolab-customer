@@ -8,21 +8,40 @@ class AutolabCustomer {
 
   // Color principal de marca para acciones, estados activos y elementos clave.
   static const Color primary = Color(0xFFFF281B);
+  static const Color primaryHover = Color(0xFFE62016);
+  static const Color primaryPressed = Color(0xFFCC1F16);
 
   // Color secundario de marca, usado principalmente para textos fuertes.
   static const Color secondary = Color(0xFF000000);
 
   // Colores neutrales base para fondos, textos suaves y bordes.
+  static const Color transparent = Colors.transparent;
   static const Color white = Color(0xFFFFFFFF);
   static const Color gray = Color(0xFFA9A9A9);
   static const Color background = Color(0xFFF4E9E9);
   static const Color border = Color(0xFFE5E5E5);
+  static const Color shadowBlackLight = Color(0x10000000);
+  static const Color shadowBlackSoft = Color(0x12000000);
+  static const Color shadowBlackMedium = Color(0x18000000);
+  static const Color shadowBlackStrong = Color(0x22000000);
+  static const Color shadowBlackIntense = Color(0x24000000);
+  static const Color shadowBlack26 = Color(0x42000000);
+  static const Color overlayBlackLight = Color(0x66000000);
+  static const Color overlayBlackDark = Color(0x99000000);
+  static const Color overlayWhiteLight = Color(0x26FFFFFF);
+  static const Color overlayWhiteStrong = Color(0xCCFFFFFF);
 
   // Colores funcionales para comunicar estados de la interfaz.
   static const Color success = Color(0xFF22C55E);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
+  static const Color successText = Color(0xFF167A3A);
+  static const Color successSoftBackground = Color(0xFFEAF7EF);
+  static const Color warningText = Color(0xFFB26A00);
+  static const Color warningSoftBackground = Color(0xFFFFF5DF);
+  static const Color errorDarkText = Color(0xFFB3261E);
+  static const Color errorSoftBackground = Color(0xFFFFECEA);
 
   // Colores asignados a los estados de las citas.
   static const Color appointmentConfirmed = success;
@@ -71,14 +90,15 @@ class AutolabCustomer {
   static const Color customerDarkHint = Color(0xFF5F5F5F);
   static const Color customerDarkImageFallback = Color(0xFF242424);
 
-  static const Color customerLightBackground = white;
-  static const Color customerLightSurface = background;
-  static const Color customerLightSoftSurface = Color(0xFFF8F4EF);
-  static const Color customerLightText = Color(0xFF181411);
-  static const Color customerLightSecondaryText = Color(0xFF6B5F57);
-  static const Color customerLightDisabledText = Color(0xFF9B8E84);
-  static const Color customerLightDivider = border;
-  static const Color customerLightHint = border;
+  static const Color customerLightBackground = Color(0xFFFFFFFF);
+  static const Color customerLightSurface = Color(0xFFF3F3F3);
+  static const Color customerLightSoftSurface = Color(0xFFE7E7E7);
+  static const Color customerLightText = Color(0xFF111111);
+  static const Color customerLightSecondaryText = Color(0xFF606060);
+  static const Color customerLightDisabledText = Color(0xFF8A8A8A);
+  static const Color customerLightDivider = Color(0xFFD7D7D7);
+  static const Color customerLightHint = Color(0xFF606060);
+  static const Color customerLightMapFallback = Color(0xFFE8EEF3);
 
   /// Devuelve el fondo principal para pantallas del módulo cliente.
   static Color customerBackgroundColor(BuildContext context) {
@@ -122,7 +142,7 @@ class AutolabCustomer {
 
   /// Devuelve el color de borde para cards, chips e inputs del cliente.
   static Color customerBorderColor(BuildContext context) {
-    return isDark(context) ? customerDarkBorder : border;
+    return isDark(context) ? customerDarkBorder : customerLightDivider;
   }
 
   /// Devuelve el color para placeholders o hints del cliente.
@@ -142,12 +162,14 @@ class AutolabCustomer {
 
   /// Devuelve el color fallback para imágenes que no cargan.
   static Color customerImageFallbackColor(BuildContext context) {
-    return isDark(context) ? customerDarkImageFallback : border;
+    return isDark(context)
+        ? customerDarkImageFallback
+        : customerLightSoftSurface;
   }
 
   /// Devuelve el color de fondo para chips del módulo cliente.
   static Color customerChipBackgroundColor(BuildContext context) {
-    return isDark(context) ? customerDarkBorder : background;
+    return isDark(context) ? customerDarkBorder : customerLightSurface;
   }
 
   /// Indica si el contexto actual está usando el tema oscuro.
@@ -201,7 +223,7 @@ class AutolabCustomer {
 
   /// Devuelve el color de relleno de los inputs de autenticación.
   static Color authInputFillColor(BuildContext context) {
-    return isDark(context) ? authFieldBackground : background;
+    return isDark(context) ? authFieldBackground : customerLightSurface;
   }
 
   /// Devuelve el color principal de texto para login, registro y recovery.
@@ -433,11 +455,13 @@ class AutolabCustomer {
     final isDark = brightness == Brightness.dark;
 
     // Colores derivados según el modo actual.
-    final surfaceColor = isDark ? darkSurface : white;
-    final backgroundColor = isDark ? darkBackground : background;
-    final textColor = isDark ? darkText : secondary;
-    final secondaryTextColor = isDark ? darkSecondaryText : gray;
-    final borderColor = isDark ? gray : border;
+    final surfaceColor = isDark ? darkSurface : customerLightSurface;
+    final backgroundColor = isDark ? darkBackground : customerLightBackground;
+    final textColor = isDark ? darkText : customerLightText;
+    final secondaryTextColor = isDark
+        ? darkSecondaryText
+        : customerLightSecondaryText;
+    final borderColor = isDark ? gray : customerLightDivider;
 
     // ColorScheme usado por componentes Material.
     final colorScheme = isDark
@@ -457,11 +481,11 @@ class AutolabCustomer {
             onPrimary: white,
             secondary: secondary,
             onSecondary: white,
-            surface: white,
-            onSurface: secondary,
+            surface: customerLightSurface,
+            onSurface: customerLightText,
             error: error,
             onError: white,
-            outline: border,
+            outline: customerLightDivider,
           );
 
     // TextTheme global construido desde los estilos de AutolabCustomer.

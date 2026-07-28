@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/di/app_injection.dart';
+import '../../core/theme/autolab_customer.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
 import '../payments/presentation/pages/my_purchases_page.dart';
@@ -92,10 +93,8 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF050606) : Colors.white,
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       extendBody: true,
       body: IndexedStack(
         index: _pageIndex,

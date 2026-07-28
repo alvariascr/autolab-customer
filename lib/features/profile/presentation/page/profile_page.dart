@@ -607,7 +607,7 @@ class _EditProfilePhotoButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AutolabCustomer.transparent,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),

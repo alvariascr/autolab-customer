@@ -102,19 +102,19 @@ class _ProductsMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBFAF8),
+        color: AutolabCustomer.customerElevatedSurfaceColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE7DED5)),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF9B3D24)),
+          Icon(icon, color: AutolabCustomer.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: AutolabCustomer.caption.copyWith(
-                color: const Color(0xFF6B5F57),
+                color: AutolabCustomer.customerSecondaryTextColor(context),
                 height: 1.35,
               ),
             ),

@@ -53,18 +53,18 @@ class _BusinessDetailsSheet extends StatelessWidget {
                   children: [
                     Text(
                       workshop.name,
-                      style: const TextStyle(
-                        color: _BusinessSheetColors.textPrimary,
-                        fontSize: 28,
+                      style: AutolabCustomer.h1.copyWith(
+                        color: AutolabCustomer.customerTextColor(context),
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       categories,
-                      style: const TextStyle(
-                        color: _BusinessSheetColors.textSecondary,
-                        fontSize: 16,
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
                         height: 1.35,
                       ),
                     ),
@@ -168,7 +168,7 @@ class _SheetDragHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: _BusinessSheetColors.handle,
+        color: AutolabCustomer.overlayWhiteStrong,
         borderRadius: BorderRadius.circular(999),
       ),
       child: const SizedBox(width: 46, height: 5),
@@ -218,13 +218,13 @@ class _LocationPreview extends StatelessWidget {
           else
             DecoratedBox(
               decoration: const BoxDecoration(
-                color: _BusinessSheetColors.mapFallback,
+                color: AutolabCustomer.customerLightMapFallback,
               ),
               child: Center(
                 child: Icon(
                   Icons.location_on_outlined,
                   size: 64,
-                  color: _BusinessSheetColors.textSecondary,
+                  color: AutolabCustomer.customerSecondaryTextColor(context),
                 ),
               ),
             ),
@@ -235,9 +235,9 @@ class _LocationPreview extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.white.withValues(alpha: 0.08),
-                    Colors.white.withValues(alpha: 0.0),
-                    Colors.white.withValues(alpha: 0.18),
+                    AutolabCustomer.white.withValues(alpha: 0.08),
+                    AutolabCustomer.white.withValues(alpha: 0.0),
+                    AutolabCustomer.white.withValues(alpha: 0.18),
                   ],
                 ),
               ),
@@ -248,10 +248,10 @@ class _LocationPreview extends StatelessWidget {
               right: 24,
               top: 86,
               child: Material(
-                color: Colors.white,
+                color: AutolabCustomer.customerElevatedSurfaceColor(context),
                 borderRadius: BorderRadius.circular(14),
                 elevation: 6,
-                shadowColor: const Color(0x22000000),
+                shadowColor: AutolabCustomer.shadowBlackStrong,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: () => _ProfileActions.openLocation(context, workshop),
@@ -265,8 +265,8 @@ class _LocationPreview extends StatelessWidget {
                       children: [
                         Text(
                           l10n.workshopProfileDirectionsAction,
-                          style: const TextStyle(
-                            color: _BusinessSheetColors.textPrimary,
+                          style: AutolabCustomer.body.copyWith(
+                            color: AutolabCustomer.customerTextColor(context),
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -284,11 +284,13 @@ class _LocationPreview extends StatelessWidget {
             bottom: 18,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: AutolabCustomer.customerElevatedSurfaceColor(
+                  context,
+                ).withValues(alpha: 0.94),
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x18000000),
+                    color: AutolabCustomer.shadowBlackMedium,
                     blurRadius: 14,
                     offset: Offset(0, 6),
                   ),
@@ -302,8 +304,8 @@ class _LocationPreview extends StatelessWidget {
                       : l10n.mapSheetFallbackAddress,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _BusinessSheetColors.textPrimary,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -334,7 +336,11 @@ class _InfoListRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 30, color: _BusinessSheetColors.textSecondary),
+        Icon(
+          icon,
+          size: 30,
+          color: AutolabCustomer.customerSecondaryTextColor(context),
+        ),
         const SizedBox(width: 18),
         Expanded(
           child: Column(
@@ -342,9 +348,8 @@ class _InfoListRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: _BusinessSheetColors.textPrimary,
-                  fontSize: 18,
+                style: AutolabCustomer.bodyLarge.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
                   fontWeight: FontWeight.w800,
                   height: 1.25,
                 ),
@@ -353,9 +358,8 @@ class _InfoListRow extends StatelessWidget {
                 const SizedBox(height: 5),
                 Text(
                   subtitle!,
-                  style: const TextStyle(
-                    color: _BusinessSheetColors.textSecondary,
-                    fontSize: 16,
+                  style: AutolabCustomer.bodyLarge.copyWith(
+                    color: AutolabCustomer.customerSecondaryTextColor(context),
                     height: 1.35,
                   ),
                 ),
@@ -365,19 +369,13 @@ class _InfoListRow extends StatelessWidget {
         ),
         if (trailing != null) ...[
           const SizedBox(width: 12),
-          Icon(trailing, size: 28, color: _BusinessSheetColors.iconMuted),
+          Icon(
+            trailing,
+            size: 28,
+            color: AutolabCustomer.customerHintColor(context),
+          ),
         ],
       ],
     );
   }
-}
-
-class _BusinessSheetColors {
-  const _BusinessSheetColors._();
-
-  static const textPrimary = Color(0xFF181411);
-  static const textSecondary = Color(0xFF6B5F57);
-  static const iconMuted = Color(0xFF9A9A9A);
-  static const mapFallback = Color(0xFFE8EEF3);
-  static const handle = Color(0xCCFFFFFF);
 }

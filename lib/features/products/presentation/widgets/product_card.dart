@@ -14,7 +14,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AutolabCustomer.customerElevatedSurfaceColor(context),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -43,7 +43,7 @@ class ProductCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.body.copyWith(
-                color: const Color(0xFF181411),
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
                 fontSize: 15,
               ),
@@ -52,7 +52,7 @@ class ProductCard extends StatelessWidget {
             ProductPriceText(
               price: product.sellingPrice,
               style: AutolabCustomer.caption.copyWith(
-                color: const Color(0xFF181411),
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
               ),
@@ -64,7 +64,7 @@ class ProductCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AutolabCustomer.caption.copyWith(
-                  color: const Color(0xFF6B5F57),
+                  color: AutolabCustomer.customerSecondaryTextColor(context),
                   fontSize: 12,
                 ),
               ),
@@ -75,12 +75,14 @@ class ProductCard extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF181411),
+                  color: AutolabCustomer.customerInvertedSurfaceColor(context),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_forward_rounded,
-                  color: Colors.white,
+                  color: AutolabCustomer.customerOnInvertedSurfaceColor(
+                    context,
+                  ),
                 ),
               ),
             ),
@@ -100,10 +102,10 @@ class _WorkshopAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 18,
-      backgroundColor: Colors.white,
+      backgroundColor: AutolabCustomer.customerElevatedSurfaceColor(context),
       child: CircleAvatar(
         radius: 14,
-        backgroundColor: const Color(0xFFE9DDD2),
+        backgroundColor: AutolabCustomer.customerSoftSurfaceColor(context),
         backgroundImage: product.workshopAvatarUrl.trim().isNotEmpty
             ? NetworkImage(product.workshopAvatarUrl)
             : null,

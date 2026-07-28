@@ -181,7 +181,10 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
             title: Text(
               notice.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             content: Text(
               notice.message,

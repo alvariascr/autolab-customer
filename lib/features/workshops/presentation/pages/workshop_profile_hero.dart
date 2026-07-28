@@ -35,9 +35,9 @@ class _ProfileHeroState extends State<_ProfileHero> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0x66000000),
-                  Color(0x22000000),
-                  Color(0x99000000),
+                  AutolabCustomer.overlayBlackLight,
+                  AutolabCustomer.shadowBlackStrong,
+                  AutolabCustomer.overlayBlackDark,
                 ],
               ),
             ),

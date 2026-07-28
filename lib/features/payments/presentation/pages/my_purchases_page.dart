@@ -53,8 +53,8 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF06285E),
-        foregroundColor: Colors.white,
+        backgroundColor: AutolabCustomer.primary,
+        foregroundColor: AutolabCustomer.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -71,7 +71,10 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         ),
         title: Text(
           l10n.myPurchasesTitle,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontFamily: AutolabCustomer.primaryFont,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       body: SafeArea(
@@ -249,7 +252,7 @@ class _PurchaseCard extends StatelessWidget {
         border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AutolabCustomer.secondary.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
