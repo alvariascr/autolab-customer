@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -14,14 +15,21 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
-import '../../data/garage_vehicle_remote_data_source.dart';
+import '../../application/active_garage_vehicle_loader.dart';
+import '../../application/garage_vehicle_controller.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../../domain/usecases/get_default_garage_vehicle.dart';
 import '../helpers/garage_vehicle_display.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, this.showBottomNavigation = true});
+  const ProfilePage({
+    super.key,
+    this.showBottomNavigation = true,
+    this.garageVehicleController,
+  });
 
   final bool showBottomNavigation;
+  final GarageVehicleController? garageVehicleController;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -29,18 +37,38 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   static const _profilePhotoPathKey = 'profile_photo_path';
-  static const _activeVehicleIdKey = 'garage_active_vehicle_id';
-
   int _currentIndex = 4;
   String? _profilePhotoPath;
   GarageVehicle? _activeVehicle;
-  String? _activeVehicleImagePath;
+  int _activeVehicleLoadGeneration = 0;
 
   @override
   void initState() {
     super.initState();
+    widget.garageVehicleController?.addListener(_onGarageVehiclesChanged);
     _loadProfilePhoto();
-    _loadActiveVehicle();
+    unawaited(_loadActiveVehicle());
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.garageVehicleController != widget.garageVehicleController) {
+      oldWidget.garageVehicleController?.removeListener(
+        _onGarageVehiclesChanged,
+      );
+      widget.garageVehicleController?.addListener(_onGarageVehiclesChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.garageVehicleController?.removeListener(_onGarageVehiclesChanged);
+    super.dispose();
+  }
+
+  void _onGarageVehiclesChanged() {
+    unawaited(_loadActiveVehicle());
   }
 
   void _handleBottomNavigation(int index) {
@@ -58,11 +86,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _openVehiclesPage() async {
     await context.push('/vehicles');
-    if (!mounted) {
-      return;
-    }
-
-    await _loadActiveVehicle();
   }
 
   @override
@@ -96,12 +119,9 @@ class _ProfilePageState extends State<ProfilePage> {
               profilePhotoPath: _profilePhotoPath,
               onEditPhotoTap: _showChangePhotoDialog,
             ),
-            if (_activeVehicle != null) ...[
+            if (_activeVehicle case final activeVehicle?) ...[
               const SizedBox(height: AutolabCustomer.spacingLg),
-              _ActiveVehicleCard(
-                vehicle: _activeVehicle!,
-                imagePath: _activeVehicleImagePath,
-              ),
+              _ActiveVehicleCard(vehicle: activeVehicle),
             ],
             const SizedBox(height: AutolabCustomer.spacingLg),
             _SectionTitle(l10n.garageQuickAccessTitle),
@@ -346,34 +366,24 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadActiveVehicle() async {
-    final preferences = await SharedPreferences.getInstance();
-    final activeVehicleId = preferences.getString(_activeVehicleIdKey);
-
-    if (activeVehicleId == null || activeVehicleId.isEmpty) {
-      return;
-    }
-
+    final generation = ++_activeVehicleLoadGeneration;
     try {
-      final vehicles = await sl<GarageVehicleRemoteDataSource>().getVehicles();
-      final activeVehicle = vehicles.cast<GarageVehicle?>().firstWhere(
-        (vehicle) => vehicle?.id == activeVehicleId,
-        orElse: () => null,
+      final activeVehicle = await loadActiveGarageVehicle(
+        sl<GetDefaultGarageVehicle>(),
       );
 
-      if (activeVehicle == null || !mounted) {
+      if (!mounted || generation != _activeVehicleLoadGeneration) {
+        return;
+      }
+      if (activeVehicle == null) {
+        setState(() {
+          _activeVehicle = null;
+        });
         return;
       }
 
-      final imagePath = preferences.getString(
-        'garage_vehicle_image_${activeVehicle.id}',
-      );
-
       setState(() {
         _activeVehicle = activeVehicle;
-        _activeVehicleImagePath =
-            imagePath != null && File(imagePath).existsSync()
-            ? imagePath
-            : null;
       });
     } catch (_) {
       // The active vehicle is optional on the garage screen.
@@ -615,10 +625,9 @@ class _EditProfilePhotoButton extends StatelessWidget {
 }
 
 class _ActiveVehicleCard extends StatelessWidget {
-  const _ActiveVehicleCard({required this.vehicle, this.imagePath});
+  const _ActiveVehicleCard({required this.vehicle});
 
   final GarageVehicle vehicle;
-  final String? imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -635,7 +644,7 @@ class _ActiveVehicleCard extends StatelessWidget {
           SizedBox(
             width: 92,
             height: 48,
-            child: _ActiveVehicleImage(imagePath: imagePath),
+            child: _ActiveVehicleImage(imageUrl: vehicle.imageUrl),
           ),
           const SizedBox(width: AutolabCustomer.spacingMd),
           Expanded(
@@ -690,17 +699,16 @@ class _ActiveVehicleCard extends StatelessWidget {
 }
 
 class _ActiveVehicleImage extends StatelessWidget {
-  const _ActiveVehicleImage({this.imagePath});
+  const _ActiveVehicleImage({this.imageUrl});
 
-  final String? imagePath;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
-    final path = imagePath;
-
-    if (path != null && path.isNotEmpty) {
-      return Image.file(
-        File(path),
+    final url = imageUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) =>
             const _ActiveVehiclePlaceholder(),

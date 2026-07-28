@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../core/di/app_injection.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
+import '../profile/application/garage_vehicle_controller.dart';
 import '../profile/presentation/page/profile_page.dart';
 import '../workshops/domain/entities/workshop.dart';
 
@@ -51,7 +54,11 @@ class NavigationHandler {
         // Perfil
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ProfilePage()),
+          MaterialPageRoute(
+            builder: (_) => ProfilePage(
+              garageVehicleController: sl<GarageVehicleController>(),
+            ),
+          ),
         );
         return;
 

@@ -9,6 +9,9 @@ class GarageVehicle {
     this.color,
     this.fuelType,
     this.transmissionType,
+    this.isDefault = false,
+    this.imagePath,
+    this.imageUrl,
   });
 
   final String id;
@@ -20,4 +23,7 @@ class GarageVehicle {
   final String? color;
   final String? fuelType;
   final String? transmissionType;
+  final bool isDefault;
+  final String? imagePath;
+  final String? imageUrl;
 }

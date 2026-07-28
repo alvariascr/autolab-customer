@@ -3,14 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../data/garage_vehicle_remote_data_source.dart';
+import '../../application/garage_vehicle_controller.dart';
+import '../../application/garage_vehicle_image_service.dart';
 import '../../domain/entities/garage_vehicle.dart';
+import '../../domain/repositories/garage_vehicle_repository.dart';
+import '../../domain/usecases/get_garage_vehicles.dart';
 import '../helpers/garage_vehicle_display.dart';
 
 class VehiclesPage extends StatefulWidget {
@@ -21,10 +22,12 @@ class VehiclesPage extends StatefulWidget {
 }
 
 class _VehiclesPageState extends State<VehiclesPage> {
-  static const _newVehicleImageKey = 'garage_vehicle_image_new';
-  static const activeVehicleIdKey = 'garage_active_vehicle_id';
-
-  late final GarageVehicleRemoteDataSource _dataSource;
+  static const _newVehicleImageKey =
+      GarageVehicleImageService.newVehicleImageKey;
+  late final GarageVehicleRepository _repository;
+  late final GetGarageVehicles _getGarageVehicles;
+  late final GarageVehicleImageService _imageService;
+  GarageVehicleController? _garageVehicleController;
   var _status = _VehiclesStatus.loading;
   var _vehicles = <GarageVehicle>[];
   GarageVehicle? _selectedVehicle;
@@ -34,7 +37,12 @@ class _VehiclesPageState extends State<VehiclesPage> {
   @override
   void initState() {
     super.initState();
-    _dataSource = sl<GarageVehicleRemoteDataSource>();
+    _repository = sl<GarageVehicleRepository>();
+    _getGarageVehicles = sl<GetGarageVehicles>();
+    _imageService = sl<GarageVehicleImageService>();
+    _garageVehicleController = sl.isRegistered<GarageVehicleController>()
+        ? sl<GarageVehicleController>()
+        : null;
     _loadVehicles();
     _loadVehicleImages();
   }
@@ -45,11 +53,25 @@ class _VehiclesPageState extends State<VehiclesPage> {
     setState(() => _status = _VehiclesStatus.loading);
 
     try {
-      final vehicles = await _dataSource.getVehicles();
+      var vehicles = await _getGarageVehicles();
+      if (await _imageService.uploadLegacyImages(vehicles)) {
+        vehicles = await _getGarageVehicles();
+      }
+      final defaultVehicle = vehicles
+          .where((vehicle) => vehicle.isDefault)
+          .firstOrNull;
       if (!mounted) return;
 
       setState(() {
         _vehicles = vehicles;
+        if (_selectedVehicle != null) {
+          _selectedVehicle = vehicles
+              .where((vehicle) => vehicle.id == _selectedVehicle!.id)
+              .firstOrNull;
+        }
+        if (_selectedVehicle == null && defaultVehicle != null) {
+          _selectedVehicle = defaultVehicle;
+        }
         if (_selectedVehicle != null &&
             vehicles.every((vehicle) => vehicle.id != _selectedVehicle!.id)) {
           _selectedVehicle = null;
@@ -69,7 +91,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) =>
-          _VehicleForm(dataSource: _dataSource, initialVehicle: vehicle),
+          _VehicleForm(repository: _repository, initialVehicle: vehicle),
     );
 
     if (saved == true && mounted) {
@@ -101,7 +123,8 @@ class _VehiclesPageState extends State<VehiclesPage> {
     if (confirmed != true) return;
 
     try {
-      await _dataSource.deleteVehicle(vehicle.id);
+      await _repository.deleteVehicle(vehicle.id);
+      _garageVehicleController?.notifyVehiclesChanged();
       if (!mounted) return;
       await _loadVehicles();
     } catch (_) {
@@ -118,26 +141,69 @@ class _VehiclesPageState extends State<VehiclesPage> {
       _vehicleImagePaths.remove(_newVehicleImageKey);
       _formVersion++;
     });
-    _removeNewVehicleImage();
+    _imageService.removeNewVehicleImage();
   }
 
   Future<void> _selectVehicle(GarageVehicle vehicle) async {
-    setState(() {
-      _selectedVehicle = vehicle;
-      _formVersion++;
-    });
-
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(activeVehicleIdKey, vehicle.id);
+    try {
+      if (_garageVehicleController != null) {
+        await _garageVehicleController!.setDefaultVehicle(vehicle.id);
+      } else {
+        await _repository.setDefaultVehicle(vehicle.id);
+      }
+      if (!mounted) return;
+      setState(() {
+        _selectedVehicle = vehicle;
+        _formVersion++;
+      });
+      await _loadVehicles();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.vehiclesSaveFailed),
+        ),
+      );
+    }
   }
 
   Future<void> _handleVehicleSaved(String? vehicleId) async {
     if (vehicleId != null && vehicleId.isNotEmpty) {
-      await _moveNewVehicleImage(vehicleId);
+      try {
+        final movedImage = await _imageService.moveAndUploadNewVehicleImage(
+          vehicleId,
+        );
+        if (movedImage != null) {
+          if (mounted) {
+            setState(() {
+              _vehicleImagePaths
+                ..remove(_newVehicleImageKey)
+                ..[movedImage.preferenceKey] = movedImage.localPath;
+            });
+          }
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.vehiclesSaveFailed),
+            ),
+          );
+        }
+      }
     }
 
     _startNewVehicle();
     await _loadVehicles();
+    _garageVehicleController?.notifyVehiclesChanged();
+    if (vehicleId != null &&
+        vehicleId.isNotEmpty &&
+        !_vehicles.any((vehicle) => vehicle.isDefault)) {
+      final vehicle = _vehicles
+          .where((item) => item.id == vehicleId)
+          .firstOrNull;
+      if (vehicle != null) await _selectVehicle(vehicle);
+    }
   }
 
   Future<void> _pickVehicleImage() async {
@@ -148,34 +214,41 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     if (image == null || !mounted) return;
 
-    final persistedImagePath = await _persistVehicleImage(
+    final key = _vehicleImageKey(_selectedVehicle);
+    final persistedImagePath = await _imageService.persistImage(
       sourcePath: image.path,
-      key: _vehicleImageKey(_selectedVehicle),
+      preferenceKey: key,
     );
 
     if (!mounted) return;
 
-    final key = _vehicleImageKey(_selectedVehicle);
     setState(() {
       _vehicleImagePaths[key] = persistedImagePath;
     });
 
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(key, persistedImagePath);
+    final selectedVehicleId = _selectedVehicle?.id;
+    if (selectedVehicleId != null) {
+      try {
+        await _imageService.uploadPersistedImage(
+          vehicleId: selectedVehicleId,
+          localPath: persistedImagePath,
+          preferenceKey: key,
+        );
+        await _loadVehicles();
+        _garageVehicleController?.notifyVehiclesChanged();
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.vehiclesSaveFailed),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadVehicleImages() async {
-    final preferences = await SharedPreferences.getInstance();
-    final loadedPaths = <String, String>{};
-
-    for (final key in preferences.getKeys()) {
-      if (!key.startsWith('garage_vehicle_image_')) continue;
-
-      final path = preferences.getString(key);
-      if (path == null || path.isEmpty || !File(path).existsSync()) continue;
-
-      loadedPaths[key] = path;
-    }
+    final loadedPaths = await _imageService.loadLocalImages();
 
     if (!mounted) return;
 
@@ -184,62 +257,6 @@ class _VehiclesPageState extends State<VehiclesPage> {
         ..clear()
         ..addAll(loadedPaths);
     });
-  }
-
-  Future<void> _removeNewVehicleImage() async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_newVehicleImageKey);
-  }
-
-  Future<void> _moveNewVehicleImage(String vehicleId) async {
-    final preferences = await SharedPreferences.getInstance();
-    final temporaryPath = preferences.getString(_newVehicleImageKey);
-
-    if (temporaryPath == null || temporaryPath.isEmpty) {
-      return;
-    }
-
-    final vehicleImageKey = _vehicleImageKeyById(vehicleId);
-    final persistedImagePath = await _persistVehicleImage(
-      sourcePath: temporaryPath,
-      key: vehicleImageKey,
-    );
-    await preferences.setString(vehicleImageKey, persistedImagePath);
-    await preferences.remove(_newVehicleImageKey);
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _vehicleImagePaths
-        ..remove(_newVehicleImageKey)
-        ..[vehicleImageKey] = persistedImagePath;
-    });
-  }
-
-  Future<String> _persistVehicleImage({
-    required String sourcePath,
-    required String key,
-  }) async {
-    final sourceFile = File(sourcePath);
-    final appDirectory = await getApplicationDocumentsDirectory();
-    final imagesDirectory = Directory(
-      '${appDirectory.path}${Platform.pathSeparator}garage_vehicle_images',
-    );
-
-    if (!imagesDirectory.existsSync()) {
-      await imagesDirectory.create(recursive: true);
-    }
-
-    final extension = _fileExtension(sourceFile.path);
-    final fileName =
-        '${key}_${DateTime.now().microsecondsSinceEpoch}$extension';
-    final destinationPath =
-        '${imagesDirectory.path}${Platform.pathSeparator}$fileName';
-
-    final copiedFile = await sourceFile.copy(destinationPath);
-    return copiedFile.path;
   }
 
   @override
@@ -263,7 +280,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
             children: [
               _VehiclesBackButton(onTap: () => _goBack(context)),
               const SizedBox(height: AutolabCustomer.spacingMd),
-              _VehiclesTitleRow(onManageTap: () => _openVehicleForm()),
+              const _VehiclesTitleRow(),
               const SizedBox(height: AutolabCustomer.spacingMd),
               SizedBox(
                 height: AutolabCustomer.responsiveDouble(
@@ -294,6 +311,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                   vehicle: _selectedVehicle,
                   imagePath:
                       _vehicleImagePaths[_vehicleImageKey(_selectedVehicle)],
+                  imageUrl: _selectedVehicle?.imageUrl,
                   onChangeImage: _pickVehicleImage,
                 ),
                 const SizedBox(height: AutolabCustomer.spacingMd),
@@ -301,7 +319,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
                   key: ValueKey(
                     '${_selectedVehicle?.id ?? 'new'}-$_formVersion',
                   ),
-                  dataSource: _dataSource,
+                  repository: _repository,
                   initialVehicle: _selectedVehicle,
                   embedded: true,
                   onSaved: _handleVehicleSaved,
@@ -340,7 +358,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
         final vehicle = _vehicles[index];
         return _VehicleCompactCard(
           vehicle: vehicle,
-          selected: _selectedVehicle?.id == vehicle.id,
+          selected: vehicle.isDefault,
           onTap: () => _selectVehicle(vehicle),
           onEdit: () => _openVehicleForm(vehicle: vehicle),
           onDelete: () => _deleteVehicle(vehicle),
@@ -390,42 +408,18 @@ class _VehiclesBackButton extends StatelessWidget {
 }
 
 class _VehiclesTitleRow extends StatelessWidget {
-  const _VehiclesTitleRow({required this.onManageTap});
-
-  final VoidCallback onManageTap;
+  const _VehiclesTitleRow();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.vehiclesTitle,
-            style: AutolabCustomer.bodyLarge.copyWith(
-              color: AutolabCustomer.customerTextColor(context),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: onManageTap,
-          style: TextButton.styleFrom(
-            foregroundColor: AutolabCustomer.primary,
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            l10n.vehiclesManageAction,
-            style: AutolabCustomer.caption.copyWith(
-              color: AutolabCustomer.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      l10n.vehiclesTitle,
+      style: AutolabCustomer.bodyLarge.copyWith(
+        color: AutolabCustomer.customerTextColor(context),
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }
@@ -476,16 +470,7 @@ class _VehicleCompactCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Center(
-                        child: Icon(
-                          Icons.directions_car_filled_rounded,
-                          color: AutolabCustomer.customerTextColor(context),
-                          size: AutolabCustomer.responsiveDouble(
-                            context,
-                            compact: 34,
-                            regular: 42,
-                            tablet: 48,
-                          ),
-                        ),
+                        child: _VehicleCompactImage(vehicle: vehicle),
                       ),
                     ),
                     Text(
@@ -498,14 +483,32 @@ class _VehicleCompactCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      garageVehicleSelectorSubtitle(vehicle),
+                      selected
+                          ? AppLocalizations.of(context)!.garageActiveVehicle
+                          : garageVehicleSelectorSubtitle(vehicle),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AutolabCustomer.caption.copyWith(
-                        color: AutolabCustomer.customerSecondaryTextColor(
-                          context,
-                        ),
+                        color: selected
+                            ? AutolabCustomer.primary
+                            : AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
                         fontSize: 9,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(
+                        selected
+                            ? Icons.check_circle_outline_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: selected
+                            ? AutolabCustomer.primary
+                            : AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
+                        size: 10,
                       ),
                     ),
                   ],
@@ -515,9 +518,20 @@ class _VehicleCompactCard extends StatelessWidget {
                   top: -8,
                   child: PopupMenuButton<String>(
                     color: AutolabCustomer.customerSurfaceColor(context),
-                    icon: const Icon(Icons.more_horiz_rounded, size: 16),
-                    iconColor: AutolabCustomer.customerSecondaryTextColor(
-                      context,
+                    icon: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 3,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AutolabCustomer.white.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Icon(
+                        Icons.more_horiz_rounded,
+                        size: 16,
+                        color: AutolabCustomer.secondary,
+                      ),
                     ),
                     onSelected: (value) {
                       if (value == 'edit') {
@@ -542,22 +556,45 @@ class _VehicleCompactCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Icon(
-                    selected
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: selected
-                        ? AutolabCustomer.primary
-                        : AutolabCustomer.customerSecondaryTextColor(context),
-                    size: 14,
-                  ),
-                ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VehicleCompactImage extends StatelessWidget {
+  const _VehicleCompactImage({required this.vehicle});
+
+  final GarageVehicle vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = vehicle.imageUrl;
+    final placeholder = Icon(
+      Icons.directions_car_filled_rounded,
+      color: AutolabCustomer.customerTextColor(context),
+      size: AutolabCustomer.responsiveDouble(
+        context,
+        compact: 34,
+        regular: 42,
+        tablet: 48,
+      ),
+    );
+
+    if (imageUrl == null || imageUrl.isEmpty) return placeholder;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      child: SizedBox.expand(
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => placeholder,
+          loadingBuilder: (context, child, loadingProgress) =>
+              loadingProgress == null ? child : placeholder,
         ),
       ),
     );
@@ -628,10 +665,12 @@ class _VehiclePreview extends StatelessWidget {
     required this.vehicle,
     required this.onChangeImage,
     this.imagePath,
+    this.imageUrl,
   });
 
   final GarageVehicle? vehicle;
   final String? imagePath;
+  final String? imageUrl;
   final VoidCallback onChangeImage;
 
   @override
@@ -649,7 +688,7 @@ class _VehiclePreview extends StatelessWidget {
             regular: 114,
             tablet: 136,
           ),
-          child: _VehiclePreviewImage(imagePath: imagePath),
+          child: _VehiclePreviewImage(imagePath: imagePath, imageUrl: imageUrl),
         ),
         if (hasSelectedVehicle) ...[
           const SizedBox(height: AutolabCustomer.spacingXs),
@@ -696,9 +735,10 @@ class _VehiclePreview extends StatelessWidget {
 }
 
 class _VehiclePreviewImage extends StatelessWidget {
-  const _VehiclePreviewImage({this.imagePath});
+  const _VehiclePreviewImage({this.imagePath, this.imageUrl});
 
   final String? imagePath;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -707,6 +747,16 @@ class _VehiclePreviewImage extends StatelessWidget {
     if (path != null && path.isNotEmpty) {
       return Image.file(
         File(path),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) =>
+            const _VehiclePreviewPlaceholder(),
+      );
+    }
+
+    final url = imageUrl;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) =>
             const _VehiclePreviewPlaceholder(),
@@ -771,14 +821,14 @@ class _VehiclesMessage extends StatelessWidget {
 
 class _VehicleForm extends StatefulWidget {
   const _VehicleForm({
-    required this.dataSource,
+    required this.repository,
     this.initialVehicle,
     this.embedded = false,
     this.onSaved,
     super.key,
   });
 
-  final GarageVehicleRemoteDataSource dataSource;
+  final GarageVehicleRepository repository;
   final GarageVehicle? initialVehicle;
   final bool embedded;
   final Future<void> Function(String? vehicleId)? onSaved;
@@ -841,7 +891,7 @@ class _VehicleFormState extends State<_VehicleForm> {
       final vehicle = widget.initialVehicle;
       String? savedVehicleId;
       if (vehicle == null) {
-        savedVehicleId = await widget.dataSource.createVehicle(
+        savedVehicleId = await widget.repository.createVehicle(
           licensePlate: _plateController.text,
           vehicleType: _vehicleType,
           brand: _brandController.text,
@@ -852,7 +902,7 @@ class _VehicleFormState extends State<_VehicleForm> {
           transmissionType: _transmissionType,
         );
       } else {
-        await widget.dataSource.updateVehicle(
+        await widget.repository.updateVehicle(
           id: vehicle.id,
           licensePlate: _plateController.text,
           vehicleType: _vehicleType,
@@ -1272,18 +1322,5 @@ InputDecoration _vehicleInputDecoration(
 String _vehicleImageKey(GarageVehicle? vehicle) {
   return vehicle == null
       ? _VehiclesPageState._newVehicleImageKey
-      : 'garage_vehicle_image_${vehicle.id}';
-}
-
-String _vehicleImageKeyById(String vehicleId) {
-  return 'garage_vehicle_image_$vehicleId';
-}
-
-String _fileExtension(String path) {
-  final dotIndex = path.lastIndexOf('.');
-  if (dotIndex == -1 || dotIndex == path.length - 1) {
-    return '.jpg';
-  }
-
-  return path.substring(dotIndex);
+      : GarageVehicleImageService.vehicleImageKey(vehicle.id);
 }

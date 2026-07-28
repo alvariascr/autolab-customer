@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../core/di/app_injection.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
 import '../payments/presentation/pages/my_purchases_page.dart';
+import '../profile/application/garage_vehicle_controller.dart';
 import '../profile/presentation/page/profile_page.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
@@ -104,7 +106,10 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
             onSearchClosed: _handleSearchClosed,
           ),
           const MapPage(showBottomNavigation: false),
-          const ProfilePage(showBottomNavigation: false),
+          ProfilePage(
+            showBottomNavigation: false,
+            garageVehicleController: sl<GarageVehicleController>(),
+          ),
           const MyPurchasesPage(showBottomNavigation: false),
         ],
       ),

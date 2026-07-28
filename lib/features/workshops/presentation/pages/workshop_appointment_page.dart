@@ -11,7 +11,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
-import '../../../profile/presentation/page/vehicles_page.dart';
 import '../../application/appointment_cubit.dart';
 import '../../application/appointment_state.dart';
 import '../../domain/entities/appointment_vehicle.dart';
@@ -79,12 +78,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
                     )
                   : Column(
                       children: [
-                        if (state.currentStep == 0)
-                          _MobileHeader(
-                            steps: steps,
-                            currentStep: state.currentStep,
-                            onBack: () => _handleBack(context, state),
-                          ),
                         Expanded(
                           child: _pageBody(
                             context: context,
@@ -180,42 +173,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }) {
     switch (state.currentStep) {
       case 0:
-        return _VehicleStep(
-          title: steps[state.currentStep].title,
-          vehicles: state.vehicles,
-          vehiclesStatus: state.vehiclesStatus,
-          selectedVehicleId: state.selectedVehicleId,
-          licensePlate: state.vehicleLicensePlate,
-          vehicleType: state.vehicleType,
-          brand: state.vehicleBrand,
-          model: state.vehicleModel,
-          year: state.vehicleYear,
-          color: state.vehicleColor,
-          fuelType: state.vehicleFuelType,
-          transmissionType: state.vehicleTransmissionType,
-          onExistingVehicleSelected: context
-              .read<AppointmentCubit>()
-              .selectExistingVehicle,
-          onNewVehicleSelected: () => _openGarage(context),
-          onLicensePlateChanged: context
-              .read<AppointmentCubit>()
-              .updateVehicleLicensePlate,
-          onVehicleTypeChanged: context
-              .read<AppointmentCubit>()
-              .updateVehicleType,
-          onBrandChanged: context.read<AppointmentCubit>().updateVehicleBrand,
-          onModelChanged: context.read<AppointmentCubit>().updateVehicleModel,
-          onYearChanged: context.read<AppointmentCubit>().updateVehicleYear,
-          onColorChanged: context.read<AppointmentCubit>().updateVehicleColor,
-          onFuelTypeChanged: context
-              .read<AppointmentCubit>()
-              .updateVehicleFuelType,
-          onTransmissionTypeChanged: context
-              .read<AppointmentCubit>()
-              .updateVehicleTransmissionType,
-          isDesktop: isDesktop,
-        );
-      case 1:
         return _DateTimeMock(
           title: steps[state.currentStep].title,
           selectedDate: state.selectedDate,
@@ -229,7 +186,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           onFocusedDateChanged: context.read<AppointmentCubit>().focusDate,
           onSelected: context.read<AppointmentCubit>().selectTime,
         );
-      case 2:
+      case 1:
         return _BookingReviewStep(
           title: steps[state.currentStep].title,
           workshopName: _workshopName(state),
@@ -249,19 +206,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   String _workshopName(AppointmentState state) {
     final name = state.workshop?.name.trim();
     return name == null || name.isEmpty ? 'Taller Autolab' : name;
-  }
-
-  Future<void> _openGarage(BuildContext context) async {
-    final cubit = context.read<AppointmentCubit>();
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const VehiclesPage()));
-
-    if (!mounted) {
-      return;
-    }
-
-    await cubit.refreshVehicles();
   }
 
   void _handleBack(BuildContext context, AppointmentState state) {
@@ -371,7 +315,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       return;
     }
 
-    if (state.currentStep == 1) {
+    if (state.currentStep == 0) {
       if (state.selectedDate == null || state.selectedTime == null) {
         _showAppointmentMessage(
           context,
@@ -539,7 +483,6 @@ enum _AppointmentMessageType { success, warning, error }
 
 List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   return [
-    _AppointmentStep(l10n.appointmentStepVehicleInfo, Icons.directions_car),
     _AppointmentStep(l10n.appointmentStepDateTime, Icons.event_outlined),
     _AppointmentStep(
       l10n.appointmentStepConfirmation,
@@ -734,6 +677,7 @@ class _DesktopStepItem extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _MobileHeader extends StatefulWidget {
   const _MobileHeader({
     required this.steps,
@@ -876,6 +820,8 @@ class _MobileHeaderState extends State<_MobileHeader> {
   }
 }
 
+// Kept temporarily as a reusable fallback for a future change-vehicle flow.
+// ignore: unused_element
 class _VehicleStep extends StatelessWidget {
   const _VehicleStep({
     required this.title,

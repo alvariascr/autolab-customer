@@ -1492,11 +1492,11 @@ abstract class AppLocalizations {
   /// **'Mis vehículos'**
   String get vehiclesTitle;
 
-  /// No description provided for @vehiclesManageAction.
+  /// No description provided for @vehiclesViewAllAction.
   ///
   /// In es, this message translates to:
-  /// **'Gestionar'**
-  String get vehiclesManageAction;
+  /// **'Ver todos'**
+  String get vehiclesViewAllAction;
 
   /// No description provided for @vehiclesProfileSubtitle.
   ///

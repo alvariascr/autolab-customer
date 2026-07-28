@@ -9,6 +9,7 @@ class AppointmentVehicleRecord {
     this.color,
     this.fuelType,
     this.transmissionType,
+    this.isDefault = false,
   });
 
   final String id;
@@ -20,4 +21,5 @@ class AppointmentVehicleRecord {
   final String? color;
   final String? fuelType;
   final String? transmissionType;
+  final bool isDefault;
 }

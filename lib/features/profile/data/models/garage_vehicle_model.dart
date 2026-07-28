@@ -11,9 +11,15 @@ class GarageVehicleModel extends GarageVehicle {
     super.color,
     super.fuelType,
     super.transmissionType,
+    super.isDefault,
+    super.imagePath,
+    super.imageUrl,
   });
 
-  factory GarageVehicleModel.fromMap(Map<String, dynamic> map) {
+  factory GarageVehicleModel.fromMap(
+    Map<String, dynamic> map, {
+    String? imageUrl,
+  }) {
     return GarageVehicleModel(
       id: map['id']?.toString() ?? '',
       licensePlate: map['license_plate']?.toString() ?? '',
@@ -24,6 +30,9 @@ class GarageVehicleModel extends GarageVehicle {
       color: map['color']?.toString(),
       fuelType: map['fuel_type']?.toString(),
       transmissionType: map['transmission_type']?.toString(),
+      isDefault: map['is_default'] == true,
+      imagePath: map['image_path']?.toString(),
+      imageUrl: imageUrl,
     );
   }
 }
