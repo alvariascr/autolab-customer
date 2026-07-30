@@ -23,16 +23,27 @@ class LaropayCheckoutLauncher {
   Future<void> launch({
     required String appointmentId,
     required String workshopName,
+    double? chargeableAmount,
   }) async {
     final paymentContext = await (await _getPaymentContext(appointmentId)).fold(
       (failure) async =>
           throw LaropayCheckoutLaunchException(_failureMessage(failure)),
       (context) async => context,
     );
+    final amount = _paymentAmount(
+      contextAmount: paymentContext.amount,
+      chargeableAmount: chargeableAmount,
+    );
+    if (!amount.isFinite || amount <= 0) {
+      throw const LaropayCheckoutLaunchException(
+        'No hay productos cobrables para generar el link de pago.',
+      );
+    }
+
     final result = await _generateLaropayLink(
       LaropayLinkRequest(
         internalTransactionId: paymentContext.orderId,
-        amount: paymentContext.amount,
+        amount: amount,
         document: paymentContext.orderNumber ?? appointmentId,
         detail: 'Autolab $workshopName',
         customerFirstName: paymentContext.customerFirstName,
@@ -62,6 +73,19 @@ class LaropayCheckoutLauncher {
 
   static Future<bool> _launchInBrowser(Uri uri) {
     return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  static double _paymentAmount({
+    required double contextAmount,
+    required double? chargeableAmount,
+  }) {
+    if (chargeableAmount != null &&
+        chargeableAmount.isFinite &&
+        chargeableAmount > 0) {
+      return chargeableAmount;
+    }
+
+    return contextAmount;
   }
 
   static String _failureMessage(Failure failure) {

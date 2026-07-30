@@ -255,6 +255,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             await sl<LaropayCheckoutLauncher>().launch(
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
+              chargeableAmount: _chargeableProductsAmount(submitState),
             );
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
@@ -354,6 +355,21 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
               item.product.sellingPrice != null &&
               item.product.sellingPrice! > 0,
         );
+  }
+
+  double _chargeableProductsAmount(AppointmentState state) {
+    if (!state.includeProducts) {
+      return 0;
+    }
+
+    return state.selectedProducts.fold<double>(0, (total, item) {
+      final price = item.product.sellingPrice;
+      if (item.quantity <= 0 || price == null || price <= 0) {
+        return total;
+      }
+
+      return total + (price * item.quantity);
+    });
   }
 
   Future<bool> _showAppointmentCreatedDialog(BuildContext context) async {

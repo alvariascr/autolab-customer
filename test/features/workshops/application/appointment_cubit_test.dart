@@ -341,7 +341,7 @@ void main() {
         ..setIncludeProducts(true)
         ..toggleProduct(product)
         ..changeProductQuantity(product, 1)
-        ..selectDate(DateTime(2026, 7, 28))
+        ..selectDate(DateTime(2026, 8, 28))
         ..selectTime('06:15');
 
       final appointmentId = await cubit.submitBooking();
@@ -353,7 +353,7 @@ void main() {
                 () => bookServiceAppointment(
                   workshopId: 'workshop-1',
                   inventoryItemId: 'service-1',
-                  scheduledDateTime: DateTime(2026, 7, 28, 6, 15),
+                  scheduledDateTime: DateTime(2026, 8, 28, 6, 15),
                   products: captureAny<List<AppointmentProductSelection>>(
                     named: 'products',
                   ),
