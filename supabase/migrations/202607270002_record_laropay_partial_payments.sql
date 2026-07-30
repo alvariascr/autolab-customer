@@ -25,6 +25,7 @@ declare
   v_payment_link public.laropay_payment_links%rowtype;
   v_effective_status text;
   v_order_id uuid;
+  v_order_workshop_id uuid;
   v_updated_order_count integer;
   v_card_payment_method_id integer;
   v_payment_reference text;
@@ -85,27 +86,39 @@ begin
 
     v_payment_reference := 'LAROPAY:' || v_payment_link.id::text;
 
+    select o.workshop_id
+    into v_order_workshop_id
+    from public.orders o
+    where o.id = v_order_id
+    for update;
+
+    if not found then
+      raise exception 'payment_order_not_found';
+    end if;
+
     select pm.id
     into v_card_payment_method_id
-    from public.payment_methods pm
-    where pm.id in (20, 2, 3)
-      or lower(coalesce(pm.name, '')) in (
+    from public.workshop_payment_methods wpm
+    join public.payment_methods pm on pm.id = wpm.payment_method_id
+    where wpm.workshop_id = v_order_workshop_id
+      and translate(lower(coalesce(pm.name, '')), 'áéíóúü', 'aeiouu') in (
         'tarjeta',
         'tarjeta credito',
-        'tarjeta crédito',
         'tarjeta de credito',
-        'tarjeta de crédito',
         'tarjeta debito',
-        'tarjeta débito',
-        'tarjeta de debito',
-        'tarjeta de débito'
+        'tarjeta de debito'
       )
     order by
       case
-        when pm.id = 20 then 0
-        when lower(coalesce(pm.name, '')) = 'tarjeta' then 1
-        when pm.id = 2 then 2
-        when pm.id = 3 then 3
+        when translate(lower(coalesce(pm.name, '')), 'áéíóúü', 'aeiouu') = 'tarjeta' then 0
+        when translate(lower(coalesce(pm.name, '')), 'áéíóúü', 'aeiouu') in (
+          'tarjeta credito',
+          'tarjeta de credito'
+        ) then 1
+        when translate(lower(coalesce(pm.name, '')), 'áéíóúü', 'aeiouu') in (
+          'tarjeta debito',
+          'tarjeta de debito'
+        ) then 2
         else 4
       end,
       pm.id
@@ -113,15 +126,6 @@ begin
 
     if v_card_payment_method_id is null then
       raise exception 'laropay_card_payment_method_not_found';
-    end if;
-
-    perform 1
-    from public.orders o
-    where o.id = v_order_id
-    for update;
-
-    if not found then
-      raise exception 'payment_order_not_found';
     end if;
 
     insert into public.payments (
