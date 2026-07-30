@@ -21,13 +21,20 @@ backend.
 Configurar estos secrets en Supabase:
 
 ```powershell
-npx supabase secrets set LAROPAY_BASE_URL=https://...
-npx supabase secrets set LAROPAY_BASIC_USER=...
-npx supabase secrets set LAROPAY_BASIC_PASSWORD=...
-npx supabase secrets set LAROPAY_ID_USER=...
-npx supabase secrets set LAROPAY_TOKEN=...
-npx supabase secrets set LAROPAY_CALLBACK_URL=https://<project-ref>.functions.supabase.co/laropay-return
-npx supabase secrets set LAROPAY_TRANSACTION_TYPE=1
+npx supabase secrets set LAROPAY_BASE_URL
+npx supabase secrets set LAROPAY_BASIC_USER
+npx supabase secrets set LAROPAY_BASIC_PASSWORD
+npx supabase secrets set LAROPAY_ID_USER
+npx supabase secrets set LAROPAY_TOKEN
+npx supabase secrets set LAROPAY_CALLBACK_URL
+npx supabase secrets set LAROPAY_TRANSACTION_TYPE
+```
+
+El CLI solicitara cada valor de forma interactiva. Para cargar varios valores,
+usar un archivo `.env` local no versionado:
+
+```powershell
+npx supabase secrets set --env-file .\.env.laropay.local
 ```
 
 Tambien deben existir los secrets propios de Supabase:
@@ -182,24 +189,34 @@ order by created_at desc
 limit 10;
 ```
 
-Auditoria de payloads tecnicos:
+Auditoria tecnica sin exponer payloads completos:
 
 ```sql
 select
-  id,
-  link_id,
-  status,
-  request_payload,
-  response_payload,
-  verify_payload,
-  certifier_payload,
-  status_check_error,
-  created_at,
-  status_checked_at
-from public.laropay_payment_links
+  lpl.id,
+  lpl.link_id,
+  lpl.status,
+  lpl.response_code,
+  lpl.response_description,
+  (
+    select array_agg(key order by key)
+    from jsonb_object_keys(coalesce(lpl.request_payload, '{}'::jsonb)) as keys(key)
+  ) as request_payload_keys,
+  (
+    select array_agg(key order by key)
+    from jsonb_object_keys(coalesce(lpl.response_payload, '{}'::jsonb)) as keys(key)
+  ) as response_payload_keys,
+  lpl.status_check_error,
+  lpl.created_at,
+  lpl.status_checked_at
+from public.laropay_payment_links lpl
 order by created_at desc
 limit 5;
 ```
+
+Si soporte necesita revisar payloads completos, la exportacion debe hacerse solo
+con acceso administrativo y con redaccion previa de datos personales o
+credenciales.
 
 Pagos Laropay registrados en la tabla de pagos:
 

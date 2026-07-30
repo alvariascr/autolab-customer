@@ -251,6 +251,15 @@ begin
       where o.workshop_id = p_workshop_id
         and a.appointment_status not in ('cancelled', 'no_show')
         and not public.is_inspection_service_name(ii.name)
+        and a.scheduled_datetime < v_scheduled_end_datetime
+        and (
+          a.scheduled_datetime
+            + make_interval(
+                secs => (
+                  coalesce(nullif(ii.estimated_duration_hours, 0), 0.5) * 3600
+                )::double precision
+              )
+        ) > v_scheduled_datetime
     ),
     segment_occupancy as (
       select
@@ -273,7 +282,8 @@ begin
     select
       ii.id,
       ii.selling_price,
-      product_item.quantity
+      sum(product_item.quantity)::integer as quantity,
+      count(*)::integer as raw_count
     from (
       select
         coalesce(
@@ -283,7 +293,7 @@ begin
         ) as raw_id,
         case
           when nullif(value ->> 'quantity', '') is null then 1
-          when (value ->> 'quantity') ~ '^-?[0-9]+$'
+          when (value ->> 'quantity') ~ '^[0-9]{1,3}$'
             then (value ->> 'quantity')::integer
           else 0
         end as quantity
@@ -298,8 +308,9 @@ begin
     where ii.workshop_id = p_workshop_id
       and ii.status = 'active'
       and ii.item_type <> 'service'
+    group by ii.id, ii.selling_price
   loop
-    if v_product.quantity <= 0 then
+    if v_product.quantity <= 0 or v_product.quantity > 999 then
       raise exception using message = 'appointment_products_invalid';
     end if;
 
@@ -307,7 +318,7 @@ begin
       raise exception using message = 'appointment_product_price_required';
     end if;
 
-    v_valid_product_count := v_valid_product_count + 1;
+    v_valid_product_count := v_valid_product_count + v_product.raw_count;
     v_validated_products :=
       v_validated_products ||
       jsonb_build_object(

@@ -391,7 +391,7 @@ async function loadOrderPaymentData(
       const quantity = numberValue(item.quantity);
       const unitPrice = numberValue(item.unit_price);
       if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) {
-        return total;
+        throw new Error("invalid_order_products");
       }
 
       return total + quantity * unitPrice;
@@ -783,6 +783,7 @@ function safeErrorCode(message: string) {
     message.startsWith("auth_") ||
     message.startsWith("invalid_") ||
     message.startsWith("missing_env_") ||
+    isBadRequestError(message) ||
     message === "transaction_not_found"
   ) {
     return message;

@@ -1,11 +1,9 @@
-do $$
-begin
-  alter type public.payment_status add value if not exists 'partial';
-exception
-  when undefined_object then
-    null;
-end;
-$$;
+alter type public.payment_status add value if not exists 'partial';
+
+create unique index if not exists payments_order_reference_number_unique_idx
+on public.payments (order_id, reference_number)
+where reference_number is not null;
+
 create or replace function public.persist_laropay_status_check(
   p_payment_link_id uuid,
   p_status text,
@@ -90,11 +88,9 @@ begin
     select pm.id
     into v_card_payment_method_id
     from public.payment_methods pm
-    where lower(coalesce(pm.name, '')) in (
+    where pm.id in (20, 2, 3)
+      or lower(coalesce(pm.name, '')) in (
         'tarjeta',
-        'card',
-        'credito',
-        'crédito',
         'tarjeta credito',
         'tarjeta crédito',
         'tarjeta de credito',
@@ -104,12 +100,13 @@ begin
         'tarjeta de debito',
         'tarjeta de débito'
       )
-      or lower(coalesce(pm.name, '')) like '%tarjeta%'
-      or lower(coalesce(pm.name, '')) like '%card%'
     order by
       case
-        when lower(coalesce(pm.name, '')) = 'tarjeta' then 0
-        else 2
+        when pm.id = 20 then 0
+        when lower(coalesce(pm.name, '')) = 'tarjeta' then 1
+        when pm.id = 2 then 2
+        when pm.id = 3 then 3
+        else 4
       end,
       pm.id
     limit 1;
@@ -151,7 +148,10 @@ begin
       from public.payments p
       where p.order_id = v_order_id
         and p.reference_number = v_payment_reference
-    );
+    )
+    on conflict (order_id, reference_number)
+      where reference_number is not null
+      do nothing;
 
     select coalesce(sum(p.amount), 0)
     into v_total_paid
@@ -164,11 +164,15 @@ begin
     set
       payment_status = case
         when v_total_paid <= 0 then 'unpaid'
-        when v_total_paid >= coalesce(o.total_amount, 0) then 'paid'
+        when o.total_amount is null then 'partial'
+        when v_total_paid >= o.total_amount then 'paid'
         else 'partial'
       end::public.payment_status,
       paid_amount = v_total_paid,
-      remaining_amount = greatest(coalesce(o.total_amount, 0) - v_total_paid, 0),
+      remaining_amount = case
+        when o.total_amount is null then null
+        else greatest(o.total_amount - v_total_paid, 0)
+      end,
       updated_at = now()
     where o.id = v_order_id;
 
