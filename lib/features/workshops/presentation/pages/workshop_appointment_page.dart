@@ -250,11 +250,12 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
 
       final submitState = cubit.state;
       if (appointmentId != null) {
-        if (_hasChargeableProducts(submitState)) {
+        if (submitState.hasChargeableProducts) {
           try {
             await sl<LaropayCheckoutLauncher>().launch(
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
+              chargeableAmount: submitState.chargeableProductsAmount,
             );
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
@@ -344,16 +345,6 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     }
 
     context.read<AppointmentCubit>().goNext();
-  }
-
-  bool _hasChargeableProducts(AppointmentState state) {
-    return state.includeProducts &&
-        state.selectedProducts.any(
-          (item) =>
-              item.quantity > 0 &&
-              item.product.sellingPrice != null &&
-              item.product.sellingPrice! > 0,
-        );
   }
 
   Future<bool> _showAppointmentCreatedDialog(BuildContext context) async {
