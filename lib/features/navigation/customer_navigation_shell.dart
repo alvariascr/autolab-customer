@@ -135,33 +135,35 @@ class _CartPlaceholderPage extends StatelessWidget {
           AutolabCustomer.responsiveScreenMargin(context),
         ),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.shopping_cart_outlined,
-                color: AutolabCustomer.primary,
-                size: AutolabCustomer.iconLg + 10,
-              ),
-              const SizedBox(height: AutolabCustomer.spacingMd),
-              Text(
-                l10n.navigationCartComingSoonTitle,
-                textAlign: TextAlign.center,
-                style: AutolabCustomer.bodyLarge.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
-                  fontWeight: FontWeight.w800,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.shopping_cart_outlined,
+                  color: AutolabCustomer.primary,
+                  size: AutolabCustomer.iconLg + 10,
                 ),
-              ),
-              const SizedBox(height: AutolabCustomer.spacingSm),
-              Text(
-                l10n.navigationCartComingSoonMessage,
-                textAlign: TextAlign.center,
-                style: AutolabCustomer.body.copyWith(
-                  color: AutolabCustomer.customerSecondaryTextColor(context),
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: AutolabCustomer.spacingMd),
+                Text(
+                  l10n.navigationCartComingSoonTitle,
+                  textAlign: TextAlign.center,
+                  style: AutolabCustomer.bodyLarge.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AutolabCustomer.spacingSm),
+                Text(
+                  l10n.navigationCartComingSoonMessage,
+                  textAlign: TextAlign.center,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.customerSecondaryTextColor(context),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
