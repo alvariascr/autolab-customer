@@ -6,6 +6,7 @@ import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../application/cart_cubit.dart';
+import '../../data/datasources/cart_checkout_remote_data_source.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key, this.showBackButton = false});
@@ -117,7 +118,7 @@ class _CartPageState extends State<CartPage> {
     final cartCubit = context.read<CartCubit>();
     final result = await cartCubit.createOrder();
 
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
 
     if (result == null) {
       messenger.showSnackBar(
@@ -127,8 +128,150 @@ class _CartPageState extends State<CartPage> {
     }
 
     setState(() => _showCheckout = false);
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.cartCreateOrderSuccess(result.orderNumber))),
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => _CartSuccessDialog(result: result),
+    );
+  }
+}
+
+class _CartSuccessDialog extends StatelessWidget {
+  const _CartSuccessDialog({required this.result});
+
+  final CartCheckoutResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Dialog(
+      backgroundColor: AutolabCustomer.transparent,
+      insetPadding: const EdgeInsets.all(AutolabCustomer.spacingLg),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AutolabCustomer.customerSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusLg),
+          border: Border.all(
+            color: AutolabCustomer.customerBorderColor(context),
+          ),
+          boxShadow: AutolabCustomer.shadowLevel2,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AutolabCustomer.spacingLg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AutolabCustomer.success, width: 5),
+                ),
+                child: Icon(
+                  Icons.check_rounded,
+                  color: AutolabCustomer.success,
+                  size: AutolabCustomer.iconLg,
+                ),
+              ),
+              const SizedBox(height: AutolabCustomer.spacingLg),
+              Text(
+                l10n.cartOrderSuccessTitle,
+                textAlign: TextAlign.center,
+                style: AutolabCustomer.h3.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: AutolabCustomer.spacingSm),
+              Text(
+                l10n.cartOrderSuccessMessage,
+                textAlign: TextAlign.center,
+                style: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.customerSecondaryTextColor(context),
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: AutolabCustomer.spacingLg),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AutolabCustomer.customerBackgroundColor(context),
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusMd),
+                  border: Border.all(
+                    color: AutolabCustomer.customerBorderColor(context),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+                  child: Column(
+                    children: [
+                      _CartSuccessRow(
+                        label: l10n.cartOrderNumberLabel,
+                        value: result.orderNumber,
+                      ),
+                      const SizedBox(height: AutolabCustomer.spacingSm),
+                      _CartSuccessRow(
+                        label: l10n.cartTotal,
+                        value: _formatCurrency(result.totalAmount),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AutolabCustomer.spacingLg),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  style: AutolabCustomer.primaryButton,
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    l10n.cartOrderSuccessAction,
+                    style: AutolabCustomer.body.copyWith(
+                      color: AutolabCustomer.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CartSuccessRow extends StatelessWidget {
+  const _CartSuccessRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

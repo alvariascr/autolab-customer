@@ -772,6 +772,10 @@
       "orderNumber": {}
     }
   },
+  "cartOrderSuccessTitle": "¡Compra exitosa!",
+  "cartOrderSuccessMessage": "Tu pedido fue creado correctamente.",
+  "cartOrderNumberLabel": "Orden",
+  "cartOrderSuccessAction": "Entendido",
   "cartCreateOrderError": "No fue posible crear la orden. Intenta nuevamente.",
   "cartSecurePurchaseTitle": "Compra segura",
   "cartSecurePurchaseMessage": "Tus datos están protegidos",

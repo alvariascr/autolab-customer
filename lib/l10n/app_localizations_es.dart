@@ -2216,6 +2216,18 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get cartOrderSuccessTitle => '¡Compra exitosa!';
+
+  @override
+  String get cartOrderSuccessMessage => 'Tu pedido fue creado correctamente.';
+
+  @override
+  String get cartOrderNumberLabel => 'Orden';
+
+  @override
+  String get cartOrderSuccessAction => 'Entendido';
+
+  @override
   String get cartCreateOrderError =>
       'No fue posible crear la orden. Intenta nuevamente.';
 

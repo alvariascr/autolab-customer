@@ -3988,6 +3988,30 @@ abstract class AppLocalizations {
   /// **'Orden {orderNumber} creada correctamente.'**
   String cartCreateOrderSuccess(Object orderNumber);
 
+  /// No description provided for @cartOrderSuccessTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Compra exitosa!'**
+  String get cartOrderSuccessTitle;
+
+  /// No description provided for @cartOrderSuccessMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu pedido fue creado correctamente.'**
+  String get cartOrderSuccessMessage;
+
+  /// No description provided for @cartOrderNumberLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Orden'**
+  String get cartOrderNumberLabel;
+
+  /// No description provided for @cartOrderSuccessAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get cartOrderSuccessAction;
+
   /// No description provided for @cartCreateOrderError.
   ///
   /// In es, this message translates to:

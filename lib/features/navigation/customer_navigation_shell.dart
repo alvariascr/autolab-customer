@@ -34,7 +34,9 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   void didUpdateWidget(covariant CustomerNavigationShell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialIndex != widget.initialIndex) {
-      _setInitialIndex(widget.initialIndex);
+      setState(() {
+        _setInitialIndex(widget.initialIndex);
+      });
     }
   }
 
