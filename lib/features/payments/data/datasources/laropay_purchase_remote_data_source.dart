@@ -7,6 +7,10 @@ final _uuidRegex = RegExp(
   caseSensitive: false,
 );
 
+const _ordersPageSize = 100;
+const _paymentLinkBatchSize = 100;
+const _workshopPaymentStatus = 'workshop_payment';
+
 typedef LaropayStatusInvoker =
     Future<FunctionResponse> Function(String paymentLinkId);
 typedef CurrentUserIdProvider = String? Function();
@@ -59,27 +63,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
       throw const LaropayPurchaseAuthException();
     }
 
-    final response = await _client
-        .from('orders')
-        .select('''
-          id,
-          order_number,
-          payment_status,
-          total_amount,
-          paid_amount,
-          remaining_amount,
-          created_at,
-          updated_at,
-          workshops(name),
-          customers!inner(user_id)
-        ''')
-        .eq('customers.user_id', user.id)
-        .order('created_at', ascending: false)
-        .limit(50);
-
-    final orders = response
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(growable: false);
+    final orders = await _ordersForUser(user.id);
     final orderIds = orders
         .map((item) => _stringValue(item['id']))
         .where(_isUuid)
@@ -144,37 +128,75 @@ class SupabaseLaropayPurchaseRemoteDataSource
     List<String> orderIds,
     String userId,
   ) async {
-    final response = await _client
-        .from('laropay_payment_links')
-        .select('''
-          id,
-          internal_transaction_id,
-          amount,
-          currency_code,
-          detail,
-          link_id,
-          link_url,
-          status,
-          response_code,
-          response_description,
-          reject_reason,
-          auth_response_code,
-          created_at,
-          updated_at,
-          expires_at
-        ''')
-        .eq('user_id', userId)
-        .inFilter('internal_transaction_id', orderIds)
-        .order('created_at', ascending: false);
-
     final linksByOrderId = <String, Map<String, dynamic>>{};
-    for (final item in response) {
-      final map = Map<String, dynamic>.from(item);
-      final orderId = _stringValue(map['internal_transaction_id']);
-      linksByOrderId.putIfAbsent(orderId, () => map);
+    for (final batch in _chunks(orderIds, _paymentLinkBatchSize)) {
+      final response = await _client
+          .from('laropay_payment_links')
+          .select('''
+            id,
+            internal_transaction_id,
+            amount,
+            currency_code,
+            detail,
+            link_id,
+            link_url,
+            status,
+            response_code,
+            response_description,
+            reject_reason,
+            auth_response_code,
+            created_at,
+            updated_at,
+            expires_at
+          ''')
+          .eq('user_id', userId)
+          .inFilter('internal_transaction_id', batch)
+          .order('created_at', ascending: false);
+
+      for (final item in response) {
+        final map = Map<String, dynamic>.from(item);
+        final orderId = _stringValue(map['internal_transaction_id']);
+        linksByOrderId.putIfAbsent(orderId, () => map);
+      }
     }
 
     return linksByOrderId;
+  }
+
+  Future<List<Map<String, dynamic>>> _ordersForUser(String userId) async {
+    final orders = <Map<String, dynamic>>[];
+    var offset = 0;
+
+    while (true) {
+      final response = await _client
+          .from('orders')
+          .select('''
+            id,
+            order_number,
+            payment_status,
+            total_amount,
+            paid_amount,
+            remaining_amount,
+            created_at,
+            updated_at,
+            workshops(name),
+            customers!inner(user_id)
+          ''')
+          .eq('customers.user_id', userId)
+          .order('created_at', ascending: false)
+          .range(offset, offset + _ordersPageSize - 1);
+
+      final page = response
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
+      orders.addAll(page);
+
+      if (page.length < _ordersPageSize) {
+        return orders;
+      }
+
+      offset += _ordersPageSize;
+    }
   }
 
   LaropayPurchase _purchaseFromOrder(
@@ -189,14 +211,13 @@ class SupabaseLaropayPurchaseRemoteDataSource
       );
     }
 
-    final paymentStatus = _stringValue(order['payment_status']);
     return LaropayPurchase(
       id: _stringValue(order['id']),
       amount: _nullableNumberValue(order['paid_amount']) ?? 0,
       currencyCode: 'CRC',
       detail: _orderTitle(order),
       linkId: '',
-      status: paymentStatus.isEmpty ? 'unpaid' : paymentStatus,
+      status: _workshopPaymentStatus,
       responseCode: '',
       responseDescription: '',
       rejectReason: '',
@@ -326,6 +347,13 @@ double? _nullableNumberValue(Object? value) {
   }
 
   return double.tryParse(_stringValue(value));
+}
+
+Iterable<List<T>> _chunks<T>(List<T> values, int size) sync* {
+  for (var start = 0; start < values.length; start += size) {
+    final end = start + size > values.length ? values.length : start + size;
+    yield values.sublist(start, end);
+  }
 }
 
 Uri? _secureUri(Object? value) {

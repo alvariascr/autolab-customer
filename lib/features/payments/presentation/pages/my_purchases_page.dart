@@ -613,7 +613,7 @@ extension _LaropayPurchaseView on LaropayPurchase {
   }
 
   _PurchaseState get state {
-    if (hasOutstandingBalance && isLaropayApproved) {
+    if (hasPaymentLink && hasOutstandingBalance && isLaropayApproved) {
       return _PurchaseState.partial;
     }
 
