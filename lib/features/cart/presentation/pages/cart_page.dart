@@ -729,9 +729,8 @@ class _SavedDeliveryAddressesList extends StatelessWidget {
                       onSelected: (_) => context
                           .read<CartCubit>()
                           .selectDeliveryAddress(address),
-                      onDeleted: () => context
-                          .read<CartCubit>()
-                          .deleteDeliveryAddress(address.id),
+                      onDeleted: () =>
+                          _confirmDeleteDeliveryAddress(context, address),
                       deleteIcon: Icon(
                         Icons.close_rounded,
                         size: AutolabCustomer.iconXs,
@@ -764,6 +763,66 @@ class _SavedDeliveryAddressesList extends StatelessWidget {
       ],
     );
   }
+}
+
+Future<void> _confirmDeleteDeliveryAddress(
+  BuildContext context,
+  CustomerDeliveryAddress address,
+) async {
+  final l10n = AppLocalizations.of(context)!;
+  final shouldDelete = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusLg),
+          side: BorderSide(color: AutolabCustomer.customerBorderColor(context)),
+        ),
+        title: Text(
+          l10n.cartDeleteAddressTitle,
+          style: AutolabCustomer.h3.copyWith(
+            color: AutolabCustomer.customerTextColor(context),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Text(
+          l10n.cartDeleteAddressMessage,
+          style: AutolabCustomer.body.copyWith(
+            color: AutolabCustomer.customerSecondaryTextColor(context),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(
+              l10n.cartDeleteAddressCancel,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.customerSecondaryTextColor(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              l10n.cartDeleteAddressConfirm,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (shouldDelete != true || !context.mounted) {
+    return;
+  }
+
+  await context.read<CartCubit>().deleteDeliveryAddress(address.id);
 }
 
 class _DeliveryAddressCard extends StatelessWidget {

@@ -3916,6 +3916,30 @@ abstract class AppLocalizations {
   /// **'No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.'**
   String get cartSaveAddressError;
 
+  /// No description provided for @cartDeleteAddressTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar dirección'**
+  String get cartDeleteAddressTitle;
+
+  /// No description provided for @cartDeleteAddressMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Seguro que quieres eliminar esta dirección?'**
+  String get cartDeleteAddressMessage;
+
+  /// No description provided for @cartDeleteAddressCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get cartDeleteAddressCancel;
+
+  /// No description provided for @cartDeleteAddressConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get cartDeleteAddressConfirm;
+
   /// No description provided for @cartFieldRequired.
   ///
   /// In es, this message translates to:
