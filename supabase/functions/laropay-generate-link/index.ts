@@ -298,6 +298,10 @@ Deno.serve(async (request) => {
       return json({ error: error.message }, 400);
     }
 
+    if (error instanceof Error && isBadRequestError(error.message)) {
+      return json({ error: error.message }, 400);
+    }
+
     if (error instanceof Error && error.message === "transaction_not_found") {
       return json({ error: error.message }, 403);
     }
@@ -352,7 +356,7 @@ async function loadOrderPaymentData(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, workshop_id, remaining_amount, total_amount, payment_status, customers!inner(user_id)",
+      "id, workshop_id, payment_status, customers!inner(user_id)",
     )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
@@ -371,13 +375,34 @@ async function loadOrderPaymentData(
     throw new Error("invalid_order_payment_status");
   }
 
-  const rawRemainingAmount = order.remaining_amount;
-  const amount = hasStoredValue(rawRemainingAmount)
-    ? numberValue(rawRemainingAmount)
-    : numberValue(order.total_amount);
+  const { data: products, error: productsError } = await adminSupabaseClient(
+    env,
+  )
+    .from("order_products")
+    .select("quantity, unit_price")
+    .eq("order_id", stringValue(input.internalTransactionId));
+
+  if (productsError !== null) {
+    throw new Error("invalid_order_products");
+  }
+
+  const amount = ((products ?? []) as Array<Record<string, unknown>>)
+    .reduce((total, item) => {
+      const quantity = numberValue(item.quantity);
+      const unitPrice = numberValue(item.unit_price);
+      if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) {
+        throw new Error("invalid_order_products");
+      }
+
+      return total + quantity * unitPrice;
+    }, 0);
 
   if (!Number.isFinite(amount) || amount <= 0) {
-    throw new Error("invalid_order_amount");
+    throw new Error("order_has_no_chargeable_products");
+  }
+
+  if (Math.abs(amount - numberValue(input.amount)) > 0.01) {
+    throw new Error("amount_mismatch");
   }
 
   return {
@@ -682,18 +707,6 @@ function numberValue(value: unknown) {
   return Number.NaN;
 }
 
-function hasStoredValue(value: unknown) {
-  if (value === null || value === undefined) {
-    return false;
-  }
-
-  if (typeof value === "string") {
-    return value.trim() !== "";
-  }
-
-  return typeof value === "number";
-}
-
 function trimOrNull(value: unknown) {
   const text = stringValue(value);
   return text === "" ? null : text;
@@ -705,6 +718,13 @@ function normalizedExpirationType(input: LaropayLinkRequest) {
 
 function normalizedExpirationValue(input: LaropayLinkRequest) {
   return input.expirationValue ?? 1;
+}
+
+function isBadRequestError(message: string) {
+  return [
+    "amount_mismatch",
+    "order_has_no_chargeable_products",
+  ].includes(message);
 }
 
 function calculateExpiresAt(input: LaropayLinkRequest) {
@@ -763,6 +783,7 @@ function safeErrorCode(message: string) {
     message.startsWith("auth_") ||
     message.startsWith("invalid_") ||
     message.startsWith("missing_env_") ||
+    isBadRequestError(message) ||
     message === "transaction_not_found"
   ) {
     return message;

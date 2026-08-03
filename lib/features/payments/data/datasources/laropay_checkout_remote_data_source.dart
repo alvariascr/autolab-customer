@@ -36,8 +36,6 @@ class SupabaseLaropayCheckoutRemoteDataSource
             orders!inner(
               id,
               order_number,
-              remaining_amount,
-              total_amount,
               payment_status,
               customers!inner(user_id)
             )
@@ -61,36 +59,22 @@ class SupabaseLaropayCheckoutRemoteDataSource
     final orderId = _stringValue(orderService['order_id']).isNotEmpty
         ? _stringValue(orderService['order_id'])
         : _stringValue(order['id']);
-    final amount = _paymentAmount(order);
     final profile = _userProfile(user);
 
-    if (orderId.isEmpty || !amount.isFinite || amount <= 0) {
+    if (orderId.isEmpty ||
+        _stringValue(order['payment_status']).toLowerCase() != 'unpaid') {
       throw const LaropayCheckoutContextException();
     }
 
     return LaropayPaymentContext(
       orderId: orderId,
       orderNumber: _nullableString(order['order_number']),
-      amount: amount,
+      amount: 0,
       customerFirstName: profile.firstName,
       customerLastName: profile.lastName,
       customerEmail: profile.email,
       customerPhone: profile.phone,
     );
-  }
-
-  static double _paymentAmount(Map<String, dynamic> order) {
-    if (_stringValue(order['payment_status']).toLowerCase() != 'unpaid') {
-      return double.nan;
-    }
-
-    final rawRemainingAmount = order['remaining_amount'];
-    final remainingAmount = _numberValue(order['remaining_amount']);
-    if (_hasStoredValue(rawRemainingAmount)) {
-      return remainingAmount;
-    }
-
-    return _numberValue(order['total_amount']);
   }
 
   static _LaropayUserProfile _userProfile(User user) {
@@ -156,16 +140,4 @@ String _stringValue(Object? value) {
 String? _nullableString(Object? value) {
   final text = _stringValue(value);
   return text.isEmpty ? null : text;
-}
-
-double _numberValue(Object? value) {
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  return double.tryParse(value?.toString() ?? '') ?? double.nan;
-}
-
-bool _hasStoredValue(Object? value) {
-  return value != null && value.toString().trim().isNotEmpty;
 }

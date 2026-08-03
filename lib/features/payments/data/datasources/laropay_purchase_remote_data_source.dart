@@ -17,7 +17,21 @@ class LaropayPurchaseAuthException implements Exception {
 }
 
 class LaropayPurchaseStatusException implements Exception {
-  const LaropayPurchaseStatusException();
+  const LaropayPurchaseStatusException({
+    this.message = 'laropay_purchase_status_failed',
+    this.status,
+    this.details,
+  });
+
+  final String message;
+  final int? status;
+  final Object? details;
+
+  @override
+  String toString() {
+    return 'LaropayPurchaseStatusException('
+        'message: $message, status: $status, details: $details)';
+  }
 }
 
 class SupabaseLaropayPurchaseRemoteDataSource
@@ -87,8 +101,12 @@ class SupabaseLaropayPurchaseRemoteDataSource
             'laropay-check-status',
             body: {'paymentLinkId': normalizedId},
           );
-    } on FunctionException {
-      throw const LaropayPurchaseStatusException();
+    } on FunctionException catch (error) {
+      throw LaropayPurchaseStatusException(
+        message: 'laropay_check_status_function_failed',
+        status: error.status,
+        details: error.details,
+      );
     }
 
     final data = response.data;
@@ -122,7 +140,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
 
   LaropayPurchase _purchaseFromStatusResponse(Map<String, dynamic> map) {
     final status = _stringValue(map['status']);
-    final linkUrl = _secureUri(map['link_url']);
+    final linkUrl = _secureUri(_firstValue(map, 'link_url', 'linkURL'));
     if (_requiresPaymentLink(status) && linkUrl == null) {
       throw const LaropayPurchaseStatusException();
     }
@@ -130,20 +148,35 @@ class SupabaseLaropayPurchaseRemoteDataSource
     return LaropayPurchase(
       id: _stringValue(map['id']),
       amount: _numberValue(map['amount']),
-      currencyCode: _stringValue(map['currency_code']).isEmpty
+      currencyCode:
+          _stringValue(
+            _firstValue(map, 'currency_code', 'currencyCode'),
+          ).isEmpty
           ? 'CRC'
-          : _stringValue(map['currency_code']),
+          : _stringValue(_firstValue(map, 'currency_code', 'currencyCode')),
       detail: _stringValue(map['detail']),
-      linkId: _stringValue(map['link_id']),
+      linkId: _stringValue(_firstValue(map, 'link_id', 'linkID')),
       linkUrl: linkUrl,
       status: status,
-      responseCode: _stringValue(map['response_code']),
-      responseDescription: _stringValue(map['response_description']),
-      rejectReason: _stringValue(map['reject_reason']),
-      createdAt: DateTime.tryParse(_stringValue(map['created_at'])),
-      expiresAt: DateTime.tryParse(_stringValue(map['expires_at'])),
+      responseCode: _stringValue(_firstValue(map, 'response_code', 'response')),
+      responseDescription: _stringValue(
+        _firstValue(map, 'response_description', 'responseDescription'),
+      ),
+      rejectReason: _stringValue(
+        _firstValue(map, 'reject_reason', 'rejectReason'),
+      ),
+      createdAt: DateTime.tryParse(
+        _stringValue(_firstValue(map, 'created_at', 'createdAt')),
+      ),
+      expiresAt: DateTime.tryParse(
+        _stringValue(_firstValue(map, 'expires_at', 'expiresAt')),
+      ),
     );
   }
+}
+
+Object? _firstValue(Map<String, dynamic> map, String primary, String fallback) {
+  return map[primary] ?? map[fallback];
 }
 
 String _stringValue(Object? value) => value?.toString().trim() ?? '';

@@ -106,6 +106,23 @@ class AppointmentState extends Equatable {
   final String? createdAppointmentId;
   final String? submitErrorMessage;
 
+  double get chargeableProductsAmount {
+    if (!includeProducts) {
+      return 0;
+    }
+
+    return selectedProducts.fold<double>(0, (total, item) {
+      final price = item.product.sellingPrice;
+      if (item.quantity <= 0 || price == null || price <= 0) {
+        return total;
+      }
+
+      return total + (price * item.quantity);
+    });
+  }
+
+  bool get hasChargeableProducts => chargeableProductsAmount > 0;
+
   AppointmentState copyWith({
     String? workshopId,
     Workshop? workshop,

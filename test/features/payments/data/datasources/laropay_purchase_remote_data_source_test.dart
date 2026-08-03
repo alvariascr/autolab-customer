@@ -50,6 +50,44 @@ void main() {
   });
 
   test(
+    'maps camelCase status responses returned by the Edge Function',
+    () async {
+      final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+        client,
+        currentUserIdProvider: () => 'user-1',
+        statusInvoker: (_) async => FunctionResponse(
+          status: 200,
+          data: {
+            'id': 'payment-1',
+            'amount': 12000,
+            'currencyCode': 'CRC',
+            'detail': 'Kit',
+            'linkID': r'$$ABC',
+            'linkURL': 'https://pay.test/link',
+            'status': 'paid',
+            'response': '00',
+            'responseDescription': 'OK',
+            'rejectReason': '',
+            'createdAt': '2026-07-08T12:00:00Z',
+            'expiresAt': '2026-07-09T12:00:00Z',
+          },
+        ),
+      );
+
+      final purchase = await dataSource.refreshPurchaseStatus('payment-1');
+
+      expect(purchase.id, 'payment-1');
+      expect(purchase.status, 'paid');
+      expect(purchase.amount, 12000);
+      expect(purchase.currencyCode, 'CRC');
+      expect(purchase.linkId, r'$$ABC');
+      expect(purchase.responseCode, '00');
+      expect(purchase.responseDescription, 'OK');
+      expect(purchase.linkUrl, Uri.parse('https://pay.test/link'));
+    },
+  );
+
+  test(
     'rejects active status responses with an invalid payment link',
     () async {
       final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
@@ -137,7 +175,15 @@ void main() {
 
     await expectLater(
       dataSource.refreshPurchaseStatus('payment-1'),
-      throwsA(isA<LaropayPurchaseStatusException>()),
+      throwsA(
+        isA<LaropayPurchaseStatusException>()
+            .having((error) => error.status, 'status', 502)
+            .having(
+              (error) => error.message,
+              'message',
+              'laropay_check_status_function_failed',
+            ),
+      ),
     );
   });
 
