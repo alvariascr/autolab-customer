@@ -47,7 +47,7 @@ class NavigationHandler {
         return;
 
       case 3:
-        context.go('/home-customer?tab=cart');
+        context.go('/cart');
         return;
 
       case 4:

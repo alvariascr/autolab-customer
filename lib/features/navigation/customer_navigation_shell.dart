@@ -10,9 +10,14 @@ import '../profile/presentation/page/profile_page.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
 class CustomerNavigationShell extends StatefulWidget {
-  const CustomerNavigationShell({super.key, this.initialIndex = 0});
+  const CustomerNavigationShell({
+    super.key,
+    this.initialIndex = 0,
+    this.activationKey,
+  });
 
   final int initialIndex;
+  final String? activationKey;
 
   @override
   State<CustomerNavigationShell> createState() =>
@@ -33,7 +38,8 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   @override
   void didUpdateWidget(covariant CustomerNavigationShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialIndex != widget.initialIndex) {
+    if (oldWidget.initialIndex != widget.initialIndex ||
+        oldWidget.activationKey != widget.activationKey) {
       setState(() {
         _setInitialIndex(widget.initialIndex);
       });

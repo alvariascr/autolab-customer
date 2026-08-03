@@ -723,12 +723,23 @@ class _SavedDeliveryAddressesList extends StatelessWidget {
                     padding: const EdgeInsets.only(
                       right: AutolabCustomer.spacingXs,
                     ),
-                    child: ChoiceChip(
+                    child: InputChip(
                       selected: address.id == cart.selectedDeliveryAddressId,
                       label: Text(address.shortLabel),
                       onSelected: (_) => context
                           .read<CartCubit>()
                           .selectDeliveryAddress(address),
+                      onDeleted: () => context
+                          .read<CartCubit>()
+                          .deleteDeliveryAddress(address.id),
+                      deleteIcon: Icon(
+                        Icons.close_rounded,
+                        size: AutolabCustomer.iconXs,
+                        color: address.id == cart.selectedDeliveryAddressId
+                            ? AutolabCustomer.white
+                            : AutolabCustomer.customerTextColor(context),
+                      ),
+                      tooltip: l10n.vehiclesDeleteAction,
                       selectedColor: AutolabCustomer.primary,
                       backgroundColor: AutolabCustomer.customerBackgroundColor(
                         context,

@@ -14,8 +14,7 @@ class CartCubit extends Cubit<CartState> {
           checkoutRemoteDataSource ??
           CartCheckoutRemoteDataSource(Supabase.instance.client),
       super(const CartState()) {
-    _loadSavedCart();
-    unawaited(loadDeliveryAddresses());
+    unawaited(_initializeCart());
   }
 
   final CartCheckoutRemoteDataSource _checkoutRemoteDataSource;
@@ -173,8 +172,63 @@ class CartCubit extends Cubit<CartState> {
     );
   }
 
-  void selectDeliveryAddress(CustomerDeliveryAddress address) {
+  Future<void> selectDeliveryAddress(CustomerDeliveryAddress address) async {
     _emitAndSave(_stateWithAddresses(state, address));
+
+    try {
+      final savedAddress = await _checkoutRemoteDataSource
+          .setDefaultDeliveryAddress(address.id);
+      final addresses = [
+        savedAddress,
+        ...state.deliveryAddresses.where((item) => item.id != savedAddress.id),
+      ];
+
+      _emitAndSave(
+        _stateWithAddresses(
+          state.copyWith(
+            deliveryAddresses: addresses,
+            clearDeliveryAddressesError: true,
+          ),
+          savedAddress,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(deliveryAddressesError: error.toString()));
+    }
+  }
+
+  Future<void> deleteDeliveryAddress(String addressId) async {
+    try {
+      await _checkoutRemoteDataSource.deleteDeliveryAddress(addressId);
+
+      final remainingAddresses = state.deliveryAddresses
+          .where((address) => address.id != addressId)
+          .toList(growable: false);
+      final wasSelected = state.selectedDeliveryAddressId == addressId;
+      final nextSelectedAddress = wasSelected
+          ? remainingAddresses
+                    .where((address) => address.isDefault)
+                    .firstOrNull ??
+                remainingAddresses.firstOrNull
+          : remainingAddresses
+                .where(
+                  (address) => address.id == state.selectedDeliveryAddressId,
+                )
+                .firstOrNull;
+
+      _emitAndSave(
+        _stateWithAddresses(
+          state.copyWith(
+            deliveryAddresses: remainingAddresses,
+            clearDeliveryDetails: wasSelected && remainingAddresses.isEmpty,
+            clearDeliveryAddressesError: true,
+          ),
+          nextSelectedAddress,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(deliveryAddressesError: error.toString()));
+    }
   }
 
   void startNewDeliveryAddress() {
@@ -319,6 +373,11 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
+  Future<void> _initializeCart() async {
+    await _loadSavedCart();
+    await loadDeliveryAddresses(applyDefault: state.homeDelivery);
+  }
+
   void _emitAndSave(CartState nextState) {
     emit(nextState);
     _saveCart(nextState);
@@ -461,6 +520,7 @@ class CartState {
       'deliveryDistrict': deliveryDistrict,
       'deliveryExactAddress': deliveryExactAddress,
       'deliveryPhoneNumber': deliveryPhoneNumber,
+      'selectedDeliveryAddressId': selectedDeliveryAddressId,
     };
   }
 
@@ -485,6 +545,8 @@ class CartState {
           json['deliveryAddress'] as String? ??
           '',
       deliveryPhoneNumber: json['deliveryPhoneNumber'] as String? ?? '',
+      selectedDeliveryAddressId:
+          json['selectedDeliveryAddressId'] as String? ?? '',
     );
   }
 }

@@ -130,7 +130,9 @@ class _PhysicalProductDetailContentState
                                     product,
                                     quantity: _quantity,
                                   );
-                                  context.go('/home-customer?tab=cart');
+                                  context.go(
+                                    '/cart?source=buy&openedAt=${DateTime.now().microsecondsSinceEpoch}',
+                                  );
                                 }
                               : null,
                           icon: const Icon(Icons.shopping_cart_outlined),

@@ -68,6 +68,45 @@ class CartCheckoutRemoteDataSource {
     );
   }
 
+  Future<CustomerDeliveryAddress> setDefaultDeliveryAddress(
+    String addressId,
+  ) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.trim().isEmpty) {
+      throw const CartCheckoutException('cart_auth_required');
+    }
+
+    await _client
+        .from('customer_delivery_addresses')
+        .update({'is_default': false})
+        .eq('user_id', userId);
+
+    final response = await _client
+        .from('customer_delivery_addresses')
+        .update({'is_default': true})
+        .eq('id', addressId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+    return CustomerDeliveryAddress.fromJson(
+      Map<String, dynamic>.from(response),
+    );
+  }
+
+  Future<void> deleteDeliveryAddress(String addressId) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.trim().isEmpty) {
+      throw const CartCheckoutException('cart_auth_required');
+    }
+
+    await _client
+        .from('customer_delivery_addresses')
+        .update({'is_active': false, 'is_default': false})
+        .eq('id', addressId)
+        .eq('user_id', userId);
+  }
+
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) async {
     final response = await _client.rpc(
       'create_cart_order',
