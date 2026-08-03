@@ -3778,6 +3778,258 @@ abstract class AppLocalizations {
   /// **'Por confirmar'**
   String get appointmentPriceToConfirm;
 
+  /// No description provided for @cartTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi carrito'**
+  String get cartTitle;
+
+  /// No description provided for @cartCheckoutTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprar'**
+  String get cartCheckoutTitle;
+
+  /// No description provided for @cartProductCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Sin productos} =1{1 producto} other{{count} productos}}'**
+  String cartProductCount(num count);
+
+  /// No description provided for @cartFreeShippingBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'Envío gratis en compras mayores a ₡25.000'**
+  String get cartFreeShippingBanner;
+
+  /// No description provided for @cartAdditionalProducts.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto adicional} other{{count} productos adicionales}}'**
+  String cartAdditionalProducts(num count);
+
+  /// No description provided for @cartDeliveryServiceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio de envío'**
+  String get cartDeliveryServiceTitle;
+
+  /// No description provided for @cartDeliveryAddressDetails.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalles de dirección de envío'**
+  String get cartDeliveryAddressDetails;
+
+  /// No description provided for @cartDeliveryDisabledMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Necesitas envío?'**
+  String get cartDeliveryDisabledMessage;
+
+  /// No description provided for @cartSavedAddressesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Direcciones guardadas'**
+  String get cartSavedAddressesTitle;
+
+  /// No description provided for @cartNewAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva dirección'**
+  String get cartNewAddressAction;
+
+  /// No description provided for @cartAddressHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección'**
+  String get cartAddressHint;
+
+  /// No description provided for @cartAddressRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa una dirección para continuar.'**
+  String get cartAddressRequired;
+
+  /// No description provided for @cartAddAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar'**
+  String get cartAddAddressAction;
+
+  /// No description provided for @cartEditAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get cartEditAddressAction;
+
+  /// No description provided for @cartDeliveryFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección de entrega'**
+  String get cartDeliveryFormTitle;
+
+  /// No description provided for @cartProvinceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Provincia'**
+  String get cartProvinceLabel;
+
+  /// No description provided for @cartCantonLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantón'**
+  String get cartCantonLabel;
+
+  /// No description provided for @cartDistrictLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Distrito'**
+  String get cartDistrictLabel;
+
+  /// No description provided for @cartExactAddressLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación exacta'**
+  String get cartExactAddressLabel;
+
+  /// No description provided for @cartPhoneLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de celular'**
+  String get cartPhoneLabel;
+
+  /// No description provided for @cartSaveAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar dirección'**
+  String get cartSaveAddressAction;
+
+  /// No description provided for @cartSavingAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardando...'**
+  String get cartSavingAddressAction;
+
+  /// No description provided for @cartSaveAddressError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.'**
+  String get cartSaveAddressError;
+
+  /// No description provided for @cartFieldRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Este campo es obligatorio.'**
+  String get cartFieldRequired;
+
+  /// No description provided for @cartSummaryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get cartSummaryTitle;
+
+  /// No description provided for @cartSubtotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Subtotal ({count, plural, =1{1 producto} other{{count} productos}})'**
+  String cartSubtotal(num count);
+
+  /// No description provided for @cartShipping.
+  ///
+  /// In es, this message translates to:
+  /// **'Envío'**
+  String get cartShipping;
+
+  /// No description provided for @cartFreeShipping.
+  ///
+  /// In es, this message translates to:
+  /// **'Gratis'**
+  String get cartFreeShipping;
+
+  /// No description provided for @cartTaxes.
+  ///
+  /// In es, this message translates to:
+  /// **'Impuestos'**
+  String get cartTaxes;
+
+  /// No description provided for @cartTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total'**
+  String get cartTotal;
+
+  /// No description provided for @cartFinishPurchase.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizar compra'**
+  String get cartFinishPurchase;
+
+  /// No description provided for @cartContinueToCheckout.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get cartContinueToCheckout;
+
+  /// No description provided for @cartPurchaseComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'La compra estará disponible próximamente.'**
+  String get cartPurchaseComingSoon;
+
+  /// No description provided for @cartCreatingOrder.
+  ///
+  /// In es, this message translates to:
+  /// **'Creando orden...'**
+  String get cartCreatingOrder;
+
+  /// No description provided for @cartCreateOrderSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Orden {orderNumber} creada correctamente.'**
+  String cartCreateOrderSuccess(Object orderNumber);
+
+  /// No description provided for @cartCreateOrderError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible crear la orden. Intenta nuevamente.'**
+  String get cartCreateOrderError;
+
+  /// No description provided for @cartSecurePurchaseTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra segura'**
+  String get cartSecurePurchaseTitle;
+
+  /// No description provided for @cartSecurePurchaseMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos están protegidos'**
+  String get cartSecurePurchaseMessage;
+
+  /// No description provided for @cartNeedHelpTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Necesitas ayuda?'**
+  String get cartNeedHelpTitle;
+
+  /// No description provided for @cartNeedHelpMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Contáctanos'**
+  String get cartNeedHelpMessage;
+
+  /// No description provided for @cartEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu carrito está vacío'**
+  String get cartEmptyTitle;
+
+  /// No description provided for @cartEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega productos desde un taller para verlos aquí.'**
+  String get cartEmptyMessage;
+
   /// No description provided for @appointmentDurationMinutes.
   ///
   /// In es, this message translates to:

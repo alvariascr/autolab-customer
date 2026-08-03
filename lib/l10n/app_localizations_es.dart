@@ -2081,6 +2081,164 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPriceToConfirm => 'Por confirmar';
 
   @override
+  String get cartTitle => 'Mi carrito';
+
+  @override
+  String get cartCheckoutTitle => 'Comprar';
+
+  @override
+  String cartProductCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos',
+      one: '1 producto',
+      zero: 'Sin productos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cartFreeShippingBanner =>
+      'Envío gratis en compras mayores a ₡25.000';
+
+  @override
+  String cartAdditionalProducts(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos adicionales',
+      one: '1 producto adicional',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cartDeliveryServiceTitle => 'Servicio de envío';
+
+  @override
+  String get cartDeliveryAddressDetails => 'Detalles de dirección de envío';
+
+  @override
+  String get cartDeliveryDisabledMessage => '¿Necesitas envío?';
+
+  @override
+  String get cartSavedAddressesTitle => 'Direcciones guardadas';
+
+  @override
+  String get cartNewAddressAction => 'Nueva dirección';
+
+  @override
+  String get cartAddressHint => 'Dirección';
+
+  @override
+  String get cartAddressRequired => 'Ingresa una dirección para continuar.';
+
+  @override
+  String get cartAddAddressAction => 'Agregar';
+
+  @override
+  String get cartEditAddressAction => 'Editar';
+
+  @override
+  String get cartDeliveryFormTitle => 'Dirección de entrega';
+
+  @override
+  String get cartProvinceLabel => 'Provincia';
+
+  @override
+  String get cartCantonLabel => 'Cantón';
+
+  @override
+  String get cartDistrictLabel => 'Distrito';
+
+  @override
+  String get cartExactAddressLabel => 'Ubicación exacta';
+
+  @override
+  String get cartPhoneLabel => 'Número de celular';
+
+  @override
+  String get cartSaveAddressAction => 'Guardar dirección';
+
+  @override
+  String get cartSavingAddressAction => 'Guardando...';
+
+  @override
+  String get cartSaveAddressError =>
+      'No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.';
+
+  @override
+  String get cartFieldRequired => 'Este campo es obligatorio.';
+
+  @override
+  String get cartSummaryTitle => 'Resumen';
+
+  @override
+  String cartSubtotal(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos',
+      one: '1 producto',
+    );
+    return 'Subtotal ($_temp0)';
+  }
+
+  @override
+  String get cartShipping => 'Envío';
+
+  @override
+  String get cartFreeShipping => 'Gratis';
+
+  @override
+  String get cartTaxes => 'Impuestos';
+
+  @override
+  String get cartTotal => 'Total';
+
+  @override
+  String get cartFinishPurchase => 'Finalizar compra';
+
+  @override
+  String get cartContinueToCheckout => 'Continuar';
+
+  @override
+  String get cartPurchaseComingSoon =>
+      'La compra estará disponible próximamente.';
+
+  @override
+  String get cartCreatingOrder => 'Creando orden...';
+
+  @override
+  String cartCreateOrderSuccess(Object orderNumber) {
+    return 'Orden $orderNumber creada correctamente.';
+  }
+
+  @override
+  String get cartCreateOrderError =>
+      'No fue posible crear la orden. Intenta nuevamente.';
+
+  @override
+  String get cartSecurePurchaseTitle => 'Compra segura';
+
+  @override
+  String get cartSecurePurchaseMessage => 'Tus datos están protegidos';
+
+  @override
+  String get cartNeedHelpTitle => '¿Necesitas ayuda?';
+
+  @override
+  String get cartNeedHelpMessage => 'Contáctanos';
+
+  @override
+  String get cartEmptyTitle => 'Tu carrito está vacío';
+
+  @override
+  String get cartEmptyMessage =>
+      'Agrega productos desde un taller para verlos aquí.';
+
+  @override
   String appointmentDurationMinutes(Object minutes) {
     return '$minutes min';
   }

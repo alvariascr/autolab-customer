@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../cart/application/cart_cubit.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_price_text.dart';
 import 'product_detail_hero.dart';
@@ -122,8 +124,15 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: () =>
-                              context.go('/home-customer?tab=cart'),
+                          onPressed: hasStock
+                              ? () {
+                                  context.read<CartCubit>().addProduct(
+                                    product,
+                                    quantity: _quantity,
+                                  );
+                                  context.go('/home-customer?tab=cart');
+                                }
+                              : null,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailBuyAction,
@@ -149,14 +158,21 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: () {
-                            final workshopId = product.workshopId.trim();
-                            context.go(
-                              workshopId.isEmpty
-                                  ? '/home-customer'
-                                  : '/workshops/$workshopId',
-                            );
-                          },
+                          onPressed: hasStock
+                              ? () {
+                                  context.read<CartCubit>().addProduct(
+                                    product,
+                                    quantity: _quantity,
+                                  );
+
+                                  final workshopId = product.workshopId.trim();
+                                  context.go(
+                                    workshopId.isEmpty
+                                        ? '/home-customer'
+                                        : '/workshops/$workshopId',
+                                  );
+                                }
+                              : null,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailAddToCartAction,
