@@ -384,38 +384,3 @@ class _ProfileMetaChip extends StatelessWidget {
     );
   }
 }
-
-class _WorkshopAvatar extends StatelessWidget {
-  const _WorkshopAvatar({required this.workshop});
-
-  final Workshop workshop;
-
-  @override
-  Widget build(BuildContext context) {
-    final outerRadius = AutolabCustomer.responsiveDouble(
-      context,
-      compact: 52,
-      regular: 62,
-      tablet: 72,
-    );
-
-    return CircleAvatar(
-      radius: outerRadius,
-      backgroundColor: AutolabCustomer.background,
-      child: CircleAvatar(
-        radius: outerRadius - 5,
-        backgroundColor: AutolabCustomer.background,
-        backgroundImage: workshop.avatarUrl.isNotEmpty
-            ? NetworkImage(workshop.avatarUrl)
-            : null,
-        child: workshop.avatarUrl.isEmpty
-            ? const Icon(
-                Icons.storefront_outlined,
-                size: AutolabCustomer.iconLg,
-                color: AutolabCustomer.secondary,
-              )
-            : null,
-      ),
-    );
-  }
-}
