@@ -9,6 +9,7 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import 'product_card.dart';
+import 'products_message.dart';
 
 class WorkshopProductsCarousel extends StatefulWidget {
   const WorkshopProductsCarousel({super.key, required this.workshopId});
@@ -49,16 +50,32 @@ class _WorkshopProductsCarouselState extends State<WorkshopProductsCarousel> {
             const <Product>[];
 
         if (result == null || result.isLeft()) {
-          return const _ProductsMessage(
+          return ProductsMessage(
             icon: Icons.error_outline_rounded,
             message: 'No fue posible cargar los productos de este taller.',
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+            backgroundColor: AutolabCustomer.customerElevatedSurfaceColor(
+              context,
+            ),
+            borderColor: AutolabCustomer.customerBorderColor(context),
+            borderRadius: 16,
+            iconSpacing: 12,
+            textHeight: 1.35,
           );
         }
 
         if (products.isEmpty) {
-          return const _ProductsMessage(
+          return ProductsMessage(
             icon: Icons.inventory_2_outlined,
             message: 'Este taller aun no tiene productos publicados.',
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+            backgroundColor: AutolabCustomer.customerElevatedSurfaceColor(
+              context,
+            ),
+            borderColor: AutolabCustomer.customerBorderColor(context),
+            borderRadius: 16,
+            iconSpacing: 12,
+            textHeight: 1.35,
           );
         }
 
@@ -86,41 +103,6 @@ class _WorkshopProductsCarouselState extends State<WorkshopProductsCarousel> {
           }).toList(),
         );
       },
-    );
-  }
-}
-
-class _ProductsMessage extends StatelessWidget {
-  const _ProductsMessage({required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-      decoration: BoxDecoration(
-        color: AutolabCustomer.customerElevatedSurfaceColor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AutolabCustomer.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: AutolabCustomer.caption.copyWith(
-                color: AutolabCustomer.customerSecondaryTextColor(context),
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
