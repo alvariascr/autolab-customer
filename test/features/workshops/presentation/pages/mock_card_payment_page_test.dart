@@ -7,41 +7,44 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('MockCardPaymentPage', () {
-    testWidgets('respeta superficies de modo claro y oscuro', (tester) async {
-      for (final theme in [
-        AutolabCustomer.lightTheme,
-        AutolabCustomer.darkTheme,
-      ]) {
-        await tester.pumpWidget(const SizedBox.shrink());
+    testWidgets('usa la superficie clara cuando el tema es claro', (
+      tester,
+    ) async {
+      await _pumpPaymentPage(tester, AutolabCustomer.lightTheme);
 
-        await tester.pumpWidget(
-          MaterialApp(
-            key: ValueKey(theme.brightness),
-            theme: theme,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: MockCardPaymentPage(
-              appointmentId: 'appointment-1',
-              amountLabel: '¢30.000',
-              workshopName: 'Servicentro Tilarán',
-              onClose: () {},
-            ),
-          ),
-        );
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, AutolabCustomer.customerLightSurface);
+    });
 
-        final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-        expect(
-          scaffold.backgroundColor,
-          theme.brightness == Brightness.dark
-              ? AutolabCustomer.customerDarkSurface
-              : AutolabCustomer.customerLightSurface,
-        );
-      }
+    testWidgets('usa la superficie oscura cuando el tema es oscuro', (
+      tester,
+    ) async {
+      await _pumpPaymentPage(tester, AutolabCustomer.darkTheme);
+
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, AutolabCustomer.customerDarkSurface);
     });
   });
+}
+
+Future<void> _pumpPaymentPage(WidgetTester tester, ThemeData theme) {
+  return tester.pumpWidget(
+    MaterialApp(
+      key: ValueKey(theme.brightness),
+      theme: theme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: MockCardPaymentPage(
+        appointmentId: 'appointment-1',
+        amountLabel: 'CRC 30.000',
+        workshopName: 'Servicentro Tilaran',
+        onClose: () {},
+      ),
+    ),
+  );
 }
