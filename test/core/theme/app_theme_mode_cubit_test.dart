@@ -1,51 +1,58 @@
 import 'dart:async';
 
 import 'package:autolab_customer/core/theme/app_theme_mode_cubit.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('AppThemeModeCubit', () {
-    test('persiste el modo claro seleccionado', () async {
-      final storage = _FakeAppThemeModeStorage();
-      final cubit = AppThemeModeCubit(storage: storage);
+    late _FakeAppThemeModeStorage storage;
 
-      await cubit.setThemeMode(ThemeMode.light);
+    blocTest<AppThemeModeCubit, ThemeMode>(
+      'persiste el modo claro seleccionado',
+      build: () {
+        storage = _FakeAppThemeModeStorage();
+        return AppThemeModeCubit(storage: storage);
+      },
+      act: (cubit) => cubit.setThemeMode(ThemeMode.light),
+      expect: () => [ThemeMode.light],
+      verify: (_) {
+        expect(storage.savedValue, 'light');
+      },
+    );
 
-      expect(storage.savedValue, 'light');
+    blocTest<AppThemeModeCubit, ThemeMode>(
+      'carga el modo guardado al iniciar',
+      build: () {
+        storage = _FakeAppThemeModeStorage(
+          initialValue: 'light',
+          waitForLoadRelease: true,
+        );
+        return AppThemeModeCubit(storage: storage);
+      },
+      act: (_) => storage.releaseLoad(),
+      expect: () => [ThemeMode.light],
+    );
 
-      await cubit.close();
-    });
-
-    test('carga el modo guardado al iniciar', () async {
-      final storage = _FakeAppThemeModeStorage(initialValue: 'light');
-      final cubit = AppThemeModeCubit(storage: storage);
-
-      await storage.loadCompleted;
-
-      expect(cubit.state, ThemeMode.light);
-
-      await cubit.close();
-    });
-
-    test(
+    blocTest<AppThemeModeCubit, ThemeMode>(
       'mantiene la seleccion reciente aunque exista otro modo guardado',
-      () async {
-        final storage = _FakeAppThemeModeStorage(
+      build: () {
+        storage = _FakeAppThemeModeStorage(
           initialValue: 'dark',
           waitForLoadRelease: true,
         );
-        final cubit = AppThemeModeCubit(storage: storage);
-
+        return AppThemeModeCubit(storage: storage);
+      },
+      act: (cubit) async {
         await cubit.setThemeMode(ThemeMode.light);
         storage.releaseLoad();
-        await storage.loadCompleted;
-
+      },
+      expect: () => [ThemeMode.light],
+      verify: (cubit) {
         expect(cubit.state, ThemeMode.light);
         expect(storage.savedValue, 'light');
-
-        await cubit.close();
       },
     );
 
@@ -70,11 +77,8 @@ class _FakeAppThemeModeStorage implements AppThemeModeStorage {
 
   final String? initialValue;
   final bool waitForLoadRelease;
-  final _loadCompleted = Completer<void>();
   final _loadRelease = Completer<void>();
   String? savedValue;
-
-  Future<void> get loadCompleted => _loadCompleted.future;
 
   void releaseLoad() {
     if (!_loadRelease.isCompleted) {
@@ -87,12 +91,6 @@ class _FakeAppThemeModeStorage implements AppThemeModeStorage {
     if (waitForLoadRelease) {
       await _loadRelease.future;
     }
-
-    scheduleMicrotask(() {
-      if (!_loadCompleted.isCompleted) {
-        _loadCompleted.complete();
-      }
-    });
 
     return initialValue;
   }
