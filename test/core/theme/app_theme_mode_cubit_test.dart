@@ -25,5 +25,23 @@ void main() {
 
       await cubit.close();
     });
+
+    test(
+      'mantiene la seleccion reciente aunque exista otro modo guardado',
+      () async {
+        SharedPreferences.setMockInitialValues({'app_theme_mode': 'dark'});
+        final cubit = AppThemeModeCubit();
+
+        await cubit.setThemeMode(ThemeMode.light);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(cubit.state, ThemeMode.light);
+
+        final preferences = await SharedPreferences.getInstance();
+        expect(preferences.getString('app_theme_mode'), 'light');
+
+        await cubit.close();
+      },
+    );
   });
 }

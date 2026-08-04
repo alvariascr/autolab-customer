@@ -7,6 +7,8 @@ class AppThemeModeCubit extends Cubit<ThemeMode> {
     _loadSavedMode();
   }
 
+  var _hasExplicitSelection = false;
+
   static const _preferenceKey = 'app_theme_mode';
   static const _darkValue = 'dark';
   static const _lightValue = 'light';
@@ -21,6 +23,7 @@ class AppThemeModeCubit extends Cubit<ThemeMode> {
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
+    _hasExplicitSelection = true;
     emit(mode);
 
     final preferences = await SharedPreferences.getInstance();
@@ -32,7 +35,7 @@ class AppThemeModeCubit extends Cubit<ThemeMode> {
     final value = preferences.getString(_preferenceKey);
     final mode = _modeFromValue(value);
 
-    if (!isClosed && mode != state) {
+    if (!isClosed && !_hasExplicitSelection && mode != state) {
       emit(mode);
     }
   }
