@@ -20,7 +20,9 @@ void main() {
       final storage = _FakeAppThemeModeStorage(initialValue: 'light');
       final cubit = AppThemeModeCubit(storage: storage);
 
-      await expectLater(cubit.stream, emits(ThemeMode.light));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state, ThemeMode.light);
 
       await cubit.close();
     });
