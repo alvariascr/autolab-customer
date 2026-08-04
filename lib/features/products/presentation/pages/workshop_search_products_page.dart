@@ -405,9 +405,9 @@ class _FilterChips extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(999),
             ),
-            labelStyle: AutolabCustomer.body.copyWith(
-              color: AutolabCustomer.customerTextColor(context),
-              fontWeight: FontWeight.w800,
+            labelStyle: workshopSearchAvailabilityChipLabelStyle(
+              context,
+              isSelected: onlyAvailable,
             ),
           ),
         ],
@@ -440,6 +440,19 @@ class _FilterChips extends StatelessWidget {
 
     return normalized[0].toUpperCase() + normalized.substring(1);
   }
+}
+
+@visibleForTesting
+TextStyle workshopSearchAvailabilityChipLabelStyle(
+  BuildContext context, {
+  required bool isSelected,
+}) {
+  return AutolabCustomer.body.copyWith(
+    color: isSelected
+        ? AutolabCustomer.successText
+        : AutolabCustomer.customerTextColor(context),
+    fontWeight: FontWeight.w800,
+  );
 }
 
 class _MenuChip<T> extends StatelessWidget {
