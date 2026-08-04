@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_customer/core/theme/app_theme_mode_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +22,7 @@ void main() {
       final storage = _FakeAppThemeModeStorage(initialValue: 'light');
       final cubit = AppThemeModeCubit(storage: storage);
 
-      await Future<void>.delayed(Duration.zero);
+      await storage.loadCompleted;
 
       expect(cubit.state, ThemeMode.light);
 
@@ -32,12 +34,13 @@ void main() {
       () async {
         final storage = _FakeAppThemeModeStorage(
           initialValue: 'dark',
-          loadDelay: Duration.zero,
+          waitForLoadRelease: true,
         );
         final cubit = AppThemeModeCubit(storage: storage);
 
         await cubit.setThemeMode(ThemeMode.light);
-        await Future<void>.delayed(Duration.zero);
+        storage.releaseLoad();
+        await storage.loadCompleted;
 
         expect(cubit.state, ThemeMode.light);
         expect(storage.savedValue, 'light');
@@ -60,20 +63,38 @@ void main() {
 }
 
 class _FakeAppThemeModeStorage implements AppThemeModeStorage {
-  _FakeAppThemeModeStorage({this.initialValue, this.loadDelay});
+  _FakeAppThemeModeStorage({
+    this.initialValue,
+    this.waitForLoadRelease = false,
+  });
 
   final String? initialValue;
-  final Duration? loadDelay;
+  final bool waitForLoadRelease;
+  final _loadCompleted = Completer<void>();
+  final _loadRelease = Completer<void>();
   String? savedValue;
+
+  Future<void> get loadCompleted => _loadCompleted.future;
+
+  void releaseLoad() {
+    if (!_loadRelease.isCompleted) {
+      _loadRelease.complete();
+    }
+  }
 
   @override
   Future<String?> loadThemeMode() async {
-    final delay = loadDelay;
-    if (delay != null) {
-      await Future<void>.delayed(delay);
+    if (waitForLoadRelease) {
+      await _loadRelease.future;
     }
 
-    return savedValue ?? initialValue;
+    scheduleMicrotask(() {
+      if (!_loadCompleted.isCompleted) {
+        _loadCompleted.complete();
+      }
+    });
+
+    return initialValue;
   }
 
   @override
