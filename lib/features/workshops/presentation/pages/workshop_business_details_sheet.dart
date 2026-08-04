@@ -217,8 +217,8 @@ class _LocationPreview extends StatelessWidget {
             )
           else
             DecoratedBox(
-              decoration: const BoxDecoration(
-                color: AutolabCustomer.customerLightMapFallback,
+              decoration: BoxDecoration(
+                color: AutolabCustomer.customerMapFallbackColor(context),
               ),
               child: Center(
                 child: Icon(

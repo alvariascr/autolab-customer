@@ -77,5 +77,33 @@ void main() {
         ]);
       },
     );
+
+    testWidgets('expone fallback contextual para mapas sin coordenadas', (
+      tester,
+    ) async {
+      final colors = <Color>[];
+
+      for (final theme in [
+        AutolabCustomer.lightTheme,
+        AutolabCustomer.darkTheme,
+      ]) {
+        await tester.pumpWidget(
+          Theme(
+            data: theme,
+            child: Builder(
+              builder: (context) {
+                colors.add(AutolabCustomer.customerMapFallbackColor(context));
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        );
+      }
+
+      expect(colors, [
+        AutolabCustomer.customerLightMapFallback,
+        AutolabCustomer.customerDarkSurface,
+      ]);
+    });
   });
 }
