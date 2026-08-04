@@ -145,7 +145,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
       ),
       bottomNavigationBar: widget.showBottomNavigation
           ? CustomBottomNavbar(
-              currentIndex: 3,
+              currentIndex: 4,
               onTap: (index) => NavigationHandler.handle(context, index),
             )
           : null,
@@ -302,9 +302,28 @@ class _PurchaseCard extends StatelessWidget {
             const SizedBox(height: 16),
             _PurchaseDetailRow(
               icon: Icons.payments_outlined,
-              label: l10n.myPurchasesAmountLabel,
-              value: purchase.formattedAmount,
+              label: purchase.hasOrderAmounts
+                  ? purchase.hasPaymentLink
+                        ? l10n.myPurchasesPaidOnlineLabel
+                        : l10n.myPurchasesPaidLabel
+                  : l10n.myPurchasesAmountLabel,
+              value: purchase.formattedPaidAmount,
             ),
+            if (purchase.hasOrderAmounts) ...[
+              _PurchaseDetailRow(
+                icon: Icons.account_balance_wallet_outlined,
+                label: l10n.myPurchasesPendingAtWorkshopLabel,
+                value: purchase.formattedRemainingAmount,
+                valueColor: purchase.hasOutstandingBalance
+                    ? AutolabCustomer.warning
+                    : null,
+              ),
+              _PurchaseDetailRow(
+                icon: Icons.receipt_long_outlined,
+                label: l10n.myPurchasesOrderTotalLabel,
+                value: purchase.formattedOrderTotalAmount,
+              ),
+            ],
             _PurchaseDetailRow(
               icon: Icons.calendar_month_outlined,
               label: l10n.myPurchasesDateLabel,
@@ -401,11 +420,13 @@ class _PurchaseDetailRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.valueColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +454,7 @@ class _PurchaseDetailRow extends StatelessWidget {
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.caption.copyWith(
-                color: AutolabCustomer.customerTextColor(context),
+                color: valueColor ?? AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -525,6 +546,12 @@ class _PurchaseViewState {
     AppLocalizations l10n,
   ) {
     return switch (purchase.state) {
+      _PurchaseState.partial => _PurchaseViewState(
+        label: l10n.myPurchasesPartialStatus,
+        message: l10n.myPurchasesPartialMessage,
+        color: AutolabCustomer.warning,
+        icon: Icons.info_outline_rounded,
+      ),
       _PurchaseState.approved => _PurchaseViewState(
         label: l10n.myPurchasesApprovedStatus,
         message: l10n.myPurchasesApprovedMessage,
@@ -549,6 +576,12 @@ class _PurchaseViewState {
         color: AutolabCustomer.warning,
         icon: Icons.hourglass_top_rounded,
       ),
+      _PurchaseState.workshopPayment => _PurchaseViewState(
+        label: l10n.myPurchasesWorkshopPaymentStatus,
+        message: l10n.myPurchasesWorkshopPaymentMessage,
+        color: AutolabCustomer.warning,
+        icon: Icons.handshake_outlined,
+      ),
       _PurchaseState.unknown => _PurchaseViewState(
         label: l10n.myPurchasesUnknownStatus,
         message: l10n.myPurchasesUnknownMessage,
@@ -559,7 +592,15 @@ class _PurchaseViewState {
   }
 }
 
-enum _PurchaseState { pending, approved, rejected, expired, unknown }
+enum _PurchaseState {
+  pending,
+  partial,
+  approved,
+  rejected,
+  expired,
+  workshopPayment,
+  unknown,
+}
 
 extension _LaropayPurchaseView on LaropayPurchase {
   String title(AppLocalizations l10n) {
@@ -567,14 +608,22 @@ extension _LaropayPurchaseView on LaropayPurchase {
   }
 
   bool get canReopenLink {
-    return linkUrl != null && state == _PurchaseState.pending;
+    return hasPaymentLink && linkUrl != null && state == _PurchaseState.pending;
   }
 
   bool get canRefreshStatus {
-    return state == _PurchaseState.pending;
+    return hasPaymentLink && state == _PurchaseState.pending;
   }
 
   _PurchaseState get state {
+    if (hasPaymentLink && hasOutstandingBalance && isLaropayApproved) {
+      return _PurchaseState.partial;
+    }
+
+    if (!hasPaymentLink && hasOutstandingBalance) {
+      return _PurchaseState.workshopPayment;
+    }
+
     final normalizedStatus = status.toLowerCase().trim();
     final normalizedResponse = responseCode.toLowerCase().trim();
     final normalizedDescription = responseDescription.toLowerCase().trim();
@@ -615,13 +664,42 @@ extension _LaropayPurchaseView on LaropayPurchase {
     return _PurchaseState.unknown;
   }
 
-  String get formattedAmount {
+  bool get isLaropayApproved {
+    final normalizedStatus = status.toLowerCase().trim();
+    return normalizedStatus == 'paid' ||
+        normalizedStatus == 'approved' ||
+        normalizedStatus == 'completed';
+  }
+
+  bool get hasOrderAmounts {
+    return orderTotalAmount != null ||
+        orderPaidAmount != null ||
+        orderRemainingAmount != null;
+  }
+
+  bool get hasOutstandingBalance {
+    return (orderRemainingAmount ?? 0) > 0;
+  }
+
+  String get formattedPaidAmount {
+    return _formatCurrency(orderPaidAmount ?? amount, currencyCode);
+  }
+
+  String get formattedRemainingAmount {
+    return _formatCurrency(orderRemainingAmount ?? 0, currencyCode);
+  }
+
+  String get formattedOrderTotalAmount {
+    return _formatCurrency(orderTotalAmount ?? amount, currencyCode);
+  }
+
+  String _formatCurrency(double value, String code) {
     final formatter = NumberFormat.currency(
       locale: 'es_CR',
-      symbol: currencyCode.toUpperCase() == 'USD' ? r'$' : '₡',
+      symbol: code.toUpperCase() == 'USD' ? r'$' : '₡',
       decimalDigits: 2,
     );
-    return formatter.format(amount);
+    return formatter.format(value);
   }
 
   String formattedCreatedAt(AppLocalizations l10n) {
@@ -634,7 +712,14 @@ extension _LaropayPurchaseView on LaropayPurchase {
   }
 
   String get reference {
-    return linkId.isEmpty ? id : linkId;
+    if (hasPaymentLink && linkId.isNotEmpty) {
+      return linkId;
+    }
+
+    final displayOrderNumber = orderNumber?.trim();
+    return displayOrderNumber == null || displayOrderNumber.isEmpty
+        ? id
+        : displayOrderNumber;
   }
 }
 

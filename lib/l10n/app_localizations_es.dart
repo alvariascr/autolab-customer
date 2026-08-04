@@ -532,7 +532,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get garageOrders => 'Mis pedidos';
 
   @override
-  String get garageHistory => 'Historial';
+  String get garageHistory => 'Mis órdenes';
 
   @override
   String get garageManagementTitle => 'Gestión';
@@ -1987,31 +1987,31 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get laropayPaymentResultPaidMessage =>
-      'Tu compra fue aprobada correctamente. Ya puedes revisar el detalle en Mis compras.';
+      'Tu orden fue aprobada correctamente. Ya puedes revisar el detalle en Mis órdenes.';
 
   @override
   String get laropayPaymentResultRejectedTitle => 'Pago no procesado';
 
   @override
   String get laropayPaymentResultRejectedMessage =>
-      'Laropay no pudo procesar la compra. Puedes revisar el estado o intentar nuevamente desde Mis compras.';
+      'Laropay no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.';
 
   @override
   String get laropayPaymentResultExpiredTitle => 'Link vencido';
 
   @override
   String get laropayPaymentResultExpiredMessage =>
-      'El link de pago ya no está disponible. Genera una nueva compra para continuar.';
+      'El link de pago ya no está disponible. Genera una nueva orden para continuar.';
 
   @override
   String get laropayPaymentResultPendingTitle => 'Pago en revisión';
 
   @override
   String get laropayPaymentResultPendingMessage =>
-      'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis compras.';
+      'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis órdenes.';
 
   @override
-  String get laropayPaymentResultViewPurchasesAction => 'Ver mis compras';
+  String get laropayPaymentResultViewPurchasesAction => 'Ver mis órdenes';
 
   @override
   String get laropayPaymentResultBackToWorkshopAction => 'Volver al taller';
@@ -2096,27 +2096,29 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get myPurchasesTitle => 'Mis compras';
+  String get myPurchasesTitle => 'Mis órdenes';
 
   @override
-  String get myPurchasesSubtitle =>
-      'Consulta tus pagos de productos adicionales';
+  String get myPurchasesSubtitle => 'Consulta tus órdenes y pagos';
 
   @override
-  String get myPurchasesEmptyTitle => 'Aún no tienes compras';
+  String get myPurchasesEmptyTitle => 'Aún no tienes órdenes';
 
   @override
   String get myPurchasesEmptyMessage =>
-      'Cuando pagues productos adicionales, aparecerán aquí con su estado.';
+      'Cuando agendes una cita o generes una compra, aparecerá aquí con su estado.';
 
   @override
-  String get myPurchasesLoadErrorTitle => 'No pudimos cargar tus compras';
+  String get myPurchasesLoadErrorTitle => 'No pudimos cargar tus órdenes';
 
   @override
   String get myPurchasesRetryAction => 'Reintentar';
 
   @override
   String get myPurchasesPendingStatus => 'Pendiente';
+
+  @override
+  String get myPurchasesPartialStatus => 'Pago parcial';
 
   @override
   String get myPurchasesApprovedStatus => 'Procesado';
@@ -2128,11 +2130,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPurchasesExpiredStatus => 'Vencido';
 
   @override
+  String get myPurchasesWorkshopPaymentStatus => 'Pago en taller';
+
+  @override
   String get myPurchasesUnknownStatus => 'En revisión';
 
   @override
   String get myPurchasesPendingMessage =>
       'El link fue generado. Esperamos la confirmación de Laropay.';
+
+  @override
+  String get myPurchasesPartialMessage =>
+      'Productos pagados. Servicio pendiente de pago en el taller.';
 
   @override
   String get myPurchasesApprovedMessage =>
@@ -2146,6 +2155,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El link de pago venció o ya no está disponible.';
 
   @override
+  String get myPurchasesWorkshopPaymentMessage =>
+      'Servicio agendado. El pago se realiza directamente en el taller.';
+
+  @override
   String get myPurchasesUnknownMessage => 'El pago está en revisión.';
 
   @override
@@ -2156,6 +2169,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesAmountLabel => 'Monto';
+
+  @override
+  String get myPurchasesPaidLabel => 'Pagado';
+
+  @override
+  String get myPurchasesPaidOnlineLabel => 'Pagado en línea';
+
+  @override
+  String get myPurchasesPendingAtWorkshopLabel => 'Pendiente en taller';
+
+  @override
+  String get myPurchasesOrderTotalLabel => 'Total de la orden';
 
   @override
   String get myPurchasesDateLabel => 'Fecha';

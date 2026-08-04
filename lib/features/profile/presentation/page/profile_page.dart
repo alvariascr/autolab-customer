@@ -151,6 +151,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 _QuickAccessCard(
                   icon: Icons.receipt_long_outlined,
                   label: l10n.garageHistory,
+                  onTap: () => context.push('/purchases'),
                 ),
               ],
             ),

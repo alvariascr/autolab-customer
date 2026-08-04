@@ -12,6 +12,12 @@ class LaropayPurchase {
     required this.createdAt,
     required this.expiresAt,
     this.linkUrl,
+    this.hasPaymentLink = true,
+    this.orderNumber,
+    this.orderPaymentStatus,
+    this.orderTotalAmount,
+    this.orderPaidAmount,
+    this.orderRemainingAmount,
   });
 
   final String id;
@@ -26,4 +32,10 @@ class LaropayPurchase {
   final DateTime? createdAt;
   final DateTime? expiresAt;
   final Uri? linkUrl;
+  final bool hasPaymentLink;
+  final String? orderNumber;
+  final String? orderPaymentStatus;
+  final double? orderTotalAmount;
+  final double? orderPaidAmount;
+  final double? orderRemainingAmount;
 }

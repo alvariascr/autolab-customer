@@ -245,6 +245,8 @@ Deno.serve(async (request) => {
       verifyResponse,
       certifierResponse,
       statusCheckError: null,
+    }).catch((error) => {
+      throw new LaropayStatusCheckError("persist_status_check_failed", error);
     });
 
     return json({
@@ -255,7 +257,8 @@ Deno.serve(async (request) => {
         : stringValue(certifierResponse.response),
     });
   } catch (error) {
-    console.error("laropay_check_status_failed", safeError(error));
+    const safe = safeError(error);
+    console.error("laropay_check_status_failed", safe);
 
     if (error instanceof Error && error.message.startsWith("auth_")) {
       return json({ error: error.message }, 401);
@@ -265,7 +268,13 @@ Deno.serve(async (request) => {
       return json({ error: error.message }, 400);
     }
 
-    return json({ error: "laropay_check_status_failed" }, 500);
+    return json(
+      {
+        error: "laropay_check_status_failed",
+        code: safeErrorResponseCode(safe),
+      },
+      500,
+    );
   }
 });
 
@@ -770,7 +779,15 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
-function safeError(error: unknown) {
+function safeError(error: unknown): Record<string, unknown> {
+  if (error instanceof LaropayStatusCheckError) {
+    return {
+      name: error.name,
+      code: error.message,
+      cause: safeError(error.originalCause),
+    };
+  }
+
   if (error instanceof LaropayHttpError) {
     return { status: error.status, body: sanitizeJson(error.body) };
   }
@@ -783,7 +800,31 @@ function safeError(error: unknown) {
     return { name: error.name, code: safeErrorCode(error.message) };
   }
 
+  if (error !== null && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    return {
+      name: stringValue(record.name) || "ObjectError",
+      code: safeErrorCode(stringValue(record.code || record.message)),
+      details: sanitizeJson(record.details),
+      hint: sanitizeJson(record.hint),
+    };
+  }
+
   return { name: "NonError" };
+}
+
+function safeErrorResponseCode(error: unknown): string {
+  if (error !== null && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const code = stringValue(record.code);
+    if (code !== "") {
+      return code;
+    }
+
+    return safeErrorResponseCode(record.cause);
+  }
+
+  return "unexpected_error";
 }
 
 function safeErrorCode(message: string) {
@@ -841,5 +882,12 @@ type Env = {
 class LaropayHttpError extends Error {
   constructor(public readonly status: number, public readonly body: unknown) {
     super("laropay_http_error");
+  }
+}
+
+class LaropayStatusCheckError extends Error {
+  constructor(message: string, public readonly originalCause: unknown) {
+    super(message);
+    this.name = "LaropayStatusCheckError";
   }
 }
