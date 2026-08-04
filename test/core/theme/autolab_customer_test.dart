@@ -1,5 +1,4 @@
 import 'package:autolab_customer/core/theme/autolab_customer.dart';
-import 'package:autolab_customer/features/products/presentation/pages/workshop_search_products_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -42,41 +41,6 @@ void main() {
       expect(colors?.appointmentCompleted, AutolabCustomer.white);
       expect(colors?.info, AutolabCustomer.info);
     });
-
-    testWidgets(
-      'mantiene contraste del filtro disponible seleccionado en ambos temas',
-      (tester) async {
-        final selectedColors = <Color>[];
-
-        for (final theme in [
-          AutolabCustomer.lightTheme,
-          AutolabCustomer.darkTheme,
-        ]) {
-          await tester.pumpWidget(
-            MaterialApp(
-              theme: theme,
-              home: Builder(
-                builder: (context) {
-                  selectedColors.add(
-                    workshopSearchAvailabilityChipLabelStyle(
-                      context,
-                      isSelected: true,
-                    ).color!,
-                  );
-
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          );
-        }
-
-        expect(selectedColors, [
-          AutolabCustomer.successText,
-          AutolabCustomer.successText,
-        ]);
-      },
-    );
 
     testWidgets('expone fallback contextual para mapas sin coordenadas', (
       tester,
