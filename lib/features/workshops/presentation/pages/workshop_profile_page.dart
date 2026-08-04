@@ -18,6 +18,7 @@ import '../../domain/entities/workshop.dart';
 import '../../domain/repositories/workshop_repository.dart';
 import '../../domain/services/workshop_today_business_hours_resolver.dart';
 import '../widgets/workshop_avatar.dart';
+import '../widgets/workshop_menu_action.dart';
 import '../workshop_empty_state_resolver.dart';
 
 part 'workshop_profile_content.dart';

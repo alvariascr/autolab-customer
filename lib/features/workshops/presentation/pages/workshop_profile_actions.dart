@@ -242,22 +242,11 @@ class _MenuAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    return WorkshopMenuAction(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
       enabled: enabled,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        icon,
-        size: 30,
-        color: AutolabCustomer.customerTextColor(context),
-      ),
-      title: Text(
-        title,
-        style: AutolabCustomer.bodyLarge.copyWith(
-          color: AutolabCustomer.customerTextColor(context),
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-      subtitle: subtitle == null ? null : Text(subtitle!),
       onTap: onTap == null
           ? null
           : () {
