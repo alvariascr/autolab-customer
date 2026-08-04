@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppThemeModeCubit extends Cubit<ThemeMode> {
-  AppThemeModeCubit() : super(ThemeMode.system) {
+  AppThemeModeCubit({AppThemeModeStorage? storage})
+    : _storage = storage ?? const SharedPreferencesAppThemeModeStorage(),
+      super(ThemeMode.system) {
     _loadSavedMode();
   }
 
+  final AppThemeModeStorage _storage;
   var _hasExplicitSelection = false;
 
   static const _preferenceKey = 'app_theme_mode';
@@ -26,13 +29,11 @@ class AppThemeModeCubit extends Cubit<ThemeMode> {
     _hasExplicitSelection = true;
     emit(mode);
 
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_preferenceKey, _modeToValue(mode));
+    await _storage.saveThemeMode(_modeToValue(mode));
   }
 
   Future<void> _loadSavedMode() async {
-    final preferences = await SharedPreferences.getInstance();
-    final value = preferences.getString(_preferenceKey);
+    final value = await _storage.loadThemeMode();
     final mode = _modeFromValue(value);
 
     if (!isClosed && !_hasExplicitSelection && mode != state) {
@@ -55,5 +56,27 @@ class AppThemeModeCubit extends Cubit<ThemeMode> {
       ThemeMode.light => _lightValue,
       ThemeMode.system => _systemValue,
     };
+  }
+}
+
+abstract class AppThemeModeStorage {
+  Future<String?> loadThemeMode();
+
+  Future<void> saveThemeMode(String value);
+}
+
+class SharedPreferencesAppThemeModeStorage implements AppThemeModeStorage {
+  const SharedPreferencesAppThemeModeStorage();
+
+  @override
+  Future<String?> loadThemeMode() async {
+    final preferences = await SharedPreferences.getInstance();
+    return preferences.getString(AppThemeModeCubit._preferenceKey);
+  }
+
+  @override
+  Future<void> saveThemeMode(String value) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(AppThemeModeCubit._preferenceKey, value);
   }
 }
