@@ -229,23 +229,25 @@ class MapCubit extends Cubit<MapState> {
         .toList();
 
     if (currentLocation == null || !currentLocation.hasValidCoordinates) {
-      return List<Workshop>.from(validWorkshops, growable: false);
+      return List<Workshop>.unmodifiable(validWorkshops);
     }
 
+    final distances = <String, double>{
+      for (final workshop in validWorkshops)
+        workshop.id: WorkshopDistanceCalculator.distanceInKm(
+          currentLocation: currentLocation,
+          workshop: workshop,
+        ),
+    };
+
     validWorkshops.sort((a, b) {
-      final aDistance = WorkshopDistanceCalculator.distanceInKm(
-        currentLocation: currentLocation,
-        workshop: a,
-      );
-      final bDistance = WorkshopDistanceCalculator.distanceInKm(
-        currentLocation: currentLocation,
-        workshop: b,
-      );
+      final aDistance = distances[a.id] ?? double.infinity;
+      final bDistance = distances[b.id] ?? double.infinity;
 
       return aDistance.compareTo(bDistance);
     });
 
-    return List<Workshop>.from(validWorkshops, growable: false);
+    return List<Workshop>.unmodifiable(validWorkshops);
   }
 
   List<Workshop> _mergeWorkshopResults(
