@@ -22,6 +22,7 @@ class ProductModel extends Product {
     required super.providerName,
     required super.workshopName,
     required super.workshopAvatarUrl,
+    super.workshopDeliveryFee,
   });
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
@@ -46,6 +47,11 @@ class ProductModel extends Product {
       providerName: _relationName(map['product_providers']),
       workshopName: _relationName(map['workshops']),
       workshopAvatarUrl: _relationValue(map['workshops'], 'avatar_url'),
+      workshopDeliveryFee:
+          _nullableDouble(
+            _relationRawValue(map['workshops'], 'delivery_fee'),
+          ) ??
+          0,
     );
   }
 
@@ -82,17 +88,21 @@ class ProductModel extends Product {
   }
 
   static String _relationValue(dynamic relation, String key) {
+    return _relationRawValue(relation, key)?.toString() ?? '';
+  }
+
+  static Object? _relationRawValue(dynamic relation, String key) {
     if (relation is Map<String, dynamic>) {
-      return relation[key]?.toString() ?? '';
+      return relation[key];
     }
 
     if (relation is List && relation.isNotEmpty) {
       final first = relation.first;
       if (first is Map<String, dynamic>) {
-        return first[key]?.toString() ?? '';
+        return first[key];
       }
     }
 
-    return '';
+    return null;
   }
 }

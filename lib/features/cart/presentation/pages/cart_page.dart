@@ -66,8 +66,6 @@ class _CartPageState extends State<CartPage> {
                                 : () => Navigator.maybePop(context),
                           ),
                           const SizedBox(height: AutolabCustomer.spacingSmd),
-                          _ShippingBanner(),
-                          const SizedBox(height: AutolabCustomer.spacingSmd),
                           if (cart.items.isEmpty)
                             _EmptyCartState()
                           else if (_showCheckout)
@@ -326,52 +324,6 @@ class _CartHeader extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _ShippingBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AutolabCustomer.successSoftBackground.withValues(
-          alpha: AutolabCustomer.isDark(context) ? 0.12 : 1,
-        ),
-        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AutolabCustomer.spacingSmd,
-          vertical: AutolabCustomer.spacingSm,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.local_shipping_outlined,
-              color: AutolabCustomer.success,
-              size: AutolabCustomer.iconSm,
-            ),
-            const SizedBox(width: AutolabCustomer.spacingSm),
-            Expanded(
-              child: Text(
-                l10n.cartFreeShippingBanner,
-                style: AutolabCustomer.caption.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AutolabCustomer.customerSecondaryTextColor(context),
-              size: AutolabCustomer.iconSm,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

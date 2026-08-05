@@ -33,10 +33,12 @@ class WorkshopProfilePage extends StatefulWidget {
     super.key,
     required this.workshopId,
     this.paymentLinkId,
+    this.initialCatalogSection,
   });
 
   final String workshopId;
   final String? paymentLinkId;
+  final String? initialCatalogSection;
 
   @override
   State<WorkshopProfilePage> createState() => _WorkshopProfilePageState();
@@ -107,7 +109,10 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
                       );
                     }
 
-                    return _WorkshopProfileContent(workshop: workshop);
+                    return _WorkshopProfileContent(
+                      workshop: workshop,
+                      initialCatalogSection: widget.initialCatalogSection,
+                    );
                   },
                 );
               },

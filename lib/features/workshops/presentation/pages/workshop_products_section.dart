@@ -1,9 +1,10 @@
 part of 'workshop_profile_page.dart';
 
 class _ProductsSection extends StatefulWidget {
-  const _ProductsSection({required this.workshopId});
+  const _ProductsSection({required this.workshopId, this.initialSection});
 
   final String workshopId;
+  final String? initialSection;
 
   @override
   State<_ProductsSection> createState() => _ProductsSectionState();
@@ -16,9 +17,18 @@ class _ProductsSectionState extends State<_ProductsSection> {
   @override
   void initState() {
     super.initState();
+    _selectedSection = _normalizeInitialSection(widget.initialSection);
     _productsFuture = sl<ProductRepository>().getActiveProductsByWorkshop(
       widget.workshopId,
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProductsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSection != widget.initialSection) {
+      _selectedSection = _normalizeInitialSection(widget.initialSection);
+    }
   }
 
   @override
@@ -140,6 +150,15 @@ class _ProductsSectionState extends State<_ProductsSection> {
 
   bool _isService(Product product) {
     return product.itemType.trim().toLowerCase() == 'service';
+  }
+
+  String _normalizeInitialSection(String? section) {
+    return switch (section?.trim().toLowerCase()) {
+      _SectionKey.popular => _SectionKey.popular,
+      _SectionKey.services => _SectionKey.services,
+      _SectionKey.products => _SectionKey.products,
+      _ => _SectionKey.all,
+    };
   }
 }
 

@@ -20,7 +20,6 @@ class CartCubit extends Cubit<CartState> {
   final CartCheckoutRemoteDataSource _checkoutRemoteDataSource;
 
   static const double taxRate = 0.13;
-  static const double freeShippingThreshold = 25000;
   static const String _storageKey = 'customer_cart';
 
   void addProduct(Product product, {int quantity = 1}) {
@@ -36,7 +35,10 @@ class CartCubit extends Cubit<CartState> {
       items.add(CartItem(product: product, quantity: quantity));
     } else {
       final current = items[index];
-      items[index] = current.copyWith(quantity: current.quantity + quantity);
+      items[index] = current.copyWith(
+        product: product,
+        quantity: current.quantity + quantity,
+      );
     }
 
     _emitAndSave(
@@ -430,12 +432,14 @@ class CartState {
 
   double get taxes => subtotal * CartCubit.taxRate;
 
-  bool get hasFreeShipping {
-    return subtotal >= CartCubit.freeShippingThreshold;
-  }
-
   double get shippingCost {
-    return homeDelivery && !hasFreeShipping && items.isNotEmpty ? 2500 : 0;
+    if (!homeDelivery || items.isEmpty) {
+      return 0;
+    }
+
+    return items
+        .map((item) => item.product.workshopDeliveryFee)
+        .firstWhere((fee) => fee > 0, orElse: () => 0);
   }
 
   double get total => subtotal + taxes + shippingCost;
@@ -611,6 +615,7 @@ extension _ProductCartJson on Product {
       'providerName': providerName,
       'workshopName': workshopName,
       'workshopAvatarUrl': workshopAvatarUrl,
+      'workshopDeliveryFee': workshopDeliveryFee,
     };
   }
 }
@@ -638,5 +643,6 @@ Product _productFromCartJson(Map<String, dynamic> json) {
     providerName: json['providerName'] as String? ?? '',
     workshopName: json['workshopName'] as String? ?? '',
     workshopAvatarUrl: json['workshopAvatarUrl'] as String? ?? '',
+    workshopDeliveryFee: (json['workshopDeliveryFee'] as num?)?.toDouble() ?? 0,
   );
 }

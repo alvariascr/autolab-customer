@@ -200,10 +200,7 @@ begin
       raise exception using message = 'cart_delivery_details_required';
     end if;
 
-    select case
-      when v_products_total >= 25000 then 0
-      else coalesce(nullif(w.delivery_fee, 0), 2500)
-    end
+    select coalesce(w.delivery_fee, 0)
     into v_delivery_fee
     from public.workshops w
     where w.id = v_workshop_id;

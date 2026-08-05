@@ -27,7 +27,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     product_categories(name),
     product_brands(name),
     product_providers(name),
-    workshops(name, avatar_url)
+    workshops(name, avatar_url, delivery_fee)
   ''';
 
   @override

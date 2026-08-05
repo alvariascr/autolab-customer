@@ -156,8 +156,8 @@ class _PhysicalProductDetailContentState
                         ),
                         child: OutlinedButton.icon(
                           style: AutolabCustomer.secondaryButton.copyWith(
-                            foregroundColor: const WidgetStatePropertyAll(
-                              AutolabCustomer.white,
+                            foregroundColor: WidgetStatePropertyAll(
+                              AutolabCustomer.customerTextColor(context),
                             ),
                           ),
                           onPressed: hasStock
@@ -171,7 +171,7 @@ class _PhysicalProductDetailContentState
                                   context.go(
                                     workshopId.isEmpty
                                         ? '/home-customer'
-                                        : '/workshops/$workshopId',
+                                        : '/workshops/$workshopId?section=products',
                                   );
                                 }
                               : null,
@@ -179,7 +179,7 @@ class _PhysicalProductDetailContentState
                           label: Text(
                             l10n.productDetailAddToCartAction,
                             style: AutolabCustomer.body.copyWith(
-                              color: AutolabCustomer.white,
+                              color: AutolabCustomer.customerTextColor(context),
                               fontWeight: FontWeight.w700,
                             ),
                           ),

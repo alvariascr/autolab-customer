@@ -20,6 +20,7 @@ class Product {
     required this.providerName,
     required this.workshopName,
     required this.workshopAvatarUrl,
+    this.workshopDeliveryFee = 0,
   });
 
   final String id;
@@ -42,6 +43,7 @@ class Product {
   final String providerName;
   final String workshopName;
   final String workshopAvatarUrl;
+  final double workshopDeliveryFee;
 
   String get effectiveDescription {
     final trimmed = description.trim();

@@ -122,6 +122,7 @@ class AppRouter {
           return WorkshopProfilePage(
             workshopId: workshopId,
             paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+            initialCatalogSection: state.uri.queryParameters['section'],
           );
         },
       ),
