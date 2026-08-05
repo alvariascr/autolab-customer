@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/autolab_customer.dart';
 import '../../l10n/app_localizations.dart';
 import 'widgets/home_scaffold.dart';
 
@@ -57,19 +58,19 @@ class HomePage extends StatelessWidget {
           label: l10n.adminHomeStatusCapacityLabel,
           value: '76%',
           caption: l10n.adminHomeStatusCapacityCaption,
-          tone: const Color(0xFF0F8A5F),
+          tone: AutolabCustomer.success,
         ),
         (
           label: l10n.adminHomeStatusCriticalDeliveriesLabel,
           value: '03',
           caption: l10n.adminHomeStatusCriticalDeliveriesCaption,
-          tone: const Color(0xFFB54708),
+          tone: AutolabCustomer.warning,
         ),
         (
           label: l10n.adminHomeStatusPendingApprovalsLabel,
           value: '08',
           caption: l10n.adminHomeStatusPendingApprovalsCaption,
-          tone: const Color(0xFF9B3D24),
+          tone: AutolabCustomer.primary,
         ),
       ]),
     );

@@ -17,6 +17,8 @@ import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../domain/entities/workshop.dart';
 import '../../domain/repositories/workshop_repository.dart';
 import '../../domain/services/workshop_today_business_hours_resolver.dart';
+import '../widgets/workshop_avatar.dart';
+import '../widgets/workshop_menu_action.dart';
 import '../workshop_empty_state_resolver.dart';
 
 part 'workshop_profile_content.dart';
@@ -181,7 +183,10 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
             title: Text(
               notice.title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             content: Text(
               notice.message,

@@ -74,7 +74,7 @@ class _SegmentedPill extends StatelessWidget {
       height: 58,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F1F1),
+        color: AutolabCustomer.customerSurfaceColor(context),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(children: children),
@@ -95,12 +95,14 @@ class _PillTab extends StatelessWidget {
         height: double.infinity,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
+          color: selected
+              ? AutolabCustomer.customerElevatedSurfaceColor(context)
+              : AutolabCustomer.transparent,
           borderRadius: BorderRadius.circular(999),
           boxShadow: selected
               ? const [
                   BoxShadow(
-                    color: Color(0x10000000),
+                    color: AutolabCustomer.shadowBlackLight,
                     blurRadius: 10,
                     offset: Offset(0, 4),
                   ),
@@ -109,10 +111,11 @@ class _PillTab extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            color: selected ? const Color(0xFF181411) : const Color(0xFF6B5F57),
+          style: AutolabCustomer.body.copyWith(
+            color: selected
+                ? AutolabCustomer.customerTextColor(context)
+                : AutolabCustomer.customerSecondaryTextColor(context),
             fontWeight: FontWeight.w800,
-            fontSize: 15,
           ),
         ),
       ),
@@ -239,15 +242,11 @@ class _MenuAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    return WorkshopMenuAction(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
       enabled: enabled,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 30, color: const Color(0xFF181411)),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-      ),
-      subtitle: subtitle == null ? null : Text(subtitle!),
       onTap: onTap == null
           ? null
           : () {

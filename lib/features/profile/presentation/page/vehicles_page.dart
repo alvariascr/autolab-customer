@@ -89,7 +89,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AutolabCustomer.transparent,
       builder: (_) =>
           _VehicleForm(repository: _repository, initialVehicle: vehicle),
     );
@@ -460,7 +460,9 @@ class _VehicleCompactCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
               border: Border.all(
-                color: selected ? AutolabCustomer.primary : Colors.transparent,
+                color: selected
+                    ? AutolabCustomer.primary
+                    : AutolabCustomer.transparent,
               ),
             ),
             child: Stack(

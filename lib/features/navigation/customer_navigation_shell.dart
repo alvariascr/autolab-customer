@@ -93,10 +93,8 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF050606) : Colors.white,
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       extendBody: true,
       body: IndexedStack(
         index: _pageIndex,

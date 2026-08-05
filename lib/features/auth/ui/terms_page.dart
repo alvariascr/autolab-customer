@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
 
 class TermsPage extends StatelessWidget {
@@ -16,7 +17,9 @@ class TermsPage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Text(
             l10n.authTermsPageBody,
-            style: const TextStyle(fontSize: 14),
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+            ),
           ),
         ),
       ),

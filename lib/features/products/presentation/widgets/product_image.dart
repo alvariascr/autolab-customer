@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/autolab_customer.dart';
+
 class ProductImage extends StatelessWidget {
   const ProductImage({
     super.key,
@@ -55,11 +57,11 @@ class _ProductImagePlaceholder extends StatelessWidget {
     return Container(
       height: height,
       width: double.infinity,
-      color: const Color(0xFFF8F4EF),
+      color: AutolabCustomer.customerImageFallbackColor(context),
       child: Center(
         child: Icon(
           Icons.inventory_2_outlined,
-          color: const Color(0xFF9B3D24),
+          color: AutolabCustomer.primary,
           size: iconSize,
         ),
       ),

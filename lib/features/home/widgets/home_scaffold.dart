@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/application/auth_session_cubit.dart';
 
@@ -36,10 +37,10 @@ class HomeScaffold extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F2EE),
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: AutolabCustomer.customerElevatedSurfaceColor(context),
+        surfaceTintColor: AutolabCustomer.transparent,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,13 +49,13 @@ class HomeScaffold extends StatelessWidget {
               title,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF181411),
+                color: AutolabCustomer.customerTextColor(context),
               ),
             ),
             Text(
               subtitle,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF7B6F67),
+                color: AutolabCustomer.customerSecondaryTextColor(context),
               ),
             ),
           ],
@@ -67,8 +68,12 @@ class HomeScaffold extends StatelessWidget {
                 context.read<AuthSessionCubit>().logout();
               },
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF181411),
-                foregroundColor: Colors.white,
+                backgroundColor: AutolabCustomer.customerInvertedSurfaceColor(
+                  context,
+                ),
+                foregroundColor: AutolabCustomer.customerOnInvertedSurfaceColor(
+                  context,
+                ),
               ),
               icon: const Icon(Icons.logout, size: 18),
               label: Text(l10n.adminHomeLogout),
@@ -129,7 +134,7 @@ class HomeScaffold extends StatelessWidget {
                         currentStatusTitle,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF181411),
+                          color: AutolabCustomer.customerTextColor(context),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -167,14 +172,17 @@ class _HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF181411), Color(0xFF41352E)],
+          colors: [
+            AutolabCustomer.customerLightText,
+            AutolabCustomer.customerLightSecondaryText,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x22181411),
+            color: AutolabCustomer.shadowBlackStrong,
             blurRadius: 24,
             offset: Offset(0, 16),
           ),
@@ -186,13 +194,13 @@ class _HeroCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0x26FFFFFF),
+              color: AutolabCustomer.overlayWhiteLight,
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               label,
               style: theme.textTheme.labelLarge?.copyWith(
-                color: Colors.white,
+                color: AutolabCustomer.white,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -201,7 +209,7 @@ class _HeroCard extends StatelessWidget {
           Text(
             value,
             style: theme.textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
+              color: AutolabCustomer.white,
               fontWeight: FontWeight.w800,
               height: 1.1,
             ),
@@ -226,9 +234,9 @@ class _InfoSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AutolabCustomer.customerElevatedSurfaceColor(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE7DDD5)),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +245,7 @@ class _InfoSection extends StatelessWidget {
             title,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF181411),
+              color: AutolabCustomer.customerTextColor(context),
             ),
           ),
           const SizedBox(height: 16),
@@ -251,10 +259,10 @@ class _InfoSection extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4ECE6),
+                      color: AutolabCustomer.customerSoftSurfaceColor(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(item.icon, color: const Color(0xFF9B3D24)),
+                    child: Icon(item.icon, color: AutolabCustomer.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -265,14 +273,16 @@ class _InfoSection extends StatelessWidget {
                           item.title,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF181411),
+                            color: AutolabCustomer.customerTextColor(context),
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           item.description,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF6F625A),
+                            color: AutolabCustomer.customerSecondaryTextColor(
+                              context,
+                            ),
                             height: 1.35,
                           ),
                         ),
@@ -302,9 +312,9 @@ class _StatusCard extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AutolabCustomer.customerElevatedSurfaceColor(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE7DDD5)),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +322,7 @@ class _StatusCard extends StatelessWidget {
           Text(
             item.label,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF7B6F67),
+              color: AutolabCustomer.customerSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -320,7 +330,7 @@ class _StatusCard extends StatelessWidget {
             item.value,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF181411),
+              color: AutolabCustomer.customerTextColor(context),
             ),
           ),
           const SizedBox(height: 10),

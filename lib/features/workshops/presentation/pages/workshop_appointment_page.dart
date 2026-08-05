@@ -368,7 +368,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             title: Text(
               l10n.appointmentCreatedSuccess,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             content: Text(
               l10n.appointmentConfirmationDeliveryMessage,
@@ -399,18 +402,18 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
     final config = switch (type) {
       _AppointmentMessageType.success => (
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF167A3A),
-        background: const Color(0xFFEAF7EF),
+        color: AutolabCustomer.successText,
+        background: AutolabCustomer.successSoftBackground,
       ),
       _AppointmentMessageType.warning => (
         icon: Icons.info_outline,
-        color: const Color(0xFFB26A00),
-        background: const Color(0xFFFFF5DF),
+        color: AutolabCustomer.warningText,
+        background: AutolabCustomer.warningSoftBackground,
       ),
       _AppointmentMessageType.error => (
         icon: Icons.error_outline,
         color: _appointmentPrimary(context),
-        background: const Color(0xFFFFECEA),
+        background: AutolabCustomer.errorSoftBackground,
       ),
     };
 
@@ -422,7 +425,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
           elevation: 4,
           margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
           padding: EdgeInsets.zero,
-          backgroundColor: Colors.transparent,
+          backgroundColor: AutolabCustomer.transparent,
           duration: const Duration(seconds: 4),
           content: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -432,7 +435,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
               border: Border.all(color: config.color.withValues(alpha: 0.35)),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x22000000),
+                  color: AutolabCustomer.shadowBlackStrong,
                   blurRadius: 14,
                   offset: Offset(0, 6),
                 ),
@@ -563,6 +566,7 @@ class _DesktopRail extends StatelessWidget {
           Text(
             AppLocalizations.of(context)!.appointmentStepWorkshop,
             style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: _appointmentPrimary(context),
               fontWeight: FontWeight.w900,
               fontSize: 17,
@@ -572,6 +576,7 @@ class _DesktopRail extends StatelessWidget {
           Text(
             workshopName,
             style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: _WorkshopAppointmentPageState.ink,
               fontSize: 24,
               fontWeight: FontWeight.w600,
@@ -582,12 +587,18 @@ class _DesktopRail extends StatelessWidget {
             AppLocalizations.of(
               context,
             )!.appointmentWorkshopFallbackDescription,
-            style: const TextStyle(color: _WorkshopAppointmentPageState.muted),
+            style: const TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
+              color: _WorkshopAppointmentPageState.muted,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
             'Autolab Customer',
-            style: TextStyle(color: _WorkshopAppointmentPageState.muted),
+            style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
+              color: _WorkshopAppointmentPageState.muted,
+            ),
           ),
         ],
       ),
@@ -629,11 +640,11 @@ class _DesktopStepItem extends StatelessWidget {
               height: 32,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active || done ? color : Colors.white,
+                color: active || done ? color : AutolabCustomer.white,
                 shape: BoxShape.circle,
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x24000000),
+                    color: AutolabCustomer.shadowBlackIntense,
                     blurRadius: 12,
                     offset: Offset(0, 4),
                   ),
@@ -642,7 +653,8 @@ class _DesktopStepItem extends StatelessWidget {
               child: Text(
                 '$number',
                 style: TextStyle(
-                  color: active || done ? Colors.white : color,
+                  fontFamily: AutolabCustomer.primaryFont,
+                  color: active || done ? AutolabCustomer.white : color,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -657,6 +669,7 @@ class _DesktopStepItem extends StatelessWidget {
           child: Text(
             title,
             style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: titleColor,
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -749,10 +762,10 @@ class _MobileHeaderState extends State<_MobileHeader> {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(color: Colors.white),
+      decoration: BoxDecoration(color: AutolabCustomer.white),
       child: Container(
         height: 84,
-        color: const Color(0xFFF6F6F6),
+        color: AutolabCustomer.customerLightSurface,
         alignment: Alignment.centerLeft,
         child: ListView.separated(
           controller: _scrollController,
@@ -771,7 +784,7 @@ class _MobileHeaderState extends State<_MobileHeader> {
                 vertical: 12,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AutolabCustomer.white,
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
                   color: active
@@ -795,6 +808,7 @@ class _MobileHeaderState extends State<_MobileHeader> {
                     Text(
                       widget.steps[index].title,
                       style: TextStyle(
+                        fontFamily: AutolabCustomer.primaryFont,
                         color: _appointmentPrimary(context),
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -968,11 +982,11 @@ class _VehicleFormCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AutolabCustomer.white,
         border: Border.all(color: AutolabCustomer.border),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
+            color: AutolabCustomer.shadowBlackSoft,
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1216,6 +1230,7 @@ class _VehiclePickerStrip extends StatelessWidget {
               child: Text(
                 l10n.appointmentMyVehiclesTitle,
                 style: const TextStyle(
+                  fontFamily: AutolabCustomer.primaryFont,
                   color: _WorkshopAppointmentPageState.ink,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
@@ -1234,12 +1249,13 @@ class _VehiclePickerStrip extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AutolabCustomer.white,
               border: Border.all(color: AutolabCustomer.border),
             ),
             child: Text(
               l10n.appointmentNoVehiclesForWorkshop,
               style: const TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
                 color: _WorkshopAppointmentPageState.muted,
                 fontWeight: FontWeight.w600,
               ),
@@ -1302,6 +1318,7 @@ class _AddVehiclePill extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
+                  fontFamily: AutolabCustomer.primaryFont,
                   color: _appointmentPrimary(context),
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
@@ -1340,9 +1357,9 @@ class _ExistingVehicleCard extends StatelessWidget {
     final typeLabel = _localizedVehicleTypeLabel(context, vehicle.vehicleType);
 
     return Material(
-      color: Colors.white,
+      color: AutolabCustomer.white,
       elevation: 1.5,
-      shadowColor: Colors.black26,
+      shadowColor: AutolabCustomer.shadowBlack26,
       child: InkWell(
         onTap: onTap,
         child: Container(
@@ -1365,7 +1382,7 @@ class _ExistingVehicleCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: selected
                       ? AutolabCustomer.background
-                      : const Color(0xFFF6F6F6),
+                      : AutolabCustomer.customerLightSurface,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Stack(
@@ -1399,6 +1416,7 @@ class _ExistingVehicleCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
+                  fontFamily: AutolabCustomer.primaryFont,
                   color: _WorkshopAppointmentPageState.ink,
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
@@ -1414,6 +1432,7 @@ class _ExistingVehicleCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
+                  fontFamily: AutolabCustomer.primaryFont,
                   color: _WorkshopAppointmentPageState.muted,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
@@ -1483,11 +1502,11 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AutolabCustomer.white,
             border: Border.all(color: AutolabCustomer.border),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x10000000),
+                color: AutolabCustomer.shadowBlackLight,
                 blurRadius: 8,
                 offset: Offset(0, 3),
               ),
@@ -1499,6 +1518,7 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
                 child: Text(
                   l10n.appointmentProductsSwitchLabel,
                   style: TextStyle(
+                    fontFamily: AutolabCustomer.primaryFont,
                     color: _WorkshopAppointmentPageState.ink,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
@@ -1577,7 +1597,7 @@ class _ServiceMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
+        color: AutolabCustomer.customerLightSurface,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1588,6 +1608,7 @@ class _ServiceMetaChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: _WorkshopAppointmentPageState.ink,
               fontWeight: FontWeight.w700,
             ),
@@ -1616,9 +1637,9 @@ class _ProductOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? AutolabCustomer.background : Colors.white,
+      color: selected ? AutolabCustomer.background : AutolabCustomer.white,
       elevation: 2,
-      shadowColor: Colors.black26,
+      shadowColor: AutolabCustomer.shadowBlack26,
       child: InkWell(
         onTap: onTap,
         child: Container(
@@ -1644,7 +1665,7 @@ class _ProductOptionCard extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.inventory_2_outlined,
-                  color: Colors.white,
+                  color: AutolabCustomer.white,
                   size: 28,
                 ),
               ),
@@ -1656,6 +1677,7 @@ class _ProductOptionCard extends StatelessWidget {
                     Text(
                       product.name,
                       style: TextStyle(
+                        fontFamily: AutolabCustomer.primaryFont,
                         color: _WorkshopAppointmentPageState.ink,
                         fontSize: 19,
                         fontWeight: FontWeight.w900,
@@ -1665,6 +1687,7 @@ class _ProductOptionCard extends StatelessWidget {
                     Text(
                       product.effectiveDescription,
                       style: TextStyle(
+                        fontFamily: AutolabCustomer.primaryFont,
                         color: _WorkshopAppointmentPageState.muted,
                         fontSize: 15,
                         height: 1.3,
@@ -1710,7 +1733,7 @@ class _ProductsInfoMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AutolabCustomer.white,
         border: Border.all(color: AutolabCustomer.border),
       ),
       child: Row(
@@ -1721,6 +1744,7 @@ class _ProductsInfoMessage extends StatelessWidget {
             child: Text(
               message,
               style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
                 color: _WorkshopAppointmentPageState.ink,
                 fontSize: 16,
               ),
@@ -1742,8 +1766,8 @@ class _QuantityStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE1E1E1)),
+        color: AutolabCustomer.white,
+        border: Border.all(color: AutolabCustomer.customerLightDivider),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1759,6 +1783,7 @@ class _QuantityStepper extends StatelessWidget {
               '$quantity',
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
                 color: _WorkshopAppointmentPageState.ink,
                 fontWeight: FontWeight.w900,
               ),
@@ -1802,18 +1827,18 @@ class _BookingSubmittingOverlay extends StatelessWidget {
       child: AbsorbPointer(
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.72),
+            color: AutolabCustomer.white.withValues(alpha: 0.72),
           ),
           child: Center(
             child: Container(
               width: 280,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AutolabCustomer.white,
                 border: Border.all(color: AutolabCustomer.border),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x22000000),
+                    color: AutolabCustomer.shadowBlackStrong,
                     blurRadius: 18,
                     offset: Offset(0, 8),
                   ),
@@ -1835,6 +1860,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     l10n.appointmentCreatingTitle,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
+                      fontFamily: AutolabCustomer.primaryFont,
                       color: _WorkshopAppointmentPageState.ink,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -1845,6 +1871,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     l10n.appointmentCreatingMessage,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
+                      fontFamily: AutolabCustomer.primaryFont,
                       color: _WorkshopAppointmentPageState.muted,
                       fontSize: 14,
                       height: 1.35,
@@ -1955,13 +1982,13 @@ class _OutlineActionButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: isPrimary
               ? AutolabCustomer.primary
-              : Colors.transparent,
+              : AutolabCustomer.transparent,
           foregroundColor: isPrimary
               ? AutolabCustomer.white
               : AutolabCustomer.customerTextColor(context),
           disabledBackgroundColor: isPrimary
               ? AutolabCustomer.primary.withValues(alpha: 0.45)
-              : Colors.transparent,
+              : AutolabCustomer.transparent,
           disabledForegroundColor: AutolabCustomer.customerSecondaryTextColor(
             context,
           ),
@@ -2214,6 +2241,7 @@ class _AppointmentCalendar extends StatelessWidget {
             leftChevronMargin: EdgeInsets.zero,
             rightChevronMargin: EdgeInsets.zero,
             titleTextStyle: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: AutolabCustomer.customerTextColor(context),
               fontSize: AutolabCustomer.responsiveDouble(
                 context,
@@ -2234,11 +2262,13 @@ class _AppointmentCalendar extends StatelessWidget {
           ),
           daysOfWeekStyle: DaysOfWeekStyle(
             weekdayStyle: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: AutolabCustomer.customerTextColor(context),
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
             weekendStyle: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: AutolabCustomer.customerTextColor(context),
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -2271,7 +2301,7 @@ class _AppointmentCalendar extends StatelessWidget {
               label: l10n.appointmentSelectedDayLegend,
             ),
             _CalendarLegend(
-              color: Colors.transparent,
+              color: AutolabCustomer.transparent,
               borderColor: AutolabCustomer.customerBorderColor(context),
               label: l10n.appointmentAvailableDayLegend,
             ),
@@ -2306,7 +2336,7 @@ class _TableCalendarDay extends StatelessWidget {
         ? AutolabCustomer.gray
         : selected
         ? AutolabCustomer.primary
-        : Colors.transparent;
+        : AutolabCustomer.transparent;
     final textColor = selected
         ? AutolabCustomer.white
         : disabled
@@ -2464,7 +2494,7 @@ class _AvailableHoursPanel extends StatelessWidget {
                         ? AutolabCustomer.gray.withValues(alpha: 0.35)
                         : selected
                         ? AutolabCustomer.primary
-                        : Colors.transparent,
+                        : AutolabCustomer.transparent,
                     foregroundColor: unavailable
                         ? AutolabCustomer.gray
                         : selected
@@ -2519,7 +2549,11 @@ class _AvailabilityPanelMessage extends StatelessWidget {
         Expanded(
           child: Text(
             message,
-            style: TextStyle(color: effectiveColor, fontSize: 15),
+            style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
+              color: effectiveColor,
+              fontSize: 15,
+            ),
           ),
         ),
       ],
@@ -2559,7 +2593,7 @@ class _AppointmentNoteInput extends StatelessWidget {
           color: AutolabCustomer.customerSecondaryTextColor(context),
         ),
         filled: true,
-        fillColor: Colors.transparent,
+        fillColor: AutolabCustomer.transparent,
         contentPadding: const EdgeInsets.all(AutolabCustomer.spacingSmd),
         border: border,
         enabledBorder: border,

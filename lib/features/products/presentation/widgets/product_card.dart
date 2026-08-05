@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../workshops/presentation/widgets/workshop_avatar.dart';
 import '../../domain/entities/product.dart';
 import 'product_image.dart';
 import 'product_price_text.dart';
@@ -14,7 +15,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AutolabCustomer.customerElevatedSurfaceColor(context),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -33,7 +34,18 @@ class ProductCard extends StatelessWidget {
                 Positioned(
                   right: 8,
                   bottom: -18,
-                  child: _WorkshopAvatar(product: product),
+                  child: WorkshopAvatar(
+                    imageUrl: product.workshopAvatarUrl,
+                    outerRadius: 18,
+                    innerRadius: 14,
+                    outerColor: AutolabCustomer.customerElevatedSurfaceColor(
+                      context,
+                    ),
+                    innerColor: AutolabCustomer.customerSoftSurfaceColor(
+                      context,
+                    ),
+                    fallbackIconSize: 15,
+                  ),
                 ),
               ],
             ),
@@ -43,7 +55,7 @@ class ProductCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.body.copyWith(
-                color: const Color(0xFF181411),
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
                 fontSize: 15,
               ),
@@ -52,7 +64,7 @@ class ProductCard extends StatelessWidget {
             ProductPriceText(
               price: product.sellingPrice,
               style: AutolabCustomer.caption.copyWith(
-                color: const Color(0xFF181411),
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
               ),
@@ -64,7 +76,7 @@ class ProductCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AutolabCustomer.caption.copyWith(
-                  color: const Color(0xFF6B5F57),
+                  color: AutolabCustomer.customerSecondaryTextColor(context),
                   fontSize: 12,
                 ),
               ),
@@ -75,41 +87,19 @@ class ProductCard extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF181411),
+                  color: AutolabCustomer.customerInvertedSurfaceColor(context),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_forward_rounded,
-                  color: Colors.white,
+                  color: AutolabCustomer.customerOnInvertedSurfaceColor(
+                    context,
+                  ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _WorkshopAvatar extends StatelessWidget {
-  const _WorkshopAvatar({required this.product});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 18,
-      backgroundColor: Colors.white,
-      child: CircleAvatar(
-        radius: 14,
-        backgroundColor: const Color(0xFFE9DDD2),
-        backgroundImage: product.workshopAvatarUrl.trim().isNotEmpty
-            ? NetworkImage(product.workshopAvatarUrl)
-            : null,
-        child: product.workshopAvatarUrl.trim().isEmpty
-            ? const Icon(Icons.storefront_outlined, size: 15)
-            : null,
       ),
     );
   }

@@ -35,9 +35,9 @@ class _ProfileHeroState extends State<_ProfileHero> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0x66000000),
-                  Color(0x22000000),
-                  Color(0x99000000),
+                  AutolabCustomer.overlayBlackLight,
+                  AutolabCustomer.shadowBlackStrong,
+                  AutolabCustomer.overlayBlackDark,
                 ],
               ),
             ),
@@ -380,41 +380,6 @@ class _ProfileMetaChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _WorkshopAvatar extends StatelessWidget {
-  const _WorkshopAvatar({required this.workshop});
-
-  final Workshop workshop;
-
-  @override
-  Widget build(BuildContext context) {
-    final outerRadius = AutolabCustomer.responsiveDouble(
-      context,
-      compact: 52,
-      regular: 62,
-      tablet: 72,
-    );
-
-    return CircleAvatar(
-      radius: outerRadius,
-      backgroundColor: AutolabCustomer.background,
-      child: CircleAvatar(
-        radius: outerRadius - 5,
-        backgroundColor: AutolabCustomer.background,
-        backgroundImage: workshop.avatarUrl.isNotEmpty
-            ? NetworkImage(workshop.avatarUrl)
-            : null,
-        child: workshop.avatarUrl.isEmpty
-            ? const Icon(
-                Icons.storefront_outlined,
-                size: AutolabCustomer.iconLg,
-                color: AutolabCustomer.secondary,
-              )
-            : null,
       ),
     );
   }

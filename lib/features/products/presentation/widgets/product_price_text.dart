@@ -15,7 +15,7 @@ class ProductPriceText extends StatelessWidget {
       style:
           style ??
           AutolabCustomer.bodyLarge.copyWith(
-            color: const Color(0xFF181411),
+            color: AutolabCustomer.customerTextColor(context),
             fontWeight: FontWeight.w800,
           ),
     );

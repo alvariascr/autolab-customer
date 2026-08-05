@@ -1200,6 +1200,19 @@ class AppLocalizationsEs extends AppLocalizations {
       'No encontramos productos que coincidan con tu búsqueda.';
 
   @override
+  String get workshopSearchProductsHint => 'Buscar producto o servicio';
+
+  @override
+  String get workshopSearchProductsEmpty =>
+      'No encontramos productos o servicios con esos filtros.';
+
+  @override
+  String get workshopSearchProductsClearTooltip => 'Limpiar búsqueda';
+
+  @override
+  String get workshopSearchProductsViewWorkshopTooltip => 'Ver taller';
+
+  @override
   String get workshopProfileBusinessHoursTitle => 'Horario';
 
   @override
