@@ -22,6 +22,7 @@ class NearbyWorkshopsMap extends StatefulWidget {
     this.query = '',
     this.productResults = const [],
     this.isLoadingProductResults = false,
+    this.visibleRegionProvider,
   });
 
   final List<Workshop> workshops;
@@ -30,6 +31,7 @@ class NearbyWorkshopsMap extends StatefulWidget {
   final String query;
   final List<WorkshopProductSearchResult> productResults;
   final bool isLoadingProductResults;
+  final Future<LatLngBounds> Function()? visibleRegionProvider;
 
   @override
   State<NearbyWorkshopsMap> createState() => _NearbyWorkshopsMapState();
@@ -124,6 +126,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   bool _expandedSheet = false;
   bool _isMapLoading = true;
   bool _hasMapLoadTimedOut = false;
+  int _visibleRegionSyncToken = 0;
   Timer? _mapLoadingTimer;
 
   @override
@@ -201,12 +204,17 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
   Future<void> _syncVisibleWorkshopsWithMap() async {
     final controller = _mapController;
-    if (!mounted || controller == null || widget.workshops.isEmpty) {
+    final visibleRegionProvider = widget.visibleRegionProvider;
+    if (!mounted ||
+        (controller == null && visibleRegionProvider == null) ||
+        widget.workshops.isEmpty) {
       return;
     }
 
-    final bounds = await controller.getVisibleRegion();
-    if (!mounted) {
+    final syncToken = ++_visibleRegionSyncToken;
+    final bounds = await (visibleRegionProvider ?? controller!.getVisibleRegion)
+        .call();
+    if (!mounted || syncToken != _visibleRegionSyncToken) {
       return;
     }
 
