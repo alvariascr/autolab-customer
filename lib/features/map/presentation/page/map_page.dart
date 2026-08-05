@@ -303,8 +303,9 @@ class _MapSearchBar extends StatelessWidget {
       valueListenable: controller,
       builder: (context, value, child) {
         return Material(
-          color: AutolabCustomer.authFieldBackground,
+          color: AutolabCustomer.customerSoftSurfaceColor(context),
           borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+          clipBehavior: Clip.antiAlias,
           elevation: 8,
           shadowColor: AutolabCustomer.secondary.withValues(alpha: 0.18),
           child: SizedBox(
@@ -320,38 +321,49 @@ class _MapSearchBar extends StatelessWidget {
               textInputAction: TextInputAction.search,
               cursorColor: AutolabCustomer.primary,
               style: AutolabCustomer.body.copyWith(
-                color: AutolabCustomer.authFieldText,
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w700,
               ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AutolabCustomer.authFieldBackground,
+                fillColor: AutolabCustomer.customerSoftSurfaceColor(context),
                 hintText: l10n.mapSearchHint,
                 hintStyle: AutolabCustomer.body.copyWith(
-                  color: AutolabCustomer.authPlaceholder,
+                  color: AutolabCustomer.customerDisabledTextColor(context),
                   fontWeight: FontWeight.w700,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: AutolabCustomer.authPlaceholder,
+                  color: AutolabCustomer.customerDisabledTextColor(context),
                 ),
                 suffixIcon: value.text.trim().isEmpty
-                    ? const Padding(
-                        padding: EdgeInsetsDirectional.only(end: 12),
-                        child: Icon(
-                          Icons.tune_rounded,
-                          color: AutolabCustomer.authPlaceholder,
-                        ),
-                      )
+                    ? null
                     : IconButton(
                         tooltip: l10n.mapSearchClearTooltip,
                         onPressed: onClear,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.cancel_rounded,
-                          color: AutolabCustomer.authPlaceholder,
+                          color: AutolabCustomer.customerDisabledTextColor(
+                            context,
+                          ),
                         ),
                       ),
-                border: InputBorder.none,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                  borderSide: BorderSide(
+                    color: AutolabCustomer.customerBorderColor(context),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                  borderSide: BorderSide(
+                    color: AutolabCustomer.customerBorderColor(context),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                  borderSide: const BorderSide(color: AutolabCustomer.primary),
+                ),
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: AutolabCustomer.spacingSmd,
                 ),
@@ -382,11 +394,6 @@ class _MapFilterChips extends StatelessWidget {
           ),
           const SizedBox(width: AutolabCustomer.spacingSm),
           _FilterChipPill(
-            icon: Icons.build_circle_outlined,
-            label: l10n.mapFilterService,
-          ),
-          const SizedBox(width: AutolabCustomer.spacingSm),
-          _FilterChipPill(
             icon: Icons.star_rounded,
             label: l10n.mapFilterTopRated,
           ),
@@ -406,7 +413,7 @@ class _FilterChipPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AutolabCustomer.customerInvertedSurfaceColor(context),
+        color: AutolabCustomer.customerSoftSurfaceColor(context),
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
@@ -424,13 +431,13 @@ class _FilterChipPill extends StatelessWidget {
             Icon(
               icon,
               size: 15,
-              color: AutolabCustomer.customerOnInvertedSurfaceColor(context),
+              color: AutolabCustomer.customerTextColor(context),
             ),
             const SizedBox(width: AutolabCustomer.spacingXs),
             Text(
               label,
               style: AutolabCustomer.caption.copyWith(
-                color: AutolabCustomer.customerOnInvertedSurfaceColor(context),
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -448,9 +455,13 @@ class _MapTopPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AutolabCustomer.isDark(context);
+
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AutolabCustomer.secondary,
+        color: isDark
+            ? AutolabCustomer.secondary
+            : AutolabCustomer.customerSoftSurfaceColor(context),
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
@@ -468,7 +479,9 @@ class _MapTopPill extends StatelessWidget {
             Text(
               label,
               style: AutolabCustomer.caption.copyWith(
-                color: AutolabCustomer.white,
+                color: isDark
+                    ? AutolabCustomer.white
+                    : AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
@@ -258,6 +259,8 @@ class _SearchHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
       child: Row(
@@ -276,7 +279,7 @@ class _SearchHeader extends StatelessWidget {
                 suffixIcon: controller.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Limpiar busqueda',
+                        tooltip: l10n.workshopSearchProductsClearTooltip,
                         onPressed: () {
                           controller.clear();
                           onChanged('');
@@ -289,7 +292,7 @@ class _SearchHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   borderSide: BorderSide.none,
                 ),
-                hintText: 'Buscar producto o servicio',
+                hintText: l10n.workshopSearchProductsHint,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15),
               ),
               style: AutolabCustomer.bodyLarge.copyWith(
@@ -303,7 +306,7 @@ class _SearchHeader extends StatelessWidget {
             color: AutolabCustomer.customerSurfaceColor(context),
             shape: const CircleBorder(),
             child: IconButton(
-              tooltip: 'Ver taller',
+              tooltip: l10n.workshopSearchProductsViewWorkshopTooltip,
               onPressed: onWorkshopTap,
               icon: const Icon(Icons.storefront_outlined),
             ),
@@ -403,7 +406,9 @@ class _FilterChips extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             labelStyle: AutolabCustomer.body.copyWith(
-              color: AutolabCustomer.customerTextColor(context),
+              color: onlyAvailable
+                  ? AutolabCustomer.successText
+                  : AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -597,11 +602,13 @@ class _EmptyProductsMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Text(
-          'No encontramos productos o servicios con esos filtros.',
+          l10n.workshopSearchProductsEmpty,
           textAlign: TextAlign.center,
           style: AutolabCustomer.body.copyWith(
             color: AutolabCustomer.customerSecondaryTextColor(context),

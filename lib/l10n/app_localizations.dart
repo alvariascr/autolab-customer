@@ -1021,7 +1021,7 @@ abstract class AppLocalizations {
   /// No description provided for @garageHistory.
   ///
   /// In es, this message translates to:
-  /// **'Historial'**
+  /// **'Mis órdenes'**
   String get garageHistory;
 
   /// No description provided for @garageManagementTitle.
@@ -2217,6 +2217,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No encontramos productos que coincidan con tu búsqueda.'**
   String get workshopProfileProductsNoResults;
+
+  /// No description provided for @workshopSearchProductsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar producto o servicio'**
+  String get workshopSearchProductsHint;
+
+  /// No description provided for @workshopSearchProductsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos productos o servicios con esos filtros.'**
+  String get workshopSearchProductsEmpty;
+
+  /// No description provided for @workshopSearchProductsClearTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar búsqueda'**
+  String get workshopSearchProductsClearTooltip;
+
+  /// No description provided for @workshopSearchProductsViewWorkshopTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver taller'**
+  String get workshopSearchProductsViewWorkshopTooltip;
 
   /// No description provided for @workshopProfileBusinessHoursTitle.
   ///
@@ -3607,7 +3631,7 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultPaidMessage.
   ///
   /// In es, this message translates to:
-  /// **'Tu compra fue aprobada correctamente. Ya puedes revisar el detalle en Mis compras.'**
+  /// **'Tu orden fue aprobada correctamente. Ya puedes revisar el detalle en Mis órdenes.'**
   String get laropayPaymentResultPaidMessage;
 
   /// No description provided for @laropayPaymentResultRejectedTitle.
@@ -3619,7 +3643,7 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultRejectedMessage.
   ///
   /// In es, this message translates to:
-  /// **'Laropay no pudo procesar la compra. Puedes revisar el estado o intentar nuevamente desde Mis compras.'**
+  /// **'Laropay no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.'**
   String get laropayPaymentResultRejectedMessage;
 
   /// No description provided for @laropayPaymentResultExpiredTitle.
@@ -3631,7 +3655,7 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultExpiredMessage.
   ///
   /// In es, this message translates to:
-  /// **'El link de pago ya no está disponible. Genera una nueva compra para continuar.'**
+  /// **'El link de pago ya no está disponible. Genera una nueva orden para continuar.'**
   String get laropayPaymentResultExpiredMessage;
 
   /// No description provided for @laropayPaymentResultPendingTitle.
@@ -3643,13 +3667,13 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultPendingMessage.
   ///
   /// In es, this message translates to:
-  /// **'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis compras.'**
+  /// **'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis órdenes.'**
   String get laropayPaymentResultPendingMessage;
 
   /// No description provided for @laropayPaymentResultViewPurchasesAction.
   ///
   /// In es, this message translates to:
-  /// **'Ver mis compras'**
+  /// **'Ver mis órdenes'**
   String get laropayPaymentResultViewPurchasesAction;
 
   /// No description provided for @laropayPaymentResultBackToWorkshopAction.
@@ -4099,31 +4123,31 @@ abstract class AppLocalizations {
   /// No description provided for @myPurchasesTitle.
   ///
   /// In es, this message translates to:
-  /// **'Mis compras'**
+  /// **'Mis órdenes'**
   String get myPurchasesTitle;
 
   /// No description provided for @myPurchasesSubtitle.
   ///
   /// In es, this message translates to:
-  /// **'Consulta tus pagos de productos adicionales'**
+  /// **'Consulta tus órdenes y pagos'**
   String get myPurchasesSubtitle;
 
   /// No description provided for @myPurchasesEmptyTitle.
   ///
   /// In es, this message translates to:
-  /// **'Aún no tienes compras'**
+  /// **'Aún no tienes órdenes'**
   String get myPurchasesEmptyTitle;
 
   /// No description provided for @myPurchasesEmptyMessage.
   ///
   /// In es, this message translates to:
-  /// **'Cuando pagues productos adicionales, aparecerán aquí con su estado.'**
+  /// **'Cuando agendes una cita o generes una compra, aparecerá aquí con su estado.'**
   String get myPurchasesEmptyMessage;
 
   /// No description provided for @myPurchasesLoadErrorTitle.
   ///
   /// In es, this message translates to:
-  /// **'No pudimos cargar tus compras'**
+  /// **'No pudimos cargar tus órdenes'**
   String get myPurchasesLoadErrorTitle;
 
   /// No description provided for @myPurchasesRetryAction.
@@ -4137,6 +4161,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pendiente'**
   String get myPurchasesPendingStatus;
+
+  /// No description provided for @myPurchasesPartialStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago parcial'**
+  String get myPurchasesPartialStatus;
 
   /// No description provided for @myPurchasesApprovedStatus.
   ///
@@ -4156,6 +4186,12 @@ abstract class AppLocalizations {
   /// **'Vencido'**
   String get myPurchasesExpiredStatus;
 
+  /// No description provided for @myPurchasesWorkshopPaymentStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago en taller'**
+  String get myPurchasesWorkshopPaymentStatus;
+
   /// No description provided for @myPurchasesUnknownStatus.
   ///
   /// In es, this message translates to:
@@ -4167,6 +4203,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El link fue generado. Esperamos la confirmación de Laropay.'**
   String get myPurchasesPendingMessage;
+
+  /// No description provided for @myPurchasesPartialMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos pagados. Servicio pendiente de pago en el taller.'**
+  String get myPurchasesPartialMessage;
 
   /// No description provided for @myPurchasesApprovedMessage.
   ///
@@ -4185,6 +4227,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El link de pago venció o ya no está disponible.'**
   String get myPurchasesExpiredMessage;
+
+  /// No description provided for @myPurchasesWorkshopPaymentMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio agendado. El pago se realiza directamente en el taller.'**
+  String get myPurchasesWorkshopPaymentMessage;
 
   /// No description provided for @myPurchasesUnknownMessage.
   ///
@@ -4209,6 +4257,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Monto'**
   String get myPurchasesAmountLabel;
+
+  /// No description provided for @myPurchasesPaidLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagado'**
+  String get myPurchasesPaidLabel;
+
+  /// No description provided for @myPurchasesPaidOnlineLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagado en línea'**
+  String get myPurchasesPaidOnlineLabel;
+
+  /// No description provided for @myPurchasesPendingAtWorkshopLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente en taller'**
+  String get myPurchasesPendingAtWorkshopLabel;
+
+  /// No description provided for @myPurchasesOrderTotalLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Total de la orden'**
+  String get myPurchasesOrderTotalLabel;
 
   /// No description provided for @myPurchasesDateLabel.
   ///

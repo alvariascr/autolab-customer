@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../workshops/presentation/widgets/workshop_avatar.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_image.dart';
 
@@ -73,7 +74,17 @@ class ProductDetailHero extends StatelessWidget {
             right: 0,
             top: heroHeight - avatarSize / 2,
             child: Center(
-              child: _WorkshopAvatar(product: product, size: avatarSize),
+              child: WorkshopAvatar(
+                imageUrl: product.workshopAvatarUrl,
+                outerRadius: avatarSize / 2,
+                innerRadius: avatarSize / 2 - 3,
+                outerColor: AutolabCustomer.customerBackgroundColor(context),
+                innerColor: AutolabCustomer.customerSurfaceColor(context),
+                fallbackIconSize: avatarSize * 0.4,
+                fallbackIconColor: AutolabCustomer.primary,
+                fallbackIcon: Icons.storefront_rounded,
+                borderColor: AutolabCustomer.customerBorderColor(context),
+              ),
             ),
           ),
         ],
@@ -110,40 +121,6 @@ class _HeroActionButton extends StatelessWidget {
             size: AutolabCustomer.iconMd,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _WorkshopAvatar extends StatelessWidget {
-  const _WorkshopAvatar({required this.product, required this.size});
-
-  final Product product;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final avatarUrl = product.workshopAvatarUrl.trim();
-
-    return Container(
-      width: size,
-      height: size,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AutolabCustomer.customerBackgroundColor(context),
-        shape: BoxShape.circle,
-        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
-      ),
-      child: CircleAvatar(
-        backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-        backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-        child: avatarUrl.isEmpty
-            ? Icon(
-                Icons.storefront_rounded,
-                color: AutolabCustomer.primary,
-                size: size * 0.4,
-              )
-            : null,
       ),
     );
   }

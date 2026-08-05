@@ -810,7 +810,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
           expanded ? AutolabCustomer.spacingMd : AutolabCustomer.spacingSmd,
         ),
         decoration: BoxDecoration(
-          color: AutolabCustomer.customerElevatedSurfaceColor(
+          color: AutolabCustomer.customerSurfaceColor(
             context,
           ).withValues(alpha: 0.98),
           borderRadius: const BorderRadius.vertical(

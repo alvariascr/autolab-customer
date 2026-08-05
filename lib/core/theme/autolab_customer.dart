@@ -168,6 +168,11 @@ class AutolabCustomer {
   }
 
   /// Devuelve el color de fondo para chips del módulo cliente.
+  /// Devuelve el color fallback para mapas sin coordenadas.
+  static Color customerMapFallbackColor(BuildContext context) {
+    return isDark(context) ? customerDarkSurface : customerLightMapFallback;
+  }
+
   static Color customerChipBackgroundColor(BuildContext context) {
     return isDark(context) ? customerDarkBorder : customerLightSurface;
   }
