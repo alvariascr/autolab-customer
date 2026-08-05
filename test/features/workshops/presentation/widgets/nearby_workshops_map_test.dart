@@ -202,6 +202,74 @@ void main() {
       expect(refreshCalls, 1);
     });
 
+    testWidgets(
+      'cambia la seleccion al primer taller visible cuando el seleccionado sale del mapa',
+      (tester) async {
+        const workshops = [
+          Workshop(
+            id: 'oeste',
+            name: 'Taller Oeste',
+            description: '',
+            locationAddress: 'Oeste',
+            avatarUrl: '',
+            coverUrl: '',
+            latitude: 10,
+            longitude: -85,
+            deliveryRadiusKm: 8,
+          ),
+          Workshop(
+            id: 'este',
+            name: 'Taller Este',
+            description: '',
+            locationAddress: 'Este',
+            avatarUrl: '',
+            coverUrl: '',
+            latitude: 10,
+            longitude: -84,
+            deliveryRadiusKm: 8,
+          ),
+        ];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                height: 640,
+                child: NearbyWorkshopsMap(
+                  workshops: workshops,
+                  currentLocation: const CurrentLocation(
+                    latitude: 10,
+                    longitude: -84,
+                  ),
+                  emptyMessage: 'No encontramos talleres cercanos.',
+                  visibleRegionProvider: () async => LatLngBounds(
+                    southwest: const LatLng(9.5, -85.5),
+                    northeast: const LatLng(10.5, -84.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Taller Este'), findsWidgets);
+
+        final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+        googleMap.onCameraIdle?.call();
+        await tester.pump();
+
+        expect(find.text('Taller Oeste'), findsWidgets);
+        expect(find.text('Taller Este'), findsNothing);
+      },
+    );
+
     testWidgets('ignora regiones visibles obsoletas del mapa', (tester) async {
       const workshops = [
         Workshop(
