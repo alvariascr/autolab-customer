@@ -86,7 +86,7 @@ void main() {
         expect(cubit.state, isA<MapLoaded>());
         expect(
           (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
-          ['Autolab Escazu', 'Frenos Heredia'],
+          ['Autolab Escazu', 'Frenos Heredia', 'Llantas Cartago'],
         );
 
         queryStore.setQuery('frenos');
@@ -110,7 +110,66 @@ void main() {
       expect(cubit.state, isA<MapLoaded>());
       final loaded = cubit.state as MapLoaded;
       expect(loaded.currentLocation?.latitude, 9.8644);
-      expect(loaded.workshops.map((workshop) => workshop.id), ['3']);
+      expect(loaded.workshops.map((workshop) => workshop.id), ['3', '1', '2']);
+    });
+
+    test(
+      'muestra talleres fuera de cobertura manteniendo el orden por cercania',
+      () async {
+        await cubit.loadWorkshops(_currentLocation);
+
+        expect(cubit.state, isA<MapLoaded>());
+        expect(
+          (cubit.state as MapLoaded).workshops.map((workshop) => workshop.id),
+          ['1', '2', '3'],
+          reason:
+              'Debe incluir talleres fuera de cobertura y ordenar de menor '
+              'a mayor distancia cuando existe ubicacion del usuario.',
+        );
+      },
+    );
+
+    test(
+      'muestra talleres validos aunque no exista ubicacion del usuario',
+      () async {
+        await cubit.loadWorkshops(null);
+
+        expect(cubit.state, isA<MapLoaded>());
+        final loaded = cubit.state as MapLoaded;
+        expect(loaded.currentLocation, isNull);
+        expect(loaded.workshops.map((workshop) => workshop.id), [
+          '1',
+          '2',
+          '3',
+        ]);
+      },
+    );
+
+    test('excluye talleres con coordenadas invalidas', () async {
+      const invalidWorkshop = Workshop(
+        id: 'invalid',
+        name: 'Taller sin coordenadas validas',
+        description: 'No debe mostrarse en el mapa',
+        locationAddress: 'Sin ubicacion',
+        avatarUrl: '',
+        coverUrl: '',
+        latitude: 0,
+        longitude: 0,
+        deliveryRadiusKm: 10,
+      );
+
+      when(() => repository.getWorkshops()).thenAnswer((_) async {
+        getWorkshopsCalls += 1;
+        return const Right([..._workshops, invalidWorkshop]);
+      });
+
+      await cubit.loadWorkshops(_currentLocation);
+
+      expect(cubit.state, isA<MapLoaded>());
+      expect(
+        (cubit.state as MapLoaded).workshops.map((workshop) => workshop.id),
+        isNot(contains('invalid')),
+      );
     });
 
     test(
@@ -164,7 +223,7 @@ void main() {
         (debouncedCubit.state as MapLoaded).workshops.map(
           (workshop) => workshop.name,
         ),
-        ['Autolab Escazu', 'Frenos Heredia'],
+        ['Autolab Escazu', 'Frenos Heredia', 'Llantas Cartago'],
       );
 
       await Future<void>.delayed(const Duration(milliseconds: 40));

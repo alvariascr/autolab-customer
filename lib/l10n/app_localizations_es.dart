@@ -1457,21 +1457,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mapPageTitle => 'Mapa';
 
   @override
-  String get mapTopPillExplore => 'Explorar mapa';
+  String get mapTopPillExplore => 'Explora talleres';
 
   @override
   String get mapTopPillLoadingWorkshops => 'Cargando talleres';
 
   @override
   String get mapTopPillNoWorkshops => 'Sin talleres';
-
-  @override
-  String get mapTopPillOneWorkshopNearby => '1 taller cercano';
-
-  @override
-  String mapTopPillWorkshopsNearby(Object count) {
-    return '$count talleres cercanos';
-  }
 
   @override
   String get mapSearchHint => 'Buscar en Autolab';
@@ -1496,7 +1488,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mapLoadingMessage =>
-      'Estamos preparando el mapa y los talleres cercanos para ti.';
+      'Estamos preparando el mapa y los talleres disponibles para ti.';
 
   @override
   String get mapLoadingTimeoutTitle => 'El mapa está tardando en responder';
@@ -1559,7 +1551,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este taller está listo para atender solicitudes cerca de tu ubicación.';
 
   @override
-  String get mapSheetNearbyWorkshopsTitle => 'Talleres cerca de ti';
+  String get mapSheetNearbyWorkshopsTitle => 'Talleres en esta zona';
 
   @override
   String get mapSheetOneResult => '1 resultado';

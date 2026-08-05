@@ -22,6 +22,8 @@ class NearbyWorkshopsMap extends StatefulWidget {
     this.query = '',
     this.productResults = const [],
     this.isLoadingProductResults = false,
+    this.visibleRegionProvider,
+    this.onCurrentLocationPressed,
   });
 
   final List<Workshop> workshops;
@@ -30,6 +32,8 @@ class NearbyWorkshopsMap extends StatefulWidget {
   final String query;
   final List<WorkshopProductSearchResult> productResults;
   final bool isLoadingProductResults;
+  final Future<LatLngBounds> Function()? visibleRegionProvider;
+  final Future<void> Function()? onCurrentLocationPressed;
 
   @override
   State<NearbyWorkshopsMap> createState() => _NearbyWorkshopsMapState();
@@ -120,9 +124,12 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   BitmapDescriptor? _selectedWorkshopIcon;
   double _currentZoom = _initialZoom;
   Workshop? _selectedWorkshop;
+  List<Workshop> _visibleWorkshops = const [];
   bool _expandedSheet = false;
   bool _isMapLoading = true;
   bool _hasMapLoadTimedOut = false;
+  bool _shouldCenterAfterLocationRefresh = false;
+  int _visibleRegionSyncToken = 0;
   Timer? _mapLoadingTimer;
 
   @override
@@ -146,7 +153,22 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     if (oldWidget.workshops != widget.workshops ||
         oldWidget.currentLocation != widget.currentLocation) {
       _syncSelectedWorkshop();
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fitToMarkers());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncVisibleWorkshopsWithMap();
+      });
+    }
+
+    if (_shouldCenterAfterLocationRefresh &&
+        oldWidget.currentLocation != widget.currentLocation &&
+        widget.currentLocation != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        _shouldCenterAfterLocationRefresh = false;
+        _animateToCurrentLocation();
+      });
     }
   }
 
@@ -166,6 +188,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   void _syncSelectedWorkshop() {
     if (widget.workshops.isEmpty || widget.currentLocation == null) {
       _selectedWorkshop = null;
+      _visibleWorkshops = const [];
       _expandedSheet = false;
       return;
     }
@@ -195,9 +218,73 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
     _selectedWorkshop = sorted.first;
   }
 
+  Future<void> _syncVisibleWorkshopsWithMap() async {
+    final controller = _mapController;
+    final visibleRegionProvider = widget.visibleRegionProvider;
+    if (!mounted ||
+        (controller == null && visibleRegionProvider == null) ||
+        widget.workshops.isEmpty) {
+      return;
+    }
+
+    final syncToken = ++_visibleRegionSyncToken;
+    final bounds = await (visibleRegionProvider ?? controller!.getVisibleRegion)
+        .call();
+    if (!mounted || syncToken != _visibleRegionSyncToken) {
+      return;
+    }
+
+    final visibleWorkshops = widget.workshops
+        .where((workshop) => _boundsContain(bounds, workshop))
+        .toList(growable: false);
+
+    final selectedIsVisible =
+        _selectedWorkshop != null &&
+        visibleWorkshops.any(
+          (workshop) => workshop.id == _selectedWorkshop!.id,
+        );
+
+    setState(() {
+      _visibleWorkshops = visibleWorkshops;
+      if (!selectedIsVisible && visibleWorkshops.isNotEmpty) {
+        _selectedWorkshop = visibleWorkshops.first;
+      }
+    });
+  }
+
   void _zoomIn() => _updateZoom(_currentZoom + _zoomStep);
 
   void _zoomOut() => _updateZoom(_currentZoom - _zoomStep);
+
+  void _centerOnCurrentLocation() {
+    _shouldCenterAfterLocationRefresh = true;
+    final refreshCurrentLocation = widget.onCurrentLocationPressed;
+    if (refreshCurrentLocation != null) {
+      unawaited(refreshCurrentLocation());
+    }
+
+    _animateToCurrentLocation();
+  }
+
+  void _animateToCurrentLocation() {
+    final location = widget.currentLocation;
+    if (location == null) {
+      return;
+    }
+
+    final zoom = _currentZoom < _initialZoom ? _initialZoom : _currentZoom;
+    _currentZoom = zoom;
+    unawaited(
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(location.latitude, location.longitude),
+            zoom: zoom,
+          ),
+        ),
+      ),
+    );
+  }
 
   void _updateZoom(double nextZoom) {
     final location = widget.currentLocation;
@@ -216,64 +303,6 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
         CameraPosition(target: center, zoom: safeZoom),
       ),
     );
-  }
-
-  void _fitToMarkers() {
-    final location = widget.currentLocation;
-    if (!mounted || location == null || widget.workshops.isEmpty) {
-      return;
-    }
-
-    final maxDistanceKm = widget.workshops
-        .map(
-          (workshop) => WorkshopDistanceCalculator.distanceInKm(
-            currentLocation: location,
-            workshop: workshop,
-          ),
-        )
-        .fold<double>(0, (currentMax, distance) {
-          return distance > currentMax ? distance : currentMax;
-        });
-
-    if (maxDistanceKm <= 0.8) {
-      final focusWorkshop = _selectedWorkshop ?? widget.workshops.first;
-      final focusPoint = LatLng(
-        focusWorkshop.latitude,
-        focusWorkshop.longitude,
-      );
-      _currentZoom = 16.4;
-      _mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: focusPoint, zoom: _currentZoom),
-        ),
-      );
-      return;
-    }
-
-    if (maxDistanceKm <= 1.6) {
-      final focusWorkshop = _selectedWorkshop ?? widget.workshops.first;
-      final focusPoint = LatLng(
-        focusWorkshop.latitude,
-        focusWorkshop.longitude,
-      );
-      _currentZoom = 15.4;
-      _mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: focusPoint, zoom: _currentZoom),
-        ),
-      );
-      return;
-    }
-
-    final points = <LatLng>[
-      LatLng(location.latitude, location.longitude),
-      ...widget.workshops.map(
-        (workshop) => LatLng(workshop.latitude, workshop.longitude),
-      ),
-    ];
-    final bounds = _boundsFrom(points);
-
-    _mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 72));
   }
 
   void _selectWorkshop(Workshop workshop) {
@@ -317,7 +346,6 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   void _handleMapCreated(GoogleMapController controller) {
     _mapLoadingTimer?.cancel();
     _mapController = controller;
-    _fitToMarkers();
     if (!mounted) {
       return;
     }
@@ -326,6 +354,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       _isMapLoading = false;
       _hasMapLoadTimedOut = false;
     });
+    unawaited(_syncVisibleWorkshopsWithMap());
   }
 
   Future<void> _loadMarkerIcons() async {
@@ -350,33 +379,6 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       _workshopIcon = icons[1];
       _selectedWorkshopIcon = icons[2];
     });
-  }
-
-  LatLngBounds _boundsFrom(List<LatLng> points) {
-    var minLatitude = points.first.latitude;
-    var maxLatitude = points.first.latitude;
-    var minLongitude = points.first.longitude;
-    var maxLongitude = points.first.longitude;
-
-    for (final point in points.skip(1)) {
-      if (point.latitude < minLatitude) {
-        minLatitude = point.latitude;
-      }
-      if (point.latitude > maxLatitude) {
-        maxLatitude = point.latitude;
-      }
-      if (point.longitude < minLongitude) {
-        minLongitude = point.longitude;
-      }
-      if (point.longitude > maxLongitude) {
-        maxLongitude = point.longitude;
-      }
-    }
-
-    return LatLngBounds(
-      southwest: LatLng(minLatitude, minLongitude),
-      northeast: LatLng(maxLatitude, maxLongitude),
-    );
   }
 
   Future<BitmapDescriptor> _createCurrentLocationIcon() async {
@@ -649,6 +651,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
             markers: markers,
             onMapCreated: _handleMapCreated,
             onCameraMove: (position) => _currentZoom = position.zoom,
+            onCameraIdle: _syncVisibleWorkshopsWithMap,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
@@ -672,11 +675,11 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
           Positioned(
             right: AutolabCustomer.spacingMd,
             top: locationControlTop,
-            child: IgnorePointer(
-              child: _MapFloatingBadge(
-                icon: Icons.my_location_rounded,
-                tooltip: l10n.mapYourLocation,
-              ),
+            child: _MapFloatingButton(
+              key: const ValueKey('map-current-location-button'),
+              icon: Icons.my_location_rounded,
+              tooltip: l10n.mapYourLocation,
+              onPressed: _centerOnCurrentLocation,
             ),
           ),
           if (widget.workshops.isEmpty)
@@ -712,7 +715,9 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
                 workshop: _selectedWorkshop!,
                 currentLocation: widget.currentLocation!,
                 expanded: _expandedSheet,
-                results: widget.workshops,
+                results: widget.query.trim().isEmpty
+                    ? _visibleWorkshops
+                    : widget.workshops,
                 query: widget.query,
                 productResults: widget.productResults,
                 isLoadingProductResults: widget.isLoadingProductResults,
@@ -726,6 +731,22 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
         ],
       ),
     );
+  }
+
+  bool _boundsContain(LatLngBounds bounds, Workshop workshop) {
+    final latitude = workshop.latitude;
+    final longitude = workshop.longitude;
+    final containsLatitude =
+        latitude >= bounds.southwest.latitude &&
+        latitude <= bounds.northeast.latitude;
+    final containsLongitude =
+        bounds.southwest.longitude <= bounds.northeast.longitude
+        ? longitude >= bounds.southwest.longitude &&
+              longitude <= bounds.northeast.longitude
+        : longitude >= bounds.southwest.longitude ||
+              longitude <= bounds.northeast.longitude;
+
+    return containsLatitude && containsLongitude;
   }
 
   double _sheetReservedHeight(BuildContext context) {
@@ -1690,11 +1711,17 @@ class _MapInfoChip extends StatelessWidget {
   }
 }
 
-class _MapFloatingBadge extends StatelessWidget {
-  const _MapFloatingBadge({required this.icon, required this.tooltip});
+class _MapFloatingButton extends StatelessWidget {
+  const _MapFloatingButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   final IconData icon;
   final String tooltip;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -1717,10 +1744,15 @@ class _MapFloatingBadge extends StatelessWidget {
         child: SizedBox(
           width: 50,
           height: 50,
-          child: Icon(
-            icon,
-            size: AutolabCustomer.iconMd,
-            color: AutolabCustomer.customerTextColor(context),
+          child: IconButton(
+            tooltip: tooltip,
+            onPressed: onPressed,
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              icon,
+              size: AutolabCustomer.iconMd,
+              color: AutolabCustomer.customerTextColor(context),
+            ),
           ),
         ),
       ),
