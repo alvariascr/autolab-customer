@@ -24,7 +24,28 @@ class _WorkshopProfileContent extends StatelessWidget {
                     top: -58,
                     left: 0,
                     right: 0,
-                    child: Center(child: _WorkshopAvatar(workshop: workshop)),
+                    child: Center(
+                      child: Builder(
+                        builder: (context) {
+                          final outerRadius = AutolabCustomer.responsiveDouble(
+                            context,
+                            compact: 52,
+                            regular: 62,
+                            tablet: 72,
+                          );
+
+                          return WorkshopAvatar(
+                            imageUrl: workshop.avatarUrl,
+                            outerRadius: outerRadius,
+                            innerRadius: outerRadius - 5,
+                            outerColor: AutolabCustomer.background,
+                            innerColor: AutolabCustomer.background,
+                            fallbackIconSize: AutolabCustomer.iconLg,
+                            fallbackIconColor: AutolabCustomer.secondary,
+                          );
+                        },
+                      ),
+                    ),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(

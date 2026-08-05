@@ -12,6 +12,7 @@ import '../../domain/entities/product.dart';
 import '../../domain/usecases/get_additional_products_by_workshop.dart';
 import '../widgets/product_image.dart';
 import '../widgets/product_price_text.dart';
+import '../widgets/products_message.dart';
 import 'product_detail_hero.dart';
 
 class ServiceDetailContent extends StatefulWidget {
@@ -256,7 +257,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
         _relatedProductsMessageSliver(
           horizontalMargin: horizontalMargin,
           maxWidth: maxWidth,
-          child: _ProductsMessage(
+          child: ProductsMessage(
             icon: Icons.error_outline_rounded,
             message: l10n.serviceDetailProductsLoadError,
           ),
@@ -270,7 +271,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
         _relatedProductsMessageSliver(
           horizontalMargin: horizontalMargin,
           maxWidth: maxWidth,
-          child: _ProductsMessage(
+          child: ProductsMessage(
             icon: Icons.inventory_2_outlined,
             message: l10n.serviceDetailProductsEmpty,
           ),
@@ -560,7 +561,7 @@ class _ServiceStepActions extends StatelessWidget {
             ),
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.transparent,
+                backgroundColor: AutolabCustomer.transparent,
                 foregroundColor: AutolabCustomer.customerTextColor(context),
                 side: const BorderSide(
                   color: AutolabCustomer.primary,
@@ -798,39 +799,6 @@ class _QuantityButton extends StatelessWidget {
             tablet: 16,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ProductsMessage extends StatelessWidget {
-  const _ProductsMessage({required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
-      decoration: BoxDecoration(
-        color: AutolabCustomer.customerSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AutolabCustomer.radiusInput),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AutolabCustomer.primary),
-          const SizedBox(width: AutolabCustomer.spacingSm),
-          Expanded(
-            child: Text(
-              message,
-              style: AutolabCustomer.caption.copyWith(
-                color: AutolabCustomer.customerSecondaryTextColor(context),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

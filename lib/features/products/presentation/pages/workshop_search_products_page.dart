@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/router/build_context_navigation.dart';
+import '../../../../core/theme/autolab_customer.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
@@ -127,7 +129,7 @@ class _WorkshopSearchProductsPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       body: SafeArea(
         child: FutureBuilder<List<Product>>(
           future: _productsFuture,
@@ -192,9 +194,10 @@ class _WorkshopSearchProductsPageState
                     padding: const EdgeInsets.fromLTRB(22, 20, 22, 14),
                     child: Text(
                       '${visibleProducts.length} resultados',
-                      style: const TextStyle(
-                        color: Color(0xFF6B5F57),
-                        fontSize: 19,
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -256,6 +259,8 @@ class _SearchHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
       child: Row(
@@ -274,7 +279,7 @@ class _SearchHeader extends StatelessWidget {
                 suffixIcon: controller.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Limpiar busqueda',
+                        tooltip: l10n.workshopSearchProductsClearTooltip,
                         onPressed: () {
                           controller.clear();
                           onChanged('');
@@ -282,27 +287,26 @@ class _SearchHeader extends StatelessWidget {
                         icon: const Icon(Icons.cancel_rounded),
                       ),
                 filled: true,
-                fillColor: const Color(0xFFF1F1F1),
+                fillColor: AutolabCustomer.customerSurfaceColor(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(999),
                   borderSide: BorderSide.none,
                 ),
-                hintText: 'Buscar producto o servicio',
+                hintText: l10n.workshopSearchProductsHint,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15),
               ),
-              style: const TextStyle(
-                color: Color(0xFF181411),
-                fontSize: 21,
+              style: AutolabCustomer.bodyLarge.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
           const SizedBox(width: 12),
           Material(
-            color: const Color(0xFFF1F1F1),
+            color: AutolabCustomer.customerSurfaceColor(context),
             shape: const CircleBorder(),
             child: IconButton(
-              tooltip: 'Ver taller',
+              tooltip: l10n.workshopSearchProductsViewWorkshopTooltip,
               onPressed: onWorkshopTap,
               icon: const Icon(Icons.storefront_outlined),
             ),
@@ -395,15 +399,16 @@ class _FilterChips extends StatelessWidget {
             label: const Text('Disponibles'),
             selected: onlyAvailable,
             onSelected: onAvailabilityChanged,
-            backgroundColor: const Color(0xFFF1F1F1),
-            selectedColor: const Color(0xFFEAF6EE),
+            backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+            selectedColor: AutolabCustomer.successSoftBackground,
             side: BorderSide.none,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(999),
             ),
-            labelStyle: const TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 16,
+            labelStyle: AutolabCustomer.body.copyWith(
+              color: onlyAvailable
+                  ? AutolabCustomer.successText
+                  : AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -471,12 +476,11 @@ class _MenuChip<T> extends StatelessWidget {
             const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
           ],
         ),
-        backgroundColor: const Color(0xFFF1F1F1),
+        backgroundColor: AutolabCustomer.customerSurfaceColor(context),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-        labelStyle: const TextStyle(
-          color: Color(0xFF181411),
-          fontSize: 16,
+        labelStyle: AutolabCustomer.body.copyWith(
+          color: AutolabCustomer.customerTextColor(context),
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -520,11 +524,11 @@ class _SearchProductTile extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AutolabCustomer.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0x22000000),
+                        color: AutolabCustomer.shadowBlackStrong,
                         blurRadius: 12,
                         offset: Offset(0, 5),
                       ),
@@ -538,9 +542,8 @@ class _SearchProductTile extends StatelessWidget {
           const SizedBox(height: 20),
           ProductPriceText(
             price: product.sellingPrice,
-            style: const TextStyle(
-              color: Color(0xFF181411),
-              fontSize: 20,
+            style: AutolabCustomer.h3.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -549,9 +552,8 @@ class _SearchProductTile extends StatelessWidget {
             product.name,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF4F463F),
-              fontSize: 17,
+            style: AutolabCustomer.bodyLarge.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
               height: 1.2,
               fontWeight: FontWeight.w600,
             ),
@@ -576,7 +578,7 @@ class _StockBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF6EE),
+        color: AutolabCustomer.successSoftBackground,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Padding(
@@ -585,9 +587,8 @@ class _StockBadge extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFF1A8F52),
-            fontSize: 13,
+          style: AutolabCustomer.caption.copyWith(
+            color: AutolabCustomer.successText,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -601,13 +602,18 @@ class _EmptyProductsMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final l10n = AppLocalizations.of(context)!;
+
+    return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Text(
-          'No encontramos productos o servicios con esos filtros.',
+          l10n.workshopSearchProductsEmpty,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF6B5F57), fontSize: 15, height: 1.4),
+          style: AutolabCustomer.body.copyWith(
+            color: AutolabCustomer.customerSecondaryTextColor(context),
+            height: 1.4,
+          ),
         ),
       ),
     );

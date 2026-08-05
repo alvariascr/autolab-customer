@@ -2218,6 +2218,30 @@ abstract class AppLocalizations {
   /// **'No encontramos productos que coincidan con tu búsqueda.'**
   String get workshopProfileProductsNoResults;
 
+  /// No description provided for @workshopSearchProductsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar producto o servicio'**
+  String get workshopSearchProductsHint;
+
+  /// No description provided for @workshopSearchProductsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos productos o servicios con esos filtros.'**
+  String get workshopSearchProductsEmpty;
+
+  /// No description provided for @workshopSearchProductsClearTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar búsqueda'**
+  String get workshopSearchProductsClearTooltip;
+
+  /// No description provided for @workshopSearchProductsViewWorkshopTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver taller'**
+  String get workshopSearchProductsViewWorkshopTooltip;
+
   /// No description provided for @workshopProfileBusinessHoursTitle.
   ///
   /// In es, this message translates to:

@@ -248,16 +248,17 @@ class _SearchOverlayField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final fieldColor = AutolabCustomer.customerInvertedSurfaceColor(context);
-    final iconColor = AutolabCustomer.customerOnInvertedSurfaceColor(context);
-    final hintColor = AutolabCustomer.customerHintColor(context);
+    final fieldColor = AutolabCustomer.customerSoftSurfaceColor(context);
+    final iconColor = AutolabCustomer.customerTextColor(context);
+    final hintColor = AutolabCustomer.customerDisabledTextColor(context);
 
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, child) {
         return Material(
           color: fieldColor,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+          clipBehavior: Clip.antiAlias,
           elevation: 0,
           child: SizedBox(
             height: AutolabCustomer.spacingXxl,
@@ -291,7 +292,22 @@ class _SearchOverlayField extends StatelessWidget {
                         onPressed: onClear,
                         icon: Icon(Icons.cancel_rounded, color: hintColor),
                       ),
-                border: InputBorder.none,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                  borderSide: BorderSide(
+                    color: AutolabCustomer.customerBorderColor(context),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                  borderSide: BorderSide(
+                    color: AutolabCustomer.customerBorderColor(context),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                  borderSide: const BorderSide(color: AutolabCustomer.primary),
+                ),
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: AutolabCustomer.spacingMd - 1,
                 ),

@@ -66,7 +66,7 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F7F7),
+        backgroundColor: AutolabCustomer.customerSurfaceColor(context),
         body: SafeArea(
           child: Column(
             children: [
@@ -85,13 +85,18 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFECEA),
+                        color: _mockPaymentSoftBackground(
+                          context,
+                          lightColor: AutolabCustomer.errorSoftBackground,
+                          accentColor: primary,
+                        ),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(color: primary),
                       ),
                       child: Text(
                         l10n.appointmentMockPaymentBadge,
                         style: TextStyle(
+                          fontFamily: AutolabCustomer.primaryFont,
                           color: primary,
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
@@ -111,11 +116,15 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: AutolabCustomer.border),
+                          color: AutolabCustomer.customerElevatedSurfaceColor(
+                            context,
+                          ),
+                          border: Border.all(
+                            color: AutolabCustomer.customerBorderColor(context),
+                          ),
                           boxShadow: const [
                             BoxShadow(
-                              color: Color(0x18000000),
+                              color: AutolabCustomer.shadowBlackMedium,
                               blurRadius: 18,
                               offset: Offset(0, 8),
                             ),
@@ -133,7 +142,7 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                               ),
                               child: const Icon(
                                 Icons.credit_card_outlined,
-                                color: Colors.white,
+                                color: AutolabCustomer.white,
                                 size: 34,
                               ),
                             ),
@@ -142,10 +151,10 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                               _isApproved
                                   ? l10n.appointmentMockPaymentApprovedTitle
                                   : l10n.appointmentMockPaymentTitle,
-                              style: const TextStyle(
-                                color: AutolabCustomer.secondary,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
+                              style: AutolabCustomer.h1.copyWith(
+                                color: AutolabCustomer.customerTextColor(
+                                  context,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -153,23 +162,34 @@ class _MockCardPaymentPageState extends State<MockCardPaymentPage> {
                               _isApproved
                                   ? l10n.appointmentMockPaymentApprovedSubtitle
                                   : l10n.appointmentMockPaymentSubtitle,
-                              style: const TextStyle(
-                                color: AutolabCustomer.gray,
+                              style: TextStyle(
+                                fontFamily: AutolabCustomer.primaryFont,
+                                color:
+                                    AutolabCustomer.customerSecondaryTextColor(
+                                      context,
+                                    ),
                                 fontSize: 16,
                                 height: 1.35,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const Divider(
+                            Divider(
                               height: 34,
-                              color: AutolabCustomer.border,
+                              color: AutolabCustomer.customerDividerColor(
+                                context,
+                              ),
                             ),
                             if (_isApproved)
                               _MockPaymentStatusCard(
                                 icon: Icons.check_circle_outline,
                                 message: l10n.appointmentCreatedSuccess,
-                                color: const Color(0xFF167A3A),
-                                background: const Color(0xFFEAF7EF),
+                                color: AutolabCustomer.successText,
+                                background: _mockPaymentSoftBackground(
+                                  context,
+                                  lightColor:
+                                      AutolabCustomer.successSoftBackground,
+                                  accentColor: AutolabCustomer.successText,
+                                ),
                               )
                             else
                               _MockPaymentTimer(
@@ -282,8 +302,9 @@ class _MockPaymentStatusCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: AutolabCustomer.secondary,
+              style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                color: AutolabCustomer.customerTextColor(context),
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
               ),
@@ -305,14 +326,21 @@ class _MockPaymentTimer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final color = isExpired
-        ? const Color(0xFFB3261E)
+        ? AutolabCustomer.errorDarkText
         : Theme.of(context).colorScheme.primary;
+    final background = _mockPaymentSoftBackground(
+      context,
+      lightColor: isExpired
+          ? AutolabCustomer.errorSoftBackground
+          : AutolabCustomer.warningSoftBackground,
+      accentColor: color,
+    );
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isExpired ? const Color(0xFFFFECEA) : const Color(0xFFFFF5DF),
+        color: background,
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
@@ -322,8 +350,9 @@ class _MockPaymentTimer extends StatelessWidget {
           Expanded(
             child: Text(
               l10n.appointmentMockPaymentTimeRemaining,
-              style: const TextStyle(
-                color: AutolabCustomer.secondary,
+              style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                color: AutolabCustomer.customerTextColor(context),
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -332,6 +361,7 @@ class _MockPaymentTimer extends StatelessWidget {
           Text(
             _formatDuration(remaining),
             style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
               color: color,
               fontSize: 22,
               fontWeight: FontWeight.w900,
@@ -360,21 +390,29 @@ class _MockPaymentNotice extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF5DF),
+        color: _mockPaymentSoftBackground(
+          context,
+          lightColor: AutolabCustomer.warningSoftBackground,
+          accentColor: AutolabCustomer.warningText,
+        ),
         border: Border.all(
-          color: const Color(0xFFB26A00).withValues(alpha: 0.35),
+          color: AutolabCustomer.warningText.withValues(alpha: 0.35),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFFB26A00)),
+          const Icon(
+            Icons.info_outline_rounded,
+            color: AutolabCustomer.warningText,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: AutolabCustomer.secondary,
+              style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                color: AutolabCustomer.customerTextColor(context),
                 fontSize: 14,
                 height: 1.35,
                 fontWeight: FontWeight.w700,
@@ -409,8 +447,9 @@ class _MockPaymentDetailRow extends StatelessWidget {
             width: 108,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AutolabCustomer.gray,
+              style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
+                color: AutolabCustomer.customerSecondaryTextColor(context),
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -420,9 +459,10 @@ class _MockPaymentDetailRow extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
+                fontFamily: AutolabCustomer.primaryFont,
                 color: emphasize
                     ? Theme.of(context).colorScheme.primary
-                    : AutolabCustomer.secondary,
+                    : AutolabCustomer.customerTextColor(context),
                 fontSize: emphasize ? 22 : 15,
                 fontWeight: FontWeight.w900,
               ),
@@ -432,4 +472,16 @@ class _MockPaymentDetailRow extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _mockPaymentSoftBackground(
+  BuildContext context, {
+  required Color lightColor,
+  required Color accentColor,
+}) {
+  if (!AutolabCustomer.isDark(context)) {
+    return lightColor;
+  }
+
+  return accentColor.withValues(alpha: 0.16);
 }

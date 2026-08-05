@@ -49,7 +49,7 @@ class DeliveryLocationCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 4),
       child: Material(
-        color: Colors.transparent,
+        color: AutolabCustomer.transparent,
         child: InkWell(
           onTap: isBusy ? null : onTap,
           borderRadius: BorderRadius.circular(14),

@@ -529,6 +529,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       text: TextSpan(
         text: text,
         style: TextStyle(
+          fontFamily: AutolabCustomer.primaryFont,
           color: color,
           fontSize: fontSize,
           fontWeight: FontWeight.w900,
@@ -798,7 +799,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
     final resultsCount = productResults.length + workshopResults.length;
 
     return Material(
-      color: Colors.transparent,
+      color: AutolabCustomer.transparent,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
@@ -809,7 +810,7 @@ class _SelectedWorkshopSheet extends StatelessWidget {
           expanded ? AutolabCustomer.spacingMd : AutolabCustomer.spacingSmd,
         ),
         decoration: BoxDecoration(
-          color: AutolabCustomer.customerElevatedSurfaceColor(
+          color: AutolabCustomer.customerSurfaceColor(
             context,
           ).withValues(alpha: 0.98),
           borderRadius: const BorderRadius.vertical(
@@ -1124,8 +1125,10 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => onOpened(workshop),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF181411),
-                    foregroundColor: Colors.white,
+                    backgroundColor:
+                        AutolabCustomer.customerInvertedSurfaceColor(context),
+                    foregroundColor:
+                        AutolabCustomer.customerOnInvertedSurfaceColor(context),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -1133,7 +1136,9 @@ class _SelectedWorkshopSummary extends StatelessWidget {
                   icon: const Icon(Icons.storefront_outlined, size: 18),
                   label: Text(
                     l10n.mapSheetOpenWorkshopAction,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: AutolabCustomer.body.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),

@@ -13,7 +13,13 @@ void main() {
         AutolabCustomer.primaryFont,
       );
       expect(theme.colorScheme.primary, AutolabCustomer.primary);
-      expect(theme.scaffoldBackgroundColor, AutolabCustomer.background);
+      expect(
+        theme.scaffoldBackgroundColor,
+        AutolabCustomer.customerLightBackground,
+      );
+      expect(theme.colorScheme.surface, AutolabCustomer.customerLightSurface);
+      expect(theme.colorScheme.onSurface, AutolabCustomer.customerLightText);
+      expect(theme.colorScheme.outline, AutolabCustomer.customerLightDivider);
       expect(theme.textTheme.headlineMedium?.fontSize, 24);
     });
 
@@ -34,6 +40,34 @@ void main() {
       expect(colors?.appointmentConfirmed, AutolabCustomer.success);
       expect(colors?.appointmentCompleted, AutolabCustomer.white);
       expect(colors?.info, AutolabCustomer.info);
+    });
+
+    testWidgets('expone fallback contextual para mapas sin coordenadas', (
+      tester,
+    ) async {
+      final colors = <Color>[];
+
+      for (final theme in [
+        AutolabCustomer.lightTheme,
+        AutolabCustomer.darkTheme,
+      ]) {
+        await tester.pumpWidget(
+          Theme(
+            data: theme,
+            child: Builder(
+              builder: (context) {
+                colors.add(AutolabCustomer.customerMapFallbackColor(context));
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        );
+      }
+
+      expect(colors, [
+        AutolabCustomer.customerLightMapFallback,
+        AutolabCustomer.customerDarkSurface,
+      ]);
     });
   });
 }
