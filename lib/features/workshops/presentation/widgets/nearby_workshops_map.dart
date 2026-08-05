@@ -23,6 +23,7 @@ class NearbyWorkshopsMap extends StatefulWidget {
     this.productResults = const [],
     this.isLoadingProductResults = false,
     this.visibleRegionProvider,
+    this.onCurrentLocationPressed,
   });
 
   final List<Workshop> workshops;
@@ -32,6 +33,7 @@ class NearbyWorkshopsMap extends StatefulWidget {
   final List<WorkshopProductSearchResult> productResults;
   final bool isLoadingProductResults;
   final Future<LatLngBounds> Function()? visibleRegionProvider;
+  final Future<void> Function()? onCurrentLocationPressed;
 
   @override
   State<NearbyWorkshopsMap> createState() => _NearbyWorkshopsMapState();
@@ -126,6 +128,7 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   bool _expandedSheet = false;
   bool _isMapLoading = true;
   bool _hasMapLoadTimedOut = false;
+  bool _shouldCenterAfterLocationRefresh = false;
   int _visibleRegionSyncToken = 0;
   Timer? _mapLoadingTimer;
 
@@ -152,6 +155,19 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
       _syncSelectedWorkshop();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _syncVisibleWorkshopsWithMap();
+      });
+    }
+
+    if (_shouldCenterAfterLocationRefresh &&
+        oldWidget.currentLocation != widget.currentLocation &&
+        widget.currentLocation != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        _shouldCenterAfterLocationRefresh = false;
+        _animateToCurrentLocation();
       });
     }
   }
@@ -241,6 +257,16 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
   void _zoomOut() => _updateZoom(_currentZoom - _zoomStep);
 
   void _centerOnCurrentLocation() {
+    _shouldCenterAfterLocationRefresh = true;
+    final refreshCurrentLocation = widget.onCurrentLocationPressed;
+    if (refreshCurrentLocation != null) {
+      unawaited(refreshCurrentLocation());
+    }
+
+    _animateToCurrentLocation();
+  }
+
+  void _animateToCurrentLocation() {
     final location = widget.currentLocation;
     if (location == null) {
       return;
@@ -248,11 +274,13 @@ class _NearbyWorkshopsMapState extends State<NearbyWorkshopsMap> {
 
     final zoom = _currentZoom < _initialZoom ? _initialZoom : _currentZoom;
     _currentZoom = zoom;
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(location.latitude, location.longitude),
-          zoom: zoom,
+    unawaited(
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(location.latitude, location.longitude),
+            zoom: zoom,
+          ),
         ),
       ),
     );

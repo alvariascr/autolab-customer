@@ -149,6 +149,8 @@ void main() {
     testWidgets('muestra boton interactivo para centrar ubicacion actual', (
       tester,
     ) async {
+      var refreshCalls = 0;
+
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: const [
@@ -160,14 +162,17 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: SizedBox(
-              height: 320,
-              child: const NearbyWorkshopsMap(
-                workshops: [],
-                currentLocation: CurrentLocation(
+              height: 640,
+              child: NearbyWorkshopsMap(
+                workshops: const [],
+                currentLocation: const CurrentLocation(
                   latitude: 9.9281,
                   longitude: -84.0907,
                 ),
                 emptyMessage: 'No encontramos talleres cercanos.',
+                onCurrentLocationPressed: () async {
+                  refreshCalls += 1;
+                },
               ),
             ),
           ),
@@ -190,6 +195,11 @@ void main() {
             .onPressed,
         isNotNull,
       );
+
+      await tester.tap(locationButton);
+      await tester.pump();
+
+      expect(refreshCalls, 1);
     });
 
     testWidgets('ignora regiones visibles obsoletas del mapa', (tester) async {

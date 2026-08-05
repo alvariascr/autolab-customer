@@ -131,6 +131,8 @@ class _MapPageViewState extends State<_MapPageView> {
                       child: _MapBody(
                         state: mapState,
                         emptyMessage: emptyMessage,
+                        onCurrentLocationPressed: () =>
+                            context.read<LocationCubit>().refresh(),
                       ),
                     ),
                     Positioned(
@@ -175,12 +177,17 @@ class _MapPageViewState extends State<_MapPageView> {
 }
 
 class _MapBody extends StatelessWidget {
-  const _MapBody({required this.state, required this.emptyMessage});
+  const _MapBody({
+    required this.state,
+    required this.emptyMessage,
+    required this.onCurrentLocationPressed,
+  });
 
   static const _emptyStateResolver = WorkshopEmptyStateResolver();
 
   final MapState state;
   final String emptyMessage;
+  final Future<void> Function() onCurrentLocationPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +225,7 @@ class _MapBody extends StatelessWidget {
           query: query,
           productResults: productResults,
           isLoadingProductResults: isLoadingProductResults,
+          onCurrentLocationPressed: onCurrentLocationPressed,
         ),
     };
   }
