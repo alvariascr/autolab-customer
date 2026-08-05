@@ -1,6 +1,5 @@
 import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
@@ -129,7 +128,6 @@ class RegisterCardState extends State<RegisterCard> {
     final titleSize = isCompactHeight ? 24.0 : 28.0;
     final subtitleSize = isCompactHeight ? 15.0 : 17.0;
     final buttonHeight = isCompactHeight ? 50.0 : 54.0;
-    final socialButtonSize = isCompactHeight ? 48.0 : 58.0;
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return AuthCardShell(
@@ -390,71 +388,10 @@ class RegisterCardState extends State<RegisterCard> {
                     ],
                   ),
                 ),
-                SizedBox(height: isCompactHeight ? 10 : 14),
-                Center(
-                  child: Text(
-                    l10n.authLoginSocialPrompt,
-                    style: AutolabCustomer.bodyLarge.copyWith(
-                      color: AutolabCustomer.authTextColor(context),
-                      fontSize: isCompactHeight ? 14 : 16,
-                    ),
-                  ),
-                ),
-                SizedBox(height: isCompactHeight ? 12 : 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _AuthSocialButton(
-                      icon: FontAwesomeIcons.google,
-                      color: AutolabCustomer.primary,
-                      size: socialButtonSize,
-                    ),
-                    _AuthSocialButton(
-                      icon: FontAwesomeIcons.facebookF,
-                      color: AutolabCustomer.facebook,
-                      size: socialButtonSize,
-                    ),
-                    _AuthSocialButton(
-                      icon: FontAwesomeIcons.apple,
-                      color: AutolabCustomer.white,
-                      size: socialButtonSize,
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _AuthSocialButton extends StatelessWidget {
-  const _AuthSocialButton({
-    required this.icon,
-    required this.color,
-    required this.size,
-  });
-
-  final IconData icon;
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AutolabCustomer.authOutlineColor(context),
-          width: 1.5,
-        ),
-      ),
-      child: Center(
-        child: FaIcon(icon, color: color, size: size * 0.48),
       ),
     );
   }
