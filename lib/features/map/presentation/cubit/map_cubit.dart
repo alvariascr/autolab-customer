@@ -11,7 +11,7 @@ import '../../../products/domain/services/workshop_product_search_grouper.dart';
 import '../../../workshops/application/workshop_discovery_query_store.dart';
 import '../../../workshops/domain/entities/workshop.dart';
 import '../../../workshops/domain/repositories/workshop_repository.dart';
-import '../../../workshops/domain/services/workshop_proximity_filter.dart';
+import '../../../workshops/domain/services/workshop_distance_calculator.dart';
 import '../../../workshops/domain/services/workshop_search_location_resolver.dart';
 import '../../../workshops/domain/services/workshop_text_search_filter.dart';
 import 'map_state.dart';
@@ -35,7 +35,6 @@ class MapCubit extends Cubit<MapState> {
   final WorkshopDiscoveryQueryStore? _queryStore;
   final Duration _queryDebounceDuration;
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
-  static const _proximityFilter = WorkshopProximityFilter();
   static const _textSearchFilter = WorkshopTextSearchFilter();
   static const _productSearchFilter = ProductSearchFilter();
   static const _productSearchGrouper = WorkshopProductSearchGrouper();
@@ -174,7 +173,7 @@ class MapCubit extends Cubit<MapState> {
   ) {
     final query = _queryStore?.query ?? '';
     final searchLocation = _searchLocationResolver.resolve(userLocation);
-    final nearbyWorkshops = _proximityFilter.filterNearby(
+    final explorableWorkshops = _explorableWorkshops(
       workshops: workshops,
       currentLocation: searchLocation,
     );
@@ -184,8 +183,11 @@ class MapCubit extends Cubit<MapState> {
     }
 
     final workshopResults = trimmedQuery.isEmpty
-        ? nearbyWorkshops
-        : _textSearchFilter.filter(workshops: nearbyWorkshops, query: query);
+        ? explorableWorkshops
+        : _textSearchFilter.filter(
+            workshops: explorableWorkshops,
+            query: query,
+          );
     final productResults = trimmedQuery.isEmpty
         ? const <WorkshopProductSearchResult>[]
         : _productSearchGrouper.group(
@@ -193,7 +195,7 @@ class MapCubit extends Cubit<MapState> {
               products: _allProducts,
               query: query,
             ),
-            workshops: nearbyWorkshops,
+            workshops: explorableWorkshops,
           );
     final visibleWorkshops = trimmedQuery.isEmpty
         ? workshopResults
@@ -216,6 +218,34 @@ class MapCubit extends Cubit<MapState> {
     }
 
     return visibleWorkshops;
+  }
+
+  List<Workshop> _explorableWorkshops({
+    required List<Workshop> workshops,
+    required CurrentLocation? currentLocation,
+  }) {
+    final validWorkshops = workshops
+        .where((workshop) => workshop.hasValidCoordinates)
+        .toList();
+
+    if (currentLocation == null || !currentLocation.hasValidCoordinates) {
+      return List<Workshop>.from(validWorkshops, growable: false);
+    }
+
+    validWorkshops.sort((a, b) {
+      final aDistance = WorkshopDistanceCalculator.distanceInKm(
+        currentLocation: currentLocation,
+        workshop: a,
+      );
+      final bDistance = WorkshopDistanceCalculator.distanceInKm(
+        currentLocation: currentLocation,
+        workshop: b,
+      );
+
+      return aDistance.compareTo(bDistance);
+    });
+
+    return List<Workshop>.from(validWorkshops, growable: false);
   }
 
   List<Workshop> _mergeWorkshopResults(

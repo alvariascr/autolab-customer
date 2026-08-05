@@ -144,6 +144,52 @@ void main() {
       expect(find.byKey(const ValueKey('map-zoom-out-button')), findsOneWidget);
     });
 
+    testWidgets('muestra boton interactivo para centrar ubicacion actual', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              height: 320,
+              child: const NearbyWorkshopsMap(
+                workshops: [],
+                currentLocation: CurrentLocation(
+                  latitude: 9.9281,
+                  longitude: -84.0907,
+                ),
+                emptyMessage: 'No encontramos talleres cercanos.',
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final locationButton = find.byKey(
+        const ValueKey('map-current-location-button'),
+      );
+
+      expect(locationButton, findsOneWidget);
+      expect(
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: locationButton,
+                matching: find.byType(IconButton),
+              ),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    });
+
     testWidgets('abre el perfil del taller desde resultados de busqueda', (
       tester,
     ) async {

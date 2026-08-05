@@ -474,16 +474,9 @@
   "workshopEmptyLocationErrorFallback": "No pudimos obtener tu ubicación para buscar talleres cercanos.",
   "workshopEmptyNoNearby": "No encontramos talleres cercanos a tu ubicación actual.",
   "mapPageTitle": "Mapa",
-  "mapTopPillExplore": "Explorar mapa",
+  "mapTopPillExplore": "Explora talleres",
   "mapTopPillLoadingWorkshops": "Cargando talleres",
   "mapTopPillNoWorkshops": "Sin talleres",
-  "mapTopPillOneWorkshopNearby": "1 taller cercano",
-  "mapTopPillWorkshopsNearby": "{count} talleres cercanos",
-  "@mapTopPillWorkshopsNearby": {
-    "placeholders": {
-      "count": {}
-    }
-  },
   "mapSearchHint": "Buscar en Autolab",
   "mapSearchFiltersTooltip": "Filtros",
   "mapSearchClearTooltip": "Limpiar",
@@ -491,7 +484,7 @@
   "mapFilterService": "Servicio",
   "mapFilterTopRated": "Mejor calificado",
   "mapLoadingTitle": "Cargando mapa",
-  "mapLoadingMessage": "Estamos preparando el mapa y los talleres cercanos para ti.",
+  "mapLoadingMessage": "Estamos preparando el mapa y los talleres disponibles para ti.",
   "mapLoadingTimeoutTitle": "El mapa está tardando en responder",
   "mapLoadingTimeoutMessage": "Los talleres ya están disponibles. Si el mapa no aparece, revisa la conexión, permisos de ubicación o la configuración de Google Maps del dispositivo.",
   "mapAttributionOpenStreetMap": "OpenStreetMap contributors",
@@ -519,7 +512,7 @@
   "mapSheetLabelWorkshop": "Taller",
   "mapSheetLabelCoverage": "Alcance",
   "mapSheetFallbackDescription": "Este taller está listo para atender solicitudes cerca de tu ubicación.",
-  "mapSheetNearbyWorkshopsTitle": "Talleres cerca de ti",
+  "mapSheetNearbyWorkshopsTitle": "Talleres en esta zona",
   "mapSheetOneResult": "1 resultado",
   "mapSheetResults": "{count} resultados",
   "@mapSheetResults": {

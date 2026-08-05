@@ -86,7 +86,7 @@ void main() {
         expect(cubit.state, isA<MapLoaded>());
         expect(
           (cubit.state as MapLoaded).workshops.map((workshop) => workshop.name),
-          ['Autolab Escazu', 'Frenos Heredia'],
+          ['Autolab Escazu', 'Frenos Heredia', 'Llantas Cartago'],
         );
 
         queryStore.setQuery('frenos');
@@ -110,8 +110,21 @@ void main() {
       expect(cubit.state, isA<MapLoaded>());
       final loaded = cubit.state as MapLoaded;
       expect(loaded.currentLocation?.latitude, 9.8644);
-      expect(loaded.workshops.map((workshop) => workshop.id), ['3']);
+      expect(loaded.workshops.map((workshop) => workshop.id), ['3', '1', '2']);
     });
+
+    test(
+      'muestra talleres fuera de cobertura para exploracion del mapa',
+      () async {
+        await cubit.loadWorkshops(_currentLocation);
+
+        expect(cubit.state, isA<MapLoaded>());
+        expect(
+          (cubit.state as MapLoaded).workshops.map((workshop) => workshop.id),
+          ['1', '2', '3'],
+        );
+      },
+    );
 
     test(
       'ignora respuestas de talleres cuando el cubit ya fue cerrado',
@@ -164,7 +177,7 @@ void main() {
         (debouncedCubit.state as MapLoaded).workshops.map(
           (workshop) => workshop.name,
         ),
-        ['Autolab Escazu', 'Frenos Heredia'],
+        ['Autolab Escazu', 'Frenos Heredia', 'Llantas Cartago'],
       );
 
       await Future<void>.delayed(const Duration(milliseconds: 40));
