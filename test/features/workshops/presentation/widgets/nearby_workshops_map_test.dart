@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/workshop.dart';
 import 'package:autolab_customer/features/workshops/presentation/widgets/nearby_workshops_map.dart';
@@ -142,6 +144,216 @@ void main() {
 
       expect(find.byKey(const ValueKey('map-zoom-in-button')), findsOneWidget);
       expect(find.byKey(const ValueKey('map-zoom-out-button')), findsOneWidget);
+    });
+
+    testWidgets('muestra boton interactivo para centrar ubicacion actual', (
+      tester,
+    ) async {
+      var refreshCalls = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              height: 640,
+              child: NearbyWorkshopsMap(
+                workshops: const [],
+                currentLocation: const CurrentLocation(
+                  latitude: 9.9281,
+                  longitude: -84.0907,
+                ),
+                emptyMessage: 'No encontramos talleres cercanos.',
+                onCurrentLocationPressed: () async {
+                  refreshCalls += 1;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final locationButton = find.byKey(
+        const ValueKey('map-current-location-button'),
+      );
+
+      expect(locationButton, findsOneWidget);
+      expect(
+        tester
+            .widget<IconButton>(
+              find.descendant(
+                of: locationButton,
+                matching: find.byType(IconButton),
+              ),
+            )
+            .onPressed,
+        isNotNull,
+      );
+
+      await tester.tap(locationButton);
+      await tester.pump();
+
+      expect(refreshCalls, 1);
+    });
+
+    testWidgets(
+      'cambia la seleccion al primer taller visible cuando el seleccionado sale del mapa',
+      (tester) async {
+        const workshops = [
+          Workshop(
+            id: 'oeste',
+            name: 'Taller Oeste',
+            description: '',
+            locationAddress: 'Oeste',
+            avatarUrl: '',
+            coverUrl: '',
+            latitude: 10,
+            longitude: -85,
+            deliveryRadiusKm: 8,
+          ),
+          Workshop(
+            id: 'este',
+            name: 'Taller Este',
+            description: '',
+            locationAddress: 'Este',
+            avatarUrl: '',
+            coverUrl: '',
+            latitude: 10,
+            longitude: -84,
+            deliveryRadiusKm: 8,
+          ),
+        ];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                height: 640,
+                child: NearbyWorkshopsMap(
+                  workshops: workshops,
+                  currentLocation: const CurrentLocation(
+                    latitude: 10,
+                    longitude: -84,
+                  ),
+                  emptyMessage: 'No encontramos talleres cercanos.',
+                  visibleRegionProvider: () async => LatLngBounds(
+                    southwest: const LatLng(9.5, -85.5),
+                    northeast: const LatLng(10.5, -84.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Taller Este'), findsWidgets);
+
+        final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+        googleMap.onCameraIdle?.call();
+        await tester.pump();
+
+        expect(find.text('Taller Oeste'), findsWidgets);
+        expect(find.text('Taller Este'), findsNothing);
+      },
+    );
+
+    testWidgets('ignora regiones visibles obsoletas del mapa', (tester) async {
+      const workshops = [
+        Workshop(
+          id: 'oeste',
+          name: 'Taller Oeste',
+          description: '',
+          locationAddress: 'Oeste',
+          avatarUrl: '',
+          coverUrl: '',
+          latitude: 10,
+          longitude: -85,
+          deliveryRadiusKm: 8,
+        ),
+        Workshop(
+          id: 'este',
+          name: 'Taller Este',
+          description: '',
+          locationAddress: 'Este',
+          avatarUrl: '',
+          coverUrl: '',
+          latitude: 10,
+          longitude: -84,
+          deliveryRadiusKm: 8,
+        ),
+      ];
+      final firstRegion = Completer<LatLngBounds>();
+      final secondRegion = Completer<LatLngBounds>();
+      var requestCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              height: 640,
+              child: NearbyWorkshopsMap(
+                workshops: workshops,
+                currentLocation: const CurrentLocation(
+                  latitude: 10,
+                  longitude: -84.5,
+                ),
+                emptyMessage: 'No encontramos talleres cercanos.',
+                visibleRegionProvider: () {
+                  requestCount += 1;
+                  return requestCount == 1
+                      ? firstRegion.future
+                      : secondRegion.future;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.onCameraIdle?.call();
+      googleMap.onCameraIdle?.call();
+
+      secondRegion.complete(
+        LatLngBounds(
+          southwest: const LatLng(9.5, -84.5),
+          northeast: const LatLng(10.5, -83.5),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Taller Este'), findsWidgets);
+
+      firstRegion.complete(
+        LatLngBounds(
+          southwest: const LatLng(9.5, -85.5),
+          northeast: const LatLng(10.5, -84.5),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Taller Este'), findsWidgets);
+      expect(find.text('Taller Oeste'), findsNothing);
     });
 
     testWidgets('abre el perfil del taller desde resultados de busqueda', (

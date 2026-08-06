@@ -125,17 +125,14 @@ class _MapPageViewState extends State<_MapPageView> {
                   ),
                 };
 
-                final workshopsCount = switch (mapState) {
-                  MapLoaded(:final workshops) => workshops.length,
-                  _ => 0,
-                };
-
                 return Stack(
                   children: [
                     Positioned.fill(
                       child: _MapBody(
                         state: mapState,
                         emptyMessage: emptyMessage,
+                        onCurrentLocationPressed: () =>
+                            context.read<LocationCubit>().refresh(),
                       ),
                     ),
                     Positioned(
@@ -145,7 +142,7 @@ class _MapPageViewState extends State<_MapPageView> {
                       child: SafeArea(
                         bottom: false,
                         child: _MapDiscoveryOverlay(
-                          countLabel: _labelFor(workshopsCount, mapState, l10n),
+                          countLabel: _labelFor(mapState, l10n),
                           controller: _searchController,
                           onChanged: _updateSearchQuery,
                           onClear: _clearSearchQuery,
@@ -168,28 +165,29 @@ class _MapPageViewState extends State<_MapPageView> {
     );
   }
 
-  String _labelFor(
-    int workshopsCount,
-    MapState mapState,
-    AppLocalizations l10n,
-  ) {
+  String _labelFor(MapState mapState, AppLocalizations l10n) {
     return switch (mapState) {
       MapLoading() || MapInitial() => l10n.mapTopPillLoadingWorkshops,
       MapError() => l10n.mapTopPillNoWorkshops,
-      MapLoaded() when workshopsCount == 0 => l10n.mapTopPillNoWorkshops,
-      MapLoaded() when workshopsCount == 1 => l10n.mapTopPillOneWorkshopNearby,
-      MapLoaded() => l10n.mapTopPillWorkshopsNearby(workshopsCount),
+      MapLoaded(:final workshops) when workshops.isEmpty =>
+        l10n.mapTopPillNoWorkshops,
+      MapLoaded() => l10n.mapTopPillExplore,
     };
   }
 }
 
 class _MapBody extends StatelessWidget {
-  const _MapBody({required this.state, required this.emptyMessage});
+  const _MapBody({
+    required this.state,
+    required this.emptyMessage,
+    required this.onCurrentLocationPressed,
+  });
 
   static const _emptyStateResolver = WorkshopEmptyStateResolver();
 
   final MapState state;
   final String emptyMessage;
+  final Future<void> Function() onCurrentLocationPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +225,7 @@ class _MapBody extends StatelessWidget {
           query: query,
           productResults: productResults,
           isLoadingProductResults: isLoadingProductResults,
+          onCurrentLocationPressed: onCurrentLocationPressed,
         ),
     };
   }

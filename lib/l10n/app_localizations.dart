@@ -2677,7 +2677,7 @@ abstract class AppLocalizations {
   /// No description provided for @mapTopPillExplore.
   ///
   /// In es, this message translates to:
-  /// **'Explorar mapa'**
+  /// **'Explora talleres'**
   String get mapTopPillExplore;
 
   /// No description provided for @mapTopPillLoadingWorkshops.
@@ -2691,18 +2691,6 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin talleres'**
   String get mapTopPillNoWorkshops;
-
-  /// No description provided for @mapTopPillOneWorkshopNearby.
-  ///
-  /// In es, this message translates to:
-  /// **'1 taller cercano'**
-  String get mapTopPillOneWorkshopNearby;
-
-  /// No description provided for @mapTopPillWorkshopsNearby.
-  ///
-  /// In es, this message translates to:
-  /// **'{count} talleres cercanos'**
-  String mapTopPillWorkshopsNearby(Object count);
 
   /// No description provided for @mapSearchHint.
   ///
@@ -2749,7 +2737,7 @@ abstract class AppLocalizations {
   /// No description provided for @mapLoadingMessage.
   ///
   /// In es, this message translates to:
-  /// **'Estamos preparando el mapa y los talleres cercanos para ti.'**
+  /// **'Estamos preparando el mapa y los talleres disponibles para ti.'**
   String get mapLoadingMessage;
 
   /// No description provided for @mapLoadingTimeoutTitle.
@@ -2857,7 +2845,7 @@ abstract class AppLocalizations {
   /// No description provided for @mapSheetNearbyWorkshopsTitle.
   ///
   /// In es, this message translates to:
-  /// **'Talleres cerca de ti'**
+  /// **'Talleres en esta zona'**
   String get mapSheetNearbyWorkshopsTitle;
 
   /// No description provided for @mapSheetOneResult.
