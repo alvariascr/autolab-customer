@@ -27,21 +27,6 @@ begin
     v_name := nullif(split_part(v_email, '@', 1), '');
   end if;
 
-  update public.user_profiles
-  set
-    name = coalesce(v_name, 'Cliente Autolab'),
-    role = 'customer'::public.app_role,
-    email = v_email,
-    phone = v_phone,
-    workshop_id = null,
-    force_password_change = false,
-    updated_at = now()
-  where user_id = new.id;
-
-  if found then
-    return new;
-  end if;
-
   insert into public.user_profiles (
     user_id,
     name,
@@ -61,7 +46,16 @@ begin
     null,
     false,
     now()
-  );
+  )
+  on conflict (user_id) do update
+  set
+    name = excluded.name,
+    role = excluded.role,
+    email = excluded.email,
+    phone = excluded.phone,
+    workshop_id = excluded.workshop_id,
+    force_password_change = excluded.force_password_change,
+    updated_at = excluded.updated_at;
 
   return new;
 end;
