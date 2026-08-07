@@ -234,7 +234,7 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  Future<void> deleteDeliveryAddress(String addressId) async {
+  Future<bool> deleteDeliveryAddress(String addressId) async {
     try {
       await _deleteDeliveryAddress(addressId);
 
@@ -263,8 +263,10 @@ class CartCubit extends Cubit<CartState> {
           nextSelectedAddress,
         ),
       );
+      return true;
     } catch (error) {
       emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
+      return false;
     }
   }
 

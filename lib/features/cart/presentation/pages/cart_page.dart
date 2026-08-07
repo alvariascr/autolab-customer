@@ -809,7 +809,16 @@ Future<void> _confirmDeleteDeliveryAddress(
     return;
   }
 
-  await context.read<CartCubit>().deleteDeliveryAddress(address.id);
+  final messenger = ScaffoldMessenger.of(context);
+  final wasDeleted = await context.read<CartCubit>().deleteDeliveryAddress(
+    address.id,
+  );
+
+  if (!wasDeleted && context.mounted) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.cartDeleteAddressError)),
+    );
+  }
 }
 
 class _DeliveryAddressCard extends StatelessWidget {

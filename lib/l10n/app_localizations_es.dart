@@ -2174,6 +2174,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.';
 
   @override
+  String get cartDeleteAddressError =>
+      'No fue posible eliminar la dirección. Intenta nuevamente.';
+
+  @override
   String get cartDeleteAddressTitle => 'Eliminar dirección';
 
   @override
