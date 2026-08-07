@@ -744,6 +744,7 @@
   "cartDistrictLabel": "Distrito",
   "cartExactAddressLabel": "Ubicación exacta",
   "cartPhoneLabel": "Número de celular",
+  "cartPhoneInvalid": "Ingresa un número de teléfono válido.",
   "cartSaveAddressAction": "Guardar dirección",
   "cartSavingAddressAction": "Guardando...",
   "cartSaveAddressError": "No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.",

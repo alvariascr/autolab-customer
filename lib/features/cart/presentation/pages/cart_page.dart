@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
@@ -1045,6 +1046,19 @@ class _DeliveryDetailsSheetState extends State<_DeliveryDetailsSheet> {
                     controller: _phoneController,
                     label: l10n.cartPhoneLabel,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s-]')),
+                    ],
+                    validator: (value) {
+                      final phone = value?.trim() ?? '';
+                      if (phone.isEmpty) {
+                        return l10n.cartFieldRequired;
+                      }
+                      if (!RegExp(r'^[0-9+\s-]{8,15}$').hasMatch(phone)) {
+                        return l10n.cartPhoneInvalid;
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: AutolabCustomer.spacingMd),
                   SizedBox(
@@ -1112,12 +1126,16 @@ class _DeliveryDetailsField extends StatelessWidget {
     required this.label,
     this.maxLines = 1,
     this.keyboardType,
+    this.inputFormatters,
+    this.validator,
   });
 
   final TextEditingController controller;
   final String label;
   final int maxLines;
   final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final FormFieldValidator<String>? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -1129,12 +1147,15 @@ class _DeliveryDetailsField extends StatelessWidget {
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         style: AutolabCustomer.body.copyWith(
           color: AutolabCustomer.customerTextColor(context),
         ),
-        validator: (value) => value == null || value.trim().isEmpty
-            ? l10n.cartFieldRequired
-            : null,
+        validator:
+            validator ??
+            (value) => value == null || value.trim().isEmpty
+                ? l10n.cartFieldRequired
+                : null,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: AutolabCustomer.body.copyWith(

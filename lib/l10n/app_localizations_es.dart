@@ -2164,6 +2164,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartPhoneLabel => 'Número de celular';
 
   @override
+  String get cartPhoneInvalid => 'Ingresa un número de teléfono válido.';
+
+  @override
   String get cartSaveAddressAction => 'Guardar dirección';
 
   @override

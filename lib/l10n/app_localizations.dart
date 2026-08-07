@@ -3910,6 +3910,12 @@ abstract class AppLocalizations {
   /// **'Número de celular'**
   String get cartPhoneLabel;
 
+  /// No description provided for @cartPhoneInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa un número de teléfono válido.'**
+  String get cartPhoneInvalid;
+
   /// No description provided for @cartSaveAddressAction.
   ///
   /// In es, this message translates to:
