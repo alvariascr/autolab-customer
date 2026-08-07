@@ -140,9 +140,7 @@ class _PhysicalProductDetailContentState
                                     return;
                                   }
 
-                                  context.go(
-                                    '/cart?source=buy&openedAt=${DateTime.now().microsecondsSinceEpoch}',
-                                  );
+                                  context.go('/cart');
                                 }
                               : null,
                           icon: const Icon(Icons.shopping_cart_outlined),

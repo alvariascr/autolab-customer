@@ -84,18 +84,12 @@ class AppRouter {
             _ => 0,
           };
 
-          return CustomerNavigationShell(
-            initialIndex: initialIndex,
-            activationKey: state.uri.toString(),
-          );
+          return CustomerNavigationShell(initialIndex: initialIndex);
         },
       ),
       GoRoute(
         path: '/cart',
-        builder: (context, state) => CustomerNavigationShell(
-          initialIndex: 3,
-          activationKey: state.uri.toString(),
-        ),
+        builder: (context, state) => CustomerNavigationShell(initialIndex: 3),
       ),
       GoRoute(
         path: '/appointments',
