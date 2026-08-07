@@ -26,6 +26,7 @@ alter table public.order_delivery_details enable row level security;
 create or replace function public.set_order_delivery_details_updated_at()
 returns trigger
 language plpgsql
+set search_path to 'public'
 as $function$
 begin
   new.updated_at = now();
