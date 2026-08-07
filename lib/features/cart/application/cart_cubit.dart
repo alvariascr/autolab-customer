@@ -34,6 +34,7 @@ class CartCubit extends Cubit<CartState> {
   final DeleteDeliveryAddress _deleteDeliveryAddress;
   final CreateCartOrder _createCartOrder;
   var _sessionVersion = 0;
+  var _cartMutationVersion = 0;
 
   static const double taxRate = 0.13;
   static const String _storageKey = 'customer_cart';
@@ -95,6 +96,7 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> clearSessionData() async {
     _sessionVersion++;
+    _cartMutationVersion++;
     emit(const CartState());
 
     final preferences = await SharedPreferences.getInstance();
@@ -395,7 +397,10 @@ class CartCubit extends Cubit<CartState> {
     return state.copyWith(items: items);
   }
 
-  Future<void> _loadSavedCart(int sessionVersion) async {
+  Future<void> _loadSavedCart({
+    required int sessionVersion,
+    required int mutationVersion,
+  }) async {
     final preferences = await SharedPreferences.getInstance();
     final rawCart = preferences.getString(_storageKey);
     if (rawCart == null || rawCart.trim().isEmpty) {
@@ -404,7 +409,8 @@ class CartCubit extends Cubit<CartState> {
 
     try {
       final decoded = jsonDecode(rawCart) as Map<String, dynamic>;
-      if (sessionVersion != _sessionVersion) {
+      if (sessionVersion != _sessionVersion ||
+          mutationVersion != _cartMutationVersion) {
         return;
       }
       emit(CartState.fromJson(decoded));
@@ -417,9 +423,14 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> _initializeCart() async {
     final sessionVersion = _sessionVersion;
+    final mutationVersion = _cartMutationVersion;
 
-    await _loadSavedCart(sessionVersion);
-    if (sessionVersion != _sessionVersion) {
+    await _loadSavedCart(
+      sessionVersion: sessionVersion,
+      mutationVersion: mutationVersion,
+    );
+    if (sessionVersion != _sessionVersion ||
+        mutationVersion != _cartMutationVersion) {
       return;
     }
 
@@ -427,6 +438,7 @@ class CartCubit extends Cubit<CartState> {
   }
 
   void _emitAndSave(CartState nextState) {
+    _cartMutationVersion++;
     emit(nextState);
     _saveCart(nextState);
   }
