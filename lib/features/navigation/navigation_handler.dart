@@ -1,11 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/di/app_injection.dart';
-import '../home/home_customer_page.dart';
-import '../map/presentation/page/map_page.dart';
-import '../profile/application/garage_vehicle_controller.dart';
-import '../profile/presentation/page/profile_page.dart';
 import '../workshops/domain/entities/workshop.dart';
 
 // Cuando tengas las pantallas, descomenta estos imports:
@@ -25,25 +20,11 @@ class NavigationHandler {
         return;
 
       case 1:
-        // Mapa
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const MapPage()),
-        );
-
+        context.go('/home-customer?tab=map');
         return;
 
       case 2:
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const HomeCustomerPage(
-              initialIndex: 2,
-              initialShowSearchBar: true,
-            ),
-          ),
-          (route) => false,
-        );
+        context.go('/home-customer?tab=search');
         return;
 
       case 3:
@@ -51,15 +32,7 @@ class NavigationHandler {
         return;
 
       case 4:
-        // Perfil
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProfilePage(
-              garageVehicleController: sl<GarageVehicleController>(),
-            ),
-          ),
-        );
+        context.go('/home-customer?tab=garage');
         return;
 
       default:
