@@ -126,10 +126,20 @@ class _PhysicalProductDetailContentState
                           ),
                           onPressed: hasStock
                               ? () {
-                                  context.read<CartCubit>().addProduct(
-                                    product,
-                                    quantity: _quantity,
-                                  );
+                                  final wasAdded = context
+                                      .read<CartCubit>()
+                                      .addProduct(product, quantity: _quantity);
+                                  if (!wasAdded) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.productDetailStockLimitReached,
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
                                   context.go(
                                     '/cart?source=buy&openedAt=${DateTime.now().microsecondsSinceEpoch}',
                                   );
@@ -162,10 +172,19 @@ class _PhysicalProductDetailContentState
                           ),
                           onPressed: hasStock
                               ? () {
-                                  context.read<CartCubit>().addProduct(
-                                    product,
-                                    quantity: _quantity,
-                                  );
+                                  final wasAdded = context
+                                      .read<CartCubit>()
+                                      .addProduct(product, quantity: _quantity);
+                                  if (!wasAdded) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.productDetailStockLimitReached,
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
 
                                   final workshopId = product.workshopId.trim();
                                   context.go(

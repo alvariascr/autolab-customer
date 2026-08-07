@@ -1258,8 +1258,20 @@ class _QuantityStepper extends StatelessWidget {
           ),
           _QuantityButton(
             icon: Icons.add_rounded,
-            onPressed: () =>
-                context.read<CartCubit>().increaseQuantity(item.product.id),
+            onPressed: () {
+              final wasIncreased = context.read<CartCubit>().increaseQuantity(
+                item.product.id,
+              );
+              if (!wasIncreased) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context)!.cartStockLimitReached,
+                    ),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),

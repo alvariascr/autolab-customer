@@ -43,14 +43,21 @@ class CartCubit extends Cubit<CartState> {
   static const double taxRate = 0.13;
   static const String _storageKey = 'customer_cart';
 
-  void addProduct(Product product, {int quantity = 1}) {
+  bool addProduct(Product product, {int quantity = 1}) {
     if (!_isPhysicalProduct(product) || quantity <= 0) {
-      return;
+      return false;
     }
 
     final items = [...state.items];
     final index = items.indexWhere((item) => item.product.id == product.id);
     final isStartingNewCart = state.items.isEmpty;
+    final stock = product.currentStock;
+    final currentQuantity = index == -1 ? 0 : items[index].quantity;
+    final nextQuantity = currentQuantity + quantity;
+
+    if (stock != null && stock >= 0 && nextQuantity > stock) {
+      return false;
+    }
 
     if (index == -1) {
       items.add(CartItem(product: product, quantity: quantity));
@@ -68,14 +75,15 @@ class CartCubit extends Cubit<CartState> {
         homeDelivery: isStartingNewCart ? false : null,
       ),
     );
+    return true;
   }
 
-  void increaseQuantity(String productId) {
-    _updateQuantity(productId, (quantity) => quantity + 1);
+  bool increaseQuantity(String productId) {
+    return _updateQuantity(productId, (quantity) => quantity + 1);
   }
 
-  void decreaseQuantity(String productId) {
-    _updateQuantity(productId, (quantity) => quantity - 1);
+  bool decreaseQuantity(String productId) {
+    return _updateQuantity(productId, (quantity) => quantity - 1);
   }
 
   void removeProduct(String productId) {
@@ -364,19 +372,32 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  void _updateQuantity(String productId, int Function(int quantity) update) {
+  bool _updateQuantity(String productId, int Function(int quantity) update) {
+    var wasUpdated = false;
     final items = state.items
         .map((item) {
           if (item.product.id != productId) {
             return item;
           }
 
-          return item.copyWith(quantity: update(item.quantity));
+          final nextQuantity = update(item.quantity);
+          final stock = item.product.currentStock;
+          if (stock != null && stock >= 0 && nextQuantity > stock) {
+            return item;
+          }
+
+          wasUpdated = nextQuantity != item.quantity;
+          return item.copyWith(quantity: nextQuantity);
         })
         .where((item) => item.quantity > 0)
         .toList(growable: false);
 
+    if (!wasUpdated) {
+      return false;
+    }
+
     _emitAndSave(_stateWithItems(items));
+    return true;
   }
 
   bool _isPhysicalProduct(Product product) {

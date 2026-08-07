@@ -2452,6 +2452,12 @@ abstract class AppLocalizations {
   /// **'Agregar al carrito'**
   String get productDetailAddToCartAction;
 
+  /// No description provided for @productDetailStockLimitReached.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay más unidades disponibles de este producto.'**
+  String get productDetailStockLimitReached;
+
   /// No description provided for @productDetailCartComingSoon.
   ///
   /// In es, this message translates to:
@@ -3807,6 +3813,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'{count, plural, =0{Sin productos} =1{1 producto} other{{count} productos}}'**
   String cartProductCount(num count);
+
+  /// No description provided for @cartStockLimitReached.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay más unidades disponibles de este producto.'**
+  String get cartStockLimitReached;
 
   /// No description provided for @cartFreeShippingBanner.
   ///

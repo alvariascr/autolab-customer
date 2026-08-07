@@ -441,6 +441,7 @@
   "productDetailDescriptionFallback": "Consulta los detalles de este producto directamente con el taller.",
   "productDetailBuyAction": "Comprar",
   "productDetailAddToCartAction": "Agregar al carrito",
+  "productDetailStockLimitReached": "No hay más unidades disponibles de este producto.",
   "productDetailCartComingSoon": "El carrito estará disponible próximamente.",
   "appointmentSelectServiceRequired": "Selecciona un servicio para continuar.",
   "appointmentSelectDateTimeRequired": "Selecciona un día y una hora.",
@@ -722,6 +723,7 @@
       "count": {}
     }
   },
+  "cartStockLimitReached": "No hay más unidades disponibles de este producto.",
   "cartFreeShippingBanner": "Envío gratis en compras mayores a ₡25.000",
   "cartAdditionalProducts": "{count, plural, =1{1 producto adicional} other{{count} productos adicionales}}",
   "@cartAdditionalProducts": {

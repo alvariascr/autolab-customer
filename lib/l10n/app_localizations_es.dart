@@ -1334,6 +1334,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get productDetailAddToCartAction => 'Agregar al carrito';
 
   @override
+  String get productDetailStockLimitReached =>
+      'No hay más unidades disponibles de este producto.';
+
+  @override
   String get productDetailCartComingSoon =>
       'El carrito estará disponible próximamente.';
 
@@ -2102,6 +2106,10 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get cartStockLimitReached =>
+      'No hay más unidades disponibles de este producto.';
 
   @override
   String get cartFreeShippingBanner =>
