@@ -26,12 +26,13 @@ class _CartPageState extends State<CartPage> {
 
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, cart) {
+        final showCheckout = _showCheckout && cart.items.isNotEmpty;
         final hasDeliveryAddress = cart.hasCompleteDeliveryDetails;
         final isCheckingOut = cart.checkoutStatus.isLoading;
         final canCheckout =
             cart.items.isNotEmpty &&
             !isCheckingOut &&
-            (!_showCheckout || !cart.homeDelivery || hasDeliveryAddress);
+            (!showCheckout || !cart.homeDelivery || hasDeliveryAddress);
 
         return Scaffold(
           backgroundColor: AutolabCustomer.customerBackgroundColor(context),
@@ -55,34 +56,34 @@ class _CartPageState extends State<CartPage> {
                       sliver: SliverList.list(
                         children: [
                           _CartHeader(
-                            title: _showCheckout
+                            title: showCheckout
                                 ? l10n.cartCheckoutTitle
                                 : l10n.cartTitle,
-                            subtitle: _showCheckout
+                            subtitle: showCheckout
                                 ? null
                                 : l10n.cartProductCount(cart.totalQuantity),
                             showBackButton:
-                                widget.showBackButton || _showCheckout,
-                            onBackTap: _showCheckout
+                                widget.showBackButton || showCheckout,
+                            onBackTap: showCheckout
                                 ? () => setState(() => _showCheckout = false)
                                 : () => Navigator.maybePop(context),
                           ),
                           const SizedBox(height: AutolabCustomer.spacingSmd),
                           if (cart.items.isEmpty)
                             _EmptyCartState()
-                          else if (_showCheckout)
+                          else if (showCheckout)
                             _CartCheckoutView(cart: cart)
                           else
                             _CartItemsView(cart: cart),
                           const SizedBox(height: AutolabCustomer.spacingMd),
-                          if (!_showCheckout && cart.items.isNotEmpty) ...[
+                          if (!showCheckout && cart.items.isNotEmpty) ...[
                             _CartDeliverySection(cart: cart),
                             const SizedBox(height: AutolabCustomer.spacingSmd),
                             _CartSummaryCard(cart: cart, includeShipping: true),
                           ],
                           const SizedBox(height: AutolabCustomer.spacingSm),
                           _CartPrimaryButton(
-                            label: _showCheckout
+                            label: showCheckout
                                 ? isCheckingOut
                                       ? l10n.cartCreatingOrder
                                       : l10n.cartFinishPurchase
@@ -91,7 +92,7 @@ class _CartPageState extends State<CartPage> {
                             onPressed: !canCheckout
                                 ? null
                                 : () async {
-                                    if (!_showCheckout) {
+                                    if (!showCheckout) {
                                       await context
                                           .read<CartCubit>()
                                           .refreshWorkshopDeliveryFee();
