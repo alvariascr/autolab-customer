@@ -540,7 +540,7 @@ class CartState {
     return items.fold(0, (total, item) => total + item.lineSubtotal);
   }
 
-  double get taxes => subtotal * CartCubit.taxRate;
+  double get taxes => _roundCurrency(subtotal * CartCubit.taxRate);
 
   double get shippingCost {
     if (!homeDelivery || items.isEmpty) {
@@ -682,6 +682,10 @@ class CartState {
           json['selectedDeliveryAddressId'] as String? ?? '',
     );
   }
+}
+
+double _roundCurrency(double value) {
+  return (value * 100).roundToDouble() / 100;
 }
 
 enum CartCheckoutStatus {

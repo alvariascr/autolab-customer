@@ -42,6 +42,15 @@ before update on public.order_delivery_details
 for each row
 execute function public.set_order_delivery_details_updated_at();
 
+create or replace function public.cart_tax_rate()
+returns numeric
+language sql
+stable
+set search_path to 'public'
+as $function$
+  select 0.13::numeric;
+$function$;
+
 drop policy if exists "customers can read own order delivery details"
   on public.order_delivery_details;
 
@@ -228,7 +237,7 @@ begin
     where w.id = v_workshop_id;
   end if;
 
-  v_tax_total := round(v_products_total * 0.13, 2);
+  v_tax_total := round(v_products_total * public.cart_tax_rate(), 2);
   v_total_amount := v_products_total + v_tax_total + v_delivery_fee;
 
   v_order_number :=
