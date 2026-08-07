@@ -415,6 +415,47 @@ class _CartReviewItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _CartProductBaseCard(
+      item: item,
+      bottom: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${_formatCurrency(item.unitPrice)} x ${item.quantity}',
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerSecondaryTextColor(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            _formatCurrency(item.lineSubtotal),
+            style: AutolabCustomer.body.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CartProductBaseCard extends StatelessWidget {
+  const _CartProductBaseCard({
+    required this.item,
+    required this.bottom,
+    this.titleTrailing,
+    this.descriptionSpacing = AutolabCustomer.spacingSm,
+  });
+
+  final CartItem item;
+  final Widget bottom;
+  final Widget? titleTrailing;
+  final double descriptionSpacing;
+
+  @override
+  Widget build(BuildContext context) {
     final product = item.product;
 
     return DecoratedBox(
@@ -443,14 +484,22 @@ class _CartReviewItemCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AutolabCustomer.body.copyWith(
-                      color: AutolabCustomer.customerTextColor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AutolabCustomer.body.copyWith(
+                            color: AutolabCustomer.customerTextColor(context),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      ?titleTrailing,
+                    ],
                   ),
                   const SizedBox(height: AutolabCustomer.spacingXs),
                   Text(
@@ -463,29 +512,8 @@ class _CartReviewItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AutolabCustomer.spacingSm),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${_formatCurrency(item.unitPrice)} x ${item.quantity}',
-                          style: AutolabCustomer.caption.copyWith(
-                            color: AutolabCustomer.customerSecondaryTextColor(
-                              context,
-                            ),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        _formatCurrency(item.lineSubtotal),
-                        style: AutolabCustomer.body.copyWith(
-                          color: AutolabCustomer.customerTextColor(context),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
+                  SizedBox(height: descriptionSpacing),
+                  bottom,
                 ],
               ),
             ),
@@ -1133,95 +1161,32 @@ class _CartItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final product = item.product;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AutolabCustomer.customerSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
-        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 72,
-              height: 72,
-              child: ProductImage(
-                imageUrl: product.primaryImageUrl,
-                height: 72,
-                borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
-                placeholderIconSize: AutolabCustomer.iconMd,
-              ),
-            ),
-            const SizedBox(width: AutolabCustomer.spacingSmd),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AutolabCustomer.body.copyWith(
-                            color: AutolabCustomer.customerTextColor(context),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).deleteButtonTooltip,
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () =>
-                            context.read<CartCubit>().removeProduct(product.id),
-                        icon: Icon(
-                          Icons.delete_outline_rounded,
-                          color: AutolabCustomer.customerSecondaryTextColor(
-                            context,
-                          ),
-                          size: AutolabCustomer.iconSm,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    product.effectiveDescription,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AutolabCustomer.caption.copyWith(
-                      color: AutolabCustomer.customerSecondaryTextColor(
-                        context,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AutolabCustomer.spacingXs),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _formatCurrency(item.unitPrice),
-                          style: AutolabCustomer.body.copyWith(
-                            color: AutolabCustomer.customerSecondaryTextColor(
-                              context,
-                            ),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      _QuantityStepper(item: item),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+    return _CartProductBaseCard(
+      item: item,
+      descriptionSpacing: AutolabCustomer.spacingXs,
+      titleTrailing: IconButton(
+        tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+        visualDensity: VisualDensity.compact,
+        onPressed: () => context.read<CartCubit>().removeProduct(product.id),
+        icon: Icon(
+          Icons.delete_outline_rounded,
+          color: AutolabCustomer.customerSecondaryTextColor(context),
+          size: AutolabCustomer.iconSm,
         ),
+      ),
+      bottom: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _formatCurrency(item.unitPrice),
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.customerSecondaryTextColor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          _QuantityStepper(item: item),
+        ],
       ),
     );
   }
