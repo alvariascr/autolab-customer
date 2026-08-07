@@ -48,7 +48,9 @@ class _CartPageState extends State<CartPage> {
                         AutolabCustomer.responsiveScreenMargin(context),
                         AutolabCustomer.spacingSmd,
                         AutolabCustomer.responsiveScreenMargin(context),
-                        AutolabCustomer.spacingLg,
+                        AutolabCustomer.spacingLg +
+                            MediaQuery.paddingOf(context).bottom +
+                            kBottomNavigationBarHeight,
                       ),
                       sliver: SliverList.list(
                         children: [
