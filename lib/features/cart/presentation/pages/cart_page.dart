@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
@@ -1495,7 +1496,11 @@ class _CartCircleButton extends StatelessWidget {
 }
 
 String _formatCurrency(double value) {
-  return '₡${value.toStringAsFixed(0)}';
+  return NumberFormat.currency(
+    locale: 'es_CR',
+    symbol: '₡',
+    decimalDigits: 0,
+  ).format(value);
 }
 
 OutlineInputBorder _cartInputBorder(
