@@ -463,12 +463,16 @@ class CartCubit extends Cubit<CartState> {
   void _emitAndSave(CartState nextState) {
     _cartMutationVersion++;
     emit(nextState);
-    _saveCart(nextState);
+    unawaited(_saveCart(nextState));
   }
 
   Future<void> _saveCart(CartState cart) async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_storageKey, jsonEncode(cart.toJson()));
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_storageKey, jsonEncode(cart.toJson()));
+    } catch (_) {
+      // La persistencia local es best-effort y no debe romper el flujo.
+    }
   }
 }
 
