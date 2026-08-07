@@ -109,6 +109,16 @@ class CartCheckoutRemoteDataSource {
         .eq('user_id', userId);
   }
 
+  Future<double> getWorkshopDeliveryFee(String workshopId) async {
+    final response = await _client
+        .from('workshops')
+        .select('delivery_fee')
+        .eq('id', workshopId)
+        .single();
+
+    return (response['delivery_fee'] as num?)?.toDouble() ?? 0;
+  }
+
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) async {
     final response = await _client.rpc(
       'create_cart_order',

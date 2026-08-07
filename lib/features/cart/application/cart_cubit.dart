@@ -8,6 +8,7 @@ import '../../products/domain/entities/product.dart';
 import '../domain/entities/cart_checkout.dart';
 import '../domain/usecases/create_cart_order.dart';
 import '../domain/usecases/delete_delivery_address.dart';
+import '../domain/usecases/get_workshop_delivery_fee.dart';
 import '../domain/usecases/load_delivery_addresses.dart';
 import '../domain/usecases/save_delivery_address.dart';
 import '../domain/usecases/set_default_delivery_address.dart';
@@ -18,11 +19,13 @@ class CartCubit extends Cubit<CartState> {
     required SaveDeliveryAddress saveDeliveryAddress,
     required SetDefaultDeliveryAddress setDefaultDeliveryAddress,
     required DeleteDeliveryAddress deleteDeliveryAddress,
+    required GetWorkshopDeliveryFee getWorkshopDeliveryFee,
     required CreateCartOrder createCartOrder,
   }) : _loadDeliveryAddresses = loadDeliveryAddresses,
        _saveDeliveryAddress = saveDeliveryAddress,
        _setDefaultDeliveryAddress = setDefaultDeliveryAddress,
        _deleteDeliveryAddress = deleteDeliveryAddress,
+       _getWorkshopDeliveryFee = getWorkshopDeliveryFee,
        _createCartOrder = createCartOrder,
        super(const CartState()) {
     unawaited(_initializeCart());
@@ -32,6 +35,7 @@ class CartCubit extends Cubit<CartState> {
   final SaveDeliveryAddress _saveDeliveryAddress;
   final SetDefaultDeliveryAddress _setDefaultDeliveryAddress;
   final DeleteDeliveryAddress _deleteDeliveryAddress;
+  final GetWorkshopDeliveryFee _getWorkshopDeliveryFee;
   final CreateCartOrder _createCartOrder;
   var _sessionVersion = 0;
   var _cartMutationVersion = 0;
@@ -270,6 +274,20 @@ class CartCubit extends Cubit<CartState> {
     );
   }
 
+  Future<void> refreshWorkshopDeliveryFee() async {
+    final workshopId = state.singleWorkshopId;
+    if (workshopId == null) {
+      return;
+    }
+
+    try {
+      final deliveryFee = await _getWorkshopDeliveryFee(workshopId);
+      _emitAndSave(state.copyWith(currentWorkshopDeliveryFee: deliveryFee));
+    } catch (_) {
+      // Keep the persisted item fee as a fallback; checkout RPC remains authoritative.
+    }
+  }
+
   Future<CartCheckoutResult?> createOrder() async {
     if (state.items.isEmpty || state.checkoutStatus.isLoading) {
       return null;
@@ -307,6 +325,7 @@ class CartCubit extends Cubit<CartState> {
     );
 
     try {
+      await refreshWorkshopDeliveryFee();
       final result = await _createCartOrder(
         CartCheckoutRequest(
           products: state.items
@@ -391,7 +410,11 @@ class CartCubit extends Cubit<CartState> {
 
   CartState _stateWithItems(List<CartItem> items) {
     if (items.isEmpty) {
-      return state.copyWith(items: items, homeDelivery: false);
+      return state.copyWith(
+        items: items,
+        homeDelivery: false,
+        clearCurrentWorkshopDeliveryFee: true,
+      );
     }
 
     return state.copyWith(items: items);
@@ -461,6 +484,7 @@ class CartState {
     this.deliveryPhoneNumber = '',
     this.selectedDeliveryAddressId = '',
     this.deliveryAddresses = const [],
+    this.currentWorkshopDeliveryFee,
     this.deliveryAddressesError,
     this.checkoutStatus = CartCheckoutStatus.initial,
     this.checkoutError,
@@ -476,6 +500,7 @@ class CartState {
   final String deliveryPhoneNumber;
   final String selectedDeliveryAddressId;
   final List<CustomerDeliveryAddress> deliveryAddresses;
+  final double? currentWorkshopDeliveryFee;
   final String? deliveryAddressesError;
   final CartCheckoutStatus checkoutStatus;
   final String? checkoutError;
@@ -495,12 +520,26 @@ class CartState {
       return 0;
     }
 
+    final currentFee = currentWorkshopDeliveryFee;
+    if (currentFee != null) {
+      return currentFee;
+    }
+
     return items
         .map((item) => item.product.workshopDeliveryFee)
         .firstWhere((fee) => fee > 0, orElse: () => 0);
   }
 
   double get total => subtotal + taxes + shippingCost;
+
+  String? get singleWorkshopId {
+    final workshopIds = items
+        .map((item) => item.product.workshopId.trim())
+        .where((workshopId) => workshopId.isNotEmpty)
+        .toSet();
+
+    return workshopIds.length == 1 ? workshopIds.single : null;
+  }
 
   bool get hasCompleteDeliveryDetails {
     return deliveryProvince.trim().isNotEmpty &&
@@ -530,10 +569,12 @@ class CartState {
     String? deliveryPhoneNumber,
     String? selectedDeliveryAddressId,
     List<CustomerDeliveryAddress>? deliveryAddresses,
+    double? currentWorkshopDeliveryFee,
     String? deliveryAddressesError,
     CartCheckoutStatus? checkoutStatus,
     String? checkoutError,
     bool clearDeliveryDetails = false,
+    bool clearCurrentWorkshopDeliveryFee = false,
     bool clearDeliveryAddressesError = false,
     bool clearCheckoutError = false,
   }) {
@@ -562,6 +603,9 @@ class CartState {
           ? ''
           : selectedDeliveryAddressId ?? this.selectedDeliveryAddressId,
       deliveryAddresses: deliveryAddresses ?? this.deliveryAddresses,
+      currentWorkshopDeliveryFee: clearCurrentWorkshopDeliveryFee
+          ? null
+          : currentWorkshopDeliveryFee ?? this.currentWorkshopDeliveryFee,
       deliveryAddressesError: clearDeliveryAddressesError
           ? null
           : deliveryAddressesError ?? this.deliveryAddressesError,

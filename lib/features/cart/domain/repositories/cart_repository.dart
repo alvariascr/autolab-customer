@@ -12,5 +12,7 @@ abstract interface class CartRepository {
 
   Future<void> deleteDeliveryAddress(String addressId);
 
+  Future<double> getWorkshopDeliveryFee(String workshopId);
+
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request);
 }

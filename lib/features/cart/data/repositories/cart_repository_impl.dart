@@ -23,6 +23,11 @@ class CartRepositoryImpl implements CartRepository {
   }
 
   @override
+  Future<double> getWorkshopDeliveryFee(String workshopId) {
+    return _remoteDataSource.getWorkshopDeliveryFee(workshopId);
+  }
+
+  @override
   Future<CustomerDeliveryAddress> saveDeliveryAddress(
     CustomerDeliveryAddressRequest request, {
     String? addressId,

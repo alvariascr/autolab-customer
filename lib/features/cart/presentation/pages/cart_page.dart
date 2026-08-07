@@ -88,8 +88,12 @@ class _CartPageState extends State<CartPage> {
                             enabled: canCheckout,
                             onPressed: !canCheckout
                                 ? null
-                                : () {
+                                : () async {
                                     if (!_showCheckout) {
+                                      await context
+                                          .read<CartCubit>()
+                                          .refreshWorkshopDeliveryFee();
+                                      if (!mounted) return;
                                       setState(() => _showCheckout = true);
                                       return;
                                     }

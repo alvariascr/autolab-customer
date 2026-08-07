@@ -16,6 +16,7 @@ import '../../features/cart/data/repositories/cart_repository_impl.dart';
 import '../../features/cart/domain/repositories/cart_repository.dart';
 import '../../features/cart/domain/usecases/create_cart_order.dart';
 import '../../features/cart/domain/usecases/delete_delivery_address.dart';
+import '../../features/cart/domain/usecases/get_workshop_delivery_fee.dart';
 import '../../features/cart/domain/usecases/load_delivery_addresses.dart';
 import '../../features/cart/domain/usecases/save_delivery_address.dart';
 import '../../features/cart/domain/usecases/set_default_delivery_address.dart';
@@ -148,6 +149,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<DeleteDeliveryAddress>(
     () => DeleteDeliveryAddress(sl<CartRepository>()),
+  );
+  sl.registerLazySingleton<GetWorkshopDeliveryFee>(
+    () => GetWorkshopDeliveryFee(sl<CartRepository>()),
   );
   sl.registerLazySingleton<CreateCartOrder>(
     () => CreateCartOrder(sl<CartRepository>()),
