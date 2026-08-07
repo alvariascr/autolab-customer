@@ -33,38 +33,22 @@ class CartCheckoutRemoteDataSource {
     CustomerDeliveryAddressRequest request, {
     String? addressId,
   }) async {
-    final userId = _requireUserId();
+    _requireUserId();
 
     try {
-      await _client
-          .from('customer_delivery_addresses')
-          .update({'is_default': false})
-          .eq('user_id', userId);
-
-      final payload = {
-        'user_id': userId,
-        'province': request.province.trim(),
-        'canton': request.canton.trim(),
-        'district': request.district.trim(),
-        'exact_address': request.exactAddress.trim(),
-        'phone': request.phone.trim(),
-        'is_default': true,
-        'is_active': true,
-      };
-
-      final response = addressId == null || addressId.trim().isEmpty
-          ? await _client
-                .from('customer_delivery_addresses')
-                .insert(payload)
-                .select()
-                .single()
-          : await _client
-                .from('customer_delivery_addresses')
-                .update(payload)
-                .eq('id', addressId)
-                .eq('user_id', userId)
-                .select()
-                .single();
+      final response = await _client.rpc(
+        'save_customer_delivery_address',
+        params: {
+          'p_address_id': addressId == null || addressId.trim().isEmpty
+              ? null
+              : addressId,
+          'p_province': request.province.trim(),
+          'p_canton': request.canton.trim(),
+          'p_district': request.district.trim(),
+          'p_exact_address': request.exactAddress.trim(),
+          'p_phone': request.phone.trim(),
+        },
+      );
 
       return CustomerDeliveryAddress.fromJson(
         Map<String, dynamic>.from(response),
@@ -79,21 +63,13 @@ class CartCheckoutRemoteDataSource {
   Future<CustomerDeliveryAddress> setDefaultDeliveryAddress(
     String addressId,
   ) async {
-    final userId = _requireUserId();
+    _requireUserId();
 
     try {
-      await _client
-          .from('customer_delivery_addresses')
-          .update({'is_default': false})
-          .eq('user_id', userId);
-
-      final response = await _client
-          .from('customer_delivery_addresses')
-          .update({'is_default': true})
-          .eq('id', addressId)
-          .eq('user_id', userId)
-          .select()
-          .single();
+      final response = await _client.rpc(
+        'set_default_customer_delivery_address',
+        params: {'p_address_id': addressId},
+      );
 
       return CustomerDeliveryAddress.fromJson(
         Map<String, dynamic>.from(response),
