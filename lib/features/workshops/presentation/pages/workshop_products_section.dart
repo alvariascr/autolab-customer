@@ -57,9 +57,12 @@ class _ProductsSectionState extends State<_ProductsSection> {
         }
 
         final sections = _buildSections(products);
-        final selectedProducts = _selectedSection == _SectionKey.all
+        final selectedSection = sections.containsKey(_selectedSection)
+            ? _selectedSection
+            : _SectionKey.all;
+        final selectedProducts = selectedSection == _SectionKey.all
             ? const <Product>[]
-            : sections[_selectedSection] ?? const <Product>[];
+            : sections[selectedSection] ?? const <Product>[];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,13 +83,13 @@ class _ProductsSectionState extends State<_ProductsSection> {
             const SizedBox(height: AutolabCustomer.spacingMd),
             _SectionTabs(
               sections: sections.keys.toList(),
-              selectedSection: _selectedSection,
+              selectedSection: selectedSection,
               onSelected: (section) {
                 setState(() => _selectedSection = section);
               },
             ),
             const SizedBox(height: AutolabCustomer.spacingMd),
-            if (_selectedSection == _SectionKey.all) ...[
+            if (selectedSection == _SectionKey.all) ...[
               const _ComingSoonPopularGroup(),
               ...sections.entries
                   .where((entry) => entry.key != _SectionKey.all)
@@ -96,11 +99,11 @@ class _ProductsSectionState extends State<_ProductsSection> {
                       products: entry.value,
                     ),
                   ),
-            ] else if (_selectedSection == _SectionKey.popular)
+            ] else if (selectedSection == _SectionKey.popular)
               const _ComingSoonPopularGroup()
             else
               _ProductMenuGroup(
-                title: _selectedSection,
+                title: selectedSection,
                 products: selectedProducts,
               ),
           ],
