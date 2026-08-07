@@ -129,14 +129,27 @@ begin
       ii.workshop_id,
       ii.selling_price,
       coalesce(ii.current_stock, 0) as current_stock,
-      input.quantity
-    from jsonb_to_recordset(p_products)
-      as input("inventoryItemId" uuid, quantity integer)
+      input.quantity,
+      input.input_rows,
+      input.invalid_quantity_count
+    from (
+      select
+        "inventoryItemId",
+        sum(quantity)::integer as quantity,
+        count(*)::integer as input_rows,
+        count(*) filter (where quantity is null or quantity <= 0)::integer
+          as invalid_quantity_count
+      from jsonb_to_recordset(p_products)
+        as input("inventoryItemId" uuid, quantity integer)
+      group by "inventoryItemId"
+    ) input
     join public.inventory_items ii on ii.id = input."inventoryItemId"
     where ii.status = 'active'
       and ii.item_type <> 'service'
+    order by ii.id
+    for no key update of ii
   loop
-    if v_product.quantity <= 0 then
+    if v_product.invalid_quantity_count > 0 or v_product.quantity <= 0 then
       raise exception using message = 'cart_products_invalid';
     end if;
 
@@ -154,7 +167,7 @@ begin
       raise exception using message = 'cart_products_multiple_workshops';
     end if;
 
-    v_valid_product_count := v_valid_product_count + 1;
+    v_valid_product_count := v_valid_product_count + v_product.input_rows;
     v_validated_products :=
       v_validated_products ||
       jsonb_build_object(
@@ -248,6 +261,15 @@ begin
     from jsonb_to_recordset(v_validated_products)
       as product_item(id uuid, selling_price numeric, quantity integer)
   loop
+    update public.inventory_items
+    set current_stock = coalesce(current_stock, 0) - v_product.quantity
+    where id = v_product.id
+      and coalesce(current_stock, 0) >= v_product.quantity;
+
+    if not found then
+      raise exception using message = 'cart_product_stock_unavailable';
+    end if;
+
     insert into public.order_products (
       order_id,
       inventory_item_id,
