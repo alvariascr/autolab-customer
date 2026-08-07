@@ -157,7 +157,8 @@ class CartCubit extends Cubit<CartState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(deliveryAddressesError: error.toString()));
+      emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
+      rethrow;
     }
   }
 
@@ -168,34 +169,38 @@ class CartCubit extends Cubit<CartState> {
     required String exactAddress,
     required String phoneNumber,
   }) async {
-    final selectedId = state.selectedDeliveryAddressId;
-    final savedAddress = await _saveDeliveryAddress(
-      CustomerDeliveryAddressRequest(
-        province: province,
-        canton: canton,
-        district: district,
-        exactAddress: exactAddress,
-        phone: phoneNumber,
-      ),
-      addressId: selectedId,
-    );
-
-    final addresses = [
-      savedAddress,
-      ...state.deliveryAddresses.where(
-        (address) => address.id != savedAddress.id,
-      ),
-    ];
-
-    _emitAndSave(
-      _stateWithAddresses(
-        state.copyWith(
-          deliveryAddresses: addresses,
-          clearDeliveryAddressesError: true,
+    try {
+      final selectedId = state.selectedDeliveryAddressId;
+      final savedAddress = await _saveDeliveryAddress(
+        CustomerDeliveryAddressRequest(
+          province: province,
+          canton: canton,
+          district: district,
+          exactAddress: exactAddress,
+          phone: phoneNumber,
         ),
+        addressId: selectedId,
+      );
+
+      final addresses = [
         savedAddress,
-      ),
-    );
+        ...state.deliveryAddresses.where(
+          (address) => address.id != savedAddress.id,
+        ),
+      ];
+
+      _emitAndSave(
+        _stateWithAddresses(
+          state.copyWith(
+            deliveryAddresses: addresses,
+            clearDeliveryAddressesError: true,
+          ),
+          savedAddress,
+        ),
+      );
+    } catch (error) {
+      emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
+    }
   }
 
   Future<void> selectDeliveryAddress(CustomerDeliveryAddress address) async {
@@ -218,7 +223,7 @@ class CartCubit extends Cubit<CartState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(deliveryAddressesError: error.toString()));
+      emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
     }
   }
 
@@ -252,7 +257,7 @@ class CartCubit extends Cubit<CartState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(deliveryAddressesError: error.toString()));
+      emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
     }
   }
 
@@ -328,7 +333,7 @@ class CartCubit extends Cubit<CartState> {
       emit(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
-          checkoutError: error.toString(),
+          checkoutError: _errorKey(error),
         ),
       );
       return null;
@@ -352,6 +357,14 @@ class CartCubit extends Cubit<CartState> {
 
   bool _isPhysicalProduct(Product product) {
     return product.itemType.trim().toLowerCase() != 'service';
+  }
+
+  String _errorKey(Object error) {
+    if (error is CartCheckoutException) {
+      return error.message;
+    }
+
+    return 'cart_unexpected_error';
   }
 
   CartState _stateWithAddresses(
