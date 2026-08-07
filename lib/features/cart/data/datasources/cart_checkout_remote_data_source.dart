@@ -8,10 +8,7 @@ class CartCheckoutRemoteDataSource {
   final SupabaseClient _client;
 
   Future<List<CustomerDeliveryAddress>> getDeliveryAddresses() async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null || userId.trim().isEmpty) {
-      return const [];
-    }
+    final userId = _requireUserId();
 
     try {
       final response = await _client
@@ -36,10 +33,7 @@ class CartCheckoutRemoteDataSource {
     CustomerDeliveryAddressRequest request, {
     String? addressId,
   }) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null || userId.trim().isEmpty) {
-      throw const CartCheckoutException('cart_auth_required');
-    }
+    final userId = _requireUserId();
 
     try {
       await _client
@@ -85,10 +79,7 @@ class CartCheckoutRemoteDataSource {
   Future<CustomerDeliveryAddress> setDefaultDeliveryAddress(
     String addressId,
   ) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null || userId.trim().isEmpty) {
-      throw const CartCheckoutException('cart_auth_required');
-    }
+    final userId = _requireUserId();
 
     try {
       await _client
@@ -115,10 +106,7 @@ class CartCheckoutRemoteDataSource {
   }
 
   Future<void> deleteDeliveryAddress(String addressId) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null || userId.trim().isEmpty) {
-      throw const CartCheckoutException('cart_auth_required');
-    }
+    final userId = _requireUserId();
 
     try {
       await _client
@@ -178,6 +166,15 @@ class CartCheckoutRemoteDataSource {
     }
 
     return CartCheckoutResult.fromJson(Map<String, dynamic>.from(response));
+  }
+
+  String _requireUserId() {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || userId.trim().isEmpty) {
+      throw const CartCheckoutException('cart_auth_required');
+    }
+
+    return userId;
   }
 }
 
