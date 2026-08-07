@@ -3943,7 +3943,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartSaveAddressError.
   ///
   /// In es, this message translates to:
-  /// **'No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.'**
+  /// **'No fue posible guardar la dirección. Intenta nuevamente.'**
   String get cartSaveAddressError;
 
   /// No description provided for @cartDeleteAddressError.

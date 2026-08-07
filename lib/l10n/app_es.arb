@@ -749,7 +749,7 @@
   "cartPhoneInvalid": "Ingresa un número de teléfono válido.",
   "cartSaveAddressAction": "Guardar dirección",
   "cartSavingAddressAction": "Guardando...",
-  "cartSaveAddressError": "No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.",
+  "cartSaveAddressError": "No fue posible guardar la dirección. Intenta nuevamente.",
   "cartDeleteAddressError": "No fue posible eliminar la dirección. Intenta nuevamente.",
   "cartDeleteAddressTitle": "Eliminar dirección",
   "cartDeleteAddressMessage": "¿Seguro que quieres eliminar esta dirección?",

@@ -2182,7 +2182,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartSaveAddressError =>
-      'No fue posible guardar la dirección. Revisa los permisos de la tabla o intenta nuevamente.';
+      'No fue posible guardar la dirección. Intenta nuevamente.';
 
   @override
   String get cartDeleteAddressError =>
