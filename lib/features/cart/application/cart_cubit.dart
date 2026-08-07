@@ -158,11 +158,10 @@ class CartCubit extends Cubit<CartState> {
       );
     } catch (error) {
       emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
-      rethrow;
     }
   }
 
-  Future<void> saveDeliveryAddress({
+  Future<bool> saveDeliveryAddress({
     required String province,
     required String canton,
     required String district,
@@ -198,8 +197,10 @@ class CartCubit extends Cubit<CartState> {
           savedAddress,
         ),
       );
+      return true;
     } catch (error) {
       emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
+      return false;
     }
   }
 

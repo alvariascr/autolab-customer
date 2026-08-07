@@ -1035,29 +1035,29 @@ class _DeliveryDetailsSheetState extends State<_DeliveryDetailsSheet> {
     }
 
     setState(() => _isSaving = true);
-    try {
-      await context.read<CartCubit>().saveDeliveryAddress(
-        province: _provinceController.text,
-        canton: _cantonController.text,
-        district: _districtController.text,
-        exactAddress: _exactAddressController.text,
-        phoneNumber: _phoneController.text,
-      );
-      if (!mounted) return;
+    final wasSaved = await context.read<CartCubit>().saveDeliveryAddress(
+      province: _provinceController.text,
+      canton: _cantonController.text,
+      district: _districtController.text,
+      exactAddress: _exactAddressController.text,
+      phoneNumber: _phoneController.text,
+    );
+    if (!mounted) return;
 
+    if (wasSaved) {
+      setState(() => _isSaving = false);
       Navigator.pop(context);
-    } catch (_) {
-      if (!mounted) return;
-
+      return;
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.cartSaveAddressError),
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+    }
+
+    if (mounted) {
+      setState(() => _isSaving = false);
     }
   }
 }
