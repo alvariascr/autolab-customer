@@ -109,6 +109,14 @@ begin
     raise exception using message = 'cart_products_required';
   end if;
 
+  if (
+    select count(distinct input."inventoryItemId")
+    from jsonb_to_recordset(p_products)
+      as input("inventoryItemId" uuid, quantity integer)
+  ) <> jsonb_array_length(p_products) then
+    raise exception using message = 'cart_products_invalid';
+  end if;
+
   select up.name, up.phone, up.email
   into v_profile_name, v_profile_phone, v_profile_email
   from public.user_profiles up
