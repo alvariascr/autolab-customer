@@ -11,6 +11,14 @@ import '../../features/appointments/domain/repositories/appointment_repository.d
 import '../../features/appointments/presentation/cubit/create_appointment_cubit.dart';
 import '../../features/appointments/presentation/cubit/my_appointments_cubit.dart';
 import '../../features/auth/di/auth_injection.dart';
+import '../../features/cart/data/datasources/cart_checkout_remote_data_source.dart';
+import '../../features/cart/data/repositories/cart_repository_impl.dart';
+import '../../features/cart/domain/repositories/cart_repository.dart';
+import '../../features/cart/domain/usecases/create_cart_order.dart';
+import '../../features/cart/domain/usecases/delete_delivery_address.dart';
+import '../../features/cart/domain/usecases/load_delivery_addresses.dart';
+import '../../features/cart/domain/usecases/save_delivery_address.dart';
+import '../../features/cart/domain/usecases/set_default_delivery_address.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
 import '../../features/payments/application/laropay_checkout_launcher.dart';
@@ -123,6 +131,27 @@ Future<void> _registerExternalDependencies() async {
 
 void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
+  sl.registerLazySingleton<CartCheckoutRemoteDataSource>(
+    () => CartCheckoutRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<CartRepository>(
+    () => CartRepositoryImpl(sl<CartCheckoutRemoteDataSource>()),
+  );
+  sl.registerLazySingleton<LoadDeliveryAddresses>(
+    () => LoadDeliveryAddresses(sl<CartRepository>()),
+  );
+  sl.registerLazySingleton<SaveDeliveryAddress>(
+    () => SaveDeliveryAddress(sl<CartRepository>()),
+  );
+  sl.registerLazySingleton<SetDefaultDeliveryAddress>(
+    () => SetDefaultDeliveryAddress(sl<CartRepository>()),
+  );
+  sl.registerLazySingleton<DeleteDeliveryAddress>(
+    () => DeleteDeliveryAddress(sl<CartRepository>()),
+  );
+  sl.registerLazySingleton<CreateCartOrder>(
+    () => CreateCartOrder(sl<CartRepository>()),
+  );
   sl.registerLazySingleton<LaropayLinkRemoteDataSource>(
     () => LaropayLinkRemoteDataSourceImpl(
       client: sl<http.Client>(),

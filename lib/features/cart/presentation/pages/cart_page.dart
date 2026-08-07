@@ -6,7 +6,7 @@ import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../application/cart_cubit.dart';
-import '../../data/datasources/cart_checkout_remote_data_source.dart';
+import '../../domain/entities/cart_checkout.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key, this.showBackButton = false});

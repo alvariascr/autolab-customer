@@ -3,21 +3,37 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../products/domain/entities/product.dart';
-import '../data/datasources/cart_checkout_remote_data_source.dart';
+import '../domain/entities/cart_checkout.dart';
+import '../domain/usecases/create_cart_order.dart';
+import '../domain/usecases/delete_delivery_address.dart';
+import '../domain/usecases/load_delivery_addresses.dart';
+import '../domain/usecases/save_delivery_address.dart';
+import '../domain/usecases/set_default_delivery_address.dart';
 
 class CartCubit extends Cubit<CartState> {
-  CartCubit({CartCheckoutRemoteDataSource? checkoutRemoteDataSource})
-    : _checkoutRemoteDataSource =
-          checkoutRemoteDataSource ??
-          CartCheckoutRemoteDataSource(Supabase.instance.client),
-      super(const CartState()) {
+  CartCubit({
+    required LoadDeliveryAddresses loadDeliveryAddresses,
+    required SaveDeliveryAddress saveDeliveryAddress,
+    required SetDefaultDeliveryAddress setDefaultDeliveryAddress,
+    required DeleteDeliveryAddress deleteDeliveryAddress,
+    required CreateCartOrder createCartOrder,
+  }) : _loadDeliveryAddresses = loadDeliveryAddresses,
+       _saveDeliveryAddress = saveDeliveryAddress,
+       _setDefaultDeliveryAddress = setDefaultDeliveryAddress,
+       _deleteDeliveryAddress = deleteDeliveryAddress,
+       _createCartOrder = createCartOrder,
+       super(const CartState()) {
     unawaited(_initializeCart());
   }
 
-  final CartCheckoutRemoteDataSource _checkoutRemoteDataSource;
+  final LoadDeliveryAddresses _loadDeliveryAddresses;
+  final SaveDeliveryAddress _saveDeliveryAddress;
+  final SetDefaultDeliveryAddress _setDefaultDeliveryAddress;
+  final DeleteDeliveryAddress _deleteDeliveryAddress;
+  final CreateCartOrder _createCartOrder;
+  var _sessionVersion = 0;
 
   static const double taxRate = 0.13;
   static const String _storageKey = 'customer_cart';
@@ -77,6 +93,14 @@ class CartCubit extends Cubit<CartState> {
     );
   }
 
+  Future<void> clearSessionData() async {
+    _sessionVersion++;
+    emit(const CartState());
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_storageKey);
+  }
+
   void setHomeDelivery(bool value) {
     _emitAndSave(state.copyWith(homeDelivery: value));
     if (value) {
@@ -112,7 +136,7 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> loadDeliveryAddresses({bool applyDefault = false}) async {
     try {
-      final addresses = await _checkoutRemoteDataSource.getDeliveryAddresses();
+      final addresses = await _loadDeliveryAddresses();
       final defaultAddress = addresses
           .where((address) => address.isDefault)
           .firstOrNull;
@@ -145,7 +169,7 @@ class CartCubit extends Cubit<CartState> {
     required String phoneNumber,
   }) async {
     final selectedId = state.selectedDeliveryAddressId;
-    final savedAddress = await _checkoutRemoteDataSource.saveDeliveryAddress(
+    final savedAddress = await _saveDeliveryAddress(
       CustomerDeliveryAddressRequest(
         province: province,
         canton: canton,
@@ -178,8 +202,7 @@ class CartCubit extends Cubit<CartState> {
     _emitAndSave(_stateWithAddresses(state, address));
 
     try {
-      final savedAddress = await _checkoutRemoteDataSource
-          .setDefaultDeliveryAddress(address.id);
+      final savedAddress = await _setDefaultDeliveryAddress(address.id);
       final addresses = [
         savedAddress,
         ...state.deliveryAddresses.where((item) => item.id != savedAddress.id),
@@ -201,7 +224,7 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> deleteDeliveryAddress(String addressId) async {
     try {
-      await _checkoutRemoteDataSource.deleteDeliveryAddress(addressId);
+      await _deleteDeliveryAddress(addressId);
 
       final remainingAddresses = state.deliveryAddresses
           .where((address) => address.id != addressId)
@@ -276,7 +299,7 @@ class CartCubit extends Cubit<CartState> {
     );
 
     try {
-      final result = await _checkoutRemoteDataSource.createOrder(
+      final result = await _createCartOrder(
         CartCheckoutRequest(
           products: state.items
               .map(
@@ -358,7 +381,7 @@ class CartCubit extends Cubit<CartState> {
     return state.copyWith(items: items);
   }
 
-  Future<void> _loadSavedCart() async {
+  Future<void> _loadSavedCart(int sessionVersion) async {
     final preferences = await SharedPreferences.getInstance();
     final rawCart = preferences.getString(_storageKey);
     if (rawCart == null || rawCart.trim().isEmpty) {
@@ -367,6 +390,9 @@ class CartCubit extends Cubit<CartState> {
 
     try {
       final decoded = jsonDecode(rawCart) as Map<String, dynamic>;
+      if (sessionVersion != _sessionVersion) {
+        return;
+      }
       emit(CartState.fromJson(decoded));
     } on FormatException {
       await preferences.remove(_storageKey);
@@ -376,7 +402,13 @@ class CartCubit extends Cubit<CartState> {
   }
 
   Future<void> _initializeCart() async {
-    await _loadSavedCart();
+    final sessionVersion = _sessionVersion;
+
+    await _loadSavedCart(sessionVersion);
+    if (sessionVersion != _sessionVersion) {
+      return;
+    }
+
     await loadDeliveryAddresses(applyDefault: state.homeDelivery);
   }
 
