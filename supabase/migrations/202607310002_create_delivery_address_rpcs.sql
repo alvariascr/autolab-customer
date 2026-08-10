@@ -21,12 +21,12 @@ begin
     raise exception 'cart_auth_required';
   end if;
 
-  update public.customer_delivery_addresses
-  set is_default = false
-  where user_id = v_user_id
-    and is_active = true;
-
   if p_address_id is null then
+    update public.customer_delivery_addresses
+    set is_default = false
+    where user_id = v_user_id
+      and is_active = true;
+
     insert into public.customer_delivery_addresses (
       user_id,
       province,
@@ -49,6 +49,24 @@ begin
     )
     returning * into v_address;
   else
+    select *
+    into v_address
+    from public.customer_delivery_addresses
+    where id = p_address_id
+      and user_id = v_user_id
+      and is_active = true
+    for update;
+
+    if v_address.id is null then
+      raise exception 'cart_delivery_address_not_found';
+    end if;
+
+    update public.customer_delivery_addresses
+    set is_default = false
+    where user_id = v_user_id
+      and is_active = true
+      and id <> p_address_id;
+
     update public.customer_delivery_addresses
     set
       province = btrim(p_province),
@@ -59,12 +77,7 @@ begin
       is_default = true,
       is_active = true
     where id = p_address_id
-      and user_id = v_user_id
     returning * into v_address;
-  end if;
-
-  if v_address.id is null then
-    raise exception 'cart_delivery_address_not_found';
   end if;
 
   return v_address;
@@ -89,21 +102,28 @@ begin
     raise exception 'cart_auth_required';
   end if;
 
-  update public.customer_delivery_addresses
-  set is_default = false
-  where user_id = v_user_id
-    and is_active = true;
-
-  update public.customer_delivery_addresses
-  set is_default = true
+  select *
+  into v_address
+  from public.customer_delivery_addresses
   where id = p_address_id
     and user_id = v_user_id
     and is_active = true
-  returning * into v_address;
+  for update;
 
   if v_address.id is null then
     raise exception 'cart_delivery_address_not_found';
   end if;
+
+  update public.customer_delivery_addresses
+  set is_default = false
+  where user_id = v_user_id
+    and is_active = true
+    and id <> p_address_id;
+
+  update public.customer_delivery_addresses
+  set is_default = true
+  where id = p_address_id
+  returning * into v_address;
 
   return v_address;
 end;
