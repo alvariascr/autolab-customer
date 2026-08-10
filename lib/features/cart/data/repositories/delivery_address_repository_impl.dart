@@ -5,7 +5,7 @@ import '../datasources/cart_checkout_remote_data_source.dart';
 class DeliveryAddressRepositoryImpl implements DeliveryAddressRepository {
   const DeliveryAddressRepositoryImpl(this._remoteDataSource);
 
-  final CartCheckoutRemoteDataSource _remoteDataSource;
+  final ICartCheckoutRemoteDataSource _remoteDataSource;
 
   @override
   Future<void> deleteDeliveryAddress(String addressId) {

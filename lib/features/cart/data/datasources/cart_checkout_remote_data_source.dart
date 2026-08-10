@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/cart_checkout.dart';
 
-abstract interface class CartCheckoutRemoteDataSource {
+abstract interface class ICartCheckoutRemoteDataSource {
   Future<List<CustomerDeliveryAddress>> getDeliveryAddresses();
 
   Future<CustomerDeliveryAddress> saveDeliveryAddress(
@@ -18,7 +18,7 @@ abstract interface class CartCheckoutRemoteDataSource {
 }
 
 class SupabaseCartCheckoutRemoteDataSource
-    implements CartCheckoutRemoteDataSource {
+    implements ICartCheckoutRemoteDataSource {
   const SupabaseCartCheckoutRemoteDataSource(this._client);
 
   final SupabaseClient _client;
