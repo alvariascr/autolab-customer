@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/app_injection.dart';
 import '../../core/theme/autolab_customer.dart';
+import '../cart/application/cart_cubit.dart';
 import '../cart/presentation/pages/cart_page.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
@@ -95,28 +97,31 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      extendBody: true,
-      body: IndexedStack(
-        index: _pageIndex,
-        children: [
-          HomeCustomerPage(
-            controller: _homeController,
-            showBottomNavigation: false,
-            onSearchClosed: _handleSearchClosed,
-          ),
-          const MapPage(showBottomNavigation: false),
-          ProfilePage(
-            showBottomNavigation: false,
-            garageVehicleController: sl<GarageVehicleController>(),
-          ),
-          const CartPage(),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomNavbar(
-        currentIndex: _navIndex,
-        onTap: _handleNavigation,
+    return BlocProvider(
+      create: (_) => sl<CartCubit>(),
+      child: Scaffold(
+        backgroundColor: AutolabCustomer.customerBackgroundColor(context),
+        extendBody: true,
+        body: IndexedStack(
+          index: _pageIndex,
+          children: [
+            HomeCustomerPage(
+              controller: _homeController,
+              showBottomNavigation: false,
+              onSearchClosed: _handleSearchClosed,
+            ),
+            const MapPage(showBottomNavigation: false),
+            ProfilePage(
+              showBottomNavigation: false,
+              garageVehicleController: sl<GarageVehicleController>(),
+            ),
+            const CartPage(),
+          ],
+        ),
+        bottomNavigationBar: CustomBottomNavbar(
+          currentIndex: _navIndex,
+          onTap: _handleNavigation,
+        ),
       ),
     );
   }

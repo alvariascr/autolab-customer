@@ -12,6 +12,8 @@ import '../../features/appointments/presentation/cubit/create_appointment_cubit.
 import '../../features/appointments/presentation/cubit/my_appointments_cubit.dart';
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/cart/application/cart_cubit.dart';
+import '../../features/cart/application/cart_items_service.dart';
+import '../../features/cart/application/cart_persistence.dart';
 import '../../features/cart/data/datasources/cart_checkout_remote_data_source.dart';
 import '../../features/cart/data/repositories/cart_repository_impl.dart';
 import '../../features/cart/data/repositories/delivery_address_repository_impl.dart';
@@ -138,6 +140,8 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<CartCheckoutRemoteDataSource>(
     () => SupabaseCartCheckoutRemoteDataSource(sl<SupabaseClient>()),
   );
+  sl.registerLazySingleton<CartItemsService>(CartItemsService.new);
+  sl.registerLazySingleton<CartPersistence>(CartPersistence.new);
   sl.registerLazySingleton<CartRepository>(
     () => CartRepositoryImpl(sl<CartCheckoutRemoteDataSource>()),
   );
@@ -170,6 +174,8 @@ void _registerFeatureDependencies() {
       deleteDeliveryAddress: sl<DeleteDeliveryAddress>(),
       getWorkshopDeliveryFee: sl<GetWorkshopDeliveryFee>(),
       createCartOrder: sl<CreateCartOrder>(),
+      itemsService: sl<CartItemsService>(),
+      persistence: sl<CartPersistence>(),
     ),
   );
   sl.registerLazySingleton<LaropayLinkRemoteDataSource>(
