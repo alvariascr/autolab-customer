@@ -103,6 +103,8 @@ declare
   v_delivery_district text;
   v_delivery_exact_address text;
   v_delivery_phone text;
+  v_workshop_address text;
+  v_workshop_phone text;
 begin
   v_user_id := auth.uid();
 
@@ -235,6 +237,13 @@ begin
     into v_delivery_fee
     from public.workshops w
     where w.id = v_workshop_id;
+  else
+    select
+      coalesce(nullif(trim(w.location_address), ''), 'Retiro en taller'),
+      coalesce(nullif(trim(w.phone), ''), '')
+    into v_workshop_address, v_workshop_phone
+    from public.workshops w
+    where w.id = v_workshop_id;
   end if;
 
   v_tax_total := round(v_products_total * public.cart_tax_rate(), 2);
@@ -303,30 +312,31 @@ begin
     );
   end loop;
 
-  if p_home_delivery then
-    insert into public.order_delivery_details (
-      order_id,
-      province,
-      canton,
-      district,
-      exact_address,
-      phone,
-      delivery_fee,
-      is_home_delivery,
-      is_received
-    )
-    values (
-      v_order_id,
-      v_delivery_province,
-      v_delivery_canton,
-      v_delivery_district,
-      v_delivery_exact_address,
-      v_delivery_phone,
-      v_delivery_fee,
-      true,
-      false
-    );
-  end if;
+  insert into public.order_delivery_details (
+    order_id,
+    province,
+    canton,
+    district,
+    exact_address,
+    phone,
+    delivery_fee,
+    is_home_delivery,
+    is_received
+  )
+  values (
+    v_order_id,
+    case when p_home_delivery then v_delivery_province else 'Retiro en taller' end,
+    case when p_home_delivery then v_delivery_canton else 'Retiro en taller' end,
+    case when p_home_delivery then v_delivery_district else 'Retiro en taller' end,
+    case when p_home_delivery then v_delivery_exact_address else v_workshop_address end,
+    case
+      when p_home_delivery then v_delivery_phone
+      else coalesce(nullif(trim(v_profile_phone), ''), v_workshop_phone)
+    end,
+    v_delivery_fee,
+    p_home_delivery,
+    false
+  );
 
   return jsonb_build_object(
     'orderId', v_order_id,
