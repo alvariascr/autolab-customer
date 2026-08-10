@@ -125,10 +125,15 @@ class _PhysicalProductDetailContentState
                             ),
                           ),
                           onPressed: hasStock
-                              ? () {
-                                  final wasAdded = context
+                              ? () async {
+                                  final wasAdded = await context
                                       .read<CartCubit>()
-                                      .addProduct(product, quantity: _quantity);
+                                      .addProductAndPersist(
+                                        product,
+                                        quantity: _quantity,
+                                      );
+                                  if (!context.mounted) return;
+
                                   if (!wasAdded) {
                                     final messenger = ScaffoldMessenger.of(
                                       context,
@@ -145,7 +150,7 @@ class _PhysicalProductDetailContentState
                                     return;
                                   }
 
-                                  context.go('/cart');
+                                  context.go('/home-customer?tab=cart');
                                 }
                               : null,
                           icon: const Icon(Icons.shopping_cart_outlined),
@@ -174,10 +179,15 @@ class _PhysicalProductDetailContentState
                             ),
                           ),
                           onPressed: hasStock
-                              ? () {
-                                  final wasAdded = context
+                              ? () async {
+                                  final wasAdded = await context
                                       .read<CartCubit>()
-                                      .addProduct(product, quantity: _quantity);
+                                      .addProductAndPersist(
+                                        product,
+                                        quantity: _quantity,
+                                      );
+                                  if (!context.mounted) return;
+
                                   if (!wasAdded) {
                                     final messenger = ScaffoldMessenger.of(
                                       context,

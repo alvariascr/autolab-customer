@@ -35,7 +35,9 @@ class CartCubit extends Cubit<CartState> {
        _itemsService = itemsService,
        _persistence = persistence,
        super(const CartState()) {
-    unawaited(_initializeCart());
+    _persistenceSubscription = _persistence.watch().listen(_syncPersistedCart);
+    _initialization = _initializeCart();
+    unawaited(_initialization);
   }
 
   final LoadDeliveryAddresses _loadDeliveryAddresses;
@@ -46,6 +48,8 @@ class CartCubit extends Cubit<CartState> {
   final CreateCartOrder _createCartOrder;
   final CartItemsService _itemsService;
   final CartPersistence _persistence;
+  late final Future<void> _initialization;
+  late final StreamSubscription<CartState> _persistenceSubscription;
   var _sessionVersion = 0;
   var _cartMutationVersion = 0;
   Future<void> _pendingSave = Future.value();
@@ -62,6 +66,30 @@ class CartCubit extends Cubit<CartState> {
         homeDelivery: update.startedNewCart ? false : null,
       ),
     );
+    return true;
+  }
+
+  Future<bool> addProductAndPersist(Product product, {int quantity = 1}) async {
+    await _initialization;
+
+    final baseState = await _persistence.load() ?? state;
+    final update = _itemsService.addProduct(
+      baseState,
+      product,
+      quantity: quantity,
+    );
+    if (!update.wasChanged) {
+      return false;
+    }
+
+    final nextState = baseState.copyWith(
+      items: update.items,
+      homeDelivery: update.startedNewCart ? false : null,
+    );
+    _cartMutationVersion++;
+    emit(nextState);
+    await _enqueueSave(nextState);
+
     return true;
   }
 
@@ -97,6 +125,25 @@ class CartCubit extends Cubit<CartState> {
     emit(const CartState());
 
     await _persistence.clear();
+  }
+
+  Future<void> reloadPersistedCart() async {
+    final sessionVersion = _sessionVersion;
+    _cartMutationVersion++;
+
+    final savedCart = await _persistence.load();
+    if (savedCart == null || isClosed || sessionVersion != _sessionVersion) {
+      return;
+    }
+
+    emit(savedCart);
+    unawaited(loadDeliveryAddresses(applyDefault: savedCart.homeDelivery));
+  }
+
+  @override
+  Future<void> close() {
+    _persistenceSubscription.cancel();
+    return super.close();
   }
 
   void setHomeDelivery(bool value) {
@@ -433,6 +480,20 @@ class CartCubit extends Cubit<CartState> {
     }
 
     await loadDeliveryAddresses(applyDefault: state.homeDelivery);
+  }
+
+  void _syncPersistedCart(CartState persistedState) {
+    if (isClosed || persistedState == state) {
+      return;
+    }
+
+    _cartMutationVersion++;
+    emit(
+      persistedState.copyWith(
+        deliveryAddresses: state.deliveryAddresses,
+        deliveryAddressesError: state.deliveryAddressesError,
+      ),
+    );
   }
 
   void _emitAndSave(CartState nextState) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -23,23 +25,34 @@ class CustomerNavigationShell extends StatefulWidget {
 
 class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   final HomeCustomerController _homeController = HomeCustomerController();
+  late final CartCubit _cartCubit;
   int _navIndex = 0;
   int _pageIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _cartCubit = sl<CartCubit>();
     _setInitialIndex(widget.initialIndex);
+    _refreshCartIfSelected();
   }
 
   @override
   void didUpdateWidget(covariant CustomerNavigationShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialIndex != widget.initialIndex) {
+    if (oldWidget.initialIndex != widget.initialIndex ||
+        _navIndex != widget.initialIndex) {
       setState(() {
         _setInitialIndex(widget.initialIndex);
       });
+      _refreshCartIfSelected();
     }
+  }
+
+  @override
+  void dispose() {
+    _cartCubit.close();
+    super.dispose();
   }
 
   void _setInitialIndex(int index) {
@@ -82,6 +95,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
         _ => 0,
       };
     });
+    _refreshCartIfSelected();
   }
 
   void _handleSearchClosed() {
@@ -97,8 +111,8 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<CartCubit>(),
+    return BlocProvider.value(
+      value: _cartCubit,
       child: Scaffold(
         backgroundColor: AutolabCustomer.customerBackgroundColor(context),
         extendBody: true,
@@ -124,5 +138,11 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
         ),
       ),
     );
+  }
+
+  void _refreshCartIfSelected() {
+    if (_navIndex == 3) {
+      unawaited(_cartCubit.reloadPersistedCart());
+    }
   }
 }
