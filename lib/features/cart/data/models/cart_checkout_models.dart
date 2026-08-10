@@ -57,6 +57,7 @@ class CartCheckoutDeliveryDetailsModel {
       'canton': canton,
       'district': district,
       'exact_address': exactAddress,
+      'exactAddress': exactAddress,
       'phone': phone,
     };
   }

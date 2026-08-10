@@ -129,6 +129,7 @@ class SupabaseCartCheckoutRemoteDataSource
               .map(
                 (product) => {
                   'inventory_item_id': product.inventoryItemId,
+                  'inventoryItemId': product.inventoryItemId,
                   'quantity': product.quantity,
                 },
               )

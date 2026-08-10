@@ -128,9 +128,11 @@ class _CartPageState extends State<CartPage> {
     if (!mounted || !context.mounted) return;
 
     if (result == null) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.cartCreateOrderError)),
+      final errorMessage = _checkoutErrorMessage(
+        l10n,
+        cartCubit.state.checkoutError,
       );
+      messenger.showSnackBar(SnackBar(content: Text(errorMessage)));
       return;
     }
 
@@ -139,6 +141,14 @@ class _CartPageState extends State<CartPage> {
       context: context,
       builder: (dialogContext) => _CartSuccessDialog(result: result),
     );
+  }
+
+  String _checkoutErrorMessage(AppLocalizations l10n, String? errorKey) {
+    return switch (errorKey) {
+      'cart_product_stock_unavailable' => l10n.cartStockLimitReached,
+      'cart_delivery_details_required' => l10n.cartAddressRequired,
+      _ => l10n.cartCreateOrderError,
+    };
   }
 }
 
