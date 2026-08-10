@@ -89,7 +89,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/cart',
-        builder: (context, state) => CustomerNavigationShell(initialIndex: 3),
+        redirect: (context, state) => '/home-customer?tab=cart',
       ),
       GoRoute(
         path: '/appointments',
