@@ -18,9 +18,6 @@ create table if not exists public.order_delivery_details (
     on delete cascade
 );
 
-alter table public.order_delivery_details
-add column if not exists is_received boolean not null default false;
-
 alter table public.order_delivery_details enable row level security;
 
 create or replace function public.set_order_delivery_details_updated_at()
