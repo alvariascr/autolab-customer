@@ -1,9 +1,10 @@
 part of 'workshop_profile_page.dart';
 
 class _ProductsSection extends StatefulWidget {
-  const _ProductsSection({required this.workshopId});
+  const _ProductsSection({required this.workshopId, this.initialSection});
 
   final String workshopId;
+  final String? initialSection;
 
   @override
   State<_ProductsSection> createState() => _ProductsSectionState();
@@ -11,14 +12,30 @@ class _ProductsSection extends StatefulWidget {
 
 class _ProductsSectionState extends State<_ProductsSection> {
   late Future<Either<Failure, List<Product>>> _productsFuture;
+  late final StreamSubscription<void> _inventoryRefreshSubscription;
   String _selectedSection = _SectionKey.all;
 
   @override
   void initState() {
     super.initState();
-    _productsFuture = sl<ProductRepository>().getActiveProductsByWorkshop(
-      widget.workshopId,
-    );
+    _selectedSection = _normalizeInitialSection(widget.initialSection);
+    _productsFuture = _loadProducts();
+    _inventoryRefreshSubscription = sl<ProductInventoryRefreshNotifier>().stream
+        .listen((_) => _refreshProducts());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProductsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialSection != widget.initialSection) {
+      _selectedSection = _normalizeInitialSection(widget.initialSection);
+    }
+  }
+
+  @override
+  void dispose() {
+    _inventoryRefreshSubscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -47,9 +64,12 @@ class _ProductsSectionState extends State<_ProductsSection> {
         }
 
         final sections = _buildSections(products);
-        final selectedProducts = _selectedSection == _SectionKey.all
+        final selectedSection = sections.containsKey(_selectedSection)
+            ? _selectedSection
+            : _SectionKey.all;
+        final selectedProducts = selectedSection == _SectionKey.all
             ? const <Product>[]
-            : sections[_selectedSection] ?? const <Product>[];
+            : sections[selectedSection] ?? const <Product>[];
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,13 +90,13 @@ class _ProductsSectionState extends State<_ProductsSection> {
             const SizedBox(height: AutolabCustomer.spacingMd),
             _SectionTabs(
               sections: sections.keys.toList(),
-              selectedSection: _selectedSection,
+              selectedSection: selectedSection,
               onSelected: (section) {
                 setState(() => _selectedSection = section);
               },
             ),
             const SizedBox(height: AutolabCustomer.spacingMd),
-            if (_selectedSection == _SectionKey.all) ...[
+            if (selectedSection == _SectionKey.all) ...[
               const _ComingSoonPopularGroup(),
               ...sections.entries
                   .where((entry) => entry.key != _SectionKey.all)
@@ -86,17 +106,33 @@ class _ProductsSectionState extends State<_ProductsSection> {
                       products: entry.value,
                     ),
                   ),
-            ] else if (_selectedSection == _SectionKey.popular)
+            ] else if (selectedSection == _SectionKey.popular)
               const _ComingSoonPopularGroup()
             else
               _ProductMenuGroup(
-                title: _selectedSection,
+                title: selectedSection,
                 products: selectedProducts,
               ),
           ],
         );
       },
     );
+  }
+
+  Future<Either<Failure, List<Product>>> _loadProducts() {
+    return sl<ProductRepository>().getActiveProductsByWorkshop(
+      widget.workshopId,
+    );
+  }
+
+  void _refreshProducts() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _productsFuture = _loadProducts();
+    });
   }
 
   Map<String, List<Product>> _buildSections(List<Product> products) {
@@ -140,6 +176,15 @@ class _ProductsSectionState extends State<_ProductsSection> {
 
   bool _isService(Product product) {
     return product.itemType.trim().toLowerCase() == 'service';
+  }
+
+  String _normalizeInitialSection(String? section) {
+    return switch (section?.trim().toLowerCase()) {
+      _SectionKey.popular => _SectionKey.popular,
+      _SectionKey.services => _SectionKey.services,
+      _SectionKey.products => _SectionKey.products,
+      _ => _SectionKey.all,
+    };
   }
 }
 

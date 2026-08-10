@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/appointments/presentation/pages/my_appointments_page.dart';
@@ -7,6 +8,7 @@ import '../../features/auth/application/auth_session_state.dart';
 import '../../features/auth/ui/forgot_password_page.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/reset_password_page.dart';
+import '../../features/cart/application/cart_cubit.dart';
 import '../../features/home/home_page.dart';
 import '../../features/navigation/customer_navigation_shell.dart';
 import '../../features/onboarding/customer_onboarding_page.dart';
@@ -76,12 +78,20 @@ class AppRouter {
       GoRoute(
         path: '/home-customer',
         builder: (context, state) {
-          final initialIndex = state.uri.queryParameters['tab'] == 'cart'
-              ? 3
-              : 0;
+          final initialIndex = switch (state.uri.queryParameters['tab']) {
+            'map' => 1,
+            'search' => 2,
+            'cart' => 3,
+            'garage' => 4,
+            _ => 0,
+          };
 
           return CustomerNavigationShell(initialIndex: initialIndex);
         },
+      ),
+      GoRoute(
+        path: '/cart',
+        redirect: (context, state) => '/home-customer?tab=cart',
       ),
       GoRoute(
         path: '/appointments',
@@ -112,6 +122,7 @@ class AppRouter {
           return WorkshopProfilePage(
             workshopId: workshopId,
             paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+            initialCatalogSection: state.uri.queryParameters['section'],
           );
         },
       ),
@@ -131,13 +142,16 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return ProductDetailPage.resolve(
-            product:
-                product?.workshopId == workshopId && product?.id == productId
-                ? product
-                : null,
-            workshopId: workshopId,
-            productId: productId,
+          return BlocProvider(
+            create: (_) => sl<CartCubit>(),
+            child: ProductDetailPage.resolve(
+              product:
+                  product?.workshopId == workshopId && product?.id == productId
+                  ? product
+                  : null,
+              workshopId: workshopId,
+              productId: productId,
+            ),
           );
         },
       ),

@@ -441,6 +441,7 @@
   "productDetailDescriptionFallback": "Consulta los detalles de este producto directamente con el taller.",
   "productDetailBuyAction": "Comprar",
   "productDetailAddToCartAction": "Agregar al carrito",
+  "productDetailStockLimitReached": "No hay más unidades disponibles de este producto.",
   "productDetailCartComingSoon": "El carrito estará disponible próximamente.",
   "appointmentSelectServiceRequired": "Selecciona un servicio para continuar.",
   "appointmentSelectDateTimeRequired": "Selecciona un día y una hora.",
@@ -714,6 +715,79 @@
     }
   },
   "appointmentPriceToConfirm": "Por confirmar",
+  "cartTitle": "Mi carrito",
+  "cartCheckoutTitle": "Comprar",
+  "cartProductCount": "{count, plural, =0{Sin productos} =1{1 producto} other{{count} productos}}",
+  "@cartProductCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "cartStockLimitReached": "No hay más unidades disponibles de este producto.",
+  "cartFreeShippingBanner": "Envío gratis en compras mayores a ₡25.000",
+  "cartAdditionalProducts": "{count, plural, =1{1 producto adicional} other{{count} productos adicionales}}",
+  "@cartAdditionalProducts": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "cartDeliveryServiceTitle": "Servicio de envío",
+  "cartDeliveryAddressDetails": "Detalles de dirección de envío",
+  "cartDeliveryDisabledMessage": "¿Necesitas envío?",
+  "cartSavedAddressesTitle": "Direcciones guardadas",
+  "cartNewAddressAction": "Nueva dirección",
+  "cartAddressHint": "Dirección",
+  "cartAddressRequired": "Ingresa una dirección para continuar.",
+  "cartAddAddressAction": "Agregar",
+  "cartEditAddressAction": "Editar",
+  "cartDeliveryFormTitle": "Dirección de entrega",
+  "cartProvinceLabel": "Provincia",
+  "cartCantonLabel": "Cantón",
+  "cartDistrictLabel": "Distrito",
+  "cartExactAddressLabel": "Ubicación exacta",
+  "cartPhoneLabel": "Número de celular",
+  "cartPhoneInvalid": "Ingresa un número de teléfono válido.",
+  "cartSaveAddressAction": "Guardar dirección",
+  "cartSavingAddressAction": "Guardando...",
+  "cartSaveAddressError": "No fue posible guardar la dirección. Intenta nuevamente.",
+  "cartDeleteAddressError": "No fue posible eliminar la dirección. Intenta nuevamente.",
+  "cartDeleteAddressTitle": "Eliminar dirección",
+  "cartDeleteAddressMessage": "¿Seguro que quieres eliminar esta dirección?",
+  "cartDeleteAddressCancel": "Cancelar",
+  "cartDeleteAddressConfirm": "Eliminar",
+  "cartFieldRequired": "Este campo es obligatorio.",
+  "cartSummaryTitle": "Resumen",
+  "cartSubtotal": "Subtotal ({count, plural, =1{1 producto} other{{count} productos}})",
+  "@cartSubtotal": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "cartShipping": "Envío",
+  "cartFreeShipping": "Gratis",
+  "cartTaxes": "Impuestos",
+  "cartTotal": "Total",
+  "cartFinishPurchase": "Finalizar compra",
+  "cartContinueToCheckout": "Continuar",
+  "cartPurchaseComingSoon": "La compra estará disponible próximamente.",
+  "cartCreatingOrder": "Creando orden...",
+  "cartCreateOrderSuccess": "Orden {orderNumber} creada correctamente.",
+  "@cartCreateOrderSuccess": {
+    "placeholders": {
+      "orderNumber": {}
+    }
+  },
+  "cartOrderSuccessTitle": "¡Compra exitosa!",
+  "cartOrderSuccessMessage": "Tu pedido fue creado correctamente.",
+  "cartOrderNumberLabel": "Orden",
+  "cartOrderSuccessAction": "Entendido",
+  "cartCreateOrderError": "No fue posible crear la orden. Intenta nuevamente.",
+  "cartSecurePurchaseTitle": "Compra segura",
+  "cartSecurePurchaseMessage": "Tus datos están protegidos",
+  "cartNeedHelpTitle": "¿Necesitas ayuda?",
+  "cartNeedHelpMessage": "Contáctanos",
+  "cartEmptyTitle": "Tu carrito está vacío",
+  "cartEmptyMessage": "Agrega productos desde un taller para verlos aquí.",
   "appointmentDurationMinutes": "{minutes} min",
   "@appointmentDurationMinutes": {
     "placeholders": {

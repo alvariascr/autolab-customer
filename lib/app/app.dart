@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/di/app_injection.dart';
 import '../core/location/location_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/app_theme_mode_cubit.dart';
@@ -16,6 +17,7 @@ import '../features/auth/application/auth_session_cubit.dart';
 import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
 import '../features/auth/ui/auth_ui_error_resolver.dart';
+import '../features/cart/application/cart_persistence.dart';
 import '../features/payments/application/laropay_return_navigation_controller.dart';
 import '../l10n/app_localizations.dart';
 
@@ -53,6 +55,7 @@ class _MyAppState extends State<MyApp> {
     _authNavigationController = AuthNavigationController(
       navigate: widget.router.go,
       clearSession: () async {
+        await sl<CartPersistence>().clear();
         await widget.authSessionCubit.logout();
       },
     );

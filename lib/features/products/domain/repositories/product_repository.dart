@@ -9,4 +9,6 @@ abstract class ProductRepository {
   Future<Either<Failure, List<Product>>> getActiveProductsByWorkshop(
     String workshopId,
   );
+
+  void invalidateActiveProductsCache({String? workshopId});
 }

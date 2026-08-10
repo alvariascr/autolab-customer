@@ -26,6 +26,7 @@ void main() {
         'workshops': {
           'name': 'Autolab Escazu',
           'avatar_url': 'https://example.com/avatar.png',
+          'delivery_fee': '3200',
         },
       });
 
@@ -39,6 +40,7 @@ void main() {
       expect(model.providerName, 'Repuestos CR');
       expect(model.workshopName, 'Autolab Escazu');
       expect(model.workshopAvatarUrl, 'https://example.com/avatar.png');
+      expect(model.workshopDeliveryFee, 3200);
       expect(model.requiresAppointment, isTrue);
       expect(model.isSchedulable, isTrue);
       expect(model.estimatedDurationHours, 1.5);

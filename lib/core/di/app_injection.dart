@@ -11,6 +11,20 @@ import '../../features/appointments/domain/repositories/appointment_repository.d
 import '../../features/appointments/presentation/cubit/create_appointment_cubit.dart';
 import '../../features/appointments/presentation/cubit/my_appointments_cubit.dart';
 import '../../features/auth/di/auth_injection.dart';
+import '../../features/cart/application/cart_cubit.dart';
+import '../../features/cart/application/cart_items_service.dart';
+import '../../features/cart/application/cart_persistence.dart';
+import '../../features/cart/data/datasources/cart_checkout_remote_data_source.dart';
+import '../../features/cart/data/repositories/cart_repository_impl.dart';
+import '../../features/cart/data/repositories/delivery_address_repository_impl.dart';
+import '../../features/cart/domain/repositories/cart_repository.dart';
+import '../../features/cart/domain/repositories/delivery_address_repository.dart';
+import '../../features/cart/domain/usecases/create_cart_order.dart';
+import '../../features/cart/domain/usecases/delete_delivery_address.dart';
+import '../../features/cart/domain/usecases/get_workshop_delivery_fee.dart';
+import '../../features/cart/domain/usecases/load_delivery_addresses.dart';
+import '../../features/cart/domain/usecases/save_delivery_address.dart';
+import '../../features/cart/domain/usecases/set_default_delivery_address.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
 import '../../features/payments/application/laropay_checkout_launcher.dart';
@@ -28,6 +42,7 @@ import '../../features/payments/domain/usecases/generate_laropay_link.dart';
 import '../../features/payments/domain/usecases/get_laropay_payment_context.dart';
 import '../../features/payments/domain/usecases/get_laropay_purchases.dart';
 import '../../features/payments/domain/usecases/refresh_laropay_purchase_status.dart';
+import '../../features/products/application/product_inventory_refresh_notifier.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
@@ -123,6 +138,49 @@ Future<void> _registerExternalDependencies() async {
 
 void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
+  sl.registerLazySingleton<ICartCheckoutRemoteDataSource>(
+    () => SupabaseCartCheckoutRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<CartItemsService>(CartItemsService.new);
+  sl.registerLazySingleton<CartPersistence>(CartPersistence.new);
+  sl.registerLazySingleton<CartRepository>(
+    () => CartRepositoryImpl(sl<ICartCheckoutRemoteDataSource>()),
+  );
+  sl.registerLazySingleton<DeliveryAddressRepository>(
+    () => DeliveryAddressRepositoryImpl(sl<ICartCheckoutRemoteDataSource>()),
+  );
+  sl.registerLazySingleton<LoadDeliveryAddresses>(
+    () => LoadDeliveryAddresses(sl<DeliveryAddressRepository>()),
+  );
+  sl.registerLazySingleton<SaveDeliveryAddress>(
+    () => SaveDeliveryAddress(sl<DeliveryAddressRepository>()),
+  );
+  sl.registerLazySingleton<SetDefaultDeliveryAddress>(
+    () => SetDefaultDeliveryAddress(sl<DeliveryAddressRepository>()),
+  );
+  sl.registerLazySingleton<DeleteDeliveryAddress>(
+    () => DeleteDeliveryAddress(sl<DeliveryAddressRepository>()),
+  );
+  sl.registerLazySingleton<GetWorkshopDeliveryFee>(
+    () => GetWorkshopDeliveryFee(sl<WorkshopRepository>()),
+  );
+  sl.registerLazySingleton<CreateCartOrder>(
+    () => CreateCartOrder(sl<CartRepository>()),
+  );
+  sl.registerFactory<CartCubit>(
+    () => CartCubit(
+      loadDeliveryAddresses: sl<LoadDeliveryAddresses>(),
+      saveDeliveryAddress: sl<SaveDeliveryAddress>(),
+      setDefaultDeliveryAddress: sl<SetDefaultDeliveryAddress>(),
+      deleteDeliveryAddress: sl<DeleteDeliveryAddress>(),
+      getWorkshopDeliveryFee: sl<GetWorkshopDeliveryFee>(),
+      createCartOrder: sl<CreateCartOrder>(),
+      inventoryRefreshNotifier: sl<ProductInventoryRefreshNotifier>(),
+      productRepository: sl<ProductRepository>(),
+      itemsService: sl<CartItemsService>(),
+      persistence: sl<CartPersistence>(),
+    ),
+  );
   sl.registerLazySingleton<LaropayLinkRemoteDataSource>(
     () => LaropayLinkRemoteDataSourceImpl(
       client: sl<http.Client>(),
@@ -194,6 +252,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<ProductInventoryRefreshNotifier>(
+    ProductInventoryRefreshNotifier.new,
   );
   sl.registerLazySingleton<ProductRepository>(
     () => ProductRepositoryImpl(

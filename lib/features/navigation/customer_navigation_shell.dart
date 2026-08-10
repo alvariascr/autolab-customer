@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/di/app_injection.dart';
 import '../../core/theme/autolab_customer.dart';
-import '../../l10n/app_localizations.dart';
+import '../cart/application/cart_cubit.dart';
+import '../cart/presentation/pages/cart_page.dart';
 import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
 import '../profile/application/garage_vehicle_controller.dart';
@@ -21,21 +25,34 @@ class CustomerNavigationShell extends StatefulWidget {
 
 class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   final HomeCustomerController _homeController = HomeCustomerController();
+  late final CartCubit _cartCubit;
   int _navIndex = 0;
   int _pageIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _cartCubit = sl<CartCubit>();
     _setInitialIndex(widget.initialIndex);
+    _refreshCartIfSelected();
   }
 
   @override
   void didUpdateWidget(covariant CustomerNavigationShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialIndex != widget.initialIndex) {
-      _setInitialIndex(widget.initialIndex);
+    if (oldWidget.initialIndex != widget.initialIndex ||
+        _navIndex != widget.initialIndex) {
+      setState(() {
+        _setInitialIndex(widget.initialIndex);
+      });
+      _refreshCartIfSelected();
     }
+  }
+
+  @override
+  void dispose() {
+    _cartCubit.close();
+    super.dispose();
   }
 
   void _setInitialIndex(int index) {
@@ -78,6 +95,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
         _ => 0,
       };
     });
+    _refreshCartIfSelected();
   }
 
   void _handleSearchClosed() {
@@ -93,78 +111,38 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      extendBody: true,
-      body: IndexedStack(
-        index: _pageIndex,
-        children: [
-          HomeCustomerPage(
-            controller: _homeController,
-            showBottomNavigation: false,
-            onSearchClosed: _handleSearchClosed,
-          ),
-          const MapPage(showBottomNavigation: false),
-          ProfilePage(
-            showBottomNavigation: false,
-            garageVehicleController: sl<GarageVehicleController>(),
-          ),
-          const _CartPlaceholderPage(),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomNavbar(
-        currentIndex: _navIndex,
-        onTap: _handleNavigation,
+    return BlocProvider.value(
+      value: _cartCubit,
+      child: Scaffold(
+        backgroundColor: AutolabCustomer.customerBackgroundColor(context),
+        extendBody: true,
+        body: IndexedStack(
+          index: _pageIndex,
+          children: [
+            HomeCustomerPage(
+              controller: _homeController,
+              showBottomNavigation: false,
+              onSearchClosed: _handleSearchClosed,
+            ),
+            const MapPage(showBottomNavigation: false),
+            ProfilePage(
+              showBottomNavigation: false,
+              garageVehicleController: sl<GarageVehicleController>(),
+            ),
+            const CartPage(),
+          ],
+        ),
+        bottomNavigationBar: CustomBottomNavbar(
+          currentIndex: _navIndex,
+          onTap: _handleNavigation,
+        ),
       ),
     );
   }
-}
 
-class _CartPlaceholderPage extends StatelessWidget {
-  const _CartPlaceholderPage();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.all(
-          AutolabCustomer.responsiveScreenMargin(context),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.shopping_cart_outlined,
-                  color: AutolabCustomer.primary,
-                  size: AutolabCustomer.iconLg + 10,
-                ),
-                const SizedBox(height: AutolabCustomer.spacingMd),
-                Text(
-                  l10n.navigationCartComingSoonTitle,
-                  textAlign: TextAlign.center,
-                  style: AutolabCustomer.bodyLarge.copyWith(
-                    color: AutolabCustomer.customerTextColor(context),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: AutolabCustomer.spacingSm),
-                Text(
-                  l10n.navigationCartComingSoonMessage,
-                  textAlign: TextAlign.center,
-                  style: AutolabCustomer.body.copyWith(
-                    color: AutolabCustomer.customerSecondaryTextColor(context),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  void _refreshCartIfSelected() {
+    if (_navIndex == 3) {
+      unawaited(_cartCubit.reloadPersistedCart());
+    }
   }
 }

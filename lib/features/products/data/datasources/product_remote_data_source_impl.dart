@@ -27,7 +27,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     product_categories(name),
     product_brands(name),
     product_providers(name),
-    workshops(name, avatar_url)
+    workshops(name, avatar_url, delivery_fee)
   ''';
 
   @override
@@ -105,7 +105,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   }
 
   bool _isMissingStatusColumn(PostgrestException error) {
-    return error.code == '42703' ||
-        error.message.toLowerCase().contains('status');
+    final message = error.message.toLowerCase();
+    return error.code == '42703' && message.contains('status');
   }
 }

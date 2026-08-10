@@ -100,6 +100,22 @@ class ProductRepositoryImpl implements ProductRepository {
     return result;
   }
 
+  @override
+  void invalidateActiveProductsCache({String? workshopId}) {
+    _activeProductsCache = null;
+    _activeProductsRequest = null;
+
+    final normalizedWorkshopId = workshopId?.trim();
+    if (normalizedWorkshopId == null || normalizedWorkshopId.isEmpty) {
+      _productsByWorkshopCache.clear();
+      _productsByWorkshopRequests.clear();
+      return;
+    }
+
+    _productsByWorkshopCache.remove(normalizedWorkshopId);
+    _productsByWorkshopRequests.remove(normalizedWorkshopId);
+  }
+
   Future<Either<Failure, List<Product>>> _guard({
     required String action,
     required Future<List<Product>> Function() loader,
