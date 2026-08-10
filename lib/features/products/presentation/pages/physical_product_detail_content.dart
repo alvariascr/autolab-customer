@@ -130,13 +130,18 @@ class _PhysicalProductDetailContentState
                                       .read<CartCubit>()
                                       .addProduct(product, quantity: _quantity);
                                   if (!wasAdded) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.productDetailStockLimitReached,
-                                        ),
-                                      ),
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
                                     );
+                                    messenger
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.productDetailStockLimitReached,
+                                          ),
+                                        ),
+                                      );
                                     return;
                                   }
 
@@ -174,13 +179,18 @@ class _PhysicalProductDetailContentState
                                       .read<CartCubit>()
                                       .addProduct(product, quantity: _quantity);
                                   if (!wasAdded) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.productDetailStockLimitReached,
-                                        ),
-                                      ),
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
                                     );
+                                    messenger
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.productDetailStockLimitReached,
+                                          ),
+                                        ),
+                                      );
                                     return;
                                   }
 
