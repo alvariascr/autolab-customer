@@ -21,6 +21,15 @@ begin
     raise exception 'cart_auth_required';
   end if;
 
+  if btrim(p_province) = ''
+    or btrim(p_canton) = ''
+    or btrim(p_district) = ''
+    or btrim(p_exact_address) = ''
+    or btrim(p_phone) = ''
+  then
+    raise exception 'cart_delivery_details_required';
+  end if;
+
   if p_address_id is null then
     update public.customer_delivery_addresses
     set is_default = false
