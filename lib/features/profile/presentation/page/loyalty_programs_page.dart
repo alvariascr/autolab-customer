@@ -208,74 +208,62 @@ class _LoyaltyHeaderLogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scale = (size.width / _sourceWidth).clamp(
-      0.0,
-      size.height / _sourceHeight,
-    );
-    final dx = (size.width - _sourceWidth * scale) / 2;
+    final scale = size.width / _sourceWidth;
     final dy = (size.height - _sourceHeight * scale) / 2;
-
-    canvas.save();
-    canvas.translate(dx, dy);
-    canvas.scale(scale);
-
-    final paint = Paint()
-      ..color = AutolabCustomer.primary
-      ..style = PaintingStyle.fill;
-    final starPaint = Paint()
-      ..color = AutolabCustomer.primary
-      ..style = PaintingStyle.fill;
-
-    final left = Path()
-      ..moveTo(0, 169)
-      ..lineTo(65, 60)
-      ..lineTo(185, 60)
-      ..lineTo(246, 169)
-      ..lineTo(154, 169)
-      ..lineTo(127, 120)
-      ..lineTo(97, 169)
-      ..close();
-    final center = Path()
-      ..moveTo(220, 60)
-      ..lineTo(338, 60)
-      ..lineTo(400, 169)
-      ..lineTo(309, 169)
-      ..lineTo(280, 119)
-      ..lineTo(252, 169)
-      ..lineTo(160, 169)
-      ..close();
-    final right = Path()
-      ..moveTo(360, 60)
-      ..lineTo(482, 60)
-      ..lineTo(548, 169)
-      ..lineTo(455, 169)
-      ..lineTo(425, 119)
-      ..lineTo(398, 169)
-      ..lineTo(306, 169)
-      ..close();
-
     canvas
-      ..drawPath(left, paint)
-      ..drawPath(center, paint)
-      ..drawPath(right, paint);
+      ..save()
+      ..translate(0, dy)
+      ..scale(scale);
 
-    final star = Path()
-      ..moveTo(522, 21)
-      ..lineTo(535, 48)
-      ..lineTo(565, 52)
-      ..lineTo(543, 73)
-      ..lineTo(548, 103)
-      ..lineTo(522, 89)
-      ..lineTo(495, 103)
-      ..lineTo(500, 73)
-      ..lineTo(478, 52)
-      ..lineTo(509, 48)
-      ..close();
-    canvas.drawPath(star, starPaint);
+    final paint = Paint()..color = AutolabCustomer.primary;
+    for (final polygon in _polygons) {
+      final path = Path()..moveTo(polygon.first.dx, polygon.first.dy);
+      for (final point in polygon.skip(1)) {
+        path.lineTo(point.dx, point.dy);
+      }
+      path.close();
+      canvas.drawPath(path, paint);
+    }
 
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+
+  static const _polygons = [
+    [
+      Offset(503.87, 7.07),
+      Offset(512.96, 35.05),
+      Offset(542.39, 35.05),
+      Offset(518.58, 52.35),
+      Offset(527.68, 80.34),
+      Offset(503.87, 63.04),
+      Offset(480.07, 80.34),
+      Offset(489.16, 52.35),
+      Offset(465.35, 35.05),
+      Offset(494.78, 35.05),
+    ],
+    [
+      Offset(279.41, 7.07),
+      Offset(404.43, 7.07),
+      Offset(462.51, 109.9),
+      Offset(542.39, 109.9),
+      Offset(603.12, 216.93),
+      Offset(397.95, 216.93),
+    ],
+    [
+      Offset(18.88, 216.93),
+      Offset(51.05, 160),
+      Offset(22.67, 109.9),
+      Offset(79.45, 109.74),
+      Offset(137.46, 7.07),
+      Offset(261.85, 7.07),
+      Offset(380.35, 216.93),
+      Offset(256, 216.93),
+      Offset(199.66, 117.18),
+      Offset(174.43, 161.84),
+      Offset(205.94, 216.93),
+    ],
+  ];
 }
