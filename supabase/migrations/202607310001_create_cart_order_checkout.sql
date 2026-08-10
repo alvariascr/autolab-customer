@@ -119,9 +119,9 @@ begin
   end if;
 
   if (
-    select count(distinct input."inventoryItemId")
+    select count(distinct input.inventory_item_id)
     from jsonb_to_recordset(p_products)
-      as input("inventoryItemId" uuid, quantity integer)
+      as input(inventory_item_id uuid, quantity integer)
   ) <> jsonb_array_length(p_products) then
     raise exception using message = 'cart_products_invalid';
   end if;
@@ -151,16 +151,16 @@ begin
       input.invalid_quantity_count
     from (
       select
-        "inventoryItemId",
+        inventory_item_id,
         sum(quantity)::integer as quantity,
         count(*)::integer as input_rows,
         count(*) filter (where quantity is null or quantity <= 0)::integer
           as invalid_quantity_count
       from jsonb_to_recordset(p_products)
-        as input("inventoryItemId" uuid, quantity integer)
-      group by "inventoryItemId"
+        as input(inventory_item_id uuid, quantity integer)
+      group by inventory_item_id
     ) input
-    join public.inventory_items ii on ii.id = input."inventoryItemId"
+    join public.inventory_items ii on ii.id = input.inventory_item_id
     where ii.status = 'active'
       and ii.item_type <> 'service'
     order by ii.id

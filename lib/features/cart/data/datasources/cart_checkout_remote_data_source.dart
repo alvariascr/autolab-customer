@@ -122,7 +122,7 @@ class CartCheckoutRemoteDataSource {
           'p_products': request.products
               .map(
                 (product) => {
-                  'inventoryItemId': product.inventoryItemId,
+                  'inventory_item_id': product.inventoryItemId,
                   'quantity': product.quantity,
                 },
               )
