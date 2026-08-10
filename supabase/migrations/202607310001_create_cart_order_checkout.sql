@@ -220,7 +220,7 @@ begin
     v_delivery_canton := coalesce(trim(p_delivery_details->>'canton'), '');
     v_delivery_district := coalesce(trim(p_delivery_details->>'district'), '');
     v_delivery_exact_address :=
-      coalesce(trim(p_delivery_details->>'exactAddress'), '');
+      coalesce(trim(p_delivery_details->>'exact_address'), '');
 
     if v_delivery_province = ''
       or v_delivery_canton = ''

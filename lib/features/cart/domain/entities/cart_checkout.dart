@@ -115,7 +115,7 @@ class CartCheckoutDeliveryDetails {
       'province': province,
       'canton': canton,
       'district': district,
-      'exactAddress': exactAddress,
+      'exact_address': exactAddress,
       'phone': phone,
     };
   }
