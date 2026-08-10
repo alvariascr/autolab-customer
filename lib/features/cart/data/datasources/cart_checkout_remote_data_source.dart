@@ -97,22 +97,6 @@ class CartCheckoutRemoteDataSource {
     }
   }
 
-  Future<double> getWorkshopDeliveryFee(String workshopId) async {
-    try {
-      final response = await _client
-          .from('workshops')
-          .select('delivery_fee')
-          .eq('id', workshopId)
-          .single();
-
-      return (response['delivery_fee'] as num?)?.toDouble() ?? 0;
-    } on PostgrestException catch (error) {
-      throw CartCheckoutException(_cartErrorKey(error.message));
-    } on AuthException catch (error) {
-      throw CartCheckoutException(_cartErrorKey(error.message));
-    }
-  }
-
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) async {
     final Object? response;
     try {

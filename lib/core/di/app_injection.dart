@@ -14,7 +14,9 @@ import '../../features/auth/di/auth_injection.dart';
 import '../../features/cart/application/cart_cubit.dart';
 import '../../features/cart/data/datasources/cart_checkout_remote_data_source.dart';
 import '../../features/cart/data/repositories/cart_repository_impl.dart';
+import '../../features/cart/data/repositories/delivery_address_repository_impl.dart';
 import '../../features/cart/domain/repositories/cart_repository.dart';
+import '../../features/cart/domain/repositories/delivery_address_repository.dart';
 import '../../features/cart/domain/usecases/create_cart_order.dart';
 import '../../features/cart/domain/usecases/delete_delivery_address.dart';
 import '../../features/cart/domain/usecases/get_workshop_delivery_fee.dart';
@@ -139,20 +141,23 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<CartRepository>(
     () => CartRepositoryImpl(sl<CartCheckoutRemoteDataSource>()),
   );
+  sl.registerLazySingleton<DeliveryAddressRepository>(
+    () => DeliveryAddressRepositoryImpl(sl<CartCheckoutRemoteDataSource>()),
+  );
   sl.registerLazySingleton<LoadDeliveryAddresses>(
-    () => LoadDeliveryAddresses(sl<CartRepository>()),
+    () => LoadDeliveryAddresses(sl<DeliveryAddressRepository>()),
   );
   sl.registerLazySingleton<SaveDeliveryAddress>(
-    () => SaveDeliveryAddress(sl<CartRepository>()),
+    () => SaveDeliveryAddress(sl<DeliveryAddressRepository>()),
   );
   sl.registerLazySingleton<SetDefaultDeliveryAddress>(
-    () => SetDefaultDeliveryAddress(sl<CartRepository>()),
+    () => SetDefaultDeliveryAddress(sl<DeliveryAddressRepository>()),
   );
   sl.registerLazySingleton<DeleteDeliveryAddress>(
-    () => DeleteDeliveryAddress(sl<CartRepository>()),
+    () => DeleteDeliveryAddress(sl<DeliveryAddressRepository>()),
   );
   sl.registerLazySingleton<GetWorkshopDeliveryFee>(
-    () => GetWorkshopDeliveryFee(sl<CartRepository>()),
+    () => GetWorkshopDeliveryFee(sl<WorkshopRepository>()),
   );
   sl.registerLazySingleton<CreateCartOrder>(
     () => CreateCartOrder(sl<CartRepository>()),

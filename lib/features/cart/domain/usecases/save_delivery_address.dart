@@ -1,10 +1,10 @@
 import '../entities/cart_checkout.dart';
-import '../repositories/cart_repository.dart';
+import '../repositories/delivery_address_repository.dart';
 
 class SaveDeliveryAddress {
   const SaveDeliveryAddress(this._repository);
 
-  final CartRepository _repository;
+  final DeliveryAddressRepository _repository;
 
   Future<CustomerDeliveryAddress> call(
     CustomerDeliveryAddressRequest request, {

@@ -11,32 +11,4 @@ class CartRepositoryImpl implements CartRepository {
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) {
     return _remoteDataSource.createOrder(request);
   }
-
-  @override
-  Future<void> deleteDeliveryAddress(String addressId) {
-    return _remoteDataSource.deleteDeliveryAddress(addressId);
-  }
-
-  @override
-  Future<List<CustomerDeliveryAddress>> getDeliveryAddresses() {
-    return _remoteDataSource.getDeliveryAddresses();
-  }
-
-  @override
-  Future<double> getWorkshopDeliveryFee(String workshopId) {
-    return _remoteDataSource.getWorkshopDeliveryFee(workshopId);
-  }
-
-  @override
-  Future<CustomerDeliveryAddress> saveDeliveryAddress(
-    CustomerDeliveryAddressRequest request, {
-    String? addressId,
-  }) {
-    return _remoteDataSource.saveDeliveryAddress(request, addressId: addressId);
-  }
-
-  @override
-  Future<CustomerDeliveryAddress> setDefaultDeliveryAddress(String addressId) {
-    return _remoteDataSource.setDefaultDeliveryAddress(addressId);
-  }
 }

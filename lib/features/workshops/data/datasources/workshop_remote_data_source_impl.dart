@@ -22,6 +22,7 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
           location_lat,
           location_lng,
           delivery_radius_km,
+          delivery_fee,
           offers_home_service,
           cover_url,
           avatar_url
@@ -45,6 +46,7 @@ class WorkshopRemoteDataSourceImpl implements WorkshopRemoteDataSource {
           location_lat,
           location_lng,
           delivery_radius_km,
+          delivery_fee,
           offers_home_service,
           cover_url,
           avatar_url,
