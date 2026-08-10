@@ -76,9 +76,13 @@ class AppRouter {
       GoRoute(
         path: '/home-customer',
         builder: (context, state) {
-          final initialIndex = state.uri.queryParameters['tab'] == 'cart'
-              ? 3
-              : 0;
+          final initialIndex = switch (state.uri.queryParameters['tab']) {
+            'map' => 1,
+            'search' => 2,
+            'cart' => 3,
+            'profile' => 4,
+            _ => 0,
+          };
 
           return CustomerNavigationShell(initialIndex: initialIndex);
         },

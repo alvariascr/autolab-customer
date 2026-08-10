@@ -43,6 +43,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
     _pageIndex = switch (index) {
       0 => 0,
       1 => 1,
+      2 => 0,
       3 => 3,
       4 => 2,
       _ => 0,
@@ -101,6 +102,8 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
         children: [
           HomeCustomerPage(
             controller: _homeController,
+            initialIndex: _navIndex == 2 ? 2 : 0,
+            initialShowSearchBar: _navIndex == 2,
             showBottomNavigation: false,
             onSearchClosed: _handleSearchClosed,
           ),
