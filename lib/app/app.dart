@@ -18,12 +18,6 @@ import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
 import '../features/auth/ui/auth_ui_error_resolver.dart';
 import '../features/cart/application/cart_cubit.dart';
-import '../features/cart/domain/usecases/create_cart_order.dart';
-import '../features/cart/domain/usecases/delete_delivery_address.dart';
-import '../features/cart/domain/usecases/get_workshop_delivery_fee.dart';
-import '../features/cart/domain/usecases/load_delivery_addresses.dart';
-import '../features/cart/domain/usecases/save_delivery_address.dart';
-import '../features/cart/domain/usecases/set_default_delivery_address.dart';
 import '../features/payments/application/laropay_return_navigation_controller.dart';
 import '../l10n/app_localizations.dart';
 
@@ -106,16 +100,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider.value(value: widget.authSessionCubit),
         BlocProvider.value(value: widget.locationCubit),
         BlocProvider(create: (_) => AppThemeModeCubit()),
-        BlocProvider(
-          create: (_) => CartCubit(
-            loadDeliveryAddresses: sl<LoadDeliveryAddresses>(),
-            saveDeliveryAddress: sl<SaveDeliveryAddress>(),
-            setDefaultDeliveryAddress: sl<SetDefaultDeliveryAddress>(),
-            deleteDeliveryAddress: sl<DeleteDeliveryAddress>(),
-            getWorkshopDeliveryFee: sl<GetWorkshopDeliveryFee>(),
-            createCartOrder: sl<CreateCartOrder>(),
-          ),
-        ),
+        BlocProvider(create: (_) => sl<CartCubit>()),
       ],
       child: BlocBuilder<AppThemeModeCubit, ThemeMode>(
         builder: (context, themeMode) {
