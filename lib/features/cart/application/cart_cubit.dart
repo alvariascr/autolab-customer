@@ -50,11 +50,7 @@ class CartCubit extends Cubit<CartState> {
   var _cartMutationVersion = 0;
 
   bool addProduct(Product product, {int quantity = 1}) {
-    final update = _itemsService.addProduct(
-      state,
-      product,
-      quantity: quantity,
-    );
+    final update = _itemsService.addProduct(state, product, quantity: quantity);
     if (!update.wasChanged) {
       return false;
     }
@@ -77,7 +73,9 @@ class CartCubit extends Cubit<CartState> {
   }
 
   void removeProduct(String productId) {
-    _emitAndSave(_stateWithItems(_itemsService.removeProduct(state, productId)));
+    _emitAndSave(
+      _stateWithItems(_itemsService.removeProduct(state, productId)),
+    );
   }
 
   void clear() {
@@ -446,4 +444,3 @@ class CartCubit extends Cubit<CartState> {
     await _persistence.save(cart);
   }
 }
-
