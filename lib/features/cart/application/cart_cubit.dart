@@ -48,6 +48,7 @@ class CartCubit extends Cubit<CartState> {
   final CartPersistence _persistence;
   var _sessionVersion = 0;
   var _cartMutationVersion = 0;
+  Future<void> _pendingSave = Future.value();
 
   bool addProduct(Product product, {int quantity = 1}) {
     final update = _itemsService.addProduct(state, product, quantity: quantity);
@@ -437,10 +438,16 @@ class CartCubit extends Cubit<CartState> {
   void _emitAndSave(CartState nextState) {
     _cartMutationVersion++;
     emit(nextState);
-    unawaited(_saveCart(nextState));
+    unawaited(_enqueueSave(nextState));
   }
 
-  Future<void> _saveCart(CartState cart) async {
-    await _persistence.save(cart);
+  Future<void> _enqueueSave(CartState cart) {
+    _pendingSave = _pendingSave
+        .catchError((_) {
+          // La persistencia local es best-effort; mantenga viva la cola.
+        })
+        .then((_) => _persistence.save(cart));
+
+    return _pendingSave;
   }
 }
