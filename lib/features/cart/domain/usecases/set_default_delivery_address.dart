@@ -7,6 +7,11 @@ class SetDefaultDeliveryAddress {
   final DeliveryAddressRepository _repository;
 
   Future<CustomerDeliveryAddress> call(String addressId) {
-    return _repository.setDefaultDeliveryAddress(addressId);
+    final trimmedId = addressId.trim();
+    if (trimmedId.isEmpty) {
+      throw const CartCheckoutException('cart_invalid_address_id');
+    }
+
+    return _repository.setDefaultDeliveryAddress(trimmedId);
   }
 }
