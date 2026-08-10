@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../application/product_inventory_refresh_notifier.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import 'physical_product_detail_content.dart';
@@ -28,9 +31,22 @@ class ProductDetailPage extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
-  late final Future<Product?> _productFuture = widget.product == null
-      ? _loadProduct()
-      : Future.value(widget.product);
+  late Future<Product?> _productFuture;
+  late final StreamSubscription<void> _inventoryRefreshSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _productFuture = _loadProduct();
+    _inventoryRefreshSubscription = sl<ProductInventoryRefreshNotifier>().stream
+        .listen((_) => _refreshProduct());
+  }
+
+  @override
+  void dispose() {
+    _inventoryRefreshSubscription.cancel();
+    super.dispose();
+  }
 
   Future<Product?> _loadProduct() async {
     final result = await sl<ProductRepository>().getActiveProductsByWorkshop(
@@ -38,10 +54,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
 
     return result.fold(
-      (_) => null,
+      (_) => widget.product,
       (products) =>
-          products.where((item) => item.id == widget.productId).firstOrNull,
+          products.where((item) => item.id == widget.productId).firstOrNull ??
+          widget.product,
     );
+  }
+
+  void _refreshProduct() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _productFuture = _loadProduct();
+    });
   }
 
   @override

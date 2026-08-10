@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart' show Either;
 import 'package:flutter/material.dart';
@@ -10,6 +12,7 @@ import '../../../../core/logging/feature_logger.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
+import '../../../products/application/product_inventory_refresh_notifier.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/presentation/widgets/product_image.dart';

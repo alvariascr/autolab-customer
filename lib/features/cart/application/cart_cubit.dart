@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../products/application/product_inventory_refresh_notifier.dart';
 import '../../products/domain/entities/product.dart';
+import '../../products/domain/repositories/product_repository.dart';
 import '../domain/entities/cart_checkout.dart';
 import '../domain/usecases/create_cart_order.dart';
 import '../domain/usecases/delete_delivery_address.dart';
@@ -24,6 +26,8 @@ class CartCubit extends Cubit<CartState> {
     required DeleteDeliveryAddress deleteDeliveryAddress,
     required GetWorkshopDeliveryFee getWorkshopDeliveryFee,
     required CreateCartOrder createCartOrder,
+    required ProductInventoryRefreshNotifier inventoryRefreshNotifier,
+    required ProductRepository productRepository,
     CartItemsService itemsService = const CartItemsService(),
     CartPersistence persistence = const CartPersistence(),
   }) : _loadDeliveryAddresses = loadDeliveryAddresses,
@@ -32,6 +36,8 @@ class CartCubit extends Cubit<CartState> {
        _deleteDeliveryAddress = deleteDeliveryAddress,
        _getWorkshopDeliveryFee = getWorkshopDeliveryFee,
        _createCartOrder = createCartOrder,
+       _inventoryRefreshNotifier = inventoryRefreshNotifier,
+       _productRepository = productRepository,
        _itemsService = itemsService,
        _persistence = persistence,
        super(const CartState()) {
@@ -46,6 +52,8 @@ class CartCubit extends Cubit<CartState> {
   final DeleteDeliveryAddress _deleteDeliveryAddress;
   final GetWorkshopDeliveryFee _getWorkshopDeliveryFee;
   final CreateCartOrder _createCartOrder;
+  final ProductInventoryRefreshNotifier _inventoryRefreshNotifier;
+  final ProductRepository _productRepository;
   final CartItemsService _itemsService;
   final CartPersistence _persistence;
   late final Future<void> _initialization;
@@ -390,7 +398,10 @@ class CartCubit extends Cubit<CartState> {
         ),
       );
 
+      final workshopId = state.singleWorkshopId;
+      _productRepository.invalidateActiveProductsCache(workshopId: workshopId);
       clear();
+      _inventoryRefreshNotifier.notify();
       return result;
     } catch (error) {
       emit(

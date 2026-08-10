@@ -42,6 +42,7 @@ import '../../features/payments/domain/usecases/generate_laropay_link.dart';
 import '../../features/payments/domain/usecases/get_laropay_payment_context.dart';
 import '../../features/payments/domain/usecases/get_laropay_purchases.dart';
 import '../../features/payments/domain/usecases/refresh_laropay_purchase_status.dart';
+import '../../features/products/application/product_inventory_refresh_notifier.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
@@ -174,6 +175,8 @@ void _registerFeatureDependencies() {
       deleteDeliveryAddress: sl<DeleteDeliveryAddress>(),
       getWorkshopDeliveryFee: sl<GetWorkshopDeliveryFee>(),
       createCartOrder: sl<CreateCartOrder>(),
+      inventoryRefreshNotifier: sl<ProductInventoryRefreshNotifier>(),
+      productRepository: sl<ProductRepository>(),
       itemsService: sl<CartItemsService>(),
       persistence: sl<CartPersistence>(),
     ),
@@ -249,6 +252,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<ProductInventoryRefreshNotifier>(
+    ProductInventoryRefreshNotifier.new,
   );
   sl.registerLazySingleton<ProductRepository>(
     () => ProductRepositoryImpl(

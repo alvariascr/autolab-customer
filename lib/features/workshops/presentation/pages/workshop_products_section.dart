@@ -12,15 +12,16 @@ class _ProductsSection extends StatefulWidget {
 
 class _ProductsSectionState extends State<_ProductsSection> {
   late Future<Either<Failure, List<Product>>> _productsFuture;
+  late final StreamSubscription<void> _inventoryRefreshSubscription;
   String _selectedSection = _SectionKey.all;
 
   @override
   void initState() {
     super.initState();
     _selectedSection = _normalizeInitialSection(widget.initialSection);
-    _productsFuture = sl<ProductRepository>().getActiveProductsByWorkshop(
-      widget.workshopId,
-    );
+    _productsFuture = _loadProducts();
+    _inventoryRefreshSubscription = sl<ProductInventoryRefreshNotifier>().stream
+        .listen((_) => _refreshProducts());
   }
 
   @override
@@ -29,6 +30,12 @@ class _ProductsSectionState extends State<_ProductsSection> {
     if (oldWidget.initialSection != widget.initialSection) {
       _selectedSection = _normalizeInitialSection(widget.initialSection);
     }
+  }
+
+  @override
+  void dispose() {
+    _inventoryRefreshSubscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -110,6 +117,22 @@ class _ProductsSectionState extends State<_ProductsSection> {
         );
       },
     );
+  }
+
+  Future<Either<Failure, List<Product>>> _loadProducts() {
+    return sl<ProductRepository>().getActiveProductsByWorkshop(
+      widget.workshopId,
+    );
+  }
+
+  void _refreshProducts() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _productsFuture = _loadProducts();
+    });
   }
 
   Map<String, List<Product>> _buildSections(List<Product> products) {
