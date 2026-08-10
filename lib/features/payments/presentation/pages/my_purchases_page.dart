@@ -52,95 +52,88 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      appBar: AppBar(
-        backgroundColor: AutolabCustomer.primary,
-        foregroundColor: AutolabCustomer.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-              return;
-            }
-
-            context.go('/home-customer');
-          },
-        ),
-        title: Text(
-          l10n.myPurchasesTitle,
-          style: const TextStyle(
-            fontFamily: AutolabCustomer.primaryFont,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: FutureBuilder<List<LaropayPurchase>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        child: Column(
+          children: [
+            _CustomerPageHeader(
+              title: l10n.myPurchasesTitle,
+              notificationTooltip: l10n.myAppointmentsNotificationsTooltip,
+              onBack: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                  return;
+                }
 
-            if (snapshot.hasError) {
-              return _PurchaseMessageState(
-                icon: Icons.cloud_off_rounded,
-                title: l10n.myPurchasesLoadErrorTitle,
-                message: snapshot.error is _PurchaseLoadException
-                    ? l10n.authErrorSessionExpired
-                    : l10n.myAppointmentsRetryMessage,
-                color: AutolabCustomer.error,
-                actionLabel: l10n.myPurchasesRetryAction,
-                onAction: _reload,
-              );
-            }
+                context.go('/home-customer');
+              },
+            ),
+            Expanded(
+              child: FutureBuilder<List<LaropayPurchase>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-            final purchases = snapshot.data ?? const <LaropayPurchase>[];
-            if (purchases.isEmpty) {
-              return _PurchaseMessageState(
-                icon: Icons.shopping_bag_outlined,
-                title: l10n.myPurchasesEmptyTitle,
-                message: l10n.myPurchasesEmptyMessage,
-                color: AutolabCustomer.primary,
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: _reload,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Text(
-                      l10n.myPurchasesSubtitle,
-                      textAlign: TextAlign.center,
-                      style: AutolabCustomer.body.copyWith(
-                        color: AutolabCustomer.customerSecondaryTextColor(
-                          context,
-                        ),
-                        fontWeight: FontWeight.w600,
-                      ),
+                  if (snapshot.hasError) {
+                    return _PurchaseMessageState(
+                      icon: Icons.cloud_off_rounded,
+                      title: l10n.myPurchasesLoadErrorTitle,
+                      message: snapshot.error is _PurchaseLoadException
+                          ? l10n.authErrorSessionExpired
+                          : l10n.myAppointmentsRetryMessage,
+                      color: AutolabCustomer.error,
+                      actionLabel: l10n.myPurchasesRetryAction,
+                      onAction: _reload,
                     );
                   }
 
-                  return _PurchaseCard(
-                    purchase: purchases[index - 1],
-                    onOpenLink: _openPurchaseLink,
-                    onRefreshStatus: _refreshPurchaseStatus,
-                    refreshing: _refreshingPurchaseIds.contains(
-                      purchases[index - 1].id,
+                  final purchases = snapshot.data ?? const <LaropayPurchase>[];
+                  if (purchases.isEmpty) {
+                    return _PurchaseMessageState(
+                      icon: Icons.shopping_bag_outlined,
+                      title: l10n.myPurchasesEmptyTitle,
+                      message: l10n.myPurchasesEmptyMessage,
+                      color: AutolabCustomer.primary,
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: _reload,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return Text(
+                            l10n.myPurchasesSubtitle,
+                            textAlign: TextAlign.center,
+                            style: AutolabCustomer.body.copyWith(
+                              color: AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        }
+
+                        return _PurchaseCard(
+                          purchase: purchases[index - 1],
+                          onOpenLink: _openPurchaseLink,
+                          onRefreshStatus: _refreshPurchaseStatus,
+                          refreshing: _refreshingPurchaseIds.contains(
+                            purchases[index - 1].id,
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 14),
+                      itemCount: purchases.length + 1,
                     ),
                   );
                 },
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 14),
-                itemCount: purchases.length + 1,
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: widget.showBottomNavigation
@@ -225,6 +218,191 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
       ),
     );
   }
+}
+
+class _CustomerPageHeader extends StatelessWidget {
+  const _CustomerPageHeader({
+    required this.title,
+    required this.notificationTooltip,
+    required this.onBack,
+  });
+
+  final String title;
+  final String notificationTooltip;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        horizontalMargin,
+        AutolabCustomer.spacingSm,
+        horizontalMargin,
+        0,
+      ),
+      child: SizedBox(
+        height: 72,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const Positioned(left: 0, top: 0, child: _CustomerHeaderLogo()),
+            Positioned(
+              left: 0,
+              bottom: 0,
+              child: _HeaderCircleButton(onTap: onBack),
+            ),
+            Positioned(
+              bottom: 0,
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AutolabCustomer.h3.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: IconButton(
+                tooltip: notificationTooltip,
+                onPressed: () {},
+                icon: Icon(
+                  Icons.notifications_none_rounded,
+                  color: AutolabCustomer.customerTextColor(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderCircleButton extends StatelessWidget {
+  const _HeaderCircleButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        onPressed: onTap,
+        style: IconButton.styleFrom(
+          backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+          foregroundColor: AutolabCustomer.customerSecondaryTextColor(context),
+        ),
+        icon: const Icon(
+          Icons.arrow_back_rounded,
+          size: AutolabCustomer.iconSm,
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerHeaderLogo extends StatelessWidget {
+  const _CustomerHeaderLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 58,
+      height: 22,
+      child: CustomPaint(painter: _CustomerHeaderLogoPainter()),
+    );
+  }
+}
+
+class _CustomerHeaderLogoPainter extends CustomPainter {
+  const _CustomerHeaderLogoPainter();
+
+  static const _sourceWidth = 622.0;
+  static const _sourceHeight = 224.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = (size.width / _sourceWidth).clamp(
+      0.0,
+      size.height / _sourceHeight,
+    );
+    final dx = (size.width - _sourceWidth * scale) / 2;
+    final dy = (size.height - _sourceHeight * scale) / 2;
+
+    canvas.save();
+    canvas.translate(dx, dy);
+    canvas.scale(scale);
+
+    final paint = Paint()
+      ..color = AutolabCustomer.primary
+      ..style = PaintingStyle.fill;
+    final starPaint = Paint()
+      ..color = AutolabCustomer.primary
+      ..style = PaintingStyle.fill;
+
+    final left = Path()
+      ..moveTo(0, 169)
+      ..lineTo(65, 60)
+      ..lineTo(185, 60)
+      ..lineTo(246, 169)
+      ..lineTo(154, 169)
+      ..lineTo(127, 120)
+      ..lineTo(97, 169)
+      ..close();
+    final center = Path()
+      ..moveTo(220, 60)
+      ..lineTo(338, 60)
+      ..lineTo(400, 169)
+      ..lineTo(309, 169)
+      ..lineTo(280, 119)
+      ..lineTo(252, 169)
+      ..lineTo(160, 169)
+      ..close();
+    final right = Path()
+      ..moveTo(360, 60)
+      ..lineTo(482, 60)
+      ..lineTo(548, 169)
+      ..lineTo(455, 169)
+      ..lineTo(425, 119)
+      ..lineTo(398, 169)
+      ..lineTo(306, 169)
+      ..close();
+
+    canvas
+      ..drawPath(left, paint)
+      ..drawPath(center, paint)
+      ..drawPath(right, paint);
+
+    final star = Path()
+      ..moveTo(522, 21)
+      ..lineTo(535, 48)
+      ..lineTo(565, 52)
+      ..lineTo(543, 73)
+      ..lineTo(548, 103)
+      ..lineTo(522, 89)
+      ..lineTo(495, 103)
+      ..lineTo(500, 73)
+      ..lineTo(478, 52)
+      ..lineTo(509, 48)
+      ..close();
+    canvas.drawPath(star, starPaint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _PurchaseCard extends StatelessWidget {
