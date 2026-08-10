@@ -136,7 +136,7 @@ Future<void> _registerExternalDependencies() async {
 void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
   sl.registerLazySingleton<CartCheckoutRemoteDataSource>(
-    () => CartCheckoutRemoteDataSource(sl<SupabaseClient>()),
+    () => SupabaseCartCheckoutRemoteDataSource(sl<SupabaseClient>()),
   );
   sl.registerLazySingleton<CartRepository>(
     () => CartRepositoryImpl(sl<CartCheckoutRemoteDataSource>()),

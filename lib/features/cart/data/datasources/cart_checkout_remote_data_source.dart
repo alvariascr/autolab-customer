@@ -2,11 +2,28 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/cart_checkout.dart';
 
-class CartCheckoutRemoteDataSource {
-  const CartCheckoutRemoteDataSource(this._client);
+abstract interface class CartCheckoutRemoteDataSource {
+  Future<List<CustomerDeliveryAddress>> getDeliveryAddresses();
+
+  Future<CustomerDeliveryAddress> saveDeliveryAddress(
+    CustomerDeliveryAddressRequest request, {
+    String? addressId,
+  });
+
+  Future<CustomerDeliveryAddress> setDefaultDeliveryAddress(String addressId);
+
+  Future<void> deleteDeliveryAddress(String addressId);
+
+  Future<CartCheckoutResult> createOrder(CartCheckoutRequest request);
+}
+
+class SupabaseCartCheckoutRemoteDataSource
+    implements CartCheckoutRemoteDataSource {
+  const SupabaseCartCheckoutRemoteDataSource(this._client);
 
   final SupabaseClient _client;
 
+  @override
   Future<List<CustomerDeliveryAddress>> getDeliveryAddresses() async {
     final userId = _requireUserId();
 
@@ -29,6 +46,7 @@ class CartCheckoutRemoteDataSource {
     }
   }
 
+  @override
   Future<CustomerDeliveryAddress> saveDeliveryAddress(
     CustomerDeliveryAddressRequest request, {
     String? addressId,
@@ -60,6 +78,7 @@ class CartCheckoutRemoteDataSource {
     }
   }
 
+  @override
   Future<CustomerDeliveryAddress> setDefaultDeliveryAddress(
     String addressId,
   ) async {
@@ -81,6 +100,7 @@ class CartCheckoutRemoteDataSource {
     }
   }
 
+  @override
   Future<void> deleteDeliveryAddress(String addressId) async {
     final userId = _requireUserId();
 
@@ -97,6 +117,7 @@ class CartCheckoutRemoteDataSource {
     }
   }
 
+  @override
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) async {
     final Object? response;
     try {
