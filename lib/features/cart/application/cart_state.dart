@@ -1,8 +1,10 @@
+import 'package:equatable/equatable.dart';
+
 import '../../products/domain/entities/product.dart';
 import '../domain/entities/cart_checkout.dart';
 import 'cart_pricing.dart';
 
-class CartState {
+class CartState extends Equatable {
   const CartState({
     this.items = const [],
     this.homeDelivery = false,
@@ -179,6 +181,24 @@ class CartState {
           json['selectedDeliveryAddressId'] as String? ?? '',
     );
   }
+
+  @override
+  List<Object?> get props => [
+    items,
+    homeDelivery,
+    deliveryAddress,
+    deliveryProvince,
+    deliveryCanton,
+    deliveryDistrict,
+    deliveryExactAddress,
+    deliveryPhoneNumber,
+    selectedDeliveryAddressId,
+    deliveryAddresses,
+    currentWorkshopDeliveryFee,
+    deliveryAddressesError,
+    checkoutStatus,
+    checkoutError,
+  ];
 }
 
 enum CartCheckoutStatus {
@@ -189,7 +209,7 @@ enum CartCheckoutStatus {
   bool get isLoading => this == CartCheckoutStatus.loading;
 }
 
-class CartItem {
+class CartItem extends Equatable {
   const CartItem({required this.product, required this.quantity});
 
   final Product product;
@@ -216,6 +236,9 @@ class CartItem {
       quantity: json['quantity'] as int? ?? 1,
     );
   }
+
+  @override
+  List<Object?> get props => [product, quantity];
 }
 
 extension _ProductCartJson on Product {

@@ -1,4 +1,6 @@
-class CustomerDeliveryAddress {
+import 'package:equatable/equatable.dart';
+
+class CustomerDeliveryAddress extends Equatable {
   const CustomerDeliveryAddress({
     required this.id,
     required this.province,
@@ -34,9 +36,20 @@ class CustomerDeliveryAddress {
 
     return parts.isEmpty ? exactAddress : parts.join(', ');
   }
+
+  @override
+  List<Object?> get props => [
+    id,
+    province,
+    canton,
+    district,
+    exactAddress,
+    phone,
+    isDefault,
+  ];
 }
 
-class CustomerDeliveryAddressRequest {
+class CustomerDeliveryAddressRequest extends Equatable {
   const CustomerDeliveryAddressRequest({
     required this.province,
     required this.canton,
@@ -50,18 +63,24 @@ class CustomerDeliveryAddressRequest {
   final String district;
   final String exactAddress;
   final String phone;
+
+  @override
+  List<Object?> get props => [province, canton, district, exactAddress, phone];
 }
 
-class CartCheckoutException implements Exception {
+class CartCheckoutException extends Equatable implements Exception {
   const CartCheckoutException(this.message);
 
   final String message;
 
   @override
+  List<Object?> get props => [message];
+
+  @override
   String toString() => message;
 }
 
-class CartCheckoutRequest {
+class CartCheckoutRequest extends Equatable {
   const CartCheckoutRequest({
     required this.products,
     required this.homeDelivery,
@@ -71,9 +90,12 @@ class CartCheckoutRequest {
   final List<CartCheckoutProduct> products;
   final bool homeDelivery;
   final CartCheckoutDeliveryDetails? deliveryDetails;
+
+  @override
+  List<Object?> get props => [products, homeDelivery, deliveryDetails];
 }
 
-class CartCheckoutProduct {
+class CartCheckoutProduct extends Equatable {
   const CartCheckoutProduct({
     required this.inventoryItemId,
     required this.quantity,
@@ -81,9 +103,12 @@ class CartCheckoutProduct {
 
   final String inventoryItemId;
   final int quantity;
+
+  @override
+  List<Object?> get props => [inventoryItemId, quantity];
 }
 
-class CartCheckoutDeliveryDetails {
+class CartCheckoutDeliveryDetails extends Equatable {
   const CartCheckoutDeliveryDetails({
     required this.province,
     required this.canton,
@@ -97,9 +122,12 @@ class CartCheckoutDeliveryDetails {
   final String district;
   final String exactAddress;
   final String phone;
+
+  @override
+  List<Object?> get props => [province, canton, district, exactAddress, phone];
 }
 
-class CartCheckoutResult {
+class CartCheckoutResult extends Equatable {
   const CartCheckoutResult({
     required this.orderId,
     required this.orderNumber,
@@ -109,4 +137,7 @@ class CartCheckoutResult {
   final String orderId;
   final String orderNumber;
   final double totalAmount;
+
+  @override
+  List<Object?> get props => [orderId, orderNumber, totalAmount];
 }
