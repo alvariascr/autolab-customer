@@ -1290,12 +1290,14 @@ class _QuantityButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onPressed,
-      child: Padding(
-        padding: const EdgeInsets.all(AutolabCustomer.spacingXs),
-        child: Icon(
-          icon,
-          color: AutolabCustomer.primary,
-          size: AutolabCustomer.iconXs,
+      child: SizedBox.square(
+        dimension: 48,
+        child: Center(
+          child: Icon(
+            icon,
+            color: AutolabCustomer.primary,
+            size: AutolabCustomer.iconXs,
+          ),
         ),
       ),
     );
