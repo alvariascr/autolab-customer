@@ -7,7 +7,12 @@ class GetWorkshopDeliveryFee {
   final WorkshopRepository _repository;
 
   Future<double> call(String workshopId) async {
-    final result = await _repository.getWorkshopById(workshopId);
+    final trimmedId = workshopId.trim();
+    if (trimmedId.isEmpty) {
+      return 0;
+    }
+
+    final result = await _repository.getWorkshopById(trimmedId);
 
     return result.fold(
       (_) => throw const CartCheckoutException('cart_delivery_fee_unavailable'),
