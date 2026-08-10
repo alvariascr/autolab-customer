@@ -134,9 +134,12 @@ class CartCheckoutResult {
 
   factory CartCheckoutResult.fromJson(Map<String, dynamic> json) {
     return CartCheckoutResult(
-      orderId: json['orderId']?.toString() ?? '',
-      orderNumber: json['orderNumber']?.toString() ?? '',
-      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
+      orderId: (json['orderId'] ?? json['order_id'])?.toString() ?? '',
+      orderNumber:
+          (json['orderNumber'] ?? json['order_number'])?.toString() ?? '',
+      totalAmount:
+          ((json['totalAmount'] ?? json['total_amount']) as num?)?.toDouble() ??
+          0,
     );
   }
 }
