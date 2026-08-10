@@ -1428,14 +1428,8 @@ class _CartPrimaryButton extends StatelessWidget {
         tablet: 60,
       ),
       child: ElevatedButton(
-        style: AutolabCustomer.primaryButton.copyWith(
-          backgroundColor: WidgetStatePropertyAll(
-            enabled
-                ? AutolabCustomer.primary
-                : AutolabCustomer.customerDisabledTextColor(context),
-          ),
-        ),
-        onPressed: onPressed,
+        style: AutolabCustomer.primaryButton,
+        onPressed: enabled ? onPressed : null,
         child: Text(
           label,
           style: AutolabCustomer.bodyLarge.copyWith(
