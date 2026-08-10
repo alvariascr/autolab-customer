@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/cart_checkout.dart';
+import '../models/cart_checkout_models.dart';
 
 abstract interface class ICartCheckoutRemoteDataSource {
   Future<List<CustomerDeliveryAddress>> getDeliveryAddresses();
@@ -37,7 +38,7 @@ class SupabaseCartCheckoutRemoteDataSource
 
       return response
           .whereType<Map<String, dynamic>>()
-          .map(CustomerDeliveryAddress.fromJson)
+          .map(CustomerDeliveryAddressModel.fromJson)
           .toList(growable: false);
     } on PostgrestException catch (error) {
       throw CartCheckoutException(_cartErrorKey(error.message));
@@ -68,7 +69,7 @@ class SupabaseCartCheckoutRemoteDataSource
         },
       );
 
-      return CustomerDeliveryAddress.fromJson(
+      return CustomerDeliveryAddressModel.fromJson(
         Map<String, dynamic>.from(response),
       );
     } on PostgrestException catch (error) {
@@ -90,7 +91,7 @@ class SupabaseCartCheckoutRemoteDataSource
         params: {'p_address_id': addressId},
       );
 
-      return CustomerDeliveryAddress.fromJson(
+      return CustomerDeliveryAddressModel.fromJson(
         Map<String, dynamic>.from(response),
       );
     } on PostgrestException catch (error) {
@@ -133,7 +134,11 @@ class SupabaseCartCheckoutRemoteDataSource
               )
               .toList(growable: false),
           'p_home_delivery': request.homeDelivery,
-          'p_delivery_details': request.deliveryDetails?.toJson(),
+          'p_delivery_details': request.deliveryDetails == null
+              ? null
+              : CartCheckoutDeliveryDetailsModel.fromEntity(
+                  request.deliveryDetails!,
+                ).toJson(),
         },
       );
     } on PostgrestException catch (error) {
@@ -146,7 +151,9 @@ class SupabaseCartCheckoutRemoteDataSource
       throw const CartCheckoutException('cart_checkout_failed');
     }
 
-    return CartCheckoutResult.fromJson(Map<String, dynamic>.from(response));
+    return CartCheckoutResultModel.fromJson(
+      Map<String, dynamic>.from(response),
+    );
   }
 
   String _requireUserId() {
