@@ -309,6 +309,7 @@ class _CartHeader extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: _CartCircleButton(
                   icon: Icons.arrow_back_ios_new_rounded,
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                   onPressed: onBackTap,
                 ),
               ),
@@ -1480,10 +1481,15 @@ class _EmptyCartState extends StatelessWidget {
 }
 
 class _CartCircleButton extends StatelessWidget {
-  const _CartCircleButton({required this.icon, required this.onPressed});
+  const _CartCircleButton({
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+  });
 
   final IconData icon;
   final VoidCallback onPressed;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -1491,7 +1497,7 @@ class _CartCircleButton extends StatelessWidget {
       width: 38,
       height: 38,
       child: IconButton(
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        tooltip: tooltip,
         onPressed: onPressed,
         style: IconButton.styleFrom(
           backgroundColor: AutolabCustomer.customerSurfaceColor(context),
