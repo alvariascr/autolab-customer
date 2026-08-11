@@ -7,8 +7,12 @@ class CartPricing {
     return lineSubtotals.fold(0, (total, subtotal) => total + subtotal);
   }
 
-  static double taxes(double subtotal) {
-    return _roundCurrency(subtotal * taxRate);
+  static double netSubtotal(double taxIncludedTotal) {
+    return _roundCurrency(taxIncludedTotal / (1 + taxRate));
+  }
+
+  static double includedTaxes(double taxIncludedTotal) {
+    return _roundCurrency(taxIncludedTotal - netSubtotal(taxIncludedTotal));
   }
 
   static double shippingCost({
