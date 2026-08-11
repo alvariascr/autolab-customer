@@ -253,6 +253,7 @@
   "myAppointmentCancelFailure": "No pudimos cancelar la cita. Intenta nuevamente.",
   "vehiclesTitle": "Mis vehículos",
   "vehiclesViewAllAction": "Ver todos",
+  "homeActivateVehicleMessage": "Activa tu vehículo",
   "vehiclesProfileSubtitle": "Administra los vehículos que usas para reservar citas.",
   "vehiclesSubtitle": "Guarda tus vehículos una sola vez y selecciónalos al agendar en cualquier taller.",
   "vehiclesAddAction": "Agregar vehículo",

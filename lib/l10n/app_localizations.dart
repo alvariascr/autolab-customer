@@ -1516,6 +1516,12 @@ abstract class AppLocalizations {
   /// **'Ver todos'**
   String get vehiclesViewAllAction;
 
+  /// No description provided for @homeActivateVehicleMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa tu vehículo'**
+  String get homeActivateVehicleMessage;
+
   /// No description provided for @vehiclesProfileSubtitle.
   ///
   /// In es, this message translates to:
