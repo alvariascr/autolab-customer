@@ -356,7 +356,7 @@ async function loadOrderPaymentData(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, workshop_id, payment_status, customers!inner(user_id)",
+      "id, workshop_id, payment_status, total_amount, customers!inner(user_id)",
     )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
@@ -375,6 +375,11 @@ async function loadOrderPaymentData(
     throw new Error("invalid_order_payment_status");
   }
 
+  const orderTotal = numberValue(order.total_amount);
+  if (!Number.isFinite(orderTotal) || orderTotal <= 0) {
+    throw new Error("invalid_order_total");
+  }
+
   const { data: products, error: productsError } = await adminSupabaseClient(
     env,
   )
@@ -386,7 +391,7 @@ async function loadOrderPaymentData(
     throw new Error("invalid_order_products");
   }
 
-  const amount = ((products ?? []) as Array<Record<string, unknown>>)
+  const productsTotal = ((products ?? []) as Array<Record<string, unknown>>)
     .reduce((total, item) => {
       const quantity = numberValue(item.quantity);
       const unitPrice = numberValue(item.unit_price);
@@ -396,6 +401,14 @@ async function loadOrderPaymentData(
 
       return total + quantity * unitPrice;
     }, 0);
+
+  if (!Number.isFinite(productsTotal) || productsTotal <= 0) {
+    throw new Error("order_has_no_chargeable_products");
+  }
+
+  // Laropay only charges product lines. Workshop services and delivery fees are
+  // settled directly with the workshop according to the business rule.
+  const amount = productsTotal;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error("order_has_no_chargeable_products");

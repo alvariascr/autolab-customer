@@ -20,6 +20,7 @@ class CartState extends Equatable {
     this.deliveryAddressesError,
     this.checkoutStatus = CartCheckoutStatus.initial,
     this.checkoutError,
+    this.pendingCheckoutResult,
   });
 
   final List<CartItem> items;
@@ -36,16 +37,19 @@ class CartState extends Equatable {
   final String? deliveryAddressesError;
   final CartCheckoutStatus checkoutStatus;
   final String? checkoutError;
+  final CartCheckoutResult? pendingCheckoutResult;
 
   int get totalQuantity {
     return items.fold(0, (total, item) => total + item.quantity);
   }
 
-  double get subtotal {
+  double get productsTotal {
     return CartPricing.subtotal(items.map((item) => item.lineSubtotal));
   }
 
-  double get taxes => CartPricing.taxes(subtotal);
+  double get subtotal => CartPricing.netSubtotal(productsTotal);
+
+  double get taxes => CartPricing.includedTaxes(productsTotal);
 
   double get shippingCost {
     return CartPricing.shippingCost(
@@ -56,7 +60,7 @@ class CartState extends Equatable {
     );
   }
 
-  double get total => subtotal + taxes + shippingCost;
+  double get total => productsTotal + shippingCost;
 
   String? get singleWorkshopId {
     final workshopIds = items
@@ -99,10 +103,12 @@ class CartState extends Equatable {
     String? deliveryAddressesError,
     CartCheckoutStatus? checkoutStatus,
     String? checkoutError,
+    CartCheckoutResult? pendingCheckoutResult,
     bool clearDeliveryDetails = false,
     bool clearCurrentWorkshopDeliveryFee = false,
     bool clearDeliveryAddressesError = false,
     bool clearCheckoutError = false,
+    bool clearPendingCheckoutResult = false,
   }) {
     return CartState(
       items: items ?? this.items,
@@ -139,6 +145,9 @@ class CartState extends Equatable {
       checkoutError: clearCheckoutError
           ? null
           : checkoutError ?? this.checkoutError,
+      pendingCheckoutResult: clearPendingCheckoutResult
+          ? null
+          : pendingCheckoutResult ?? this.pendingCheckoutResult,
     );
   }
 
@@ -198,6 +207,7 @@ class CartState extends Equatable {
     deliveryAddressesError,
     checkoutStatus,
     checkoutError,
+    pendingCheckoutResult,
   ];
 }
 

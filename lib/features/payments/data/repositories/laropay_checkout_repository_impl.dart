@@ -21,8 +21,23 @@ class LaropayCheckoutRepositoryImpl implements LaropayCheckoutRepository {
   Future<Either<Failure, LaropayPaymentContext>> getPaymentContext(
     String appointmentId,
   ) async {
+    return _getContext(
+      () => _remoteDataSource.getPaymentContext(appointmentId),
+    );
+  }
+
+  @override
+  Future<Either<Failure, LaropayPaymentContext>> getOrderPaymentContext(
+    String orderId,
+  ) async {
+    return _getContext(() => _remoteDataSource.getOrderPaymentContext(orderId));
+  }
+
+  Future<Either<Failure, LaropayPaymentContext>> _getContext(
+    Future<LaropayPaymentContext> Function() load,
+  ) async {
     try {
-      return Right(await _remoteDataSource.getPaymentContext(appointmentId));
+      return Right(await load());
     } on LaropayCheckoutAuthException catch (error, stackTrace) {
       return Left(
         AuthFailure.fromErrorItem(

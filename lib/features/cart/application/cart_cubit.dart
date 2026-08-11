@@ -72,6 +72,7 @@ class CartCubit extends Cubit<CartState> {
       state.copyWith(
         items: update.items,
         homeDelivery: update.startedNewCart ? false : null,
+        clearPendingCheckoutResult: true,
       ),
     );
     return true;
@@ -93,6 +94,7 @@ class CartCubit extends Cubit<CartState> {
     final nextState = baseState.copyWith(
       items: update.items,
       homeDelivery: update.startedNewCart ? false : null,
+      clearPendingCheckoutResult: true,
     );
     _cartMutationVersion++;
     emit(nextState);
@@ -123,6 +125,7 @@ class CartCubit extends Cubit<CartState> {
         clearDeliveryDetails: true,
         checkoutStatus: CartCheckoutStatus.initial,
         clearCheckoutError: true,
+        clearPendingCheckoutResult: true,
       ),
     );
   }
@@ -155,14 +158,18 @@ class CartCubit extends Cubit<CartState> {
   }
 
   void setHomeDelivery(bool value) {
-    _emitAndSave(state.copyWith(homeDelivery: value));
+    _emitAndSave(
+      state.copyWith(homeDelivery: value, clearPendingCheckoutResult: true),
+    );
     if (value) {
       unawaited(loadDeliveryAddresses(applyDefault: true));
     }
   }
 
   void setDeliveryAddress(String value) {
-    _emitAndSave(state.copyWith(deliveryAddress: value));
+    _emitAndSave(
+      state.copyWith(deliveryAddress: value, clearPendingCheckoutResult: true),
+    );
   }
 
   void setDeliveryDetails({
@@ -183,6 +190,7 @@ class CartCubit extends Cubit<CartState> {
         deliveryExactAddress: exactAddress.trim(),
         deliveryPhoneNumber: phoneNumber.trim(),
         deliveryAddress: exactAddress.trim(),
+        clearPendingCheckoutResult: true,
       ),
     );
   }
@@ -223,14 +231,26 @@ class CartCubit extends Cubit<CartState> {
   }) async {
     try {
       final selectedId = state.selectedDeliveryAddressId;
+      final request = CustomerDeliveryAddressRequest(
+        province: province.trim(),
+        canton: canton.trim(),
+        district: district.trim(),
+        exactAddress: exactAddress.trim(),
+        phone: phoneNumber.trim(),
+      );
+      final existingAddress = selectedId.trim().isEmpty
+          ? state.deliveryAddresses
+                .where((address) => _isSameAddress(address, request))
+                .firstOrNull
+          : null;
+
+      if (existingAddress != null) {
+        await selectDeliveryAddress(existingAddress);
+        return true;
+      }
+
       final savedAddress = await _saveDeliveryAddress(
-        CustomerDeliveryAddressRequest(
-          province: province,
-          canton: canton,
-          district: district,
-          exactAddress: exactAddress,
-          phone: phoneNumber,
-        ),
+        request,
         addressId: selectedId,
       );
 
@@ -255,6 +275,26 @@ class CartCubit extends Cubit<CartState> {
       emit(state.copyWith(deliveryAddressesError: _errorKey(error)));
       return false;
     }
+  }
+
+  bool _isSameAddress(
+    CustomerDeliveryAddress address,
+    CustomerDeliveryAddressRequest request,
+  ) {
+    return _normalizeAddressPart(address.province) ==
+            _normalizeAddressPart(request.province) &&
+        _normalizeAddressPart(address.canton) ==
+            _normalizeAddressPart(request.canton) &&
+        _normalizeAddressPart(address.district) ==
+            _normalizeAddressPart(request.district) &&
+        _normalizeAddressPart(address.exactAddress) ==
+            _normalizeAddressPart(request.exactAddress) &&
+        _normalizeAddressPart(address.phone) ==
+            _normalizeAddressPart(request.phone);
+  }
+
+  String _normalizeAddressPart(String value) {
+    return value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
   }
 
   Future<void> selectDeliveryAddress(CustomerDeliveryAddress address) async {
@@ -361,6 +401,7 @@ class CartCubit extends Cubit<CartState> {
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
           checkoutError: 'cart_products_multiple_workshops',
+          clearPendingCheckoutResult: true,
         ),
       );
       return null;
@@ -374,6 +415,11 @@ class CartCubit extends Cubit<CartState> {
     );
 
     try {
+      final pendingResult = state.pendingCheckoutResult;
+      if (pendingResult != null) {
+        return pendingResult;
+      }
+
       await refreshWorkshopDeliveryFee();
       final result = await _createCartOrder(
         CartCheckoutRequest(
@@ -400,18 +446,28 @@ class CartCubit extends Cubit<CartState> {
 
       final workshopId = state.singleWorkshopId;
       _productRepository.invalidateActiveProductsCache(workshopId: workshopId);
-      clear();
       _inventoryRefreshNotifier.notify();
+      emit(state.copyWith(pendingCheckoutResult: result));
       return result;
     } catch (error) {
       emit(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
           checkoutError: _errorKey(error),
+          clearPendingCheckoutResult: true,
         ),
       );
       return null;
     }
+  }
+
+  void resetCheckoutStatus() {
+    emit(
+      state.copyWith(
+        checkoutStatus: CartCheckoutStatus.initial,
+        clearCheckoutError: true,
+      ),
+    );
   }
 
   bool _updateQuantity(String productId, int Function(int quantity) update) {
@@ -448,6 +504,7 @@ class CartCubit extends Cubit<CartState> {
       deliveryExactAddress: address.exactAddress,
       deliveryPhoneNumber: address.phone,
       deliveryAddress: address.exactAddress,
+      clearPendingCheckoutResult: true,
     );
   }
 
@@ -457,10 +514,11 @@ class CartCubit extends Cubit<CartState> {
         items: items,
         homeDelivery: false,
         clearCurrentWorkshopDeliveryFee: true,
+        clearPendingCheckoutResult: true,
       );
     }
 
-    return state.copyWith(items: items);
+    return state.copyWith(items: items, clearPendingCheckoutResult: true);
   }
 
   Future<void> _loadSavedCart({

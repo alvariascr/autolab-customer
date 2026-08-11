@@ -12,4 +12,8 @@ class GetLaropayPaymentContext {
   Future<Either<Failure, LaropayPaymentContext>> call(String appointmentId) {
     return _repository.getPaymentContext(appointmentId);
   }
+
+  Future<Either<Failure, LaropayPaymentContext>> forOrder(String orderId) {
+    return _repository.getOrderPaymentContext(orderId);
+  }
 }
