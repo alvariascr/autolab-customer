@@ -214,7 +214,22 @@ class _PhysicalProductDetailContentState
                                         ? '/home-customer'
                                         : '/workshops/$workshopId?section=products',
                                   );
-                                  messenger.hideCurrentSnackBar();
+                                  messenger
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.productDetailAddedToCartMessage,
+                                        ),
+                                        action: SnackBarAction(
+                                          label:
+                                              l10n.productDetailViewCartAction,
+                                          onPressed: () => router.go(
+                                            '/home-customer?tab=cart',
+                                          ),
+                                        ),
+                                      ),
+                                    );
                                 }
                               : null,
                           icon: const Icon(Icons.shopping_cart_outlined),

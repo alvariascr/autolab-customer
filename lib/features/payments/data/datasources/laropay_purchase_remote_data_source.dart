@@ -1,11 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/utils/uuid_validator.dart';
 import '../../domain/entities/laropay_purchase.dart';
-
-final _uuidRegex = RegExp(
-  r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-  caseSensitive: false,
-);
 
 const _ordersPageSize = 100;
 const _paymentLinkBatchSize = 100;
@@ -66,7 +62,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
     final orders = await _ordersForUser(user.id);
     final orderIds = orders
         .map((item) => _stringValue(item['id']))
-        .where(_isUuid)
+        .where(isValidUuid)
         .toSet()
         .toList(growable: false);
 
@@ -368,8 +364,4 @@ Uri? _secureUri(Object? value) {
 bool _requiresPaymentLink(String status) {
   final normalizedStatus = status.trim().toLowerCase();
   return normalizedStatus == 'created' || normalizedStatus == 'pending';
-}
-
-bool _isUuid(String value) {
-  return _uuidRegex.hasMatch(value);
 }

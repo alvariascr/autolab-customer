@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
@@ -27,11 +28,6 @@ class MyPurchasesPage extends StatefulWidget {
 }
 
 class _MyPurchasesPageState extends State<MyPurchasesPage> {
-  static final _uuidRegex = RegExp(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-    caseSensitive: false,
-  );
-
   late Future<List<LaropayPurchase>> _future;
   final Set<String> _refreshingPurchaseIds = <String>{};
   String? _handledPaymentLinkId;
@@ -61,8 +57,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
   void _schedulePaymentReturnRefresh() {
     final paymentLinkId = widget.paymentLinkId?.trim() ?? '';
-    if (!_uuidRegex.hasMatch(paymentLinkId) ||
-        _handledPaymentLinkId == paymentLinkId) {
+    if (!isValidUuid(paymentLinkId) || _handledPaymentLinkId == paymentLinkId) {
       return;
     }
 
@@ -268,10 +263,8 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
           color: AutolabCustomer.error,
         ),
         (purchase) async {
-          _showMessage(
-            message: _returnedPaymentMessage(purchase, l10n),
-            color: _returnedPaymentColor(purchase),
-          );
+          final outcome = _returnedPaymentOutcome(purchase);
+          _showMessage(message: outcome.message(l10n), color: outcome.color);
           await _reload();
         },
       );
@@ -280,47 +273,6 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         context.go('/purchases');
       }
     }
-  }
-
-  String _returnedPaymentMessage(
-    LaropayPurchase purchase,
-    AppLocalizations l10n,
-  ) {
-    final status = purchase.status.toLowerCase();
-    final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
-
-    if (status == 'paid' ||
-        orderPaymentStatus == 'paid' ||
-        orderPaymentStatus == 'partial') {
-      return l10n.laropayPaymentResultPaidMessage;
-    }
-
-    if (status == 'rejected' || status == 'failed') {
-      return l10n.laropayPaymentResultRejectedMessage;
-    }
-
-    if (status == 'expired') {
-      return l10n.laropayPaymentResultExpiredMessage;
-    }
-
-    return l10n.laropayPaymentResultPendingMessage;
-  }
-
-  Color _returnedPaymentColor(LaropayPurchase purchase) {
-    final status = purchase.status.toLowerCase();
-    final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
-
-    if (status == 'paid' ||
-        orderPaymentStatus == 'paid' ||
-        orderPaymentStatus == 'partial') {
-      return AutolabCustomer.success;
-    }
-
-    if (status == 'rejected' || status == 'failed' || status == 'expired') {
-      return AutolabCustomer.error;
-    }
-
-    return AutolabCustomer.warning;
   }
 
   void _showMessage({required String message, required Color color}) {
@@ -335,6 +287,52 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         content: Text(message),
       ),
     );
+  }
+}
+
+enum _ReturnedPaymentOutcome { paid, rejected, expired, pending }
+
+_ReturnedPaymentOutcome _returnedPaymentOutcome(LaropayPurchase purchase) {
+  final status = purchase.status.toLowerCase();
+  final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
+
+  if (status == 'paid' ||
+      orderPaymentStatus == 'paid' ||
+      orderPaymentStatus == 'partial') {
+    return _ReturnedPaymentOutcome.paid;
+  }
+
+  if (status == 'rejected' || status == 'failed') {
+    return _ReturnedPaymentOutcome.rejected;
+  }
+
+  if (status == 'expired') {
+    return _ReturnedPaymentOutcome.expired;
+  }
+
+  return _ReturnedPaymentOutcome.pending;
+}
+
+extension _ReturnedPaymentOutcomeView on _ReturnedPaymentOutcome {
+  String message(AppLocalizations l10n) {
+    return switch (this) {
+      _ReturnedPaymentOutcome.paid => l10n.laropayPaymentResultPaidMessage,
+      _ReturnedPaymentOutcome.rejected =>
+        l10n.laropayPaymentResultRejectedMessage,
+      _ReturnedPaymentOutcome.expired =>
+        l10n.laropayPaymentResultExpiredMessage,
+      _ReturnedPaymentOutcome.pending =>
+        l10n.laropayPaymentResultPendingMessage,
+    };
+  }
+
+  Color get color {
+    return switch (this) {
+      _ReturnedPaymentOutcome.paid => AutolabCustomer.success,
+      _ReturnedPaymentOutcome.rejected ||
+      _ReturnedPaymentOutcome.expired => AutolabCustomer.error,
+      _ReturnedPaymentOutcome.pending => AutolabCustomer.warning,
+    };
   }
 }
 

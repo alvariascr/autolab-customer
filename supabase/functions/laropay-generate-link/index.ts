@@ -736,6 +736,7 @@ function normalizedExpirationValue(input: LaropayLinkRequest) {
 function isBadRequestError(message: string) {
   return [
     "amount_mismatch",
+    "invalid_order_total",
     "order_has_no_chargeable_products",
   ].includes(message);
 }

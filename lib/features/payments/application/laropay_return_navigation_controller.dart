@@ -1,3 +1,5 @@
+import '../../../core/utils/uuid_validator.dart';
+
 class LaropayReturnNavigationController {
   LaropayReturnNavigationController({
     required void Function(String location) navigate,
@@ -6,10 +8,6 @@ class LaropayReturnNavigationController {
   static const _scheme = 'autolab';
   static const _host = 'laropay-callback';
   static const _path = '/payment-return';
-  static final _uuidRegex = RegExp(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-    caseSensitive: false,
-  );
 
   final void Function(String location) _navigate;
 
@@ -19,7 +17,7 @@ class LaropayReturnNavigationController {
     }
 
     final rawPaymentLinkId = uri.queryParameters['paymentLinkId']?.trim() ?? '';
-    if (!_isUuid(rawPaymentLinkId)) {
+    if (!isValidUuid(rawPaymentLinkId)) {
       return false;
     }
 
@@ -30,7 +28,7 @@ class LaropayReturnNavigationController {
     }
 
     final workshopId = uri.queryParameters['workshopId']?.trim() ?? '';
-    if (!_isUuid(workshopId)) {
+    if (!isValidUuid(workshopId)) {
       return false;
     }
 
@@ -40,9 +38,5 @@ class LaropayReturnNavigationController {
 
   bool _isLaropayCallback(Uri uri) {
     return uri.scheme == _scheme && uri.host == _host && uri.path == _path;
-  }
-
-  bool _isUuid(String value) {
-    return _uuidRegex.hasMatch(value);
   }
 }

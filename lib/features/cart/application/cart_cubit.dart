@@ -289,12 +289,15 @@ class CartCubit extends Cubit<CartState> {
             _normalizeAddressPart(request.district) &&
         _normalizeAddressPart(address.exactAddress) ==
             _normalizeAddressPart(request.exactAddress) &&
-        _normalizeAddressPart(address.phone) ==
-            _normalizeAddressPart(request.phone);
+        _normalizePhone(address.phone) == _normalizePhone(request.phone);
   }
 
   String _normalizeAddressPart(String value) {
     return value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+  }
+
+  String _normalizePhone(String value) {
+    return value.replaceAll(RegExp(r'[\s-]+'), '');
   }
 
   Future<void> selectDeliveryAddress(CustomerDeliveryAddress address) async {

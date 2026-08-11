@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/logging/feature_logger.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../cart/presentation/widgets/cart_floating_checkout_button.dart';
 import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
@@ -49,10 +50,6 @@ class WorkshopProfilePage extends StatefulWidget {
 }
 
 class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
-  static final _uuidRegex = RegExp(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-    caseSensitive: false,
-  );
   static const _paymentStatusTimeout = Duration(seconds: 45);
 
   late Future<Either<Failure, Workshop?>> _workshopFuture;
@@ -132,7 +129,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
 
   void _schedulePaymentResultDialog() {
     final paymentLinkId = widget.paymentLinkId?.trim() ?? '';
-    if (!_uuidRegex.hasMatch(paymentLinkId)) {
+    if (!isValidUuid(paymentLinkId)) {
       return;
     }
 

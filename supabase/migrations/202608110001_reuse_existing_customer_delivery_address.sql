@@ -78,7 +78,9 @@ begin
         canton = btrim(p_canton),
         district = btrim(p_district),
         exact_address = btrim(p_exact_address),
-        phone = btrim(p_phone)
+        phone = btrim(p_phone),
+        updated_at = now(),
+        updated_by = v_user_id::text
       where id = v_address.id
       returning * into v_address;
 
@@ -138,7 +140,9 @@ begin
       exact_address = btrim(p_exact_address),
       phone = btrim(p_phone),
       is_default = true,
-      is_active = true
+      is_active = true,
+      updated_at = now(),
+      updated_by = v_user_id::text
     where id = p_address_id
     returning * into v_address;
   end if;
@@ -154,7 +158,7 @@ revoke all on function public.save_customer_delivery_address(
   text,
   text,
   text
-) from public;
+) from public, anon, authenticated;
 
 grant execute on function public.save_customer_delivery_address(
   uuid,
