@@ -103,14 +103,13 @@ class SupabaseCartCheckoutRemoteDataSource
 
   @override
   Future<void> deleteDeliveryAddress(String addressId) async {
-    final userId = _requireUserId();
+    _requireUserId();
 
     try {
-      await _client
-          .from('customer_delivery_addresses')
-          .update({'is_active': false, 'is_default': false})
-          .eq('id', addressId)
-          .eq('user_id', userId);
+      await _client.rpc(
+        'delete_customer_delivery_address',
+        params: {'p_address_id': addressId},
+      );
     } on PostgrestException catch (error) {
       throw CartCheckoutException(_cartErrorKey(error.message));
     } on AuthException catch (error) {
