@@ -2452,6 +2452,18 @@ abstract class AppLocalizations {
   /// **'Agregar al carrito'**
   String get productDetailAddToCartAction;
 
+  /// No description provided for @productDetailAddedToCartMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto agregado al carrito.'**
+  String get productDetailAddedToCartMessage;
+
+  /// No description provided for @productDetailViewCartAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver carrito'**
+  String get productDetailViewCartAction;
+
   /// No description provided for @productDetailStockLimitReached.
   ///
   /// In es, this message translates to:
@@ -3946,6 +3958,12 @@ abstract class AppLocalizations {
   /// **'No fue posible guardar la dirección. Intenta nuevamente.'**
   String get cartSaveAddressError;
 
+  /// No description provided for @cartDeleteAddressSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección eliminada correctamente.'**
+  String get cartDeleteAddressSuccess;
+
   /// No description provided for @cartDeleteAddressError.
   ///
   /// In es, this message translates to:
@@ -4009,7 +4027,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartTaxes.
   ///
   /// In es, this message translates to:
-  /// **'Impuestos'**
+  /// **'IVA incluido'**
   String get cartTaxes;
 
   /// No description provided for @cartTotal.
@@ -4071,6 +4089,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Entendido'**
   String get cartOrderSuccessAction;
+
+  /// No description provided for @cartPaymentReviewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago en revisión'**
+  String get cartPaymentReviewTitle;
+
+  /// No description provided for @cartPaymentReviewMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.'**
+  String get cartPaymentReviewMessage;
+
+  /// No description provided for @cartPaymentReviewAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get cartPaymentReviewAction;
 
   /// No description provided for @cartCreateOrderError.
   ///

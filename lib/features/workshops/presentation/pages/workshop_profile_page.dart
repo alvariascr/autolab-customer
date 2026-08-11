@@ -11,6 +11,7 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../core/logging/feature_logger.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../cart/presentation/widgets/cart_floating_checkout_button.dart';
 import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../../../products/application/product_inventory_refresh_notifier.dart';
 import '../../../products/domain/entities/product.dart';
@@ -80,46 +81,49 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      body: Column(
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: FutureBuilder<Either<Failure, Workshop?>>(
-              future: _workshopFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          FutureBuilder<Either<Failure, Workshop?>>(
+            future: _workshopFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                final result = snapshot.data;
+              final result = snapshot.data;
 
-                if (result == null) {
-                  return _ProfileMessage(
-                    message: l10n.workshopProfileLoadError,
-                  );
-                }
+              if (result == null) {
+                return _ProfileMessage(message: l10n.workshopProfileLoadError);
+              }
 
-                return result.fold(
-                  (failure) => _ProfileMessage(
-                    message: WorkshopEmptyStateResolver().resolveLoadError(
-                      failure,
-                      l10n,
-                    ),
+              return result.fold(
+                (failure) => _ProfileMessage(
+                  message: WorkshopEmptyStateResolver().resolveLoadError(
+                    failure,
+                    l10n,
                   ),
-                  (workshop) {
-                    if (workshop == null) {
-                      return _ProfileMessage(
-                        message: l10n.workshopProfileNotFound,
-                      );
-                    }
-
-                    return _WorkshopProfileContent(
-                      workshop: workshop,
-                      initialCatalogSection: widget.initialCatalogSection,
+                ),
+                (workshop) {
+                  if (workshop == null) {
+                    return _ProfileMessage(
+                      message: l10n.workshopProfileNotFound,
                     );
-                  },
-                );
-              },
-            ),
+                  }
+
+                  return _WorkshopProfileContent(
+                    workshop: workshop,
+                    initialCatalogSection: widget.initialCatalogSection,
+                  );
+                },
+              );
+            },
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: AutolabCustomer.spacingMd,
+            child: Center(child: CartFloatingCheckoutButton()),
           ),
         ],
       ),

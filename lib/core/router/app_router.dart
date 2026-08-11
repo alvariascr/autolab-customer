@@ -119,10 +119,13 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return WorkshopProfilePage(
-            workshopId: workshopId,
-            paymentLinkId: state.uri.queryParameters['paymentLinkId'],
-            initialCatalogSection: state.uri.queryParameters['section'],
+          return BlocProvider(
+            create: (_) => sl<CartCubit>(),
+            child: WorkshopProfilePage(
+              workshopId: workshopId,
+              paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+              initialCatalogSection: state.uri.queryParameters['section'],
+            ),
           );
         },
       ),

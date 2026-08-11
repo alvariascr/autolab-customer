@@ -180,6 +180,10 @@ class _PhysicalProductDetailContentState
                           ),
                           onPressed: hasStock
                               ? () async {
+                                  final messenger = ScaffoldMessenger.of(
+                                    context,
+                                  );
+                                  final router = GoRouter.of(context);
                                   final wasAdded = await context
                                       .read<CartCubit>()
                                       .addProductAndPersist(
@@ -205,11 +209,12 @@ class _PhysicalProductDetailContentState
                                   }
 
                                   final workshopId = product.workshopId.trim();
-                                  context.go(
+                                  router.go(
                                     workshopId.isEmpty
                                         ? '/home-customer'
                                         : '/workshops/$workshopId?section=products',
                                   );
+                                  messenger.hideCurrentSnackBar();
                                 }
                               : null,
                           icon: const Icon(Icons.shopping_cart_outlined),
