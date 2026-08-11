@@ -2417,6 +2417,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPurchasesRefreshStatusAction => 'Actualizar estado';
 
   @override
+  String get myPurchasesRefreshingReturnedPayment =>
+      'Estamos confirmando tu pago con Laropay.';
+
+  @override
   String get myPurchasesStatusRefreshSuccess => 'Estado de pago actualizado.';
 
   @override

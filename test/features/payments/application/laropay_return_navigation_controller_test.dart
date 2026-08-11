@@ -21,6 +21,22 @@ void main() {
     expect(destination, '/workshops/$workshopId?paymentLinkId=$paymentLinkId');
   });
 
+  test('navigates cart returns to purchases for immediate status check', () {
+    String? destination;
+    final controller = LaropayReturnNavigationController(
+      navigate: (location) => destination = location,
+    );
+
+    final handled = controller.handleAppLink(
+      Uri.parse(
+        'autolab://laropay-callback/payment-return?paymentLinkId=$paymentLinkId&target=purchases',
+      ),
+    );
+
+    expect(handled, isTrue);
+    expect(destination, '/purchases?paymentLinkId=$paymentLinkId');
+  });
+
   test('ignores a callback without a valid payment link identifier', () {
     String? destination;
     final controller = LaropayReturnNavigationController(

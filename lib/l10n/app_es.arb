@@ -844,6 +844,7 @@
   "myPurchasesReferenceLabel": "Referencia",
   "myPurchasesOpenLinkAction": "Reintentar pago",
   "myPurchasesRefreshStatusAction": "Actualizar estado",
+  "myPurchasesRefreshingReturnedPayment": "Estamos confirmando tu pago con Laropay.",
   "myPurchasesStatusRefreshSuccess": "Estado de pago actualizado.",
   "myPurchasesStatusRefreshError": "No fue posible actualizar el estado del pago.",
   "myPurchasesLinkOpenError": "No fue posible abrir el link de pago."

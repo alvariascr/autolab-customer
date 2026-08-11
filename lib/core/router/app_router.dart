@@ -99,7 +99,9 @@ class AppRouter {
       ),
       GoRoute(
         path: '/purchases',
-        builder: (context, state) => const MyPurchasesPage(),
+        builder: (context, state) => MyPurchasesPage(
+          paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+        ),
       ),
       GoRoute(
         path: '/profile',

@@ -4354,6 +4354,12 @@ abstract class AppLocalizations {
   /// **'Actualizar estado'**
   String get myPurchasesRefreshStatusAction;
 
+  /// No description provided for @myPurchasesRefreshingReturnedPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos confirmando tu pago con Laropay.'**
+  String get myPurchasesRefreshingReturnedPayment;
+
   /// No description provided for @myPurchasesStatusRefreshSuccess.
   ///
   /// In es, this message translates to:

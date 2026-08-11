@@ -18,13 +18,19 @@ class LaropayReturnNavigationController {
       return false;
     }
 
-    final workshopId = uri.queryParameters['workshopId']?.trim() ?? '';
-    if (!_isUuid(workshopId)) {
+    final rawPaymentLinkId = uri.queryParameters['paymentLinkId']?.trim() ?? '';
+    if (!_isUuid(rawPaymentLinkId)) {
       return false;
     }
 
-    final rawPaymentLinkId = uri.queryParameters['paymentLinkId']?.trim() ?? '';
-    if (!_isUuid(rawPaymentLinkId)) {
+    final target = uri.queryParameters['target']?.trim();
+    if (target == 'purchases') {
+      _navigate('/purchases?paymentLinkId=$rawPaymentLinkId');
+      return true;
+    }
+
+    final workshopId = uri.queryParameters['workshopId']?.trim() ?? '';
+    if (!_isUuid(workshopId)) {
       return false;
     }
 

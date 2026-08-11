@@ -13,22 +13,42 @@ import '../../domain/usecases/get_laropay_purchases.dart';
 import '../../domain/usecases/refresh_laropay_purchase_status.dart';
 
 class MyPurchasesPage extends StatefulWidget {
-  const MyPurchasesPage({super.key, this.showBottomNavigation = true});
+  const MyPurchasesPage({
+    super.key,
+    this.showBottomNavigation = true,
+    this.paymentLinkId,
+  });
 
   final bool showBottomNavigation;
+  final String? paymentLinkId;
 
   @override
   State<MyPurchasesPage> createState() => _MyPurchasesPageState();
 }
 
 class _MyPurchasesPageState extends State<MyPurchasesPage> {
+  static final _uuidRegex = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
+
   late Future<List<LaropayPurchase>> _future;
   final Set<String> _refreshingPurchaseIds = <String>{};
+  String? _handledPaymentLinkId;
 
   @override
   void initState() {
     super.initState();
     _future = _loadPurchases();
+    _schedulePaymentReturnRefresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant MyPurchasesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.paymentLinkId != widget.paymentLinkId) {
+      _schedulePaymentReturnRefresh();
+    }
   }
 
   Future<void> _reload() {
@@ -37,6 +57,23 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
       _future = nextFuture;
     });
     return nextFuture;
+  }
+
+  void _schedulePaymentReturnRefresh() {
+    final paymentLinkId = widget.paymentLinkId?.trim() ?? '';
+    if (!_uuidRegex.hasMatch(paymentLinkId) ||
+        _handledPaymentLinkId == paymentLinkId) {
+      return;
+    }
+
+    _handledPaymentLinkId = paymentLinkId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      _refreshReturnedPayment(paymentLinkId);
+    });
   }
 
   Future<List<LaropayPurchase>> _loadPurchases() async {
@@ -210,6 +247,80 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         setState(() => _refreshingPurchaseIds.remove(purchase.id));
       }
     }
+  }
+
+  Future<void> _refreshReturnedPayment(String paymentLinkId) async {
+    final l10n = AppLocalizations.of(context)!;
+    _showMessage(
+      message: l10n.myPurchasesRefreshingReturnedPayment,
+      color: AutolabCustomer.secondary,
+    );
+
+    try {
+      final result = await sl<RefreshLaropayPurchaseStatus>()(paymentLinkId);
+      if (!mounted) {
+        return;
+      }
+
+      await result.fold(
+        (_) async => _showMessage(
+          message: l10n.myPurchasesStatusRefreshError,
+          color: AutolabCustomer.error,
+        ),
+        (purchase) async {
+          _showMessage(
+            message: _returnedPaymentMessage(purchase, l10n),
+            color: _returnedPaymentColor(purchase),
+          );
+          await _reload();
+        },
+      );
+    } finally {
+      if (mounted) {
+        context.go('/purchases');
+      }
+    }
+  }
+
+  String _returnedPaymentMessage(
+    LaropayPurchase purchase,
+    AppLocalizations l10n,
+  ) {
+    final status = purchase.status.toLowerCase();
+    final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
+
+    if (status == 'paid' ||
+        orderPaymentStatus == 'paid' ||
+        orderPaymentStatus == 'partial') {
+      return l10n.laropayPaymentResultPaidMessage;
+    }
+
+    if (status == 'rejected' || status == 'failed') {
+      return l10n.laropayPaymentResultRejectedMessage;
+    }
+
+    if (status == 'expired') {
+      return l10n.laropayPaymentResultExpiredMessage;
+    }
+
+    return l10n.laropayPaymentResultPendingMessage;
+  }
+
+  Color _returnedPaymentColor(LaropayPurchase purchase) {
+    final status = purchase.status.toLowerCase();
+    final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
+
+    if (status == 'paid' ||
+        orderPaymentStatus == 'paid' ||
+        orderPaymentStatus == 'partial') {
+      return AutolabCustomer.success;
+    }
+
+    if (status == 'rejected' || status == 'failed' || status == 'expired') {
+      return AutolabCustomer.error;
+    }
+
+    return AutolabCustomer.warning;
   }
 
   void _showMessage({required String message, required Color color}) {
