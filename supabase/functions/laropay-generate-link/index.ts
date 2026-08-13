@@ -726,7 +726,13 @@ function isExpiredAt(value: unknown) {
     return false;
   }
 
-  const timestamp = Date.parse(text);
+  const normalizedText = text.includes(" ") ? text.replace(" ", "T") : text;
+  const timestamp = new Date(normalizedText).getTime();
+  if (Number.isNaN(timestamp)) {
+    console.warn("[laropay.generate_link] invalid_payment_expires_at");
+    return false;
+  }
+
   return Number.isFinite(timestamp) && timestamp <= Date.now();
 }
 

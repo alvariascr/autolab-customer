@@ -217,10 +217,9 @@ begin
   set
     status = 'expired',
     updated_at = now()
-  where exists (
-      select 1
+  where lpl.internal_transaction_id in (
+      select expired_order_id.id::text
       from unnest(v_order_ids) as expired_order_id(id)
-      where expired_order_id.id::text = lpl.internal_transaction_id
     )
     and lpl.status in ('created', 'pending');
 
