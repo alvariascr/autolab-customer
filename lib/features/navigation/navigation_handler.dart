@@ -23,11 +23,11 @@ class NavigationHandler {
         return;
 
       case 3:
-        context.go('/cart');
+        context.go('/home-customer?tab=cart');
         return;
 
       case 4:
-        context.go('/home-customer?tab=garage');
+        context.go('/home-customer?tab=profile');
         return;
 
       default:
