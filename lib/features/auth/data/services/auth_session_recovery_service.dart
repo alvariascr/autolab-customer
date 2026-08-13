@@ -86,7 +86,7 @@ class AuthSessionRecoveryService {
         action: 'restore_from_refresh_token_succeeded',
         context: {'userId': user.id},
       );
-      return _supabaseSessionSyncService.syncUser(user);
+      return await _supabaseSessionSyncService.syncUser(user);
     } on AuthException catch (error, stackTrace) {
       final failure = AuthFailure.fromErrorItem(
         AuthErrorCatalog.sessionRestoreFailed,

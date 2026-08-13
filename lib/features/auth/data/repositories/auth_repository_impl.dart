@@ -64,7 +64,7 @@ class AuthRepositoryImpl implements AuthRepository {
         password: cleanPassword,
       );
 
-      return _buildLoginSuccess(response, cleanEmail);
+      return await _buildLoginSuccess(response, cleanEmail);
     } on AuthException catch (error, stackTrace) {
       return _handleLoginAuthException(error, stackTrace, cleanEmail);
     } on AuthFailure catch (failure) {

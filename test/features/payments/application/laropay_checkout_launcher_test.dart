@@ -182,27 +182,23 @@ class _FakeLaropayLinkRepository implements LaropayLinkRepository {
 
 class _FakeLaropayCheckoutRepository implements LaropayCheckoutRepository {
   const _FakeLaropayCheckoutRepository({
-    this.appointmentContext,
     this.orderContext,
-    this.appointmentFailure,
     this.orderFailure,
   });
 
-  final LaropayPaymentContext? appointmentContext;
   final LaropayPaymentContext? orderContext;
-  final Failure? appointmentFailure;
   final Failure? orderFailure;
 
   @override
   Future<Either<Failure, LaropayPaymentContext>> getPaymentContext(
     String appointmentId,
   ) async {
-    final failure = appointmentFailure;
+    final failure = orderFailure;
     if (failure != null) {
       return left(failure);
     }
 
-    return right(appointmentContext ?? orderContext!);
+    return right(orderContext!);
   }
 
   @override
@@ -214,6 +210,6 @@ class _FakeLaropayCheckoutRepository implements LaropayCheckoutRepository {
       return left(failure);
     }
 
-    return right(orderContext ?? appointmentContext!);
+    return right(orderContext!);
   }
 }
