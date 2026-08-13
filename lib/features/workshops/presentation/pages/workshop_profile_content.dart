@@ -56,7 +56,7 @@ class _WorkshopProfileContent extends StatelessWidget {
                       screenMargin,
                       64,
                       screenMargin,
-                      AutolabCustomer.spacingLg,
+                      AutolabCustomer.spacingXl + kBottomNavigationBarHeight,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -16,45 +16,55 @@ class CartFloatingCheckoutButton extends StatelessWidget {
           previous.totalQuantity != current.totalQuantity,
       builder: (context, cart) {
         final count = cart.totalQuantity;
-        if (count <= 0) {
-          return const SizedBox.shrink();
-        }
-
         final l10n = AppLocalizations.of(context)!;
 
-        return Material(
-          color: AutolabCustomer.secondary,
-          borderRadius: BorderRadius.circular(999),
-          elevation: 10,
-          shadowColor: AutolabCustomer.shadowBlackStrong,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(999),
-            onTap: () => context.go('/home-customer?tab=cart'),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AutolabCustomer.spacingLg,
-                vertical: AutolabCustomer.spacingSmd,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.shopping_cart_outlined,
-                    color: AutolabCustomer.white,
-                    size: 22,
-                  ),
-                  const SizedBox(width: AutolabCustomer.spacingSm),
-                  Text(
-                    '${l10n.productDetailViewCartAction} · $count',
-                    style: AutolabCustomer.body.copyWith(
-                      color: AutolabCustomer.white,
-                      fontWeight: FontWeight.w800,
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            return ScaleTransition(
+              scale: animation,
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: count <= 0
+              ? const SizedBox.shrink(key: ValueKey('empty-cart-button'))
+              : Material(
+                  key: const ValueKey('cart-button'),
+                  color: AutolabCustomer.secondary,
+                  borderRadius: BorderRadius.circular(999),
+                  elevation: 10,
+                  shadowColor: AutolabCustomer.shadowBlackStrong,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: () => context.push('/cart'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AutolabCustomer.spacingLg,
+                        vertical: AutolabCustomer.spacingSmd,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.shopping_cart_outlined,
+                            color: AutolabCustomer.white,
+                            size: 22,
+                          ),
+                          const SizedBox(width: AutolabCustomer.spacingSm),
+                          Text(
+                            '${l10n.productDetailViewCartAction} · $count',
+                            style: AutolabCustomer.body.copyWith(
+                              color: AutolabCustomer.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
         );
       },
     );

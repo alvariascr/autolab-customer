@@ -26,37 +26,39 @@ class LaropayCheckoutLauncher {
     required String workshopName,
     required double chargeableAmount,
   }) async {
-    final paymentContext = await (await _getPaymentContext(appointmentId)).fold(
-      (failure) async =>
+    final contextResult = await _getPaymentContext(appointmentId);
+    final paymentContext = contextResult.fold(
+      (failure) =>
           throw LaropayCheckoutLaunchException(_failureMessage(failure)),
-      (context) async => context,
+      (context) => context,
     );
+
     if (!chargeableAmount.isFinite || chargeableAmount <= 0) {
       throw const LaropayCheckoutLaunchException(
-        'No hay productos cobrables para generar el link de pago.',
+        'El monto a cobrar debe ser mayor a cero para generar el link de pago.',
       );
     }
 
     await _launchPayment(
       paymentContext: paymentContext,
       amount: chargeableAmount,
-      document: paymentContext.orderNumber ?? appointmentId,
+      document: _documentFromContext(paymentContext, appointmentId),
       workshopName: workshopName,
     );
   }
 
   Future<void> launchForOrder({required String orderId}) async {
-    final paymentContext = await (await _getPaymentContext.forOrder(orderId))
-        .fold(
-          (failure) async =>
-              throw LaropayCheckoutLaunchException(_failureMessage(failure)),
-          (context) async => context,
-        );
+    final contextResult = await _getPaymentContext.forOrder(orderId);
+    final paymentContext = contextResult.fold(
+      (failure) =>
+          throw LaropayCheckoutLaunchException(_failureMessage(failure)),
+      (context) => context,
+    );
 
     await _launchPayment(
       paymentContext: paymentContext,
       amount: paymentContext.amount,
-      document: paymentContext.orderNumber ?? orderId,
+      document: _documentFromContext(paymentContext, orderId),
       workshopName: paymentContext.workshopName ?? 'Autolab',
     );
   }
@@ -69,7 +71,7 @@ class LaropayCheckoutLauncher {
   }) async {
     if (!amount.isFinite || amount <= 0) {
       throw const LaropayCheckoutLaunchException(
-        'No hay productos cobrables para generar el link de pago.',
+        'El monto a cobrar debe ser mayor a cero para generar el link de pago.',
       );
     }
 
@@ -89,19 +91,27 @@ class LaropayCheckoutLauncher {
       ),
     );
 
-    await result.fold(
-      (failure) async =>
+    final link = result.fold(
+      (failure) =>
           throw LaropayCheckoutLaunchException(_failureMessage(failure)),
-      (link) async {
-        final opened = await _launchExternalUrl(link.linkUrl);
-        if (!opened) {
-          throw LaropayCheckoutLaunchException(
-            'No fue posible abrir el navegador seguro de Laropay.',
-            linkUrl: link.linkUrl,
-          );
-        }
-      },
+      (link) => link,
     );
+
+    final opened = await _launchExternalUrl(link.linkUrl);
+    if (!opened) {
+      throw LaropayCheckoutLaunchException(
+        'No fue posible abrir el navegador seguro de Laropay.',
+        linkUrl: link.linkUrl,
+      );
+    }
+  }
+
+  static String _documentFromContext(
+    LaropayPaymentContext paymentContext,
+    String fallback,
+  ) {
+    final orderNumber = paymentContext.orderNumber?.trim() ?? '';
+    return orderNumber.isEmpty ? fallback : orderNumber;
   }
 
   static Future<bool> _launchInBrowser(Uri uri) {

@@ -121,8 +121,8 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return BlocProvider(
-            create: (_) => sl<CartCubit>(),
+          return BlocProvider.value(
+            value: sl<CartCubit>(),
             child: WorkshopProfilePage(
               workshopId: workshopId,
               paymentLinkId: state.uri.queryParameters['paymentLinkId'],
@@ -147,8 +147,8 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return BlocProvider(
-            create: (_) => sl<CartCubit>(),
+          return BlocProvider.value(
+            value: sl<CartCubit>(),
             child: ProductDetailPage.resolve(
               product:
                   product?.workshopId == workshopId && product?.id == productId

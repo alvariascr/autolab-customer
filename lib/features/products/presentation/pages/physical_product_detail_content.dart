@@ -224,9 +224,7 @@ class _PhysicalProductDetailContentState
                                         action: SnackBarAction(
                                           label:
                                               l10n.productDetailViewCartAction,
-                                          onPressed: () => router.go(
-                                            '/home-customer?tab=cart',
-                                          ),
+                                          onPressed: () => router.push('/cart'),
                                         ),
                                       ),
                                     );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +24,8 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  static const _checkoutLaunchTimeout = Duration(seconds: 45);
+
   bool _showCheckout = false;
 
   @override
@@ -152,13 +156,16 @@ class _CartPageState extends State<CartPage> {
     }
 
     try {
-      await sl<LaropayCheckoutLauncher>().launchForOrder(
-        orderId: result.orderId,
-      );
+      await sl<LaropayCheckoutLauncher>()
+          .launchForOrder(orderId: result.orderId)
+          .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
       cartCubit.resetCheckoutStatus();
       setState(() => _showCheckout = false);
     } on LaropayCheckoutLaunchException catch (_) {
+      if (!mounted || !context.mounted) return;
+      await _showPaymentReviewDialog(context, cartCubit, result);
+    } on TimeoutException catch (_) {
       if (!mounted || !context.mounted) return;
       await _showPaymentReviewDialog(context, cartCubit, result);
     } catch (_) {

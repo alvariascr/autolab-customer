@@ -257,20 +257,20 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         return;
       }
 
-      await result.fold(
-        (_) async => _showMessage(
+      result.fold(
+        (_) => _showMessage(
           message: l10n.myPurchasesStatusRefreshError,
           color: AutolabCustomer.error,
         ),
-        (purchase) async {
+        (purchase) {
           final outcome = _returnedPaymentOutcome(purchase);
           _showMessage(message: outcome.message(l10n), color: outcome.color);
-          await _reload();
+          _reload();
         },
       );
     } finally {
       if (mounted) {
-        context.go('/purchases');
+        context.replace('/purchases');
       }
     }
   }

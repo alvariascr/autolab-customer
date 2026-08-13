@@ -250,7 +250,7 @@ double _productsTotal(Object? value) {
     return double.nan;
   }
 
-  return value.fold<double>(0, (total, item) {
+  final total = value.fold<double>(0, (total, item) {
     final row = _mapValue(item);
     final quantity = _numberValue(row['quantity']);
     final unitPrice = _numberValue(row['unit_price']);
@@ -260,4 +260,6 @@ double _productsTotal(Object? value) {
 
     return total + quantity * unitPrice;
   });
+
+  return (total * 100).roundToDouble() / 100;
 }

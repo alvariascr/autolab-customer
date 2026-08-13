@@ -23,7 +23,12 @@ class LaropayReturnNavigationController {
 
     final target = uri.queryParameters['target']?.trim();
     if (target == 'purchases') {
-      _navigate('/purchases?paymentLinkId=$rawPaymentLinkId');
+      _navigate(
+        Uri(
+          path: '/purchases',
+          queryParameters: {'paymentLinkId': rawPaymentLinkId},
+        ).toString(),
+      );
       return true;
     }
 
@@ -32,7 +37,12 @@ class LaropayReturnNavigationController {
       return false;
     }
 
-    _navigate('/workshops/$workshopId?paymentLinkId=$rawPaymentLinkId');
+    _navigate(
+      Uri(
+        path: '/workshops/$workshopId',
+        queryParameters: {'paymentLinkId': rawPaymentLinkId},
+      ).toString(),
+    );
     return true;
   }
 
