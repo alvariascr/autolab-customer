@@ -60,7 +60,9 @@ class AppRedirectGuard {
     }
 
     if (role == UserRoles.admin &&
-        (location == '/home-customer' || isCustomerOnboarding)) {
+        (location == '/home-customer' ||
+            location == '/cart' ||
+            isCustomerOnboarding)) {
       return '/home';
     }
 

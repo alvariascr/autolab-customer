@@ -21,6 +21,54 @@ void main() {
     expect(destination, '/workshops/$workshopId?paymentLinkId=$paymentLinkId');
   });
 
+  test('navigates cart returns to purchases for immediate status check', () {
+    String? destination;
+    final controller = LaropayReturnNavigationController(
+      navigate: (location) => destination = location,
+    );
+
+    final handled = controller.handleAppLink(
+      Uri.parse(
+        'autolab://laropay-callback/payment-return?paymentLinkId=$paymentLinkId&target=purchases',
+      ),
+    );
+
+    expect(handled, isTrue);
+    expect(destination, '/purchases?paymentLinkId=$paymentLinkId');
+  });
+
+  test('ignores a purchases callback with an invalid payment link', () {
+    String? destination;
+    final controller = LaropayReturnNavigationController(
+      navigate: (location) => destination = location,
+    );
+
+    final handled = controller.handleAppLink(
+      Uri.parse(
+        'autolab://laropay-callback/payment-return?paymentLinkId=invalid&target=purchases',
+      ),
+    );
+
+    expect(handled, isFalse);
+    expect(destination, isNull);
+  });
+
+  test('requires a workshop identifier for an unknown target', () {
+    String? destination;
+    final controller = LaropayReturnNavigationController(
+      navigate: (location) => destination = location,
+    );
+
+    final handled = controller.handleAppLink(
+      Uri.parse(
+        'autolab://laropay-callback/payment-return?paymentLinkId=$paymentLinkId&target=unknown',
+      ),
+    );
+
+    expect(handled, isFalse);
+    expect(destination, isNull);
+  });
+
   test('ignores a callback without a valid payment link identifier', () {
     String? destination;
     final controller = LaropayReturnNavigationController(

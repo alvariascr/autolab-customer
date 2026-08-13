@@ -1347,6 +1347,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get productDetailAddToCartAction => 'Agregar al carrito';
 
   @override
+  String get productDetailAddedToCartMessage => 'Producto agregado al carrito.';
+
+  @override
+  String get productDetailViewCartAction => 'Ver carrito';
+
+  @override
+  String get productDetailStockLimitReached =>
+      'No hay más unidades disponibles de este producto.';
+
+  @override
   String get productDetailCartComingSoon =>
       'El carrito estará disponible próximamente.';
 
@@ -2099,6 +2109,223 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentPriceToConfirm => 'Por confirmar';
 
   @override
+  String get cartTitle => 'Mi carrito';
+
+  @override
+  String get cartCheckoutTitle => 'Comprar';
+
+  @override
+  String cartProductCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos',
+      one: '1 producto',
+      zero: 'Sin productos',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cartStockLimitReached =>
+      'No hay más unidades disponibles de este producto.';
+
+  @override
+  String get cartFreeShippingBanner =>
+      'Envío gratis en compras mayores a ₡25.000';
+
+  @override
+  String cartAdditionalProducts(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos adicionales',
+      one: '1 producto adicional',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cartDeliveryServiceTitle => 'Servicio de envío';
+
+  @override
+  String get cartDeliveryAddressDetails => 'Detalles de dirección de envío';
+
+  @override
+  String get cartDeliveryDisabledMessage => '¿Necesitas envío?';
+
+  @override
+  String get cartSavedAddressesTitle => 'Direcciones guardadas';
+
+  @override
+  String get cartNewAddressAction => 'Nueva dirección';
+
+  @override
+  String get cartAddressHint => 'Dirección';
+
+  @override
+  String get cartAddressRequired => 'Ingresa una dirección para continuar.';
+
+  @override
+  String get cartAddAddressAction => 'Agregar';
+
+  @override
+  String get cartEditAddressAction => 'Editar';
+
+  @override
+  String get cartDeliveryFormTitle => 'Dirección de entrega';
+
+  @override
+  String get cartProvinceLabel => 'Provincia';
+
+  @override
+  String get cartCantonLabel => 'Cantón';
+
+  @override
+  String get cartDistrictLabel => 'Distrito';
+
+  @override
+  String get cartExactAddressLabel => 'Ubicación exacta';
+
+  @override
+  String get cartPhoneLabel => 'Número de celular';
+
+  @override
+  String get cartPhoneInvalid => 'Ingresa un número de teléfono válido.';
+
+  @override
+  String get cartSaveAddressAction => 'Guardar dirección';
+
+  @override
+  String get cartSavingAddressAction => 'Guardando...';
+
+  @override
+  String get cartSaveAddressError =>
+      'No fue posible guardar la dirección. Intenta nuevamente.';
+
+  @override
+  String get cartDeleteAddressSuccess => 'Dirección eliminada correctamente.';
+
+  @override
+  String get cartDeleteAddressError =>
+      'No fue posible eliminar la dirección. Intenta nuevamente.';
+
+  @override
+  String get cartDeleteAddressTitle => 'Eliminar dirección';
+
+  @override
+  String get cartDeleteAddressMessage =>
+      '¿Seguro que quieres eliminar esta dirección?';
+
+  @override
+  String get cartDeleteAddressCancel => 'Cancelar';
+
+  @override
+  String get cartDeleteAddressConfirm => 'Eliminar';
+
+  @override
+  String get cartFieldRequired => 'Este campo es obligatorio.';
+
+  @override
+  String get cartSummaryTitle => 'Resumen';
+
+  @override
+  String cartSubtotal(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count productos',
+      one: '1 producto',
+    );
+    return 'Subtotal ($_temp0)';
+  }
+
+  @override
+  String get cartShipping => 'Envío';
+
+  @override
+  String get cartFreeShipping => 'Gratis';
+
+  @override
+  String get cartTaxes => 'IVA incluido';
+
+  @override
+  String get cartTotal => 'Total';
+
+  @override
+  String get cartFinishPurchase => 'Finalizar compra';
+
+  @override
+  String get cartContinueToCheckout => 'Continuar';
+
+  @override
+  String get cartPurchaseComingSoon =>
+      'La compra estará disponible próximamente.';
+
+  @override
+  String get cartCreatingOrder => 'Creando orden...';
+
+  @override
+  String get cartCreatingOrderMessage => 'Estamos validando tu carrito.';
+
+  @override
+  String get cartOpeningLaropayTitle => 'Preparando pago seguro';
+
+  @override
+  String get cartOpeningLaropayMessage =>
+      'Estamos abriendo Laropay. No cierres la app.';
+
+  @override
+  String cartCreateOrderSuccess(Object orderNumber) {
+    return 'Orden $orderNumber creada correctamente.';
+  }
+
+  @override
+  String get cartOrderSuccessTitle => '¡Compra exitosa!';
+
+  @override
+  String get cartOrderSuccessMessage => 'Tu pedido fue creado correctamente.';
+
+  @override
+  String get cartOrderNumberLabel => 'Orden';
+
+  @override
+  String get cartOrderSuccessAction => 'Entendido';
+
+  @override
+  String get cartPaymentReviewTitle => 'Pago en revisión';
+
+  @override
+  String get cartPaymentReviewMessage =>
+      'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.';
+
+  @override
+  String get cartPaymentReviewAction => 'Entendido';
+
+  @override
+  String get cartCreateOrderError =>
+      'No fue posible crear la orden. Intenta nuevamente.';
+
+  @override
+  String get cartSecurePurchaseTitle => 'Compra segura';
+
+  @override
+  String get cartSecurePurchaseMessage => 'Tus datos están protegidos';
+
+  @override
+  String get cartNeedHelpTitle => '¿Necesitas ayuda?';
+
+  @override
+  String get cartNeedHelpMessage => 'Contáctanos';
+
+  @override
+  String get cartEmptyTitle => 'Tu carrito está vacío';
+
+  @override
+  String get cartEmptyMessage =>
+      'Agrega productos desde un taller para verlos aquí.';
+
+  @override
   String appointmentDurationMinutes(Object minutes) {
     return '$minutes min';
   }
@@ -2211,6 +2438,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesRefreshStatusAction => 'Actualizar estado';
+
+  @override
+  String get myPurchasesRefreshingReturnedPayment =>
+      'Estamos confirmando tu pago con Laropay.';
 
   @override
   String get myPurchasesStatusRefreshSuccess => 'Estado de pago actualizado.';

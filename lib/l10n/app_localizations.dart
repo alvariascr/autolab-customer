@@ -2476,6 +2476,24 @@ abstract class AppLocalizations {
   /// **'Agregar al carrito'**
   String get productDetailAddToCartAction;
 
+  /// No description provided for @productDetailAddedToCartMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto agregado al carrito.'**
+  String get productDetailAddedToCartMessage;
+
+  /// No description provided for @productDetailViewCartAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver carrito'**
+  String get productDetailViewCartAction;
+
+  /// No description provided for @productDetailStockLimitReached.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay más unidades disponibles de este producto.'**
+  String get productDetailStockLimitReached;
+
   /// No description provided for @productDetailCartComingSoon.
   ///
   /// In es, this message translates to:
@@ -3814,6 +3832,366 @@ abstract class AppLocalizations {
   /// **'Por confirmar'**
   String get appointmentPriceToConfirm;
 
+  /// No description provided for @cartTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi carrito'**
+  String get cartTitle;
+
+  /// No description provided for @cartCheckoutTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprar'**
+  String get cartCheckoutTitle;
+
+  /// No description provided for @cartProductCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Sin productos} =1{1 producto} other{{count} productos}}'**
+  String cartProductCount(num count);
+
+  /// No description provided for @cartStockLimitReached.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay más unidades disponibles de este producto.'**
+  String get cartStockLimitReached;
+
+  /// No description provided for @cartFreeShippingBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'Envío gratis en compras mayores a ₡25.000'**
+  String get cartFreeShippingBanner;
+
+  /// No description provided for @cartAdditionalProducts.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 producto adicional} other{{count} productos adicionales}}'**
+  String cartAdditionalProducts(num count);
+
+  /// No description provided for @cartDeliveryServiceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio de envío'**
+  String get cartDeliveryServiceTitle;
+
+  /// No description provided for @cartDeliveryAddressDetails.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalles de dirección de envío'**
+  String get cartDeliveryAddressDetails;
+
+  /// No description provided for @cartDeliveryDisabledMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Necesitas envío?'**
+  String get cartDeliveryDisabledMessage;
+
+  /// No description provided for @cartSavedAddressesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Direcciones guardadas'**
+  String get cartSavedAddressesTitle;
+
+  /// No description provided for @cartNewAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva dirección'**
+  String get cartNewAddressAction;
+
+  /// No description provided for @cartAddressHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección'**
+  String get cartAddressHint;
+
+  /// No description provided for @cartAddressRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa una dirección para continuar.'**
+  String get cartAddressRequired;
+
+  /// No description provided for @cartAddAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar'**
+  String get cartAddAddressAction;
+
+  /// No description provided for @cartEditAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get cartEditAddressAction;
+
+  /// No description provided for @cartDeliveryFormTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección de entrega'**
+  String get cartDeliveryFormTitle;
+
+  /// No description provided for @cartProvinceLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Provincia'**
+  String get cartProvinceLabel;
+
+  /// No description provided for @cartCantonLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantón'**
+  String get cartCantonLabel;
+
+  /// No description provided for @cartDistrictLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Distrito'**
+  String get cartDistrictLabel;
+
+  /// No description provided for @cartExactAddressLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación exacta'**
+  String get cartExactAddressLabel;
+
+  /// No description provided for @cartPhoneLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de celular'**
+  String get cartPhoneLabel;
+
+  /// No description provided for @cartPhoneInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa un número de teléfono válido.'**
+  String get cartPhoneInvalid;
+
+  /// No description provided for @cartSaveAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar dirección'**
+  String get cartSaveAddressAction;
+
+  /// No description provided for @cartSavingAddressAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardando...'**
+  String get cartSavingAddressAction;
+
+  /// No description provided for @cartSaveAddressError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible guardar la dirección. Intenta nuevamente.'**
+  String get cartSaveAddressError;
+
+  /// No description provided for @cartDeleteAddressSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección eliminada correctamente.'**
+  String get cartDeleteAddressSuccess;
+
+  /// No description provided for @cartDeleteAddressError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible eliminar la dirección. Intenta nuevamente.'**
+  String get cartDeleteAddressError;
+
+  /// No description provided for @cartDeleteAddressTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar dirección'**
+  String get cartDeleteAddressTitle;
+
+  /// No description provided for @cartDeleteAddressMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Seguro que quieres eliminar esta dirección?'**
+  String get cartDeleteAddressMessage;
+
+  /// No description provided for @cartDeleteAddressCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get cartDeleteAddressCancel;
+
+  /// No description provided for @cartDeleteAddressConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get cartDeleteAddressConfirm;
+
+  /// No description provided for @cartFieldRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Este campo es obligatorio.'**
+  String get cartFieldRequired;
+
+  /// No description provided for @cartSummaryTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get cartSummaryTitle;
+
+  /// No description provided for @cartSubtotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Subtotal ({count, plural, =1{1 producto} other{{count} productos}})'**
+  String cartSubtotal(num count);
+
+  /// No description provided for @cartShipping.
+  ///
+  /// In es, this message translates to:
+  /// **'Envío'**
+  String get cartShipping;
+
+  /// No description provided for @cartFreeShipping.
+  ///
+  /// In es, this message translates to:
+  /// **'Gratis'**
+  String get cartFreeShipping;
+
+  /// No description provided for @cartTaxes.
+  ///
+  /// In es, this message translates to:
+  /// **'IVA incluido'**
+  String get cartTaxes;
+
+  /// No description provided for @cartTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total'**
+  String get cartTotal;
+
+  /// No description provided for @cartFinishPurchase.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizar compra'**
+  String get cartFinishPurchase;
+
+  /// No description provided for @cartContinueToCheckout.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get cartContinueToCheckout;
+
+  /// No description provided for @cartPurchaseComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'La compra estará disponible próximamente.'**
+  String get cartPurchaseComingSoon;
+
+  /// No description provided for @cartCreatingOrder.
+  ///
+  /// In es, this message translates to:
+  /// **'Creando orden...'**
+  String get cartCreatingOrder;
+
+  /// No description provided for @cartCreatingOrderMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos validando tu carrito.'**
+  String get cartCreatingOrderMessage;
+
+  /// No description provided for @cartOpeningLaropayTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando pago seguro'**
+  String get cartOpeningLaropayTitle;
+
+  /// No description provided for @cartOpeningLaropayMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos abriendo Laropay. No cierres la app.'**
+  String get cartOpeningLaropayMessage;
+
+  /// No description provided for @cartCreateOrderSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Orden {orderNumber} creada correctamente.'**
+  String cartCreateOrderSuccess(Object orderNumber);
+
+  /// No description provided for @cartOrderSuccessTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Compra exitosa!'**
+  String get cartOrderSuccessTitle;
+
+  /// No description provided for @cartOrderSuccessMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu pedido fue creado correctamente.'**
+  String get cartOrderSuccessMessage;
+
+  /// No description provided for @cartOrderNumberLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Orden'**
+  String get cartOrderNumberLabel;
+
+  /// No description provided for @cartOrderSuccessAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get cartOrderSuccessAction;
+
+  /// No description provided for @cartPaymentReviewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago en revisión'**
+  String get cartPaymentReviewTitle;
+
+  /// No description provided for @cartPaymentReviewMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.'**
+  String get cartPaymentReviewMessage;
+
+  /// No description provided for @cartPaymentReviewAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get cartPaymentReviewAction;
+
+  /// No description provided for @cartCreateOrderError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible crear la orden. Intenta nuevamente.'**
+  String get cartCreateOrderError;
+
+  /// No description provided for @cartSecurePurchaseTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra segura'**
+  String get cartSecurePurchaseTitle;
+
+  /// No description provided for @cartSecurePurchaseMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos están protegidos'**
+  String get cartSecurePurchaseMessage;
+
+  /// No description provided for @cartNeedHelpTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Necesitas ayuda?'**
+  String get cartNeedHelpTitle;
+
+  /// No description provided for @cartNeedHelpMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Contáctanos'**
+  String get cartNeedHelpMessage;
+
+  /// No description provided for @cartEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu carrito está vacío'**
+  String get cartEmptyTitle;
+
+  /// No description provided for @cartEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega productos desde un taller para verlos aquí.'**
+  String get cartEmptyMessage;
+
   /// No description provided for @appointmentDurationMinutes.
   ///
   /// In es, this message translates to:
@@ -4017,6 +4395,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Actualizar estado'**
   String get myPurchasesRefreshStatusAction;
+
+  /// No description provided for @myPurchasesRefreshingReturnedPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos confirmando tu pago con Laropay.'**
+  String get myPurchasesRefreshingReturnedPayment;
 
   /// No description provided for @myPurchasesStatusRefreshSuccess.
   ///

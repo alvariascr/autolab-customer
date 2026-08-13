@@ -7,4 +7,8 @@ abstract interface class LaropayCheckoutRepository {
   Future<Either<Failure, LaropayPaymentContext>> getPaymentContext(
     String appointmentId,
   );
+
+  Future<Either<Failure, LaropayPaymentContext>> getOrderPaymentContext(
+    String orderId,
+  );
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../workshops/domain/entities/workshop.dart';
@@ -23,11 +23,11 @@ class NavigationHandler {
         return;
 
       case 3:
-        context.go('/home-customer?tab=cart');
+        context.go('/cart');
         return;
 
       case 4:
-        context.go('/home-customer?tab=profile');
+        context.go('/home-customer?tab=garage');
         return;
 
       default:

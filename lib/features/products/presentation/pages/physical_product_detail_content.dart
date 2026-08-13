@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../cart/application/cart_cubit.dart';
 import '../../domain/entities/product.dart';
 import '../widgets/product_price_text.dart';
 import 'product_detail_hero.dart';
@@ -122,8 +124,35 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: () =>
-                              context.go('/home-customer?tab=cart'),
+                          onPressed: hasStock
+                              ? () async {
+                                  final wasAdded = await context
+                                      .read<CartCubit>()
+                                      .addProductAndPersist(
+                                        product,
+                                        quantity: _quantity,
+                                      );
+                                  if (!context.mounted) return;
+
+                                  if (!wasAdded) {
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
+                                    );
+                                    messenger
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.productDetailStockLimitReached,
+                                          ),
+                                        ),
+                                      );
+                                    return;
+                                  }
+
+                                  context.go('/home-customer?tab=cart');
+                                }
+                              : null,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailBuyAction,
@@ -145,23 +174,50 @@ class _PhysicalProductDetailContentState
                         ),
                         child: OutlinedButton.icon(
                           style: AutolabCustomer.secondaryButton.copyWith(
-                            foregroundColor: const WidgetStatePropertyAll(
-                              AutolabCustomer.white,
+                            foregroundColor: WidgetStatePropertyAll(
+                              AutolabCustomer.customerTextColor(context),
                             ),
                           ),
-                          onPressed: () {
-                            final workshopId = product.workshopId.trim();
-                            context.go(
-                              workshopId.isEmpty
-                                  ? '/home-customer'
-                                  : '/workshops/$workshopId',
-                            );
-                          },
+                          onPressed: hasStock
+                              ? () async {
+                                  final router = GoRouter.of(context);
+                                  final wasAdded = await context
+                                      .read<CartCubit>()
+                                      .addProductAndPersist(
+                                        product,
+                                        quantity: _quantity,
+                                      );
+                                  if (!context.mounted) return;
+
+                                  if (!wasAdded) {
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
+                                    );
+                                    messenger
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.productDetailStockLimitReached,
+                                          ),
+                                        ),
+                                      );
+                                    return;
+                                  }
+
+                                  final workshopId = product.workshopId.trim();
+                                  router.go(
+                                    workshopId.isEmpty
+                                        ? '/home-customer'
+                                        : '/workshops/$workshopId?section=products&cartAdded=true',
+                                  );
+                                }
+                              : null,
                           icon: const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailAddToCartAction,
                             style: AutolabCustomer.body.copyWith(
-                              color: AutolabCustomer.white,
+                              color: AutolabCustomer.customerTextColor(context),
                               fontWeight: FontWeight.w700,
                             ),
                           ),

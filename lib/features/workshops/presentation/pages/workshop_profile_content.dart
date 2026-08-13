@@ -1,9 +1,13 @@
 part of 'workshop_profile_page.dart';
 
 class _WorkshopProfileContent extends StatelessWidget {
-  const _WorkshopProfileContent({required this.workshop});
+  const _WorkshopProfileContent({
+    required this.workshop,
+    this.initialCatalogSection,
+  });
 
   final Workshop workshop;
+  final String? initialCatalogSection;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +56,7 @@ class _WorkshopProfileContent extends StatelessWidget {
                       screenMargin,
                       64,
                       screenMargin,
-                      AutolabCustomer.spacingLg,
+                      AutolabCustomer.spacingXl + kBottomNavigationBarHeight,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +70,10 @@ class _WorkshopProfileContent extends StatelessWidget {
                           color: AutolabCustomer.customerDividerColor(context),
                         ),
                         const SizedBox(height: AutolabCustomer.spacingMd),
-                        _ProductsSection(workshopId: workshop.id),
+                        _ProductsSection(
+                          workshopId: workshop.id,
+                          initialSection: initialCatalogSection,
+                        ),
                       ],
                     ),
                   ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart' show Either;
 import 'package:flutter/material.dart';
@@ -8,8 +10,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/logging/feature_logger.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../cart/presentation/widgets/cart_floating_checkout_button.dart';
 import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
+import '../../../products/application/product_inventory_refresh_notifier.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/presentation/widgets/product_image.dart';
@@ -33,24 +38,27 @@ class WorkshopProfilePage extends StatefulWidget {
     super.key,
     required this.workshopId,
     this.paymentLinkId,
+    this.initialCatalogSection,
+    this.showCartAddedMessage = false,
   });
 
   final String workshopId;
   final String? paymentLinkId;
+  final String? initialCatalogSection;
+  final bool showCartAddedMessage;
 
   @override
   State<WorkshopProfilePage> createState() => _WorkshopProfilePageState();
 }
 
 class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
-  static final _uuidRegex = RegExp(
-    r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-    caseSensitive: false,
-  );
   static const _paymentStatusTimeout = Duration(seconds: 45);
+  static const _cartAddedMessageDuration = Duration(seconds: 3);
 
   late Future<Either<Failure, Workshop?>> _workshopFuture;
   String? _shownPaymentResultKey;
+  Timer? _cartAddedMessageTimer;
+  bool _showCartAddedBanner = false;
 
   @override
   void initState() {
@@ -59,6 +67,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
       widget.workshopId,
     );
     _schedulePaymentResultDialog();
+    _scheduleCartAddedMessage();
   }
 
   @override
@@ -67,6 +76,15 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
     if (oldWidget.paymentLinkId != widget.paymentLinkId) {
       _schedulePaymentResultDialog();
     }
+    if (!oldWidget.showCartAddedMessage && widget.showCartAddedMessage) {
+      _scheduleCartAddedMessage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _cartAddedMessageTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -75,52 +93,84 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      body: Column(
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: FutureBuilder<Either<Failure, Workshop?>>(
-              future: _workshopFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          FutureBuilder<Either<Failure, Workshop?>>(
+            future: _workshopFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                final result = snapshot.data;
+              final result = snapshot.data;
 
-                if (result == null) {
-                  return _ProfileMessage(
-                    message: l10n.workshopProfileLoadError,
-                  );
-                }
+              if (result == null) {
+                return _ProfileMessage(message: l10n.workshopProfileLoadError);
+              }
 
-                return result.fold(
-                  (failure) => _ProfileMessage(
-                    message: WorkshopEmptyStateResolver().resolveLoadError(
-                      failure,
-                      l10n,
-                    ),
+              return result.fold(
+                (failure) => _ProfileMessage(
+                  message: WorkshopEmptyStateResolver().resolveLoadError(
+                    failure,
+                    l10n,
                   ),
-                  (workshop) {
-                    if (workshop == null) {
-                      return _ProfileMessage(
-                        message: l10n.workshopProfileNotFound,
-                      );
-                    }
+                ),
+                (workshop) {
+                  if (workshop == null) {
+                    return _ProfileMessage(
+                      message: l10n.workshopProfileNotFound,
+                    );
+                  }
 
-                    return _WorkshopProfileContent(workshop: workshop);
-                  },
-                );
-              },
-            ),
+                  return _WorkshopProfileContent(
+                    workshop: workshop,
+                    initialCatalogSection: widget.initialCatalogSection,
+                  );
+                },
+              );
+            },
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: AutolabCustomer.spacingMd,
+            child: Center(child: CartFloatingCheckoutButton()),
+          ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + AutolabCustomer.spacingSmd,
+            left: AutolabCustomer.spacingLg,
+            right: AutolabCustomer.spacingLg,
+            child: _CartAddedBanner(visible: _showCartAddedBanner),
           ),
         ],
       ),
     );
   }
 
+  void _scheduleCartAddedMessage() {
+    if (!widget.showCartAddedMessage) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      _cartAddedMessageTimer?.cancel();
+      setState(() => _showCartAddedBanner = true);
+      _cartAddedMessageTimer = Timer(_cartAddedMessageDuration, () {
+        if (mounted) {
+          setState(() => _showCartAddedBanner = false);
+        }
+      });
+    });
+  }
+
   void _schedulePaymentResultDialog() {
     final paymentLinkId = widget.paymentLinkId?.trim() ?? '';
-    if (!_uuidRegex.hasMatch(paymentLinkId)) {
+    if (!isValidUuid(paymentLinkId)) {
       return;
     }
 
@@ -218,6 +268,61 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
 
   void _clearPaymentQuery() {
     context.go('/workshops/${widget.workshopId}');
+  }
+}
+
+class _CartAddedBanner extends StatelessWidget {
+  const _CartAddedBanner({required this.visible});
+
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return IgnorePointer(
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        offset: visible ? Offset.zero : const Offset(0, -0.35),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 180),
+          opacity: visible ? 1 : 0,
+          child: Material(
+            color: AutolabCustomer.successSoftBackground,
+            borderRadius: BorderRadius.circular(14),
+            elevation: 8,
+            shadowColor: AutolabCustomer.shadowBlackStrong,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AutolabCustomer.spacingMd,
+                vertical: AutolabCustomer.spacingSmd,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: AutolabCustomer.success,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AutolabCustomer.spacingSm),
+                  Expanded(
+                    child: Text(
+                      l10n.productDetailAddedToCartMessage,
+                      style: AutolabCustomer.body.copyWith(
+                        color: AutolabCustomer.success,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

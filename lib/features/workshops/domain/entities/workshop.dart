@@ -9,6 +9,7 @@ class Workshop {
   final double latitude;
   final double longitude;
   final double deliveryRadiusKm;
+  final double deliveryFee;
   final bool offersHomeService;
   final List<WorkshopBusinessHour> businessHours;
   final List<String> serviceCategories;
@@ -26,6 +27,7 @@ class Workshop {
     required this.latitude,
     required this.longitude,
     required this.deliveryRadiusKm,
+    this.deliveryFee = 0,
     this.offersHomeService = false,
     this.businessHours = const [],
     this.serviceCategories = const [],

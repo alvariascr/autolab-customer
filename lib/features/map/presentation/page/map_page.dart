@@ -250,6 +250,8 @@ class _MapDiscoveryOverlay extends StatelessWidget {
     required this.onClear,
   });
 
+  static const _showFilters = false;
+
   final String countLabel;
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
@@ -274,8 +276,10 @@ class _MapDiscoveryOverlay extends StatelessWidget {
             onClear: onClear,
           ),
           const SizedBox(height: AutolabCustomer.spacingSmd),
-          const _MapFilterChips(),
-          const SizedBox(height: AutolabCustomer.spacingSmd),
+          if (_showFilters) ...[
+            const _MapFilterChips(),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
+          ],
           _MapTopPill(label: countLabel),
         ],
       ),
@@ -301,8 +305,12 @@ class _MapSearchBar extends StatelessWidget {
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, child) {
+        final searchSurfaceColor = AutolabCustomer.customerSurfaceColor(
+          context,
+        );
+
         return Material(
-          color: AutolabCustomer.customerSoftSurfaceColor(context),
+          color: searchSurfaceColor,
           borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
           clipBehavior: Clip.antiAlias,
           elevation: 8,
@@ -325,7 +333,7 @@ class _MapSearchBar extends StatelessWidget {
               ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AutolabCustomer.customerSoftSurfaceColor(context),
+                fillColor: searchSurfaceColor,
                 hintText: l10n.mapSearchHint,
                 hintStyle: AutolabCustomer.body.copyWith(
                   color: AutolabCustomer.customerDisabledTextColor(context),
@@ -454,13 +462,9 @@ class _MapTopPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AutolabCustomer.isDark(context);
-
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark
-            ? AutolabCustomer.secondary
-            : AutolabCustomer.customerSoftSurfaceColor(context),
+        color: AutolabCustomer.customerSurfaceColor(context),
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
@@ -478,9 +482,7 @@ class _MapTopPill extends StatelessWidget {
             Text(
               label,
               style: AutolabCustomer.caption.copyWith(
-                color: isDark
-                    ? AutolabCustomer.white
-                    : AutolabCustomer.customerTextColor(context),
+                color: AutolabCustomer.customerTextColor(context),
                 fontWeight: FontWeight.w800,
               ),
             ),

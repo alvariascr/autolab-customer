@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
@@ -13,9 +14,14 @@ import '../../domain/usecases/get_laropay_purchases.dart';
 import '../../domain/usecases/refresh_laropay_purchase_status.dart';
 
 class MyPurchasesPage extends StatefulWidget {
-  const MyPurchasesPage({super.key, this.showBottomNavigation = true});
+  const MyPurchasesPage({
+    super.key,
+    this.showBottomNavigation = true,
+    this.paymentLinkId,
+  });
 
   final bool showBottomNavigation;
+  final String? paymentLinkId;
 
   @override
   State<MyPurchasesPage> createState() => _MyPurchasesPageState();
@@ -24,11 +30,21 @@ class MyPurchasesPage extends StatefulWidget {
 class _MyPurchasesPageState extends State<MyPurchasesPage> {
   late Future<List<LaropayPurchase>> _future;
   final Set<String> _refreshingPurchaseIds = <String>{};
+  String? _handledPaymentLinkId;
 
   @override
   void initState() {
     super.initState();
     _future = _loadPurchases();
+    _schedulePaymentReturnRefresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant MyPurchasesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.paymentLinkId != widget.paymentLinkId) {
+      _schedulePaymentReturnRefresh();
+    }
   }
 
   Future<void> _reload() {
@@ -37,6 +53,22 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
       _future = nextFuture;
     });
     return nextFuture;
+  }
+
+  void _schedulePaymentReturnRefresh() {
+    final paymentLinkId = widget.paymentLinkId?.trim() ?? '';
+    if (!isValidUuid(paymentLinkId) || _handledPaymentLinkId == paymentLinkId) {
+      return;
+    }
+
+    _handledPaymentLinkId = paymentLinkId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      _refreshReturnedPayment(paymentLinkId);
+    });
   }
 
   Future<List<LaropayPurchase>> _loadPurchases() async {
@@ -201,6 +233,37 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     } finally {
       if (mounted) {
         setState(() => _refreshingPurchaseIds.remove(purchase.id));
+      }
+    }
+  }
+
+  Future<void> _refreshReturnedPayment(String paymentLinkId) async {
+    final l10n = AppLocalizations.of(context)!;
+    _showMessage(
+      message: l10n.myPurchasesRefreshingReturnedPayment,
+      color: AutolabCustomer.secondary,
+    );
+
+    try {
+      final result = await sl<RefreshLaropayPurchaseStatus>()(paymentLinkId);
+      if (!mounted) {
+        return;
+      }
+
+      result.fold(
+        (_) => _showMessage(
+          message: l10n.myPurchasesStatusRefreshError,
+          color: AutolabCustomer.error,
+        ),
+        (purchase) {
+          final outcome = _returnedPaymentOutcome(purchase);
+          _showMessage(message: outcome.message(l10n), color: outcome.color);
+          _reload();
+        },
+      );
+    } finally {
+      if (mounted) {
+        context.replace('/purchases');
       }
     }
   }
@@ -391,6 +454,52 @@ class _CustomerHeaderLogoPainter extends CustomPainter {
       Offset(205.94, 216.93),
     ],
   ];
+}
+
+enum _ReturnedPaymentOutcome { paid, rejected, expired, pending }
+
+_ReturnedPaymentOutcome _returnedPaymentOutcome(LaropayPurchase purchase) {
+  final status = purchase.status.toLowerCase();
+  final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
+
+  if (status == 'paid' ||
+      orderPaymentStatus == 'paid' ||
+      orderPaymentStatus == 'partial') {
+    return _ReturnedPaymentOutcome.paid;
+  }
+
+  if (status == 'rejected' || status == 'failed') {
+    return _ReturnedPaymentOutcome.rejected;
+  }
+
+  if (status == 'expired') {
+    return _ReturnedPaymentOutcome.expired;
+  }
+
+  return _ReturnedPaymentOutcome.pending;
+}
+
+extension _ReturnedPaymentOutcomeView on _ReturnedPaymentOutcome {
+  String message(AppLocalizations l10n) {
+    return switch (this) {
+      _ReturnedPaymentOutcome.paid => l10n.laropayPaymentResultPaidMessage,
+      _ReturnedPaymentOutcome.rejected =>
+        l10n.laropayPaymentResultRejectedMessage,
+      _ReturnedPaymentOutcome.expired =>
+        l10n.laropayPaymentResultExpiredMessage,
+      _ReturnedPaymentOutcome.pending =>
+        l10n.laropayPaymentResultPendingMessage,
+    };
+  }
+
+  Color get color {
+    return switch (this) {
+      _ReturnedPaymentOutcome.paid => AutolabCustomer.success,
+      _ReturnedPaymentOutcome.rejected ||
+      _ReturnedPaymentOutcome.expired => AutolabCustomer.error,
+      _ReturnedPaymentOutcome.pending => AutolabCustomer.warning,
+    };
+  }
 }
 
 class _PurchaseCard extends StatelessWidget {

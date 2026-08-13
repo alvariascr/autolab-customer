@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/appointments/presentation/pages/my_appointments_page.dart';
@@ -7,6 +8,7 @@ import '../../features/auth/application/auth_session_state.dart';
 import '../../features/auth/ui/forgot_password_page.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/reset_password_page.dart';
+import '../../features/cart/application/cart_cubit.dart';
 import '../../features/home/home_page.dart';
 import '../../features/navigation/customer_navigation_shell.dart';
 import '../../features/onboarding/customer_onboarding_page.dart';
@@ -82,6 +84,7 @@ class AppRouter {
             'search' => 2,
             'cart' => 3,
             'profile' => 4,
+            'garage' => 4,
             _ => 0,
           };
 
@@ -89,12 +92,18 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/cart',
+        redirect: (context, state) => '/home-customer?tab=cart',
+      ),
+      GoRoute(
         path: '/appointments',
         builder: (context, state) => const MyAppointmentsPage(),
       ),
       GoRoute(
         path: '/purchases',
-        builder: (context, state) => const MyPurchasesPage(),
+        builder: (context, state) => MyPurchasesPage(
+          paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+        ),
       ),
       GoRoute(
         path: '/profile',
@@ -118,9 +127,15 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return WorkshopProfilePage(
-            workshopId: workshopId,
-            paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+          return BlocProvider.value(
+            value: sl<CartCubit>(),
+            child: WorkshopProfilePage(
+              workshopId: workshopId,
+              paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+              initialCatalogSection: state.uri.queryParameters['section'],
+              showCartAddedMessage:
+                  state.uri.queryParameters['cartAdded'] == 'true',
+            ),
           );
         },
       ),
@@ -140,13 +155,16 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return ProductDetailPage.resolve(
-            product:
-                product?.workshopId == workshopId && product?.id == productId
-                ? product
-                : null,
-            workshopId: workshopId,
-            productId: productId,
+          return BlocProvider.value(
+            value: sl<CartCubit>(),
+            child: ProductDetailPage.resolve(
+              product:
+                  product?.workshopId == workshopId && product?.id == productId
+                  ? product
+                  : null,
+              workshopId: workshopId,
+              productId: productId,
+            ),
           );
         },
       ),

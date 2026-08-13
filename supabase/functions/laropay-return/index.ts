@@ -47,6 +47,9 @@ Deno.serve(async (request) => {
     const destination = new URL(`${appScheme}://${appHost}${appPath}`);
     destination.searchParams.set("workshopId", workshopId);
     destination.searchParams.set("paymentLinkId", paymentLinkId);
+    if (!(await hasAppointmentForOrder(supabase, internalTransactionId))) {
+      destination.searchParams.set("target", "purchases");
+    }
 
     return new Response(null, {
       status: 302,
@@ -71,8 +74,37 @@ function requiredEnv(key: string) {
 }
 
 function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     .test(value);
+}
+
+async function hasAppointmentForOrder(
+  supabase: ReturnType<typeof createClient>,
+  orderId: string,
+) {
+  const { data: services, error: servicesError } = await supabase
+    .from("order_services")
+    .select("id")
+    .eq("order_id", orderId);
+  if (servicesError !== null || services === null || services.length === 0) {
+    return false;
+  }
+
+  const serviceIds = services
+    .map((service) => String(service.id ?? "").trim())
+    .filter(isUuid);
+  if (serviceIds.length === 0) {
+    return false;
+  }
+
+  const { data: appointment, error: appointmentError } = await supabase
+    .from("appointments")
+    .select("id")
+    .in("order_service_id", serviceIds)
+    .limit(1)
+    .maybeSingle();
+
+  return appointmentError === null && appointment !== null;
 }
 
 function safeError(error: unknown) {
