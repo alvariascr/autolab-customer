@@ -181,10 +181,7 @@ class _FakeLaropayLinkRepository implements LaropayLinkRepository {
 }
 
 class _FakeLaropayCheckoutRepository implements LaropayCheckoutRepository {
-  const _FakeLaropayCheckoutRepository({
-    this.orderContext,
-    this.orderFailure,
-  });
+  const _FakeLaropayCheckoutRepository({this.orderContext, this.orderFailure});
 
   final LaropayPaymentContext? orderContext;
   final Failure? orderFailure;
