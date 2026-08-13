@@ -180,9 +180,6 @@ class _PhysicalProductDetailContentState
                           ),
                           onPressed: hasStock
                               ? () async {
-                                  final messenger = ScaffoldMessenger.of(
-                                    context,
-                                  );
                                   final router = GoRouter.of(context);
                                   final wasAdded = await context
                                       .read<CartCubit>()
@@ -212,22 +209,8 @@ class _PhysicalProductDetailContentState
                                   router.go(
                                     workshopId.isEmpty
                                         ? '/home-customer'
-                                        : '/workshops/$workshopId?section=products',
+                                        : '/workshops/$workshopId?section=products&cartAdded=true',
                                   );
-                                  messenger
-                                    ..hideCurrentSnackBar()
-                                    ..showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.productDetailAddedToCartMessage,
-                                        ),
-                                        action: SnackBarAction(
-                                          label:
-                                              l10n.productDetailViewCartAction,
-                                          onPressed: () => router.push('/cart'),
-                                        ),
-                                      ),
-                                    );
                                 }
                               : null,
                           icon: const Icon(Icons.shopping_cart_outlined),

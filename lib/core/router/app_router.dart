@@ -127,6 +127,8 @@ class AppRouter {
               workshopId: workshopId,
               paymentLinkId: state.uri.queryParameters['paymentLinkId'],
               initialCatalogSection: state.uri.queryParameters['section'],
+              showCartAddedMessage:
+                  state.uri.queryParameters['cartAdded'] == 'true',
             ),
           );
         },

@@ -39,11 +39,13 @@ class WorkshopProfilePage extends StatefulWidget {
     required this.workshopId,
     this.paymentLinkId,
     this.initialCatalogSection,
+    this.showCartAddedMessage = false,
   });
 
   final String workshopId;
   final String? paymentLinkId;
   final String? initialCatalogSection;
+  final bool showCartAddedMessage;
 
   @override
   State<WorkshopProfilePage> createState() => _WorkshopProfilePageState();
@@ -51,9 +53,12 @@ class WorkshopProfilePage extends StatefulWidget {
 
 class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
   static const _paymentStatusTimeout = Duration(seconds: 45);
+  static const _cartAddedMessageDuration = Duration(seconds: 3);
 
   late Future<Either<Failure, Workshop?>> _workshopFuture;
   String? _shownPaymentResultKey;
+  Timer? _cartAddedMessageTimer;
+  bool _showCartAddedBanner = false;
 
   @override
   void initState() {
@@ -62,6 +67,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
       widget.workshopId,
     );
     _schedulePaymentResultDialog();
+    _scheduleCartAddedMessage();
   }
 
   @override
@@ -70,6 +76,15 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
     if (oldWidget.paymentLinkId != widget.paymentLinkId) {
       _schedulePaymentResultDialog();
     }
+    if (!oldWidget.showCartAddedMessage && widget.showCartAddedMessage) {
+      _scheduleCartAddedMessage();
+    }
+  }
+
+  @override
+  void dispose() {
+    _cartAddedMessageTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -122,9 +137,35 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
             bottom: AutolabCustomer.spacingMd,
             child: Center(child: CartFloatingCheckoutButton()),
           ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + AutolabCustomer.spacingSmd,
+            left: AutolabCustomer.spacingLg,
+            right: AutolabCustomer.spacingLg,
+            child: _CartAddedBanner(visible: _showCartAddedBanner),
+          ),
         ],
       ),
     );
+  }
+
+  void _scheduleCartAddedMessage() {
+    if (!widget.showCartAddedMessage) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      _cartAddedMessageTimer?.cancel();
+      setState(() => _showCartAddedBanner = true);
+      _cartAddedMessageTimer = Timer(_cartAddedMessageDuration, () {
+        if (mounted) {
+          setState(() => _showCartAddedBanner = false);
+        }
+      });
+    });
   }
 
   void _schedulePaymentResultDialog() {
@@ -227,6 +268,61 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
 
   void _clearPaymentQuery() {
     context.go('/workshops/${widget.workshopId}');
+  }
+}
+
+class _CartAddedBanner extends StatelessWidget {
+  const _CartAddedBanner({required this.visible});
+
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return IgnorePointer(
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        offset: visible ? Offset.zero : const Offset(0, -0.35),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 180),
+          opacity: visible ? 1 : 0,
+          child: Material(
+            color: AutolabCustomer.successSoftBackground,
+            borderRadius: BorderRadius.circular(14),
+            elevation: 8,
+            shadowColor: AutolabCustomer.shadowBlackStrong,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AutolabCustomer.spacingMd,
+                vertical: AutolabCustomer.spacingSmd,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: AutolabCustomer.success,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AutolabCustomer.spacingSm),
+                  Expanded(
+                    child: Text(
+                      l10n.productDetailAddedToCartMessage,
+                      style: AutolabCustomer.body.copyWith(
+                        color: AutolabCustomer.success,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
