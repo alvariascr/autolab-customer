@@ -167,7 +167,7 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<CreateCartOrder>(
     () => CreateCartOrder(sl<CartRepository>()),
   );
-  sl.registerFactory<CartCubit>(
+  sl.registerLazySingleton<CartCubit>(
     () => CartCubit(
       loadDeliveryAddresses: sl<LoadDeliveryAddresses>(),
       saveDeliveryAddress: sl<SaveDeliveryAddress>(),

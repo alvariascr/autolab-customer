@@ -180,6 +180,7 @@ class _PhysicalProductDetailContentState
                           ),
                           onPressed: hasStock
                               ? () async {
+                                  final router = GoRouter.of(context);
                                   final wasAdded = await context
                                       .read<CartCubit>()
                                       .addProductAndPersist(
@@ -205,10 +206,10 @@ class _PhysicalProductDetailContentState
                                   }
 
                                   final workshopId = product.workshopId.trim();
-                                  context.go(
+                                  router.go(
                                     workshopId.isEmpty
                                         ? '/home-customer'
-                                        : '/workshops/$workshopId?section=products',
+                                        : '/workshops/$workshopId?section=products&cartAdded=true',
                                   );
                                 }
                               : null,

@@ -7,6 +7,7 @@ class LaropayPaymentContext {
     required this.customerEmail,
     this.orderNumber,
     this.customerPhone,
+    this.workshopName,
   });
 
   final String orderId;
@@ -16,4 +17,5 @@ class LaropayPaymentContext {
   final String customerLastName;
   final String customerEmail;
   final String? customerPhone;
+  final String? workshopName;
 }

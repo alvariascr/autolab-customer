@@ -1334,6 +1334,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get productDetailAddToCartAction => 'Agregar al carrito';
 
   @override
+  String get productDetailAddedToCartMessage => 'Producto agregado al carrito.';
+
+  @override
+  String get productDetailViewCartAction => 'Ver carrito';
+
+  @override
   String get productDetailStockLimitReached =>
       'No hay más unidades disponibles de este producto.';
 
@@ -2185,6 +2191,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'No fue posible guardar la dirección. Intenta nuevamente.';
 
   @override
+  String get cartDeleteAddressSuccess => 'Dirección eliminada correctamente.';
+
+  @override
   String get cartDeleteAddressError =>
       'No fue posible eliminar la dirección. Intenta nuevamente.';
 
@@ -2225,7 +2234,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartFreeShipping => 'Gratis';
 
   @override
-  String get cartTaxes => 'Impuestos';
+  String get cartTaxes => 'IVA incluido';
 
   @override
   String get cartTotal => 'Total';
@@ -2244,6 +2253,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartCreatingOrder => 'Creando orden...';
 
   @override
+  String get cartCreatingOrderMessage => 'Estamos validando tu carrito.';
+
+  @override
+  String get cartOpeningLaropayTitle => 'Preparando pago seguro';
+
+  @override
+  String get cartOpeningLaropayMessage =>
+      'Estamos abriendo Laropay. No cierres la app.';
+
+  @override
   String cartCreateOrderSuccess(Object orderNumber) {
     return 'Orden $orderNumber creada correctamente.';
   }
@@ -2259,6 +2278,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartOrderSuccessAction => 'Entendido';
+
+  @override
+  String get cartPaymentReviewTitle => 'Pago en revisión';
+
+  @override
+  String get cartPaymentReviewMessage =>
+      'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.';
+
+  @override
+  String get cartPaymentReviewAction => 'Entendido';
 
   @override
   String get cartCreateOrderError =>
@@ -2396,6 +2425,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesRefreshStatusAction => 'Actualizar estado';
+
+  @override
+  String get myPurchasesRefreshingReturnedPayment =>
+      'Estamos confirmando tu pago con Laropay.';
 
   @override
   String get myPurchasesStatusRefreshSuccess => 'Estado de pago actualizado.';

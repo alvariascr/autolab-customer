@@ -356,7 +356,7 @@ async function loadOrderPaymentData(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, workshop_id, payment_status, customers!inner(user_id)",
+      "id, workshop_id, payment_status, payment_expires_at, total_amount, customers!inner(user_id)",
     )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
@@ -375,6 +375,15 @@ async function loadOrderPaymentData(
     throw new Error("invalid_order_payment_status");
   }
 
+  if (isExpiredAt(order.payment_expires_at)) {
+    throw new Error("order_payment_expired");
+  }
+
+  const orderTotal = numberValue(order.total_amount);
+  if (!Number.isFinite(orderTotal) || orderTotal <= 0) {
+    throw new Error("invalid_order_total");
+  }
+
   const { data: products, error: productsError } = await adminSupabaseClient(
     env,
   )
@@ -386,7 +395,7 @@ async function loadOrderPaymentData(
     throw new Error("invalid_order_products");
   }
 
-  const amount = ((products ?? []) as Array<Record<string, unknown>>)
+  const productsTotal = ((products ?? []) as Array<Record<string, unknown>>)
     .reduce((total, item) => {
       const quantity = numberValue(item.quantity);
       const unitPrice = numberValue(item.unit_price);
@@ -397,12 +406,16 @@ async function loadOrderPaymentData(
       return total + quantity * unitPrice;
     }, 0);
 
-  if (!Number.isFinite(amount) || amount <= 0) {
+  if (!Number.isFinite(productsTotal) || productsTotal <= 0) {
     throw new Error("order_has_no_chargeable_products");
   }
 
-  if (Math.abs(amount - numberValue(input.amount)) > 0.01) {
-    throw new Error("amount_mismatch");
+  // Laropay only charges product lines. Workshop services and delivery fees are
+  // settled directly with the workshop according to the business rule.
+  const amount = productsTotal;
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("order_has_no_chargeable_products");
   }
 
   return {
@@ -707,6 +720,22 @@ function numberValue(value: unknown) {
   return Number.NaN;
 }
 
+function isExpiredAt(value: unknown) {
+  const text = stringValue(value);
+  if (text === "") {
+    return false;
+  }
+
+  const normalizedText = text.includes(" ") ? text.replace(" ", "T") : text;
+  const timestamp = new Date(normalizedText).getTime();
+  if (Number.isNaN(timestamp)) {
+    console.warn("[laropay.generate_link] invalid_payment_expires_at");
+    return false;
+  }
+
+  return Number.isFinite(timestamp) && timestamp <= Date.now();
+}
+
 function trimOrNull(value: unknown) {
   const text = stringValue(value);
   return text === "" ? null : text;
@@ -722,7 +751,8 @@ function normalizedExpirationValue(input: LaropayLinkRequest) {
 
 function isBadRequestError(message: string) {
   return [
-    "amount_mismatch",
+    "invalid_order_total",
+    "order_payment_expired",
     "order_has_no_chargeable_products",
   ].includes(message);
 }

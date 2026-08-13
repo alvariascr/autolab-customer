@@ -99,7 +99,9 @@ class AppRouter {
       ),
       GoRoute(
         path: '/purchases',
-        builder: (context, state) => const MyPurchasesPage(),
+        builder: (context, state) => MyPurchasesPage(
+          paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+        ),
       ),
       GoRoute(
         path: '/profile',
@@ -119,10 +121,15 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return WorkshopProfilePage(
-            workshopId: workshopId,
-            paymentLinkId: state.uri.queryParameters['paymentLinkId'],
-            initialCatalogSection: state.uri.queryParameters['section'],
+          return BlocProvider.value(
+            value: sl<CartCubit>(),
+            child: WorkshopProfilePage(
+              workshopId: workshopId,
+              paymentLinkId: state.uri.queryParameters['paymentLinkId'],
+              initialCatalogSection: state.uri.queryParameters['section'],
+              showCartAddedMessage:
+                  state.uri.queryParameters['cartAdded'] == 'true',
+            ),
           );
         },
       ),
@@ -142,8 +149,8 @@ class AppRouter {
             return const _InvalidRoutePage();
           }
 
-          return BlocProvider(
-            create: (_) => sl<CartCubit>(),
+          return BlocProvider.value(
+            value: sl<CartCubit>(),
             child: ProductDetailPage.resolve(
               product:
                   product?.workshopId == workshopId && product?.id == productId

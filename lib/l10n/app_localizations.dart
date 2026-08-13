@@ -2452,6 +2452,18 @@ abstract class AppLocalizations {
   /// **'Agregar al carrito'**
   String get productDetailAddToCartAction;
 
+  /// No description provided for @productDetailAddedToCartMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto agregado al carrito.'**
+  String get productDetailAddedToCartMessage;
+
+  /// No description provided for @productDetailViewCartAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver carrito'**
+  String get productDetailViewCartAction;
+
   /// No description provided for @productDetailStockLimitReached.
   ///
   /// In es, this message translates to:
@@ -3946,6 +3958,12 @@ abstract class AppLocalizations {
   /// **'No fue posible guardar la dirección. Intenta nuevamente.'**
   String get cartSaveAddressError;
 
+  /// No description provided for @cartDeleteAddressSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección eliminada correctamente.'**
+  String get cartDeleteAddressSuccess;
+
   /// No description provided for @cartDeleteAddressError.
   ///
   /// In es, this message translates to:
@@ -4009,7 +4027,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartTaxes.
   ///
   /// In es, this message translates to:
-  /// **'Impuestos'**
+  /// **'IVA incluido'**
   String get cartTaxes;
 
   /// No description provided for @cartTotal.
@@ -4042,6 +4060,24 @@ abstract class AppLocalizations {
   /// **'Creando orden...'**
   String get cartCreatingOrder;
 
+  /// No description provided for @cartCreatingOrderMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos validando tu carrito.'**
+  String get cartCreatingOrderMessage;
+
+  /// No description provided for @cartOpeningLaropayTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando pago seguro'**
+  String get cartOpeningLaropayTitle;
+
+  /// No description provided for @cartOpeningLaropayMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos abriendo Laropay. No cierres la app.'**
+  String get cartOpeningLaropayMessage;
+
   /// No description provided for @cartCreateOrderSuccess.
   ///
   /// In es, this message translates to:
@@ -4071,6 +4107,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Entendido'**
   String get cartOrderSuccessAction;
+
+  /// No description provided for @cartPaymentReviewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago en revisión'**
+  String get cartPaymentReviewTitle;
+
+  /// No description provided for @cartPaymentReviewMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.'**
+  String get cartPaymentReviewMessage;
+
+  /// No description provided for @cartPaymentReviewAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get cartPaymentReviewAction;
 
   /// No description provided for @cartCreateOrderError.
   ///
@@ -4317,6 +4371,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Actualizar estado'**
   String get myPurchasesRefreshStatusAction;
+
+  /// No description provided for @myPurchasesRefreshingReturnedPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos confirmando tu pago con Laropay.'**
+  String get myPurchasesRefreshingReturnedPayment;
 
   /// No description provided for @myPurchasesStatusRefreshSuccess.
   ///

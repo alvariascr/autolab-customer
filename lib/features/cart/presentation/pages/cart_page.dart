@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../application/cart_cubit.dart';
 import '../../domain/entities/cart_checkout.dart';
@@ -20,7 +24,10 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  static const _checkoutLaunchTimeout = Duration(seconds: 45);
+
   bool _showCheckout = false;
+  bool _isOpeningLaropay = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,87 +38,104 @@ class _CartPageState extends State<CartPage> {
         final showCheckout = _showCheckout && cart.items.isNotEmpty;
         final hasDeliveryAddress = cart.hasCompleteDeliveryDetails;
         final isCheckingOut = cart.checkoutStatus.isLoading;
+        final showPaymentLoading = isCheckingOut || _isOpeningLaropay;
         final canCheckout =
             cart.items.isNotEmpty &&
-            !isCheckingOut &&
+            !showPaymentLoading &&
             (!showCheckout || !cart.homeDelivery || hasDeliveryAddress);
 
         return Scaffold(
           backgroundColor: AutolabCustomer.customerBackgroundColor(context),
           body: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: CustomScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  slivers: [
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        AutolabCustomer.responsiveScreenMargin(context),
-                        AutolabCustomer.spacingSmd,
-                        AutolabCustomer.responsiveScreenMargin(context),
-                        AutolabCustomer.spacingLg +
-                            MediaQuery.paddingOf(context).bottom +
-                            kBottomNavigationBarHeight,
-                      ),
-                      sliver: SliverList.list(
-                        children: [
-                          _CartHeader(
-                            title: showCheckout
-                                ? l10n.cartCheckoutTitle
-                                : l10n.cartTitle,
-                            subtitle: showCheckout
-                                ? null
-                                : l10n.cartProductCount(cart.totalQuantity),
-                            showBackButton:
-                                widget.showBackButton || showCheckout,
-                            onBackTap: showCheckout
-                                ? () => setState(() => _showCheckout = false)
-                                : () => Navigator.maybePop(context),
+            child: Stack(
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 560),
+                    child: CustomScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      slivers: [
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            AutolabCustomer.responsiveScreenMargin(context),
+                            AutolabCustomer.spacingSmd,
+                            AutolabCustomer.responsiveScreenMargin(context),
+                            AutolabCustomer.spacingLg +
+                                MediaQuery.paddingOf(context).bottom +
+                                kBottomNavigationBarHeight,
                           ),
-                          const SizedBox(height: AutolabCustomer.spacingSmd),
-                          if (cart.items.isEmpty)
-                            _EmptyCartState()
-                          else if (showCheckout)
-                            _CartCheckoutView(cart: cart)
-                          else
-                            _CartItemsView(cart: cart),
-                          const SizedBox(height: AutolabCustomer.spacingMd),
-                          if (!showCheckout && cart.items.isNotEmpty) ...[
-                            _CartDeliverySection(cart: cart),
-                            const SizedBox(height: AutolabCustomer.spacingSmd),
-                            _CartSummaryCard(cart: cart, includeShipping: true),
-                          ],
-                          const SizedBox(height: AutolabCustomer.spacingSm),
-                          _CartPrimaryButton(
-                            label: showCheckout
-                                ? isCheckingOut
-                                      ? l10n.cartCreatingOrder
-                                      : l10n.cartFinishPurchase
-                                : l10n.cartContinueToCheckout,
-                            enabled: canCheckout,
-                            onPressed: !canCheckout
-                                ? null
-                                : () async {
-                                    if (!showCheckout) {
-                                      await context
-                                          .read<CartCubit>()
-                                          .refreshWorkshopDeliveryFee();
-                                      if (!mounted) return;
-                                      setState(() => _showCheckout = true);
-                                      return;
-                                    }
+                          sliver: SliverList.list(
+                            children: [
+                              _CartHeader(
+                                title: showCheckout
+                                    ? l10n.cartCheckoutTitle
+                                    : l10n.cartTitle,
+                                subtitle: showCheckout
+                                    ? null
+                                    : l10n.cartProductCount(cart.totalQuantity),
+                                showBackButton:
+                                    widget.showBackButton || showCheckout,
+                                onBackTap: showCheckout
+                                    ? () =>
+                                          setState(() => _showCheckout = false)
+                                    : () => Navigator.maybePop(context),
+                              ),
+                              const SizedBox(
+                                height: AutolabCustomer.spacingSmd,
+                              ),
+                              if (cart.items.isEmpty)
+                                _EmptyCartState()
+                              else if (showCheckout)
+                                _CartCheckoutView(cart: cart)
+                              else
+                                _CartItemsView(cart: cart),
+                              const SizedBox(height: AutolabCustomer.spacingMd),
+                              if (!showCheckout && cart.items.isNotEmpty) ...[
+                                _CartDeliverySection(cart: cart),
+                                const SizedBox(
+                                  height: AutolabCustomer.spacingSmd,
+                                ),
+                                _CartSummaryCard(
+                                  cart: cart,
+                                  includeShipping: true,
+                                ),
+                              ],
+                              const SizedBox(height: AutolabCustomer.spacingSm),
+                              _CartPrimaryButton(
+                                label: showCheckout
+                                    ? isCheckingOut
+                                          ? l10n.cartCreatingOrder
+                                          : l10n.cartFinishPurchase
+                                    : l10n.cartContinueToCheckout,
+                                enabled: canCheckout,
+                                onPressed: !canCheckout
+                                    ? null
+                                    : () async {
+                                        if (!showCheckout) {
+                                          await context
+                                              .read<CartCubit>()
+                                              .refreshWorkshopDeliveryFee();
+                                          if (!mounted) return;
+                                          setState(() => _showCheckout = true);
+                                          return;
+                                        }
 
-                                    _createCartOrder(context);
-                                  },
+                                        _createCartOrder(context);
+                                      },
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                if (showPaymentLoading)
+                  _CartCheckoutLoadingOverlay(
+                    isOpeningLaropay: _isOpeningLaropay,
+                  ),
+              ],
             ),
           ),
         );
@@ -128,6 +152,9 @@ class _CartPageState extends State<CartPage> {
     if (!mounted || !context.mounted) return;
 
     if (result == null) {
+      if (_isOpeningLaropay) {
+        setState(() => _isOpeningLaropay = false);
+      }
       final errorMessage = _checkoutErrorMessage(
         l10n,
         cartCubit.state.checkoutError,
@@ -136,10 +163,42 @@ class _CartPageState extends State<CartPage> {
       return;
     }
 
+    try {
+      setState(() => _isOpeningLaropay = true);
+      await sl<LaropayCheckoutLauncher>()
+          .launchForOrder(orderId: result.orderId)
+          .timeout(_checkoutLaunchTimeout);
+      if (!mounted || !context.mounted) return;
+      cartCubit.clear();
+      setState(() {
+        _isOpeningLaropay = false;
+        _showCheckout = false;
+      });
+    } on LaropayCheckoutLaunchException {
+      if (!mounted || !context.mounted) return;
+      setState(() => _isOpeningLaropay = false);
+      await _showPaymentReviewDialog(context, cartCubit, result);
+    } on TimeoutException {
+      if (!mounted || !context.mounted) return;
+      setState(() => _isOpeningLaropay = false);
+      await _showPaymentReviewDialog(context, cartCubit, result);
+    } catch (_) {
+      if (!mounted || !context.mounted) return;
+      setState(() => _isOpeningLaropay = false);
+      await _showPaymentReviewDialog(context, cartCubit, result);
+    }
+  }
+
+  Future<void> _showPaymentReviewDialog(
+    BuildContext context,
+    CartCubit cartCubit,
+    CartCheckoutResult result,
+  ) async {
+    cartCubit.clear();
     setState(() => _showCheckout = false);
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => _CartSuccessDialog(result: result),
+      builder: (dialogContext) => _CartPaymentReviewDialog(result: result),
     );
   }
 
@@ -152,8 +211,85 @@ class _CartPageState extends State<CartPage> {
   }
 }
 
-class _CartSuccessDialog extends StatelessWidget {
-  const _CartSuccessDialog({required this.result});
+class _CartCheckoutLoadingOverlay extends StatelessWidget {
+  const _CartCheckoutLoadingOverlay({required this.isOpeningLaropay});
+
+  final bool isOpeningLaropay;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final title = isOpeningLaropay
+        ? l10n.cartOpeningLaropayTitle
+        : l10n.cartCreatingOrder;
+    final message = isOpeningLaropay
+        ? l10n.cartOpeningLaropayMessage
+        : l10n.cartCreatingOrderMessage;
+
+    return Positioned.fill(
+      child: ColoredBox(
+        color: Colors.black.withValues(alpha: 0.34),
+        child: Center(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AutolabCustomer.customerSurfaceColor(context),
+              borderRadius: BorderRadius.circular(AutolabCustomer.radiusLg),
+              boxShadow: AutolabCustomer.shadowLevel2,
+              border: Border.all(
+                color: AutolabCustomer.customerBorderColor(context),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AutolabCustomer.spacingLg,
+                vertical: AutolabCustomer.spacingLg,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 38,
+                    height: 38,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: AutolabCustomer.primary,
+                    ),
+                  ),
+                  const SizedBox(height: AutolabCustomer.spacingMd),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: AutolabCustomer.body.copyWith(
+                      color: AutolabCustomer.customerTextColor(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: AutolabCustomer.spacingXs),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 260),
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CartPaymentReviewDialog extends StatelessWidget {
+  const _CartPaymentReviewDialog({required this.result});
 
   final CartCheckoutResult result;
 
@@ -183,17 +319,17 @@ class _CartSuccessDialog extends StatelessWidget {
                 height: 76,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AutolabCustomer.success, width: 5),
+                  border: Border.all(color: AutolabCustomer.warning, width: 5),
                 ),
                 child: Icon(
-                  Icons.check_rounded,
-                  color: AutolabCustomer.success,
+                  Icons.priority_high_rounded,
+                  color: AutolabCustomer.warning,
                   size: AutolabCustomer.iconLg,
                 ),
               ),
               const SizedBox(height: AutolabCustomer.spacingLg),
               Text(
-                l10n.cartOrderSuccessTitle,
+                l10n.cartPaymentReviewTitle,
                 textAlign: TextAlign.center,
                 style: AutolabCustomer.h3.copyWith(
                   color: AutolabCustomer.customerTextColor(context),
@@ -202,7 +338,7 @@ class _CartSuccessDialog extends StatelessWidget {
               ),
               const SizedBox(height: AutolabCustomer.spacingSm),
               Text(
-                l10n.cartOrderSuccessMessage,
+                l10n.cartPaymentReviewMessage,
                 textAlign: TextAlign.center,
                 style: AutolabCustomer.body.copyWith(
                   color: AutolabCustomer.customerSecondaryTextColor(context),
@@ -243,7 +379,7 @@ class _CartSuccessDialog extends StatelessWidget {
                   style: AutolabCustomer.primaryButton,
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    l10n.cartOrderSuccessAction,
+                    l10n.cartPaymentReviewAction,
                     style: AutolabCustomer.body.copyWith(
                       color: AutolabCustomer.white,
                       fontWeight: FontWeight.w900,
@@ -831,6 +967,10 @@ Future<void> _confirmDeleteDeliveryAddress(
     messenger.showSnackBar(
       SnackBar(content: Text(l10n.cartDeleteAddressError)),
     );
+  } else if (context.mounted) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.cartDeleteAddressSuccess)),
+    );
   }
 }
 
@@ -923,20 +1063,23 @@ class _DeliveryAddressCard extends StatelessWidget {
 }
 
 Future<void> _showDeliveryDetailsSheet(BuildContext context, CartState cart) {
+  final cartCubit = context.read<CartCubit>();
+
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: AutolabCustomer.transparent,
     builder: (sheetContext) {
-      return _DeliveryDetailsSheet(cart: cart);
+      return _DeliveryDetailsSheet(cart: cart, cartCubit: cartCubit);
     },
   );
 }
 
 class _DeliveryDetailsSheet extends StatefulWidget {
-  const _DeliveryDetailsSheet({required this.cart});
+  const _DeliveryDetailsSheet({required this.cart, required this.cartCubit});
 
   final CartState cart;
+  final CartCubit cartCubit;
 
   @override
   State<_DeliveryDetailsSheet> createState() => _DeliveryDetailsSheetState();
@@ -1105,7 +1248,7 @@ class _DeliveryDetailsSheetState extends State<_DeliveryDetailsSheet> {
     }
 
     setState(() => _isSaving = true);
-    final wasSaved = await context.read<CartCubit>().saveDeliveryAddress(
+    final wasSaved = await widget.cartCubit.saveDeliveryAddress(
       province: _provinceController.text,
       canton: _cantonController.text,
       district: _districtController.text,

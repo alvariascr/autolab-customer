@@ -51,7 +51,6 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   @override
   void dispose() {
-    _cartCubit.close();
     super.dispose();
   }
 
