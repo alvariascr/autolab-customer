@@ -356,7 +356,7 @@ async function loadOrderPaymentData(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, workshop_id, payment_status, total_amount, customers!inner(user_id)",
+      "id, workshop_id, payment_status, payment_expires_at, total_amount, customers!inner(user_id)",
     )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
@@ -373,6 +373,10 @@ async function loadOrderPaymentData(
   const order = data as Record<string, unknown>;
   if (stringValue(order.payment_status).toLowerCase() !== "unpaid") {
     throw new Error("invalid_order_payment_status");
+  }
+
+  if (isExpiredAt(order.payment_expires_at)) {
+    throw new Error("order_payment_expired");
   }
 
   const orderTotal = numberValue(order.total_amount);
@@ -716,6 +720,16 @@ function numberValue(value: unknown) {
   return Number.NaN;
 }
 
+function isExpiredAt(value: unknown) {
+  const text = stringValue(value);
+  if (text === "") {
+    return false;
+  }
+
+  const timestamp = Date.parse(text);
+  return Number.isFinite(timestamp) && timestamp <= Date.now();
+}
+
 function trimOrNull(value: unknown) {
   const text = stringValue(value);
   return text === "" ? null : text;
@@ -732,6 +746,7 @@ function normalizedExpirationValue(input: LaropayLinkRequest) {
 function isBadRequestError(message: string) {
   return [
     "invalid_order_total",
+    "order_payment_expired",
     "order_has_no_chargeable_products",
   ].includes(message);
 }

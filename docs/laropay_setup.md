@@ -284,6 +284,48 @@ from public.laropay_runtime_config
 where key = 'token';
 ```
 
+## Expiracion de ordenes de carrito
+
+Las ordenes creadas desde el carrito reservan stock al momento de crear la
+orden. Para evitar stock bloqueado por checkouts abandonados, las ordenes
+`CART-%` pendientes reciben automaticamente un `payment_expires_at`.
+
+El TTL se configura en minutos desde base de datos. El valor por defecto es
+`1440`, equivalente a 1 dia:
+
+```sql
+select key, value, updated_at
+from public.cart_runtime_config
+where key = 'pending_order_ttl_minutes';
+```
+
+Para cambiarlo, por ejemplo a 30 minutos:
+
+```sql
+update public.cart_runtime_config
+set
+  value = '30',
+  updated_at = now(),
+  updated_by = 'support'
+where key = 'pending_order_ttl_minutes';
+```
+
+La limpieza se ejecuta desde backend con:
+
+```sql
+select public.expire_abandoned_cart_orders();
+```
+
+Esa funcion toma ordenes `CART-%` vencidas, pendientes, sin pagos registrados y
+sin monto pagado; restaura el stock de `order_products`, marca los links
+Laropay activos como `expired` y mueve la orden a un estado final soportado por
+el enum (`expired`, `cancelled` o `canceled`).
+
+Recomendacion operativa: programar esa funcion con una tarea recurrente de
+infraestructura o Supabase, por ejemplo cada 15 o 30 minutos. La frecuencia de
+ejecucion puede ser menor que el TTL; el TTL real siempre sale de
+`cart_runtime_config`.
+
 ## Checklist para cierre de tarea
 
 - Secrets configurados en Supabase.
