@@ -4060,6 +4060,24 @@ abstract class AppLocalizations {
   /// **'Creando orden...'**
   String get cartCreatingOrder;
 
+  /// No description provided for @cartCreatingOrderMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos validando tu carrito.'**
+  String get cartCreatingOrderMessage;
+
+  /// No description provided for @cartOpeningLaropayTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando pago seguro'**
+  String get cartOpeningLaropayTitle;
+
+  /// No description provided for @cartOpeningLaropayMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos abriendo Laropay. No cierres la app.'**
+  String get cartOpeningLaropayMessage;
+
   /// No description provided for @cartCreateOrderSuccess.
   ///
   /// In es, this message translates to:

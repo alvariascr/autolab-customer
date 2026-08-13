@@ -564,6 +564,9 @@ class CartCubit extends Cubit<CartState> {
       persistedState.copyWith(
         deliveryAddresses: state.deliveryAddresses,
         deliveryAddressesError: state.deliveryAddressesError,
+        checkoutStatus: state.checkoutStatus,
+        checkoutError: state.checkoutError,
+        pendingCheckoutResult: state.pendingCheckoutResult,
       ),
     );
   }

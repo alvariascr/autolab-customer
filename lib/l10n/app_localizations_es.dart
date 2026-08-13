@@ -2253,6 +2253,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartCreatingOrder => 'Creando orden...';
 
   @override
+  String get cartCreatingOrderMessage => 'Estamos validando tu carrito.';
+
+  @override
+  String get cartOpeningLaropayTitle => 'Preparando pago seguro';
+
+  @override
+  String get cartOpeningLaropayMessage =>
+      'Estamos abriendo Laropay. No cierres la app.';
+
+  @override
   String cartCreateOrderSuccess(Object orderNumber) {
     return 'Orden $orderNumber creada correctamente.';
   }

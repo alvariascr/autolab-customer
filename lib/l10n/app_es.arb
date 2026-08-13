@@ -774,6 +774,9 @@
   "cartContinueToCheckout": "Continuar",
   "cartPurchaseComingSoon": "La compra estará disponible próximamente.",
   "cartCreatingOrder": "Creando orden...",
+  "cartCreatingOrderMessage": "Estamos validando tu carrito.",
+  "cartOpeningLaropayTitle": "Preparando pago seguro",
+  "cartOpeningLaropayMessage": "Estamos abriendo Laropay. No cierres la app.",
   "cartCreateOrderSuccess": "Orden {orderNumber} creada correctamente.",
   "@cartCreateOrderSuccess": {
     "placeholders": {

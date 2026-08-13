@@ -99,10 +99,6 @@ class SupabaseLaropayCheckoutRemoteDataSource
             email,
             phone
           ),
-          order_products(
-            quantity,
-            unit_price
-          ),
           workshops(
             name
           )
@@ -124,7 +120,7 @@ class SupabaseLaropayCheckoutRemoteDataSource
       throw const LaropayCheckoutContextException();
     }
 
-    final amount = _productsTotal(response['order_products']);
+    final amount = _numberValue(response['total_amount']);
     if (!amount.isFinite || amount <= 0) {
       throw const LaropayCheckoutContextException();
     }
@@ -243,23 +239,4 @@ double _numberValue(Object? value) {
   }
 
   return double.nan;
-}
-
-double _productsTotal(Object? value) {
-  if (value is! List) {
-    return double.nan;
-  }
-
-  final total = value.fold<double>(0, (total, item) {
-    final row = _mapValue(item);
-    final quantity = _numberValue(row['quantity']);
-    final unitPrice = _numberValue(row['unit_price']);
-    if (!quantity.isFinite || !unitPrice.isFinite) {
-      return double.nan;
-    }
-
-    return total + quantity * unitPrice;
-  });
-
-  return (total * 100).roundToDouble() / 100;
 }

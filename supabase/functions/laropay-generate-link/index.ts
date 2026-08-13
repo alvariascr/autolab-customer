@@ -414,10 +414,6 @@ async function loadOrderPaymentData(
     throw new Error("order_has_no_chargeable_products");
   }
 
-  if (Math.abs(amount - numberValue(input.amount)) > 0.01) {
-    throw new Error("amount_mismatch");
-  }
-
   return {
     amount,
     idTransaction: env.laropayTransactionType,
@@ -735,7 +731,6 @@ function normalizedExpirationValue(input: LaropayLinkRequest) {
 
 function isBadRequestError(message: string) {
   return [
-    "amount_mismatch",
     "invalid_order_total",
     "order_has_no_chargeable_products",
   ].includes(message);

@@ -27,6 +27,7 @@ class _CartPageState extends State<CartPage> {
   static const _checkoutLaunchTimeout = Duration(seconds: 45);
 
   bool _showCheckout = false;
+  bool _isOpeningLaropay = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +38,10 @@ class _CartPageState extends State<CartPage> {
         final showCheckout = _showCheckout && cart.items.isNotEmpty;
         final hasDeliveryAddress = cart.hasCompleteDeliveryDetails;
         final isCheckingOut = cart.checkoutStatus.isLoading;
+        final showPaymentLoading = isCheckingOut || _isOpeningLaropay;
         final canCheckout =
             cart.items.isNotEmpty &&
-            !isCheckingOut &&
+            !showPaymentLoading &&
             (!showCheckout || !cart.homeDelivery || hasDeliveryAddress);
 
         return Scaffold(
@@ -129,7 +131,10 @@ class _CartPageState extends State<CartPage> {
                     ),
                   ),
                 ),
-                if (isCheckingOut) const _CartCheckoutLoadingOverlay(),
+                if (showPaymentLoading)
+                  _CartCheckoutLoadingOverlay(
+                    isOpeningLaropay: _isOpeningLaropay,
+                  ),
               ],
             ),
           ),
@@ -147,6 +152,9 @@ class _CartPageState extends State<CartPage> {
     if (!mounted || !context.mounted) return;
 
     if (result == null) {
+      if (_isOpeningLaropay) {
+        setState(() => _isOpeningLaropay = false);
+      }
       final errorMessage = _checkoutErrorMessage(
         l10n,
         cartCubit.state.checkoutError,
@@ -156,20 +164,27 @@ class _CartPageState extends State<CartPage> {
     }
 
     try {
+      setState(() => _isOpeningLaropay = true);
       await sl<LaropayCheckoutLauncher>()
           .launchForOrder(orderId: result.orderId)
           .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
-      cartCubit.resetCheckoutStatus();
-      setState(() => _showCheckout = false);
-    } on LaropayCheckoutLaunchException catch (_) {
+      cartCubit.clear();
+      setState(() {
+        _isOpeningLaropay = false;
+        _showCheckout = false;
+      });
+    } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
+      setState(() => _isOpeningLaropay = false);
       await _showPaymentReviewDialog(context, cartCubit, result);
-    } on TimeoutException catch (_) {
+    } on TimeoutException {
       if (!mounted || !context.mounted) return;
+      setState(() => _isOpeningLaropay = false);
       await _showPaymentReviewDialog(context, cartCubit, result);
     } catch (_) {
       if (!mounted || !context.mounted) return;
+      setState(() => _isOpeningLaropay = false);
       await _showPaymentReviewDialog(context, cartCubit, result);
     }
   }
@@ -179,7 +194,7 @@ class _CartPageState extends State<CartPage> {
     CartCubit cartCubit,
     CartCheckoutResult result,
   ) async {
-    cartCubit.resetCheckoutStatus();
+    cartCubit.clear();
     setState(() => _showCheckout = false);
     await showDialog<void>(
       context: context,
@@ -197,15 +212,23 @@ class _CartPageState extends State<CartPage> {
 }
 
 class _CartCheckoutLoadingOverlay extends StatelessWidget {
-  const _CartCheckoutLoadingOverlay();
+  const _CartCheckoutLoadingOverlay({required this.isOpeningLaropay});
+
+  final bool isOpeningLaropay;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final title = isOpeningLaropay
+        ? l10n.cartOpeningLaropayTitle
+        : l10n.cartCreatingOrder;
+    final message = isOpeningLaropay
+        ? l10n.cartOpeningLaropayMessage
+        : l10n.cartCreatingOrderMessage;
 
     return Positioned.fill(
       child: ColoredBox(
-        color: Colors.black.withValues(alpha: 0.18),
+        color: Colors.black.withValues(alpha: 0.34),
         child: Center(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -219,25 +242,40 @@ class _CartCheckoutLoadingOverlay extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AutolabCustomer.spacingLg,
-                vertical: AutolabCustomer.spacingMd,
+                vertical: AutolabCustomer.spacingLg,
               ),
-              child: Row(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
-                    width: 22,
-                    height: 22,
+                    width: 38,
+                    height: 38,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       color: AutolabCustomer.primary,
                     ),
                   ),
-                  const SizedBox(width: AutolabCustomer.spacingSm),
+                  const SizedBox(height: AutolabCustomer.spacingMd),
                   Text(
-                    l10n.cartCreatingOrder,
+                    title,
+                    textAlign: TextAlign.center,
                     style: AutolabCustomer.body.copyWith(
                       color: AutolabCustomer.customerTextColor(context),
                       fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: AutolabCustomer.spacingXs),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 260),
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        height: 1.25,
+                      ),
                     ),
                   ),
                 ],
