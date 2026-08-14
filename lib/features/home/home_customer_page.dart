@@ -108,26 +108,12 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     _workshopsFuture = _loadWorkshops();
   }
 
-  void _syncInitialNavigationState() {
-    _currentIndex = widget.initialIndex;
-    _showSearchBar = widget.initialShowSearchBar;
-    if (widget.initialShowSearchBar) {
-      _searchController.text = _queryStore?.query ?? '';
-    } else {
-      _queryStore?.clear();
-    }
-  }
-
   @override
   void didUpdateWidget(covariant HomeCustomerPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller?._detach(this);
       widget.controller?._attach(this);
-    }
-    if (oldWidget.initialIndex != widget.initialIndex ||
-        oldWidget.initialShowSearchBar != widget.initialShowSearchBar) {
-      _syncInitialNavigationState();
     }
   }
 

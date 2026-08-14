@@ -529,7 +529,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get garageQuickAccessTitle => 'Accesos Rápidos';
 
   @override
-  String get garageOrders => 'Programas de lealtad';
+  String get garageOrders => 'Mis pedidos';
+
+  @override
+  String get loyaltyProgramsTitle => 'Programas de lealtad';
 
   @override
   String get loyaltyProgramsComingSoonTitle => 'Muy pronto';

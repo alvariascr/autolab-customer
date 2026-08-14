@@ -218,11 +218,11 @@ class _HeroIconButton extends StatelessWidget {
         ? 40.0
         : AutolabCustomer.responsiveDouble(
             context,
-            compact: 38,
-            regular: 44,
+            compact: 48,
+            regular: 48,
             tablet: 50,
           );
-    final tapTargetSize = darkBackground ? 48.0 : buttonSize;
+    final tapTargetSize = buttonSize < 48 ? 48.0 : buttonSize;
     final backgroundColor = darkBackground
         ? AutolabCustomer.secondary.withValues(alpha: 0.62)
         : AutolabCustomer.white.withValues(alpha: 0.9);
@@ -231,38 +231,26 @@ class _HeroIconButton extends StatelessWidget {
       width: tapTargetSize,
       height: tapTargetSize,
       child: Material(
-        color: Colors.transparent,
+        color: backgroundColor,
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
-          child: Center(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                shape: BoxShape.circle,
-              ),
-              child: SizedBox(
-                width: buttonSize,
-                height: buttonSize,
-                child: Icon(
-                  icon,
-                  color:
-                      iconColor ??
-                      (darkBackground
-                          ? AutolabCustomer.white
-                          : AutolabCustomer.secondary),
-                  size: darkBackground
-                      ? AutolabCustomer.iconMd
-                      : AutolabCustomer.responsiveDouble(
-                          context,
-                          compact: 20,
-                          regular: 24,
-                          tablet: 28,
-                        ),
-                ),
-              ),
-            ),
+          child: Icon(
+            icon,
+            color:
+                iconColor ??
+                (darkBackground
+                    ? AutolabCustomer.white
+                    : AutolabCustomer.secondary),
+            size: darkBackground
+                ? AutolabCustomer.iconMd
+                : AutolabCustomer.responsiveDouble(
+                    context,
+                    compact: 20,
+                    regular: 24,
+                    tablet: 28,
+                  ),
           ),
         ),
       ),

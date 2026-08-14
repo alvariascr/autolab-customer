@@ -1015,8 +1015,14 @@ abstract class AppLocalizations {
   /// No description provided for @garageOrders.
   ///
   /// In es, this message translates to:
-  /// **'Programas de lealtad'**
+  /// **'Mis pedidos'**
   String get garageOrders;
+
+  /// No description provided for @loyaltyProgramsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Programas de lealtad'**
+  String get loyaltyProgramsTitle;
 
   /// No description provided for @loyaltyProgramsComingSoonTitle.
   ///

@@ -122,11 +122,26 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
                   final purchases = snapshot.data ?? const <LaropayPurchase>[];
                   if (purchases.isEmpty) {
-                    return _PurchaseMessageState(
-                      icon: Icons.shopping_bag_outlined,
-                      title: l10n.myPurchasesEmptyTitle,
-                      message: l10n.myPurchasesEmptyMessage,
-                      color: AutolabCustomer.primary,
+                    return RefreshIndicator(
+                      onRefresh: _reload,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: _PurchaseMessageState(
+                                icon: Icons.shopping_bag_outlined,
+                                title: l10n.myPurchasesEmptyTitle,
+                                message: l10n.myPurchasesEmptyMessage,
+                                color: AutolabCustomer.primary,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   }
 
