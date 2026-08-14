@@ -4117,7 +4117,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartPaymentReviewMessage.
   ///
   /// In es, this message translates to:
-  /// **'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.'**
+  /// **'La orden fue creada, pero no fue posible procesar el pago. Revisa el estado de la orden y paga en el taller.'**
   String get cartPaymentReviewMessage;
 
   /// No description provided for @cartPaymentReviewAction.

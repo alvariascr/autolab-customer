@@ -2284,7 +2284,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartPaymentReviewMessage =>
-      'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.';
+      'La orden fue creada, pero no fue posible procesar el pago. Revisa el estado de la orden y paga en el taller.';
 
   @override
   String get cartPaymentReviewAction => 'Entendido';
