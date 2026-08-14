@@ -300,6 +300,11 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       return;
     }
 
+    if (!widget.showBottomNavigation && index == 1) {
+      context.go('/home-customer?tab=map');
+      return;
+    }
+
     setState(() {
       _currentIndex = index;
       _showSearchBar = false;

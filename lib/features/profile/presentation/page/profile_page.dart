@@ -146,7 +146,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 _QuickAccessCard(
                   icon: Icons.inventory_2_outlined,
-                  label: l10n.garageOrders,
+                  label: l10n.loyaltyProgramsTitle,
+                  onTap: () => context.push('/loyalty-programs'),
                 ),
                 _QuickAccessCard(
                   icon: Icons.receipt_long_outlined,
@@ -772,12 +773,16 @@ class _QuickAccessCard extends StatelessWidget {
             children: [
               Icon(icon, color: AutolabCustomer.primary, size: 34),
               const SizedBox(height: AutolabCustomer.spacingSm),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AutolabCustomer.body.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
-                  fontWeight: FontWeight.w800,
+              Flexible(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
