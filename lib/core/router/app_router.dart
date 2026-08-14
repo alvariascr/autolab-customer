@@ -17,6 +17,7 @@ import '../../features/products/domain/entities/product.dart';
 import '../../features/products/presentation/pages/product_detail_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
 import '../../features/profile/application/garage_vehicle_controller.dart';
+import '../../features/profile/presentation/page/loyalty_programs_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
 import '../../features/splash/startup_splash_page.dart';
@@ -82,6 +83,7 @@ class AppRouter {
             'map' => 1,
             'search' => 2,
             'cart' => 3,
+            'profile' => 4,
             'garage' => 4,
             _ => 0,
           };
@@ -111,6 +113,10 @@ class AppRouter {
       GoRoute(
         path: '/vehicles',
         builder: (context, state) => const VehiclesPage(),
+      ),
+      GoRoute(
+        path: '/loyalty-programs',
+        builder: (context, state) => const LoyaltyProgramsPage(),
       ),
       GoRoute(
         path: '/workshops/:id',

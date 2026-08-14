@@ -9,6 +9,7 @@ import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../../profile/presentation/widgets/customer_page_header.dart';
 import '../../domain/entities/laropay_purchase.dart';
 import '../../domain/usecases/get_laropay_purchases.dart';
 import '../../domain/usecases/refresh_laropay_purchase_status.dart';
@@ -84,95 +85,102 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
-      appBar: AppBar(
-        backgroundColor: AutolabCustomer.primary,
-        foregroundColor: AutolabCustomer.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-              return;
-            }
-
-            context.go('/home-customer');
-          },
-        ),
-        title: Text(
-          l10n.myPurchasesTitle,
-          style: const TextStyle(
-            fontFamily: AutolabCustomer.primaryFont,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: FutureBuilder<List<LaropayPurchase>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        child: Column(
+          children: [
+            CustomerPageHeader(
+              title: l10n.myPurchasesTitle,
+              onBack: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                  return;
+                }
 
-            if (snapshot.hasError) {
-              return _PurchaseMessageState(
-                icon: Icons.cloud_off_rounded,
-                title: l10n.myPurchasesLoadErrorTitle,
-                message: snapshot.error is _PurchaseLoadException
-                    ? l10n.authErrorSessionExpired
-                    : l10n.myAppointmentsRetryMessage,
-                color: AutolabCustomer.error,
-                actionLabel: l10n.myPurchasesRetryAction,
-                onAction: _reload,
-              );
-            }
+                context.go('/home-customer');
+              },
+            ),
+            Expanded(
+              child: FutureBuilder<List<LaropayPurchase>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-            final purchases = snapshot.data ?? const <LaropayPurchase>[];
-            if (purchases.isEmpty) {
-              return _PurchaseMessageState(
-                icon: Icons.shopping_bag_outlined,
-                title: l10n.myPurchasesEmptyTitle,
-                message: l10n.myPurchasesEmptyMessage,
-                color: AutolabCustomer.primary,
-              );
-            }
+                  if (snapshot.hasError) {
+                    return _PurchaseMessageState(
+                      icon: Icons.cloud_off_rounded,
+                      title: l10n.myPurchasesLoadErrorTitle,
+                      message: snapshot.error is _PurchaseLoadException
+                          ? l10n.authErrorSessionExpired
+                          : l10n.myAppointmentsRetryMessage,
+                      color: AutolabCustomer.error,
+                      actionLabel: l10n.myPurchasesRetryAction,
+                      onAction: _reload,
+                    );
+                  }
 
-            return RefreshIndicator(
-              onRefresh: _reload,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Text(
-                      l10n.myPurchasesSubtitle,
-                      textAlign: TextAlign.center,
-                      style: AutolabCustomer.body.copyWith(
-                        color: AutolabCustomer.customerSecondaryTextColor(
-                          context,
-                        ),
-                        fontWeight: FontWeight.w600,
+                  final purchases = snapshot.data ?? const <LaropayPurchase>[];
+                  if (purchases.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: _reload,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: _PurchaseMessageState(
+                                icon: Icons.shopping_bag_outlined,
+                                title: l10n.myPurchasesEmptyTitle,
+                                message: l10n.myPurchasesEmptyMessage,
+                                color: AutolabCustomer.primary,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   }
 
-                  return _PurchaseCard(
-                    purchase: purchases[index - 1],
-                    onOpenLink: _openPurchaseLink,
-                    onRefreshStatus: _refreshPurchaseStatus,
-                    refreshing: _refreshingPurchaseIds.contains(
-                      purchases[index - 1].id,
+                  return RefreshIndicator(
+                    onRefresh: _reload,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return Text(
+                            l10n.myPurchasesSubtitle,
+                            textAlign: TextAlign.center,
+                            style: AutolabCustomer.body.copyWith(
+                              color: AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        }
+
+                        return _PurchaseCard(
+                          purchase: purchases[index - 1],
+                          onOpenLink: _openPurchaseLink,
+                          onRefreshStatus: _refreshPurchaseStatus,
+                          refreshing: _refreshingPurchaseIds.contains(
+                            purchases[index - 1].id,
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 14),
+                      itemCount: purchases.length + 1,
                     ),
                   );
                 },
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 14),
-                itemCount: purchases.length + 1,
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: widget.showBottomNavigation

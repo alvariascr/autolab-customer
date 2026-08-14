@@ -532,6 +532,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get garageOrders => 'Mis pedidos';
 
   @override
+  String get loyaltyProgramsTitle => 'Programas de lealtad';
+
+  @override
+  String get loyaltyProgramsComingSoonTitle => 'Muy pronto';
+
+  @override
+  String get loyaltyProgramsComingSoonMessage =>
+      'Estamos preparando beneficios y programas especiales para tu vehículo.';
+
+  @override
+  String get loyaltyProgramsBackToGarage => 'Volver a mi garaje';
+
+  @override
   String get garageHistory => 'Mis órdenes';
 
   @override
@@ -787,6 +800,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vehiclesViewAllAction => 'Ver todos';
+
+  @override
+  String get homeActivateVehicleMessage => 'Activa tu vehículo';
 
   @override
   String get vehiclesProfileSubtitle =>

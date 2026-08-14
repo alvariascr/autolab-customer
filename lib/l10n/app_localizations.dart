@@ -1018,6 +1018,30 @@ abstract class AppLocalizations {
   /// **'Mis pedidos'**
   String get garageOrders;
 
+  /// No description provided for @loyaltyProgramsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Programas de lealtad'**
+  String get loyaltyProgramsTitle;
+
+  /// No description provided for @loyaltyProgramsComingSoonTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Muy pronto'**
+  String get loyaltyProgramsComingSoonTitle;
+
+  /// No description provided for @loyaltyProgramsComingSoonMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos preparando beneficios y programas especiales para tu vehículo.'**
+  String get loyaltyProgramsComingSoonMessage;
+
+  /// No description provided for @loyaltyProgramsBackToGarage.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a mi garaje'**
+  String get loyaltyProgramsBackToGarage;
+
   /// No description provided for @garageHistory.
   ///
   /// In es, this message translates to:
@@ -1497,6 +1521,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver todos'**
   String get vehiclesViewAllAction;
+
+  /// No description provided for @homeActivateVehicleMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa tu vehículo'**
+  String get homeActivateVehicleMessage;
 
   /// No description provided for @vehiclesProfileSubtitle.
   ///
