@@ -1357,6 +1357,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No hay más unidades disponibles de este producto.';
 
   @override
+  String get productDetailCartInvalidProduct =>
+      'No fue posible agregar este producto al carrito.';
+
+  @override
   String get productDetailCartComingSoon =>
       'El carrito estará disponible próximamente.';
 
@@ -2112,6 +2116,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartTitle => 'Mi carrito';
 
   @override
+  String get cartCartsTitle => 'Carritos';
+
+  @override
   String get cartCheckoutTitle => 'Comprar';
 
   @override
@@ -2257,6 +2264,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartContinueToCheckout => 'Continuar';
+
+  @override
+  String get cartViewCartAction => 'Ver carrito';
+
+  @override
+  String get cartViewWorkshopAction => 'Ver taller';
 
   @override
   String get cartPurchaseComingSoon =>

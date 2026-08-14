@@ -11,6 +11,7 @@ import '../home/home_customer_page.dart';
 import '../map/presentation/page/map_page.dart';
 import '../profile/application/garage_vehicle_controller.dart';
 import '../profile/presentation/page/profile_page.dart';
+import 'navigation_handler.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
 class CustomerNavigationShell extends StatefulWidget {
@@ -67,6 +68,8 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   }
 
   void _handleNavigation(int index) {
+    NavigationHandler.handle(context, index);
+
     if (index == 0) {
       setState(() {
         _navIndex = 0;

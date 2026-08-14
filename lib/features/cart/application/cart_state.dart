@@ -71,6 +71,50 @@ class CartState extends Equatable {
     return workshopIds.length == 1 ? workshopIds.single : null;
   }
 
+  List<CartWorkshopCart> get workshopCarts {
+    final groupedItems = <String, List<CartItem>>{};
+
+    for (final item in items) {
+      final workshopId = item.product.workshopId.trim();
+      if (workshopId.isEmpty) {
+        continue;
+      }
+
+      groupedItems.putIfAbsent(workshopId, () => []).add(item);
+    }
+
+    return groupedItems.entries
+        .map(
+          (entry) =>
+              CartWorkshopCart(workshopId: entry.key, items: entry.value),
+        )
+        .toList(growable: false);
+  }
+
+  CartState forWorkshop(String workshopId) {
+    final trimmedWorkshopId = workshopId.trim();
+
+    return CartState(
+      items: items
+          .where((item) => item.product.workshopId.trim() == trimmedWorkshopId)
+          .toList(growable: false),
+      homeDelivery: homeDelivery,
+      deliveryAddress: deliveryAddress,
+      deliveryProvince: deliveryProvince,
+      deliveryCanton: deliveryCanton,
+      deliveryDistrict: deliveryDistrict,
+      deliveryExactAddress: deliveryExactAddress,
+      deliveryPhoneNumber: deliveryPhoneNumber,
+      selectedDeliveryAddressId: selectedDeliveryAddressId,
+      deliveryAddresses: deliveryAddresses,
+      currentWorkshopDeliveryFee: currentWorkshopDeliveryFee,
+      deliveryAddressesError: deliveryAddressesError,
+      checkoutStatus: checkoutStatus,
+      checkoutError: checkoutError,
+      pendingCheckoutResult: pendingCheckoutResult,
+    );
+  }
+
   bool get hasCompleteDeliveryDetails {
     return deliveryProvince.trim().isNotEmpty &&
         deliveryCanton.trim().isNotEmpty &&
@@ -249,6 +293,33 @@ class CartItem extends Equatable {
 
   @override
   List<Object?> get props => [product, quantity];
+}
+
+class CartWorkshopCart extends Equatable {
+  const CartWorkshopCart({required this.workshopId, required this.items});
+
+  final String workshopId;
+  final List<CartItem> items;
+
+  Product get representativeProduct => items.first.product;
+
+  String get workshopName {
+    final name = representativeProduct.workshopName.trim();
+    return name.isEmpty ? 'Taller' : name;
+  }
+
+  String get workshopAvatarUrl => representativeProduct.workshopAvatarUrl;
+
+  int get totalQuantity {
+    return items.fold(0, (total, item) => total + item.quantity);
+  }
+
+  double get productsTotal {
+    return CartPricing.subtotal(items.map((item) => item.lineSubtotal));
+  }
+
+  @override
+  List<Object?> get props => [workshopId, items];
 }
 
 extension _ProductCartJson on Product {

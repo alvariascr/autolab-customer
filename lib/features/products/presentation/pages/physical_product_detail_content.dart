@@ -126,7 +126,7 @@ class _PhysicalProductDetailContentState
                           ),
                           onPressed: hasStock
                               ? () async {
-                                  final wasAdded = await context
+                                  final addStatus = await context
                                       .read<CartCubit>()
                                       .addProductAndPersist(
                                         product,
@@ -134,7 +134,7 @@ class _PhysicalProductDetailContentState
                                       );
                                   if (!context.mounted) return;
 
-                                  if (!wasAdded) {
+                                  if (!addStatus.wasAdded) {
                                     final messenger = ScaffoldMessenger.of(
                                       context,
                                     );
@@ -143,7 +143,10 @@ class _PhysicalProductDetailContentState
                                       ..showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            l10n.productDetailStockLimitReached,
+                                            _cartAddFailureMessage(
+                                              addStatus,
+                                              l10n,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -181,7 +184,7 @@ class _PhysicalProductDetailContentState
                           onPressed: hasStock
                               ? () async {
                                   final router = GoRouter.of(context);
-                                  final wasAdded = await context
+                                  final addStatus = await context
                                       .read<CartCubit>()
                                       .addProductAndPersist(
                                         product,
@@ -189,7 +192,7 @@ class _PhysicalProductDetailContentState
                                       );
                                   if (!context.mounted) return;
 
-                                  if (!wasAdded) {
+                                  if (!addStatus.wasAdded) {
                                     final messenger = ScaffoldMessenger.of(
                                       context,
                                     );
@@ -198,7 +201,10 @@ class _PhysicalProductDetailContentState
                                       ..showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            l10n.productDetailStockLimitReached,
+                                            _cartAddFailureMessage(
+                                              addStatus,
+                                              l10n,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -243,6 +249,19 @@ class _PhysicalProductDetailContentState
       default:
         return l10n.productDetailTypeFallback;
     }
+  }
+
+  String _cartAddFailureMessage(
+    CartAddProductStatus status,
+    AppLocalizations l10n,
+  ) {
+    return switch (status) {
+      CartAddProductStatus.stockLimitReached =>
+        l10n.productDetailStockLimitReached,
+      CartAddProductStatus.invalidProduct =>
+        l10n.productDetailCartInvalidProduct,
+      CartAddProductStatus.added => l10n.productDetailAddedToCartMessage,
+    };
   }
 }
 

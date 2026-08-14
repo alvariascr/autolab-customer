@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/di/app_injection.dart';
@@ -28,6 +29,7 @@ class _CartPageState extends State<CartPage> {
 
   bool _showCheckout = false;
   bool _isOpeningLaropay = false;
+  String? _selectedWorkshopId;
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +37,31 @@ class _CartPageState extends State<CartPage> {
 
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, cart) {
-        final showCheckout = _showCheckout && cart.items.isNotEmpty;
-        final hasDeliveryAddress = cart.hasCompleteDeliveryDetails;
+        final workshopCarts = cart.workshopCarts;
+        final selectedWorkshopId = _resolveSelectedWorkshopId(
+          cart,
+          workshopCarts,
+        );
+        final isShowingCartList =
+            cart.items.isNotEmpty &&
+            workshopCarts.length > 1 &&
+            selectedWorkshopId == null;
+        final activeCart = selectedWorkshopId == null
+            ? cart
+            : cart.forWorkshop(selectedWorkshopId);
+        final showCheckout = _showCheckout && activeCart.items.isNotEmpty;
+        final hasDeliveryAddress = activeCart.hasCompleteDeliveryDetails;
         final isCheckingOut = cart.checkoutStatus.isLoading;
         final showPaymentLoading = isCheckingOut || _isOpeningLaropay;
         final canCheckout =
-            cart.items.isNotEmpty &&
+            activeCart.items.isNotEmpty &&
             !showPaymentLoading &&
-            (!showCheckout || !cart.homeDelivery || hasDeliveryAddress);
+            !isShowingCartList &&
+            (!showCheckout || !activeCart.homeDelivery || hasDeliveryAddress);
+        final showBackButton =
+            widget.showBackButton ||
+            showCheckout ||
+            (selectedWorkshopId != null && workshopCarts.length > 1);
 
         return Scaffold(
           backgroundColor: AutolabCustomer.customerBackgroundColor(context),
@@ -70,15 +89,23 @@ class _CartPageState extends State<CartPage> {
                               _CartHeader(
                                 title: showCheckout
                                     ? l10n.cartCheckoutTitle
+                                    : isShowingCartList
+                                    ? l10n.cartCartsTitle
                                     : l10n.cartTitle,
-                                subtitle: showCheckout
+                                subtitle: showCheckout || isShowingCartList
                                     ? null
-                                    : l10n.cartProductCount(cart.totalQuantity),
-                                showBackButton:
-                                    widget.showBackButton || showCheckout,
+                                    : l10n.cartProductCount(
+                                        activeCart.totalQuantity,
+                                      ),
+                                showBackButton: showBackButton,
                                 onBackTap: showCheckout
                                     ? () =>
                                           setState(() => _showCheckout = false)
+                                    : selectedWorkshopId != null &&
+                                          workshopCarts.length > 1
+                                    ? () => setState(
+                                        () => _selectedWorkshopId = null,
+                                      )
                                     : () => Navigator.maybePop(context),
                               ),
                               const SizedBox(
@@ -86,18 +113,26 @@ class _CartPageState extends State<CartPage> {
                               ),
                               if (cart.items.isEmpty)
                                 _EmptyCartState()
+                              else if (isShowingCartList)
+                                _CartWorkshopCartsView(
+                                  carts: workshopCarts,
+                                  onOpenCart: _openWorkshopCart,
+                                  onOpenWorkshop: _openWorkshop,
+                                )
                               else if (showCheckout)
-                                _CartCheckoutView(cart: cart)
+                                _CartCheckoutView(cart: activeCart)
                               else
-                                _CartItemsView(cart: cart),
+                                _CartItemsView(cart: activeCart),
                               const SizedBox(height: AutolabCustomer.spacingMd),
-                              if (!showCheckout && cart.items.isNotEmpty) ...[
-                                _CartDeliverySection(cart: cart),
+                              if (!showCheckout &&
+                                  !isShowingCartList &&
+                                  activeCart.items.isNotEmpty) ...[
+                                _CartDeliverySection(cart: activeCart),
                                 const SizedBox(
                                   height: AutolabCustomer.spacingSmd,
                                 ),
                                 _CartSummaryCard(
-                                  cart: cart,
+                                  cart: activeCart,
                                   includeShipping: true,
                                 ),
                               ],
@@ -115,13 +150,18 @@ class _CartPageState extends State<CartPage> {
                                         if (!showCheckout) {
                                           await context
                                               .read<CartCubit>()
-                                              .refreshWorkshopDeliveryFee();
+                                              .refreshWorkshopDeliveryFee(
+                                                workshopId: selectedWorkshopId,
+                                              );
                                           if (!mounted) return;
                                           setState(() => _showCheckout = true);
                                           return;
                                         }
 
-                                        _createCartOrder(context);
+                                        _createCartOrder(
+                                          context,
+                                          workshopId: selectedWorkshopId,
+                                        );
                                       },
                               ),
                             ],
@@ -143,11 +183,52 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Future<void> _createCartOrder(BuildContext context) async {
+  String? _resolveSelectedWorkshopId(
+    CartState cart,
+    List<CartWorkshopCart> workshopCarts,
+  ) {
+    if (cart.items.isEmpty) {
+      _selectedWorkshopId = null;
+      return null;
+    }
+
+    if (workshopCarts.length == 1) {
+      return workshopCarts.single.workshopId;
+    }
+
+    final selectedWorkshopId = _selectedWorkshopId;
+    if (selectedWorkshopId == null ||
+        !workshopCarts.any((cart) => cart.workshopId == selectedWorkshopId)) {
+      _selectedWorkshopId = null;
+      _showCheckout = false;
+      return null;
+    }
+
+    return selectedWorkshopId;
+  }
+
+  Future<void> _openWorkshopCart(String workshopId) async {
+    setState(() {
+      _selectedWorkshopId = workshopId;
+      _showCheckout = false;
+    });
+    await context.read<CartCubit>().refreshWorkshopDeliveryFee(
+      workshopId: workshopId,
+    );
+  }
+
+  void _openWorkshop(String workshopId) {
+    context.push('/workshops/$workshopId?section=products');
+  }
+
+  Future<void> _createCartOrder(
+    BuildContext context, {
+    required String? workshopId,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     final cartCubit = context.read<CartCubit>();
-    final result = await cartCubit.createOrder();
+    final result = await cartCubit.createOrder(workshopId: workshopId);
 
     if (!mounted || !context.mounted) return;
 
@@ -169,23 +250,28 @@ class _CartPageState extends State<CartPage> {
           .launchForOrder(orderId: result.orderId)
           .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
-      cartCubit.clear();
+      if (workshopId == null) {
+        cartCubit.clear();
+      } else {
+        cartCubit.clearWorkshop(workshopId);
+      }
       setState(() {
         _isOpeningLaropay = false;
         _showCheckout = false;
+        _selectedWorkshopId = null;
       });
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
       setState(() => _isOpeningLaropay = false);
-      await _showPaymentReviewDialog(context, cartCubit, result);
+      await _showPaymentReviewDialog(context, cartCubit, result, workshopId);
     } on TimeoutException {
       if (!mounted || !context.mounted) return;
       setState(() => _isOpeningLaropay = false);
-      await _showPaymentReviewDialog(context, cartCubit, result);
+      await _showPaymentReviewDialog(context, cartCubit, result, workshopId);
     } catch (_) {
       if (!mounted || !context.mounted) return;
       setState(() => _isOpeningLaropay = false);
-      await _showPaymentReviewDialog(context, cartCubit, result);
+      await _showPaymentReviewDialog(context, cartCubit, result, workshopId);
     }
   }
 
@@ -193,9 +279,17 @@ class _CartPageState extends State<CartPage> {
     BuildContext context,
     CartCubit cartCubit,
     CartCheckoutResult result,
+    String? workshopId,
   ) async {
-    cartCubit.clear();
-    setState(() => _showCheckout = false);
+    if (workshopId == null) {
+      cartCubit.clear();
+    } else {
+      cartCubit.clearWorkshop(workshopId);
+    }
+    setState(() {
+      _showCheckout = false;
+      _selectedWorkshopId = null;
+    });
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => _CartPaymentReviewDialog(result: result),
@@ -500,6 +594,170 @@ class _CartItemsView extends StatelessWidget {
             ),
           )
           .toList(growable: false),
+    );
+  }
+}
+
+class _CartWorkshopCartsView extends StatelessWidget {
+  const _CartWorkshopCartsView({
+    required this.carts,
+    required this.onOpenCart,
+    required this.onOpenWorkshop,
+  });
+
+  final List<CartWorkshopCart> carts;
+  final ValueChanged<String> onOpenCart;
+  final ValueChanged<String> onOpenWorkshop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: carts
+          .map(
+            (cart) => Padding(
+              padding: const EdgeInsets.only(bottom: AutolabCustomer.spacingSm),
+              child: _CartWorkshopCartCard(
+                cart: cart,
+                onOpenCart: () => onOpenCart(cart.workshopId),
+                onOpenWorkshop: () => onOpenWorkshop(cart.workshopId),
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class _CartWorkshopCartCard extends StatelessWidget {
+  const _CartWorkshopCartCard({
+    required this.cart,
+    required this.onOpenCart,
+    required this.onOpenWorkshop,
+  });
+
+  final CartWorkshopCart cart;
+  final VoidCallback onOpenCart;
+  final VoidCallback onOpenWorkshop;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusMd),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
+        boxShadow: AutolabCustomer.shadowLevel1,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AutolabCustomer.spacingSmd),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CartWorkshopAvatar(cart: cart),
+                const SizedBox(width: AutolabCustomer.spacingSmd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cart.workshopName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AutolabCustomer.bodyLarge.copyWith(
+                          color: AutolabCustomer.customerTextColor(context),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: AutolabCustomer.spacingXs),
+                      Text(
+                        '${l10n.cartProductCount(cart.totalQuantity)} - '
+                        '${_formatCurrency(cart.productsTotal)}',
+                        style: AutolabCustomer.body.copyWith(
+                          color: AutolabCustomer.customerSecondaryTextColor(
+                            context,
+                          ),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.more_horiz_rounded,
+                  color: AutolabCustomer.customerSecondaryTextColor(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: AutolabCustomer.primaryButton,
+                onPressed: onOpenCart,
+                child: Text(
+                  l10n.cartViewCartAction,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AutolabCustomer.spacingSm),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton(
+                style: AutolabCustomer.secondaryButton.copyWith(
+                  side: const WidgetStatePropertyAll(
+                    BorderSide(color: AutolabCustomer.primary, width: 1.5),
+                  ),
+                  foregroundColor: WidgetStatePropertyAll(
+                    AutolabCustomer.customerTextColor(context),
+                  ),
+                ),
+                onPressed: onOpenWorkshop,
+                child: Text(
+                  l10n.cartViewWorkshopAction,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CartWorkshopAvatar extends StatelessWidget {
+  const _CartWorkshopAvatar({required this.cart});
+
+  final CartWorkshopCart cart;
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarUrl = cart.workshopAvatarUrl.trim();
+
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: AutolabCustomer.customerSoftSurfaceColor(context),
+      backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+      child: avatarUrl.isEmpty
+          ? Icon(
+              Icons.storefront_rounded,
+              color: AutolabCustomer.primary,
+              size: AutolabCustomer.iconMd,
+            )
+          : null,
     );
   }
 }

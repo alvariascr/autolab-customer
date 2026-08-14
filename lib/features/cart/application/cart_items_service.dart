@@ -10,7 +10,18 @@ class CartItemsService {
     required int quantity,
   }) {
     if (!_isPhysicalProduct(product) || quantity <= 0) {
-      return CartItemsUpdate.unchanged(state.items);
+      return CartItemsUpdate.unchanged(
+        state.items,
+        status: CartAddProductStatus.invalidProduct,
+      );
+    }
+
+    final productWorkshopId = product.workshopId.trim();
+    if (productWorkshopId.isEmpty) {
+      return CartItemsUpdate.unchanged(
+        state.items,
+        status: CartAddProductStatus.invalidProduct,
+      );
     }
 
     final items = [...state.items];
@@ -20,7 +31,10 @@ class CartItemsService {
     final nextQuantity = currentQuantity + quantity;
 
     if (stock != null && stock >= 0 && nextQuantity > stock) {
-      return CartItemsUpdate.unchanged(state.items);
+      return CartItemsUpdate.unchanged(
+        state.items,
+        status: CartAddProductStatus.stockLimitReached,
+      );
     }
 
     if (index == -1) {
@@ -34,6 +48,7 @@ class CartItemsService {
       items: items,
       wasChanged: true,
       startedNewCart: state.items.isEmpty,
+      status: CartAddProductStatus.added,
     );
   }
 
@@ -65,6 +80,9 @@ class CartItemsService {
       items: items,
       wasChanged: wasChanged,
       startedNewCart: false,
+      status: wasChanged
+          ? CartAddProductStatus.added
+          : CartAddProductStatus.stockLimitReached,
     );
   }
 
@@ -84,12 +102,29 @@ class CartItemsUpdate {
     required this.items,
     required this.wasChanged,
     required this.startedNewCart,
+    required this.status,
   });
 
-  CartItemsUpdate.unchanged(List<CartItem> items)
-    : this(items: items, wasChanged: false, startedNewCart: false);
+  CartItemsUpdate.unchanged(
+    List<CartItem> items, {
+    required CartAddProductStatus status,
+  }) : this(
+         items: items,
+         wasChanged: false,
+         startedNewCart: false,
+         status: status,
+       );
 
   final List<CartItem> items;
   final bool wasChanged;
   final bool startedNewCart;
+  final CartAddProductStatus status;
+}
+
+enum CartAddProductStatus {
+  added,
+  invalidProduct,
+  stockLimitReached;
+
+  bool get wasAdded => this == CartAddProductStatus.added;
 }
