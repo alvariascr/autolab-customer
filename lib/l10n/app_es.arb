@@ -627,6 +627,8 @@
   "appointmentCreatingAction": "CREANDO",
   "appointmentCreatingTitle": "Creando cita",
   "appointmentCreatingMessage": "Estamos confirmando tu reserva. No cierres esta pantalla.",
+  "appointmentOpeningPaymentTitle": "Preparando pago seguro",
+  "appointmentOpeningPaymentMessage": "Estamos abriendo la pasarela de pago. No cierres la app.",
   "appointmentConfirmAction": "CONFIRMAR CITA",
   "appointmentFinishAction": "FINALIZAR",
   "appointmentPayAction": "PAGAR",
@@ -776,7 +778,7 @@
   "cartCreatingOrder": "Creando orden...",
   "cartCreatingOrderMessage": "Estamos validando tu carrito.",
   "cartOpeningLaropayTitle": "Preparando pago seguro",
-  "cartOpeningLaropayMessage": "Estamos abriendo Laropay. No cierres la app.",
+  "cartOpeningLaropayMessage": "Estamos abriendo la pasarela de pago. No cierres la app.",
   "cartCreateOrderSuccess": "Orden {orderNumber} creada correctamente.",
   "@cartCreateOrderSuccess": {
     "placeholders": {

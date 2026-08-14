@@ -23,11 +23,35 @@ class CartPage extends StatefulWidget {
   State<CartPage> createState() => _CartPageState();
 }
 
-class _CartPageState extends State<CartPage> {
+class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   static const _checkoutLaunchTimeout = Duration(seconds: 45);
+  static const _externalCheckoutTransitionTimeout = Duration(seconds: 5);
 
   bool _showCheckout = false;
-  bool _isOpeningLaropay = false;
+  _CartCheckoutLoadingPhase? _checkoutLoadingPhase;
+  Completer<void>? _externalCheckoutTransitionCompleter;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _completeExternalCheckoutTransition();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _completeExternalCheckoutTransition();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +62,8 @@ class _CartPageState extends State<CartPage> {
         final showCheckout = _showCheckout && cart.items.isNotEmpty;
         final hasDeliveryAddress = cart.hasCompleteDeliveryDetails;
         final isCheckingOut = cart.checkoutStatus.isLoading;
-        final showPaymentLoading = isCheckingOut || _isOpeningLaropay;
+        final showPaymentLoading =
+            isCheckingOut || _checkoutLoadingPhase != null;
         final canCheckout =
             cart.items.isNotEmpty &&
             !showPaymentLoading &&
@@ -121,7 +146,7 @@ class _CartPageState extends State<CartPage> {
                                           return;
                                         }
 
-                                        _createCartOrder(context);
+                                        await _createCartOrder(context);
                                       },
                               ),
                             ],
@@ -133,7 +158,9 @@ class _CartPageState extends State<CartPage> {
                 ),
                 if (showPaymentLoading)
                   _CartCheckoutLoadingOverlay(
-                    isOpeningLaropay: _isOpeningLaropay,
+                    phase:
+                        _checkoutLoadingPhase ??
+                        _CartCheckoutLoadingPhase.creatingOrder,
                   ),
               ],
             ),
@@ -147,14 +174,18 @@ class _CartPageState extends State<CartPage> {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     final cartCubit = context.read<CartCubit>();
+
+    setState(
+      () => _checkoutLoadingPhase = _CartCheckoutLoadingPhase.creatingOrder,
+    );
+    await WidgetsBinding.instance.endOfFrame;
+
     final result = await cartCubit.createOrder();
 
     if (!mounted || !context.mounted) return;
 
     if (result == null) {
-      if (_isOpeningLaropay) {
-        setState(() => _isOpeningLaropay = false);
-      }
+      setState(() => _checkoutLoadingPhase = null);
       final errorMessage = _checkoutErrorMessage(
         l10n,
         cartCubit.state.checkoutError,
@@ -164,28 +195,62 @@ class _CartPageState extends State<CartPage> {
     }
 
     try {
-      setState(() => _isOpeningLaropay = true);
+      setState(
+        () => _checkoutLoadingPhase = _CartCheckoutLoadingPhase.openingLaropay,
+      );
+      await WidgetsBinding.instance.endOfFrame;
       await sl<LaropayCheckoutLauncher>()
           .launchForOrder(orderId: result.orderId)
           .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
+      await _waitForExternalCheckoutTransition();
+      if (!mounted || !context.mounted) return;
       cartCubit.clear();
       setState(() {
-        _isOpeningLaropay = false;
+        _checkoutLoadingPhase = null;
         _showCheckout = false;
       });
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
-      setState(() => _isOpeningLaropay = false);
+      setState(() => _checkoutLoadingPhase = null);
       await _showPaymentReviewDialog(context, cartCubit, result);
     } on TimeoutException {
       if (!mounted || !context.mounted) return;
-      setState(() => _isOpeningLaropay = false);
+      setState(() => _checkoutLoadingPhase = null);
       await _showPaymentReviewDialog(context, cartCubit, result);
     } catch (_) {
       if (!mounted || !context.mounted) return;
-      setState(() => _isOpeningLaropay = false);
+      setState(() => _checkoutLoadingPhase = null);
       await _showPaymentReviewDialog(context, cartCubit, result);
+    }
+  }
+
+  Future<void> _waitForExternalCheckoutTransition() async {
+    final transitionCompleter = Completer<void>();
+    _externalCheckoutTransitionCompleter = transitionCompleter;
+
+    try {
+      await transitionCompleter.future.timeout(
+        _externalCheckoutTransitionTimeout,
+      );
+    } on TimeoutException {
+      // Some in-app browser implementations do not emit lifecycle changes.
+      // Keep the payment overlay visible briefly, then continue with the
+      // existing flow instead of leaving the customer blocked.
+    } finally {
+      if (identical(
+        _externalCheckoutTransitionCompleter,
+        transitionCompleter,
+      )) {
+        _externalCheckoutTransitionCompleter = null;
+      }
+    }
+  }
+
+  void _completeExternalCheckoutTransition() {
+    final completer = _externalCheckoutTransitionCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
     }
   }
 
@@ -211,14 +276,17 @@ class _CartPageState extends State<CartPage> {
   }
 }
 
-class _CartCheckoutLoadingOverlay extends StatelessWidget {
-  const _CartCheckoutLoadingOverlay({required this.isOpeningLaropay});
+enum _CartCheckoutLoadingPhase { creatingOrder, openingLaropay }
 
-  final bool isOpeningLaropay;
+class _CartCheckoutLoadingOverlay extends StatelessWidget {
+  const _CartCheckoutLoadingOverlay({required this.phase});
+
+  final _CartCheckoutLoadingPhase phase;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isOpeningLaropay = phase == _CartCheckoutLoadingPhase.openingLaropay;
     final title = isOpeningLaropay
         ? l10n.cartOpeningLaropayTitle
         : l10n.cartCreatingOrder;

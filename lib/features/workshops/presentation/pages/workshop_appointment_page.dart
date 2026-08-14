@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -32,9 +34,37 @@ class WorkshopAppointmentPage extends StatefulWidget {
       _WorkshopAppointmentPageState();
 }
 
-class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
+class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
+    with WidgetsBindingObserver {
   static const ink = AutolabCustomer.secondary;
   static const muted = AutolabCustomer.gray;
+  static const _externalPaymentTransitionTimeout = Duration(seconds: 5);
+
+  _AppointmentLoadingPhase? _loadingPhase;
+  Completer<void>? _externalPaymentTransitionCompleter;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _completeExternalPaymentTransition();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _completeExternalPaymentTransition();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -103,7 +133,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
   }) {
     final isSubmitting =
         state.submitStatus == AppointmentSubmitStatus.submitting;
-    final isBusy = isSubmitting;
+    final isBusy = isSubmitting || _loadingPhase != null;
     final horizontalPadding = isDesktop
         ? AutolabCustomer.responsiveDouble(
             context,
@@ -160,7 +190,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
             ),
           ],
         ),
-        if (isBusy) const _BookingSubmittingOverlay(),
+        if (isBusy)
+          _BookingSubmittingOverlay(
+            phase: _loadingPhase ?? _AppointmentLoadingPhase.creating,
+          ),
       ],
     );
   }
@@ -200,6 +233,32 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
         );
       default:
         return const SizedBox.shrink();
+    }
+  }
+
+  Future<void> _waitForExternalPaymentTransition() async {
+    final transitionCompleter = Completer<void>();
+    _externalPaymentTransitionCompleter = transitionCompleter;
+
+    try {
+      await transitionCompleter.future.timeout(
+        _externalPaymentTransitionTimeout,
+      );
+    } on TimeoutException {
+      // Some in-app browser implementations do not emit lifecycle changes.
+      // Keep the payment overlay visible briefly, then continue with the
+      // existing flow instead of leaving the customer blocked.
+    } finally {
+      if (identical(_externalPaymentTransitionCompleter, transitionCompleter)) {
+        _externalPaymentTransitionCompleter = null;
+      }
+    }
+  }
+
+  void _completeExternalPaymentTransition() {
+    final completer = _externalPaymentTransitionCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
     }
   }
 
@@ -252,16 +311,27 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage> {
       if (appointmentId != null) {
         if (submitState.hasChargeableProducts) {
           try {
+            setState(() => _loadingPhase = _AppointmentLoadingPhase.payment);
+            await WidgetsBinding.instance.endOfFrame;
             await sl<LaropayCheckoutLauncher>().launch(
               appointmentId: appointmentId,
               workshopName: _workshopName(submitState),
               chargeableAmount: submitState.chargeableProductsAmount,
             );
+            if (!context.mounted) {
+              return;
+            }
+            await _waitForExternalPaymentTransition();
+            if (!context.mounted) {
+              return;
+            }
+            setState(() => _loadingPhase = null);
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
               return;
             }
 
+            setState(() => _loadingPhase = null);
             _showAppointmentMessage(
               context,
               message: l10n.laropayPaymentStartError,
@@ -1816,12 +1886,23 @@ class _QuantityButton extends StatelessWidget {
   }
 }
 
+enum _AppointmentLoadingPhase { creating, payment }
+
 class _BookingSubmittingOverlay extends StatelessWidget {
-  const _BookingSubmittingOverlay();
+  const _BookingSubmittingOverlay({required this.phase});
+
+  final _AppointmentLoadingPhase phase;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isOpeningPayment = phase == _AppointmentLoadingPhase.payment;
+    final title = isOpeningPayment
+        ? l10n.appointmentOpeningPaymentTitle
+        : l10n.appointmentCreatingTitle;
+    final message = isOpeningPayment
+        ? l10n.appointmentOpeningPaymentMessage
+        : l10n.appointmentCreatingMessage;
 
     return Positioned.fill(
       child: AbsorbPointer(
@@ -1857,7 +1938,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    l10n.appointmentCreatingTitle,
+                    title,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: AutolabCustomer.primaryFont,
@@ -1868,7 +1949,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    l10n.appointmentCreatingMessage,
+                    message,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: AutolabCustomer.primaryFont,

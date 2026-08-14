@@ -1857,6 +1857,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Estamos confirmando tu reserva. No cierres esta pantalla.';
 
   @override
+  String get appointmentOpeningPaymentTitle => 'Preparando pago seguro';
+
+  @override
+  String get appointmentOpeningPaymentMessage =>
+      'Estamos abriendo la pasarela de pago. No cierres la app.';
+
+  @override
   String get appointmentConfirmAction => 'CONFIRMAR CITA';
 
   @override
@@ -2260,7 +2267,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartOpeningLaropayMessage =>
-      'Estamos abriendo Laropay. No cierres la app.';
+      'Estamos abriendo la pasarela de pago. No cierres la app.';
 
   @override
   String cartCreateOrderSuccess(Object orderNumber) {
