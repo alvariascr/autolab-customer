@@ -189,61 +189,55 @@ class _HomeEmptyVehicleCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colors = _HomeColors.of(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: AutolabCustomer.customerSurfaceColor(context),
+    return Material(
+      color: AutolabCustomer.customerSurfaceColor(context),
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      child: InkWell(
+        onTap: onAddVehicleTap,
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AutolabCustomer.customerSoftSurfaceColor(context),
-              borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
-            ),
-            child: const Icon(
-              Icons.directions_car_filled_outlined,
-              color: AutolabCustomer.primary,
-              size: AutolabCustomer.iconSm,
-            ),
-          ),
-          const SizedBox(width: AutolabCustomer.spacingSmd),
-          Expanded(
-            child: Text(
-              l10n.homeActivateVehicleMessage,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AutolabCustomer.body.copyWith(
-                color: colors.text,
-                fontWeight: FontWeight.w800,
-                height: 1.1,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AutolabCustomer.customerSoftSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                ),
+                child: const Icon(
+                  Icons.directions_car_filled_outlined,
+                  color: AutolabCustomer.primary,
+                  size: AutolabCustomer.iconSm,
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: AutolabCustomer.spacingSm),
-          TextButton(
-            onPressed: onAddVehicleTap,
-            style: TextButton.styleFrom(
-              foregroundColor: AutolabCustomer.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              l10n.vehiclesAddAction,
-              style: AutolabCustomer.caption.copyWith(
-                color: AutolabCustomer.primary,
-                fontWeight: FontWeight.w800,
-                fontSize: 9,
+              const SizedBox(width: AutolabCustomer.spacingSmd),
+              Expanded(
+                child: Text(
+                  l10n.homeActivateVehicleMessage,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AutolabCustomer.body.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: AutolabCustomer.spacingSm),
+              Text(
+                l10n.vehiclesAddAction,
+                style: AutolabCustomer.caption.copyWith(
+                  color: AutolabCustomer.primary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 9,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

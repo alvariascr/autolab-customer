@@ -81,19 +81,27 @@ class _HeaderCircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 32,
-      height: 32,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        onPressed: onTap,
-        style: IconButton.styleFrom(
-          backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-          foregroundColor: AutolabCustomer.customerSecondaryTextColor(context),
-        ),
-        icon: const Icon(
-          Icons.arrow_back_rounded,
-          size: AutolabCustomer.iconSm,
+      width: 48,
+      height: 48,
+      child: Center(
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            onPressed: onTap,
+            style: IconButton.styleFrom(
+              backgroundColor: AutolabCustomer.customerSurfaceColor(context),
+              foregroundColor: AutolabCustomer.customerSecondaryTextColor(
+                context,
+              ),
+            ),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              size: AutolabCustomer.iconSm,
+            ),
+          ),
         ),
       ),
     );
