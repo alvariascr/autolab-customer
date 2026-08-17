@@ -486,7 +486,7 @@ async function persistStatusCheck(
       status: input.status,
       responseCode: stringValue(input.certifierResponse.response),
       responseDescription: responseDescription(input.certifierResponse),
-      rejectReason: rejectReason(input.verifyResponse, input.certifierResponse),
+      rejectReason: certifierRejectReason(input.certifierResponse),
       authResponseCode: authResponseCode(input.certifierResponse),
       payload: certifierResponse,
     });
@@ -676,6 +676,16 @@ function rejectReason(
 ) {
   return stringValue(
     verifyResponse.rejectReason ??
+      certifierResponse?.errorMessage ??
+      certifierResponse?.resultDescription,
+  );
+}
+
+function certifierRejectReason(
+  certifierResponse: Record<string, unknown> | null,
+) {
+  return stringValue(
+    certifierResponse?.rejectReason ??
       certifierResponse?.errorMessage ??
       certifierResponse?.resultDescription,
   );
