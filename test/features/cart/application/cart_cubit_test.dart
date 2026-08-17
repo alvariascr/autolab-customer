@@ -46,10 +46,35 @@ void main() {
         expect(cubit.state.currentWorkshopDeliveryFee, isNull);
       },
     );
+
+    test('no crea orden con varios talleres sin seleccionar uno', () async {
+      final cartRepository = _FakeCartRepository();
+      final cubit = _cartCubit(
+        cartRepository: cartRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'));
+
+      final result = await cubit.createOrder();
+
+      expect(result, isNull);
+      expect(cartRepository.createOrderCallCount, 0);
+      expect(cubit.state.checkoutStatus, CartCheckoutStatus.failure);
+      expect(cubit.state.checkoutError, 'cart_products_multiple_workshops');
+    });
   });
 }
 
-CartCubit _cartCubit({required WorkshopRepository workshopRepository}) {
+CartCubit _cartCubit({
+  CartRepository? cartRepository,
+  required WorkshopRepository workshopRepository,
+}) {
   final deliveryAddressRepository = _FakeDeliveryAddressRepository();
 
   return CartCubit(
@@ -60,7 +85,7 @@ CartCubit _cartCubit({required WorkshopRepository workshopRepository}) {
     ),
     deleteDeliveryAddress: DeleteDeliveryAddress(deliveryAddressRepository),
     getWorkshopDeliveryFee: GetWorkshopDeliveryFee(workshopRepository),
-    createCartOrder: CreateCartOrder(_FakeCartRepository()),
+    createCartOrder: CreateCartOrder(cartRepository ?? _FakeCartRepository()),
     inventoryRefreshNotifier: ProductInventoryRefreshNotifier(),
     productRepository: _FakeProductRepository(),
     persistence: _MemoryCartPersistence(),
@@ -115,8 +140,11 @@ class _MemoryCartPersistence extends CartPersistence {
 }
 
 class _FakeCartRepository implements CartRepository {
+  var createOrderCallCount = 0;
+
   @override
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) {
+    createOrderCallCount++;
     return Future.value(
       const CartCheckoutResult(
         orderId: 'order-id',

@@ -402,16 +402,32 @@ class CartCubit extends Cubit<CartState> {
   }
 
   Future<CartCheckoutResult?> createOrder({String? workshopId}) async {
-    final targetWorkshopId = workshopId?.trim();
-    final checkoutItems = targetWorkshopId == null || targetWorkshopId.isEmpty
-        ? state.items
-        : state.items
-              .where(
-                (item) => item.product.workshopId.trim() == targetWorkshopId,
-              )
-              .toList(growable: false);
+    if (state.items.isEmpty || state.checkoutStatus.isLoading) {
+      return null;
+    }
 
-    if (checkoutItems.isEmpty || state.checkoutStatus.isLoading) {
+    final targetWorkshopId = workshopId?.trim();
+    final resolvedWorkshopId =
+        targetWorkshopId == null || targetWorkshopId.isEmpty
+        ? state.singleWorkshopId
+        : targetWorkshopId;
+
+    if (resolvedWorkshopId == null || resolvedWorkshopId.isEmpty) {
+      emit(
+        state.copyWith(
+          checkoutStatus: CartCheckoutStatus.failure,
+          checkoutError: 'cart_products_multiple_workshops',
+          clearPendingCheckoutResult: true,
+        ),
+      );
+      return null;
+    }
+
+    final checkoutItems = state.items
+        .where((item) => item.product.workshopId.trim() == resolvedWorkshopId)
+        .toList(growable: false);
+
+    if (checkoutItems.isEmpty) {
       return null;
     }
 
