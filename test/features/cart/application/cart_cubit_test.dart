@@ -68,11 +68,40 @@ void main() {
       expect(cubit.state.checkoutStatus, CartCheckoutStatus.failure);
       expect(cubit.state.checkoutError, 'cart_products_multiple_workshops');
     });
+
+    test('crea orden solo con el taller seleccionado', () async {
+      final cartRepository = _FakeCartRepository();
+      final productRepository = _FakeProductRepository();
+      final cubit = _cartCubit(
+        cartRepository: cartRepository,
+        productRepository: productRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'));
+
+      final result = await cubit.createOrder(workshopId: 'workshop-b');
+
+      expect(result, isNotNull);
+      expect(cartRepository.createOrderCallCount, 1);
+      expect(cartRepository.lastRequest?.products, hasLength(1));
+      expect(
+        cartRepository.lastRequest?.products.single.inventoryItemId,
+        'product-b',
+      );
+      expect(productRepository.invalidatedWorkshopId, 'workshop-b');
+    });
   });
 }
 
 CartCubit _cartCubit({
   CartRepository? cartRepository,
+  ProductRepository? productRepository,
   required WorkshopRepository workshopRepository,
 }) {
   final deliveryAddressRepository = _FakeDeliveryAddressRepository();
@@ -87,7 +116,7 @@ CartCubit _cartCubit({
     getWorkshopDeliveryFee: GetWorkshopDeliveryFee(workshopRepository),
     createCartOrder: CreateCartOrder(cartRepository ?? _FakeCartRepository()),
     inventoryRefreshNotifier: ProductInventoryRefreshNotifier(),
-    productRepository: _FakeProductRepository(),
+    productRepository: productRepository ?? _FakeProductRepository(),
     persistence: _MemoryCartPersistence(),
   );
 }
@@ -141,10 +170,12 @@ class _MemoryCartPersistence extends CartPersistence {
 
 class _FakeCartRepository implements CartRepository {
   var createOrderCallCount = 0;
+  CartCheckoutRequest? lastRequest;
 
   @override
   Future<CartCheckoutResult> createOrder(CartCheckoutRequest request) {
     createOrderCallCount++;
+    lastRequest = request;
     return Future.value(
       const CartCheckoutResult(
         orderId: 'order-id',
@@ -228,6 +259,8 @@ class _FakeWorkshopRepository implements WorkshopRepository {
 }
 
 class _FakeProductRepository implements ProductRepository {
+  String? invalidatedWorkshopId;
+
   @override
   Future<Either<Failure, List<Product>>> getActiveProducts() {
     throw UnimplementedError();
@@ -241,5 +274,7 @@ class _FakeProductRepository implements ProductRepository {
   }
 
   @override
-  void invalidateActiveProductsCache({String? workshopId}) {}
+  void invalidateActiveProductsCache({String? workshopId}) {
+    invalidatedWorkshopId = workshopId;
+  }
 }

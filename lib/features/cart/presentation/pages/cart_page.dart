@@ -257,13 +257,16 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     final cartCubit = context.read<CartCubit>();
+    final targetWorkshopId = workshopId?.trim().isNotEmpty == true
+        ? workshopId!.trim()
+        : cartCubit.state.singleWorkshopId;
 
     setState(
       () => _checkoutLoadingPhase = _CartCheckoutLoadingPhase.creatingOrder,
     );
     await WidgetsBinding.instance.endOfFrame;
 
-    final result = await cartCubit.createOrder(workshopId: workshopId);
+    final result = await cartCubit.createOrder(workshopId: targetWorkshopId);
 
     if (!mounted || !context.mounted) return;
 
@@ -288,10 +291,10 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       if (!mounted || !context.mounted) return;
       await _waitForExternalCheckoutTransition();
       if (!mounted || !context.mounted) return;
-      if (workshopId == null) {
+      if (targetWorkshopId == null) {
         cartCubit.clear();
       } else {
-        cartCubit.clearWorkshop(workshopId);
+        cartCubit.clearWorkshop(targetWorkshopId);
       }
       setState(() {
         _checkoutLoadingPhase = null;
@@ -301,15 +304,30 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
       setState(() => _checkoutLoadingPhase = null);
-      await _showPaymentReviewDialog(context, cartCubit, result, workshopId);
+      await _showPaymentReviewDialog(
+        context,
+        cartCubit,
+        result,
+        targetWorkshopId,
+      );
     } on TimeoutException {
       if (!mounted || !context.mounted) return;
       setState(() => _checkoutLoadingPhase = null);
-      await _showPaymentReviewDialog(context, cartCubit, result, workshopId);
+      await _showPaymentReviewDialog(
+        context,
+        cartCubit,
+        result,
+        targetWorkshopId,
+      );
     } catch (_) {
       if (!mounted || !context.mounted) return;
       setState(() => _checkoutLoadingPhase = null);
-      await _showPaymentReviewDialog(context, cartCubit, result, workshopId);
+      await _showPaymentReviewDialog(
+        context,
+        cartCubit,
+        result,
+        targetWorkshopId,
+      );
     }
   }
 

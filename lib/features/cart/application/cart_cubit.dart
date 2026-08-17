@@ -441,11 +441,13 @@ class CartCubit extends Cubit<CartState> {
       return null;
     }
 
-    final workshopIds = checkoutItems
+    final checkoutWorkshopIds = checkoutItems
         .map((item) => item.product.workshopId.trim())
         .toSet();
 
-    if (workshopIds.contains('') || workshopIds.length != 1) {
+    if (checkoutWorkshopIds.contains('') ||
+        checkoutWorkshopIds.length != 1 ||
+        !checkoutWorkshopIds.contains(resolvedWorkshopId)) {
       emit(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
@@ -469,7 +471,7 @@ class CartCubit extends Cubit<CartState> {
         return pendingResult;
       }
 
-      await refreshWorkshopDeliveryFee(workshopId: workshopIds.single);
+      await refreshWorkshopDeliveryFee(workshopId: resolvedWorkshopId);
       final result = await _createCartOrder(
         CartCheckoutRequest(
           products: checkoutItems
@@ -494,7 +496,7 @@ class CartCubit extends Cubit<CartState> {
       );
 
       _productRepository.invalidateActiveProductsCache(
-        workshopId: workshopIds.single,
+        workshopId: resolvedWorkshopId,
       );
       _inventoryRefreshNotifier.notify();
       emit(state.copyWith(pendingCheckoutResult: result));
