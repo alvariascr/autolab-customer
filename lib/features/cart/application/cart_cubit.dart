@@ -477,8 +477,9 @@ class CartCubit extends Cubit<CartState> {
         ),
       );
 
-      final workshopId = state.singleWorkshopId;
-      _productRepository.invalidateActiveProductsCache(workshopId: workshopId);
+      _productRepository.invalidateActiveProductsCache(
+        workshopId: workshopIds.single,
+      );
       _inventoryRefreshNotifier.notify();
       emit(state.copyWith(pendingCheckoutResult: result));
       return result;
