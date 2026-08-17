@@ -60,6 +60,20 @@ void main() {
       expect(result.status, CartAddProductStatus.added);
       expect(result.items, hasLength(2));
     });
+
+    test('rechaza productos con id vacío', () {
+      const state = CartState();
+
+      final result = service.addProduct(
+        state,
+        _product(id: ' ', workshopId: 'workshop-1'),
+        quantity: 1,
+      );
+
+      expect(result.wasChanged, isFalse);
+      expect(result.status, CartAddProductStatus.invalidProduct);
+      expect(result.items, isEmpty);
+    });
   });
 }
 

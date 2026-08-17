@@ -9,7 +9,9 @@ class CartItemsService {
     Product product, {
     required int quantity,
   }) {
-    if (!_isPhysicalProduct(product) || quantity <= 0) {
+    if (product.id.trim().isEmpty ||
+        !_isPhysicalProduct(product) ||
+        quantity <= 0) {
       return CartItemsUpdate.unchanged(
         state.items,
         status: CartAddProductStatus.invalidProduct,
