@@ -296,17 +296,15 @@ class CartItem extends Equatable {
 }
 
 class CartWorkshopCart extends Equatable {
-  const CartWorkshopCart({required this.workshopId, required this.items});
+  const CartWorkshopCart({required this.workshopId, required this.items})
+    : assert(items.length > 0);
 
   final String workshopId;
   final List<CartItem> items;
 
   Product get representativeProduct => items.first.product;
 
-  String get workshopName {
-    final name = representativeProduct.workshopName.trim();
-    return name.isEmpty ? 'Taller' : name;
-  }
+  String get workshopName => representativeProduct.workshopName.trim();
 
   String get workshopAvatarUrl => representativeProduct.workshopAvatarUrl;
 

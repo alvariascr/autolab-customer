@@ -73,7 +73,8 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         final activeCart = selectedWorkshopId == null
             ? cart
             : cart.forWorkshop(selectedWorkshopId);
-        final showCheckout = _showCheckout && activeCart.items.isNotEmpty;
+        final showCheckout =
+            _showCheckout && !isShowingCartList && activeCart.items.isNotEmpty;
         final hasDeliveryAddress = activeCart.hasCompleteDeliveryDetails;
         final isCheckingOut = cart.checkoutStatus.isLoading;
         final showPaymentLoading =
@@ -215,7 +216,6 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     List<CartWorkshopCart> workshopCarts,
   ) {
     if (cart.items.isEmpty) {
-      _selectedWorkshopId = null;
       return null;
     }
 
@@ -226,8 +226,6 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     final selectedWorkshopId = _selectedWorkshopId;
     if (selectedWorkshopId == null ||
         !workshopCarts.any((cart) => cart.workshopId == selectedWorkshopId)) {
-      _selectedWorkshopId = null;
-      _showCheckout = false;
       return null;
     }
 
@@ -710,6 +708,9 @@ class _CartWorkshopCartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final workshopName = cart.workshopName.isEmpty
+        ? l10n.mapSheetLabelWorkshop
+        : cart.workshopName;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -732,7 +733,7 @@ class _CartWorkshopCartCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        cart.workshopName,
+                        workshopName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AutolabCustomer.bodyLarge.copyWith(
