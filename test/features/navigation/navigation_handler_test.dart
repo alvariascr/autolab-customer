@@ -44,6 +44,15 @@ void main() {
     );
   });
 
+  testWidgets('abre home dentro del shell del cliente', (tester) async {
+    final router = await pumpRouter(tester: tester, navigationIndex: 0);
+
+    expect(
+      router.routerDelegate.currentConfiguration.uri.toString(),
+      '/home-customer',
+    );
+  });
+
   testWidgets('abre la busqueda dentro del shell del cliente', (tester) async {
     final router = await pumpRouter(tester: tester, navigationIndex: 2);
 
@@ -69,5 +78,11 @@ void main() {
       router.routerDelegate.currentConfiguration.uri.toString(),
       '/home-customer?tab=profile',
     );
+  });
+
+  testWidgets('ignora indices de navegacion no soportados', (tester) async {
+    final router = await pumpRouter(tester: tester, navigationIndex: 99);
+
+    expect(router.routerDelegate.currentConfiguration.uri.toString(), '/');
   });
 }

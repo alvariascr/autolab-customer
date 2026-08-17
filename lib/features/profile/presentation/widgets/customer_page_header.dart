@@ -19,8 +19,6 @@ class CustomerPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
-    final notificationTooltip = this.notificationTooltip;
-    final onNotificationTap = this.onNotificationTap;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -41,6 +39,8 @@ class CustomerPageHeader extends StatelessWidget {
               child: _HeaderCircleButton(onTap: onBack),
             ),
             Positioned(
+              left: 56,
+              right: 56,
               bottom: 0,
               child: Text(
                 title,
@@ -80,26 +80,41 @@ class _HeaderCircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tooltip = MaterialLocalizations.of(context).backButtonTooltip;
+
     return SizedBox(
       width: 48,
       height: 48,
-      child: Center(
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: onTap,
-            style: IconButton.styleFrom(
-              backgroundColor: AutolabCustomer.customerSurfaceColor(context),
-              foregroundColor: AutolabCustomer.customerSecondaryTextColor(
-                context,
+      child: Tooltip(
+        message: tooltip,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: Center(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AutolabCustomer.customerSurfaceColor(context),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: AutolabCustomer.customerSecondaryTextColor(
+                        context,
+                      ),
+                      size: AutolabCustomer.iconSm,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              size: AutolabCustomer.iconSm,
             ),
           ),
         ),

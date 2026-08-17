@@ -273,6 +273,41 @@ order by created_at desc
 limit 10;
 ```
 
+Eventos tecnicos Laropay por orden/link:
+
+```sql
+select
+  e.created_at,
+  e.source,
+  e.event_type,
+  e.status,
+  e.response_code,
+  e.response_description,
+  e.reject_reason,
+  e.auth_response_code,
+  o.order_number,
+  lpl.link_id
+from public.laropay_payment_events e
+left join public.orders o on o.id = e.order_id
+left join public.laropay_payment_links lpl on lpl.id = e.payment_link_id
+order by e.created_at desc
+limit 20;
+```
+
+Catalogo de codigos conocidos del proveedor:
+
+```sql
+select
+  source,
+  code,
+  description,
+  category,
+  is_success,
+  is_retryable
+from public.laropay_response_code_catalog
+order by source, code, description;
+```
+
 Token runtime vigente sin revelar el valor:
 
 ```sql

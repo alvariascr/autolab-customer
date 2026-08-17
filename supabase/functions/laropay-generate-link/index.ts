@@ -5,6 +5,10 @@ import {
   loadLaropayRuntimeToken,
   refreshLaropayToken,
 } from "../_shared/laropay-token.ts";
+import {
+  laropayEventTypeFromResponse,
+  recordLaropayPaymentEvent,
+} from "../_shared/laropay-audit.ts";
 
 type LaropayLinkRequest = {
   internalTransactionId?: string;
@@ -626,6 +630,30 @@ async function persistAttempt(
   if (error !== null) {
     throw error;
   }
+
+  await recordLaropayPaymentEvent(adminSupabaseClient(env), {
+    paymentLinkId: reservationId,
+    orderId: stringValue(input.internalTransactionId),
+    source: "generate_link",
+    eventType: eventTypeFromGenerateResponse(laropayResponse),
+    status: normalizedStatus(laropayResponse),
+    responseCode: stringValue(laropayResponse.response),
+    responseDescription: stringValue(laropayResponse.responseDescription),
+    rejectReason: stringValue(laropayResponse.rejectReason),
+    authResponseCode: stringValue(laropayResponse.authResponseCode),
+    payload: responsePayload,
+  });
+}
+
+function eventTypeFromGenerateResponse(response: Record<string, unknown>) {
+  if (
+    stringValue(response.response) === "00" &&
+    stringValue(response.linkID) === ""
+  ) {
+    return "invalid_response";
+  }
+
+  return laropayEventTypeFromResponse(response, "provider_response");
 }
 
 function buildCallbackUrl(

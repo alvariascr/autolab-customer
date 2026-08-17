@@ -529,7 +529,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get garageQuickAccessTitle => 'Accesos Rápidos';
 
   @override
-  String get garageOrders => 'Programas de lealtad';
+  String get garageOrders => 'Mis pedidos';
+
+  @override
+  String get loyaltyProgramsTitle => 'Programas de lealtad';
 
   @override
   String get loyaltyProgramsComingSoonTitle => 'Muy pronto';
@@ -1874,6 +1877,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Estamos confirmando tu reserva. No cierres esta pantalla.';
 
   @override
+  String get appointmentOpeningPaymentTitle => 'Preparando pago seguro';
+
+  @override
+  String get appointmentOpeningPaymentMessage =>
+      'Estamos abriendo la pasarela de pago. No cierres la app.';
+
+  @override
   String get appointmentConfirmAction => 'CONFIRMAR CITA';
 
   @override
@@ -2286,7 +2296,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartOpeningLaropayMessage =>
-      'Estamos abriendo Laropay. No cierres la app.';
+      'Estamos abriendo la pasarela de pago. No cierres la app.';
 
   @override
   String cartCreateOrderSuccess(Object orderNumber) {
@@ -2310,7 +2320,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cartPaymentReviewMessage =>
-      'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.';
+      'La orden fue creada, pero no fue posible procesar el pago. Revisa el estado de la orden y paga en el taller.';
 
   @override
   String get cartPaymentReviewAction => 'Entendido';

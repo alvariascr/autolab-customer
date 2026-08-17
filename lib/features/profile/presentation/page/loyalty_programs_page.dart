@@ -18,7 +18,7 @@ class LoyaltyProgramsPage extends StatelessWidget {
         child: Column(
           children: [
             CustomerPageHeader(
-              title: l10n.garageOrders,
+              title: l10n.loyaltyProgramsTitle,
               onBack: () {
                 if (context.canPop()) {
                   context.pop();

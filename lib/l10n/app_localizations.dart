@@ -1015,8 +1015,14 @@ abstract class AppLocalizations {
   /// No description provided for @garageOrders.
   ///
   /// In es, this message translates to:
-  /// **'Programas de lealtad'**
+  /// **'Mis pedidos'**
   String get garageOrders;
+
+  /// No description provided for @loyaltyProgramsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Programas de lealtad'**
+  String get loyaltyProgramsTitle;
 
   /// No description provided for @loyaltyProgramsComingSoonTitle.
   ///
@@ -3406,6 +3412,18 @@ abstract class AppLocalizations {
   /// **'Estamos confirmando tu reserva. No cierres esta pantalla.'**
   String get appointmentCreatingMessage;
 
+  /// No description provided for @appointmentOpeningPaymentTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Preparando pago seguro'**
+  String get appointmentOpeningPaymentTitle;
+
+  /// No description provided for @appointmentOpeningPaymentMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos abriendo la pasarela de pago. No cierres la app.'**
+  String get appointmentOpeningPaymentMessage;
+
   /// No description provided for @appointmentConfirmAction.
   ///
   /// In es, this message translates to:
@@ -4123,7 +4141,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartOpeningLaropayMessage.
   ///
   /// In es, this message translates to:
-  /// **'Estamos abriendo Laropay. No cierres la app.'**
+  /// **'Estamos abriendo la pasarela de pago. No cierres la app.'**
   String get cartOpeningLaropayMessage;
 
   /// No description provided for @cartCreateOrderSuccess.
@@ -4165,7 +4183,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartPaymentReviewMessage.
   ///
   /// In es, this message translates to:
-  /// **'La orden fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu orden más tarde.'**
+  /// **'La orden fue creada, pero no fue posible procesar el pago. Revisa el estado de la orden y paga en el taller.'**
   String get cartPaymentReviewMessage;
 
   /// No description provided for @cartPaymentReviewAction.

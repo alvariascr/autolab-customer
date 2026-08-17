@@ -146,7 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 _QuickAccessCard(
                   icon: Icons.inventory_2_outlined,
-                  label: l10n.garageOrders,
+                  label: l10n.loyaltyProgramsTitle,
                   onTap: () => context.push('/loyalty-programs'),
                 ),
                 _QuickAccessCard(

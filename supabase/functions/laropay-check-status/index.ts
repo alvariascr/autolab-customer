@@ -5,6 +5,10 @@ import {
   loadLaropayRuntimeToken,
   refreshLaropayToken,
 } from "../_shared/laropay-token.ts";
+import {
+  laropayEventTypeFromResponse,
+  recordLaropayPaymentEvent,
+} from "../_shared/laropay-audit.ts";
 
 type AuthenticatedRequestUser = {
   id: string;
@@ -245,7 +249,17 @@ Deno.serve(async (request) => {
       verifyResponse,
       certifierResponse,
       statusCheckError: null,
-    }).catch((error) => {
+    }).catch(async (error) => {
+      await recordLaropayPaymentEvent(adminSupabaseClient(env), {
+        paymentLinkId: paymentLink.id,
+        orderId: paymentLink.internal_transaction_id,
+        source: "verify_secure_link",
+        eventType: "status_persist_failed",
+        status: finalStatus,
+        responseCode: safeErrorResponseCode(safeError(error)),
+        responseDescription: "Failed to persist Laropay status check",
+        payload: safeError(error),
+      });
       throw new LaropayStatusCheckError("persist_status_check_failed", error);
     });
 
@@ -447,7 +461,42 @@ async function persistStatusCheck(
     throw new Error("invalid_status_persistence_response");
   }
 
+  await recordLaropayPaymentEvent(adminSupabaseClient(env), {
+    paymentLinkId: paymentLink.id,
+    orderId: paymentLink.internal_transaction_id,
+    source: "verify_secure_link",
+    eventType: eventTypeFromStatusResponse(input.verifyResponse),
+    status: input.status,
+    responseCode: stringValue(input.verifyResponse.response),
+    responseDescription: responseDescription(input.verifyResponse),
+    rejectReason: rejectReason(input.verifyResponse, input.certifierResponse),
+    authResponseCode: authResponseCode(input.verifyResponse),
+    payload: verifyResponse,
+  });
+
+  if (
+    input.certifierResponse !== null &&
+    Object.keys(input.certifierResponse).length > 0
+  ) {
+    await recordLaropayPaymentEvent(adminSupabaseClient(env), {
+      paymentLinkId: paymentLink.id,
+      orderId: paymentLink.internal_transaction_id,
+      source: "certifier",
+      eventType: eventTypeFromStatusResponse(input.certifierResponse),
+      status: input.status,
+      responseCode: stringValue(input.certifierResponse.response),
+      responseDescription: responseDescription(input.certifierResponse),
+      rejectReason: rejectReason(input.verifyResponse, input.certifierResponse),
+      authResponseCode: authResponseCode(input.certifierResponse),
+      payload: certifierResponse,
+    });
+  }
+
   return data as PaymentLinkRow;
+}
+
+function eventTypeFromStatusResponse(response: Record<string, unknown>) {
+  return laropayEventTypeFromResponse(response, "status_persisted");
 }
 
 function statusFromVerifyResponse(
