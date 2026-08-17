@@ -25,7 +25,9 @@ import '../../features/cart/domain/usecases/get_workshop_delivery_fee.dart';
 import '../../features/cart/domain/usecases/load_delivery_addresses.dart';
 import '../../features/cart/domain/usecases/save_delivery_address.dart';
 import '../../features/cart/domain/usecases/set_default_delivery_address.dart';
+import '../../features/home/application/home_service_popularity_store.dart';
 import '../../features/home/application/recent_searches_store.dart';
+import '../../features/home/data/supabase_home_service_popularity_store.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
 import '../../features/payments/application/laropay_checkout_launcher.dart';
 import '../../features/payments/data/datasources/laropay_checkout_remote_data_source.dart';
@@ -138,6 +140,9 @@ Future<void> _registerExternalDependencies() async {
 
 void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
+  sl.registerLazySingleton<HomeServicePopularityStore>(
+    () => SupabaseHomeServicePopularityStore(sl<SupabaseClient>()),
+  );
   sl.registerLazySingleton<ICartCheckoutRemoteDataSource>(
     () => SupabaseCartCheckoutRemoteDataSource(sl<SupabaseClient>()),
   );

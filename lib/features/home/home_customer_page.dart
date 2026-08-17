@@ -13,6 +13,7 @@ import '../../core/theme/autolab_customer.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
+import '../products/domain/entities/product.dart';
 import '../products/domain/repositories/product_repository.dart';
 import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
@@ -23,7 +24,9 @@ import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import 'application/home_service_popularity_store.dart';
 import 'application/recent_searches_store.dart';
+import 'domain/home_service_inventory_matcher.dart';
 import 'location/location_ui_presenter.dart';
 import 'widgets/home_customer_content.dart';
 import 'widgets/location_option_tile.dart';
@@ -70,12 +73,19 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
   static const _workshopProximityFilter = WorkshopProximityFilter();
   static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
+  static const _homeServiceInventoryMatcher = HomeServiceInventoryMatcher();
 
   late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
   final TextEditingController _searchController = TextEditingController();
   WorkshopDiscoveryQueryStore? _queryStore;
   GarageVehicleController? _garageVehicleController;
   GarageVehicle? _activeVehicle;
+  final GlobalKey _workshopsSectionKey = GlobalKey();
+  String? _selectedHomeServiceKey;
+  String? _selectedHomeServiceLabel;
+  Set<String>? _matchingWorkshopIds;
+  bool _isHomeServiceFilterLoading = false;
+  int _homeServiceFilterGeneration = 0;
   int _activeVehicleLoadGeneration = 0;
 
   int _currentIndex = 0;
@@ -148,6 +158,67 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   Future<void> _openVehiclesPage() async {
     await context.push('/vehicles');
+  }
+
+  Future<void> _handleHomeServiceCategoryChanged(
+    String? serviceKey,
+    String? label,
+  ) async {
+    final generation = ++_homeServiceFilterGeneration;
+    if (serviceKey == null || label == null) {
+      setState(() {
+        _selectedHomeServiceKey = null;
+        _selectedHomeServiceLabel = null;
+        _matchingWorkshopIds = null;
+        _isHomeServiceFilterLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedHomeServiceKey = serviceKey;
+      _selectedHomeServiceLabel = label;
+      _matchingWorkshopIds = null;
+      _isHomeServiceFilterLoading = true;
+    });
+
+    final repository = sl.isRegistered<ProductRepository>()
+        ? sl<ProductRepository>()
+        : null;
+    final matchingProducts = repository == null
+        ? <Product>[]
+        : await repository.getActiveProducts().then(
+            (result) => result.fold(
+              (_) => <Product>[],
+              (products) => products
+                  .where(
+                    (product) => _homeServiceInventoryMatcher.matchesProduct(
+                      serviceKey,
+                      product,
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+    final matchingWorkshopIds = matchingProducts
+        .map((product) => product.workshopId)
+        .toSet();
+
+    if (!mounted || generation != _homeServiceFilterGeneration) return;
+    setState(() {
+      _matchingWorkshopIds = matchingWorkshopIds;
+      _isHomeServiceFilterLoading = false;
+    });
+
+    await WidgetsBinding.instance.endOfFrame;
+    final sectionContext = _workshopsSectionKey.currentContext;
+    if (sectionContext == null || !sectionContext.mounted) return;
+    await Scrollable.ensureVisible(
+      sectionContext,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      alignment: 0.08,
+    );
   }
 
   @override
@@ -353,12 +424,21 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             (failure) => failure,
             (_) => null,
           );
+          final matchingWorkshopIds = _matchingWorkshopIds;
+          final visibleWorkshops = matchingWorkshopIds == null
+              ? workshops
+              : workshops
+                    .where(
+                      (workshop) => matchingWorkshopIds.contains(workshop.id),
+                    )
+                    .toList();
 
           return HomeCustomerContent(
             activeVehicle: _activeVehicle,
-            workshops: workshops,
+            workshops: visibleWorkshops,
             isWorkshopsLoading:
-                snapshot.connectionState == ConnectionState.waiting,
+                snapshot.connectionState == ConnectionState.waiting ||
+                _isHomeServiceFilterLoading,
             showSearchBar: _showSearchBar,
             searchController: _searchController,
             proximityFilter: _workshopProximityFilter,
@@ -367,11 +447,19 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             onSearchClose: _closeSearch,
             onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
             onViewAllVehiclesTap: _openVehiclesPage,
+            onServiceCategoryChanged: _handleHomeServiceCategoryChanged,
+            selectedServiceKey: _selectedHomeServiceKey,
+            selectedServiceLabel: _selectedHomeServiceLabel,
+            workshopsSectionKey: _workshopsSectionKey,
             productRepository: sl.isRegistered<ProductRepository>()
                 ? sl<ProductRepository>()
                 : null,
             recentSearchesStore: sl.isRegistered<RecentSearchesStore>()
                 ? sl<RecentSearchesStore>()
+                : null,
+            servicePopularityStore:
+                sl.isRegistered<HomeServicePopularityStore>()
+                ? sl<HomeServicePopularityStore>()
                 : null,
             onSearchQueryChanged: _queryStore?.setQuery,
             workshopFailure: workshopFailure,

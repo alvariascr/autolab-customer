@@ -1630,7 +1630,57 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeNeedsTitle => '¿Qué necesitas hoy?';
 
   @override
+  String homeFilteredWorkshopsTitle(Object service) {
+    return 'Talleres para $service';
+  }
+
+  @override
+  String get homeClearServiceFilter => 'Quitar filtro';
+
+  @override
+  String get homeFilteredWorkshopsEmpty =>
+      'No encontramos talleres con esta categoría cerca de ti.';
+
+  @override
+  String homeWorkshopResultsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count talleres encontrados',
+      one: '1 taller encontrado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeServiceInspection => 'Inspección';
+
+  @override
+  String get homeServiceOilChange => 'Cambio de aceite';
+
+  @override
+  String get homeServiceTireChange => 'Cambio de llanta';
+
+  @override
   String get homeServiceBalance => 'Balanceo';
+
+  @override
+  String get homeServiceAlignment => 'Alineación';
+
+  @override
+  String get homeServicePunctureRepair => 'Reparación de llanta';
+
+  @override
+  String get homeServiceDetailing => 'Estética automotriz';
+
+  @override
+  String get homeServiceElectrical => 'Eléctrico';
+
+  @override
+  String get homeServiceInstallation => 'Instalación';
+
+  @override
+  String get homeServiceAirConditioning => 'Aire acondicionado';
 
   @override
   String get homeServiceTow => 'Grúa';
@@ -1639,13 +1689,55 @@ class AppLocalizationsEs extends AppLocalizations {
   String get homeServiceTires => 'Llantas';
 
   @override
-  String get homeServiceGeneralReview => 'Revisión\ngeneral';
+  String get homeServiceOils => 'Aceites';
 
   @override
-  String get homeServiceElectricMechanic => 'Mecánica\neléctrica';
+  String get homeServiceParts => 'Repuestos';
 
   @override
-  String get homeServiceBattery => 'Batería';
+  String get homeServiceCoolant => 'Refrigerante';
+
+  @override
+  String get homeServiceCarWashProduct => 'Producto de auto lavado';
+
+  @override
+  String get homeServiceLights => 'Luces';
+
+  @override
+  String get homeServiceBatteries => 'Baterías';
+
+  @override
+  String get homeServiceFluids => 'Líquidos';
+
+  @override
+  String get homeServiceLubricants => 'Lubricantes';
+
+  @override
+  String get homeServiceChemicals => 'Químicos';
+
+  @override
+  String get homeServiceAdditives => 'Aditivos';
+
+  @override
+  String get homeServiceGreases => 'Grasas';
+
+  @override
+  String get homeServiceFilters => 'Filtros';
+
+  @override
+  String get homeServiceTechnology => 'Tecnología';
+
+  @override
+  String get homeServiceRims => 'Aros';
+
+  @override
+  String get homeServiceRacks => 'Racks';
+
+  @override
+  String get homeServiceFloorMats => 'Alfombras';
+
+  @override
+  String get homeServiceWipers => 'Escobillas';
 
   @override
   String get homePromotionsComingSoon => 'Próximamente';
