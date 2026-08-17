@@ -10,7 +10,6 @@ import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../datasources/appointment_remote_data_source.dart';
-import '../models/appointment_model.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   const AppointmentRepositoryImpl({
@@ -24,24 +23,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   final GlobalErrorHandler errorHandler;
   final FeatureLogger featureLogger;
   final String? Function() currentUserIdProvider;
-
-  @override
-  Future<Either<Failure, Appointment>> createAppointment(
-    AppointmentDraft draft,
-  ) {
-    return _guard(
-      action: 'create_appointment',
-      context: {'workshopId': draft.workshopId, 'serviceId': draft.serviceId},
-      loader: () async {
-        final customerId = _currentCustomerId();
-
-        return remoteDataSource.createAppointment(
-          rpcParams: AppointmentModel.toCreateRpcParams(draft),
-          customerId: customerId,
-        );
-      },
-    );
-  }
 
   @override
   Future<Either<Failure, List<Appointment>>> getAppointmentsByWorkshop(

@@ -1,5 +1,4 @@
 import 'package:autolab_customer/features/appointments/data/models/appointment_model.dart';
-import 'package:autolab_customer/features/appointments/domain/entities/appointment.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -104,42 +103,6 @@ void main() {
       expect(model.cancelledAt, isNull);
       expect(model.cancelledBy, isNull);
       expect(model.cancellationReason, isNull);
-    });
-
-    test('convierte draft a parametros de RPC atomica', () {
-      final draft = AppointmentDraft(
-        workshopId: 'workshop-1',
-        serviceId: 'service-1',
-        customerName: 'Cliente Autolab',
-        customerPhone: '8888-8888',
-        customerEmail: 'cliente@autolab.app',
-        vehicleType: 'AUTOMOVIL',
-        scheduledAt: DateTime.utc(2026, 5, 28, 6, 15),
-        paymentMethod: 'sinpe',
-        totalAmount: 35000,
-        products: const [
-          AppointmentProductLine(
-            productId: 'product-1',
-            quantity: 2,
-            unitPrice: 5000,
-          ),
-        ],
-      );
-
-      final params = AppointmentModel.toCreateRpcParams(draft);
-      final products = params['p_products'] as List;
-      final firstProduct = products.first as Map<String, dynamic>;
-
-      expect(params['p_workshop_id'], 'workshop-1');
-      expect(params['p_service_id'], 'service-1');
-      expect(params['p_customer_name'], 'Cliente Autolab');
-      expect(params['p_scheduled_at'], '2026-05-28T06:15:00.000Z');
-      expect(params['p_payment_method'], 'sinpe');
-      expect(params['p_total_amount'], 35000);
-      expect(products, hasLength(1));
-      expect(firstProduct['product_id'], 'product-1');
-      expect(firstProduct['quantity'], 2);
-      expect(firstProduct['unit_price'], 5000);
     });
 
     test('usa null cuando la cita no trae customer_id', () {

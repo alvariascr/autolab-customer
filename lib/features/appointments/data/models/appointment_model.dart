@@ -82,30 +82,6 @@ class AppointmentModel extends Appointment {
     );
   }
 
-  static Map<String, dynamic> toCreateRpcParams(AppointmentDraft draft) {
-    return {
-      'p_workshop_id': draft.workshopId,
-      'p_service_id': draft.serviceId,
-      'p_customer_name': draft.customerName,
-      'p_customer_phone': draft.customerPhone,
-      'p_customer_email': draft.customerEmail,
-      'p_vehicle_type': draft.vehicleType,
-      'p_scheduled_at': draft.scheduledAt.toUtc().toIso8601String(),
-      'p_payment_method': draft.paymentMethod,
-      'p_notes': draft.notes,
-      'p_total_amount': draft.totalAmount,
-      'p_products': draft.products
-          .map(
-            (product) => {
-              'product_id': product.productId,
-              'quantity': product.quantity,
-              'unit_price': product.unitPrice,
-            },
-          )
-          .toList(),
-    };
-  }
-
   /// Serializes only flat appointment columns. Joined display data such as
   /// workshopName, serviceName and products is read-only query payload.
   Map<String, dynamic> toMap() {

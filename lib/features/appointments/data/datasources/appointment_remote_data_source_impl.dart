@@ -60,27 +60,6 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
   ''';
 
   @override
-  Future<AppointmentModel> createAppointment({
-    required Map<String, dynamic> rpcParams,
-    required String customerId,
-  }) async {
-    final response = await client.rpc(
-      'create_appointment_with_products',
-      params: {...rpcParams, 'p_customer_id': customerId},
-    );
-
-    final appointmentId = _appointmentIdFromRpcResponse(response);
-
-    if (appointmentId.isEmpty) {
-      throw const FormatException(
-        'create_appointment_with_products returned an invalid or empty ID',
-      );
-    }
-
-    return _getAppointmentById(appointmentId, customerId: customerId);
-  }
-
-  @override
   Future<List<AppointmentModel>> getAppointmentsByWorkshop({
     required String workshopId,
     required String customerId,
@@ -204,19 +183,5 @@ class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
     return error.code == 'PGRST200' ||
         message.contains('relationship') ||
         message.contains('schema cache');
-  }
-
-  String _appointmentIdFromRpcResponse(Object? response) {
-    if (response is String) {
-      return response;
-    }
-
-    if (response is Map) {
-      return response['id']?.toString() ??
-          response['appointment_id']?.toString() ??
-          '';
-    }
-
-    return response?.toString() ?? '';
   }
 }
