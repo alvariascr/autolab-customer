@@ -163,33 +163,37 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                 ),
                               ],
                               const SizedBox(height: AutolabCustomer.spacingSm),
-                              _CartPrimaryButton(
-                                label: showCheckout
-                                    ? isCheckingOut
-                                          ? l10n.cartCreatingOrder
-                                          : l10n.cartFinishPurchase
-                                    : l10n.cartContinueToCheckout,
-                                enabled: canCheckout,
-                                onPressed: !canCheckout
-                                    ? null
-                                    : () async {
-                                        if (!showCheckout) {
-                                          await context
-                                              .read<CartCubit>()
-                                              .refreshWorkshopDeliveryFee(
-                                                workshopId: selectedWorkshopId,
-                                              );
-                                          if (!mounted) return;
-                                          setState(() => _showCheckout = true);
-                                          return;
-                                        }
+                              if (!isShowingCartList)
+                                _CartPrimaryButton(
+                                  label: showCheckout
+                                      ? isCheckingOut
+                                            ? l10n.cartCreatingOrder
+                                            : l10n.cartFinishPurchase
+                                      : l10n.cartContinueToCheckout,
+                                  enabled: canCheckout,
+                                  onPressed: !canCheckout
+                                      ? null
+                                      : () async {
+                                          if (!showCheckout) {
+                                            await context
+                                                .read<CartCubit>()
+                                                .refreshWorkshopDeliveryFee(
+                                                  workshopId:
+                                                      selectedWorkshopId,
+                                                );
+                                            if (!mounted) return;
+                                            setState(
+                                              () => _showCheckout = true,
+                                            );
+                                            return;
+                                          }
 
-                                        _createCartOrder(
-                                          context,
-                                          workshopId: selectedWorkshopId,
-                                        );
-                                      },
-                              ),
+                                          _createCartOrder(
+                                            context,
+                                            workshopId: selectedWorkshopId,
+                                          );
+                                        },
+                                ),
                             ],
                           ),
                         ),
@@ -243,7 +247,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   }
 
   void _openWorkshop(String workshopId) {
-    context.push('/workshops/$workshopId?section=products');
+    context.go('/workshops/$workshopId?section=products');
   }
 
   Future<void> _createCartOrder(
