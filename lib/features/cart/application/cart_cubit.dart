@@ -140,14 +140,14 @@ class CartCubit extends Cubit<CartState> {
       return;
     }
 
+    final remainingItems = state.items
+        .where((item) => item.product.workshopId.trim() != trimmedWorkshopId)
+        .toList(growable: false);
+
     _emitAndSave(
       _stateWithItems(
-        state.items
-            .where(
-              (item) => item.product.workshopId.trim() != trimmedWorkshopId,
-            )
-            .toList(growable: false),
-      ),
+        remainingItems,
+      ).copyWith(clearCurrentWorkshopDeliveryFee: true),
     );
   }
 
