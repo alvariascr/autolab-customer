@@ -74,10 +74,75 @@ void main() {
       expect(result.status, CartAddProductStatus.invalidProduct);
       expect(result.items, isEmpty);
     });
+
+    test('rechaza servicios', () {
+      const state = CartState();
+
+      final result = service.addProduct(
+        state,
+        _product(
+          id: 'service-1',
+          workshopId: 'workshop-1',
+          itemType: 'service',
+        ),
+        quantity: 1,
+      );
+
+      expect(result.wasChanged, isFalse);
+      expect(result.status, CartAddProductStatus.invalidProduct);
+      expect(result.items, isEmpty);
+    });
+
+    test('rechaza productos sin workshopId', () {
+      const state = CartState();
+
+      final result = service.addProduct(
+        state,
+        _product(id: 'product-1', workshopId: ' '),
+        quantity: 1,
+      );
+
+      expect(result.wasChanged, isFalse);
+      expect(result.status, CartAddProductStatus.invalidProduct);
+      expect(result.items, isEmpty);
+    });
+
+    test('rechaza cantidades no positivas', () {
+      const state = CartState();
+
+      final result = service.addProduct(
+        state,
+        _product(id: 'product-1', workshopId: 'workshop-1'),
+        quantity: 0,
+      );
+
+      expect(result.wasChanged, isFalse);
+      expect(result.status, CartAddProductStatus.invalidProduct);
+      expect(result.items, isEmpty);
+    });
+
+    test('rechaza cantidades superiores al inventario', () {
+      const state = CartState();
+
+      final result = service.addProduct(
+        state,
+        _product(id: 'product-1', workshopId: 'workshop-1', currentStock: 1),
+        quantity: 2,
+      );
+
+      expect(result.wasChanged, isFalse);
+      expect(result.status, CartAddProductStatus.stockLimitReached);
+      expect(result.items, isEmpty);
+    });
   });
 }
 
-Product _product({required String id, required String workshopId}) {
+Product _product({
+  required String id,
+  required String workshopId,
+  String itemType = 'product',
+  int? currentStock = 10,
+}) {
   return Product(
     id: id,
     workshopId: workshopId,
@@ -85,9 +150,9 @@ Product _product({required String id, required String workshopId}) {
     description: 'Descripción',
     primaryImageUrl: '',
     sellingPrice: 1000,
-    currentStock: 10,
+    currentStock: currentStock,
     minimumStockAlert: 1,
-    itemType: 'product',
+    itemType: itemType,
     status: 'active',
     requiresAppointment: false,
     skuNumber: id,
