@@ -17,6 +17,13 @@ class CartFloatingCheckoutButton extends StatelessWidget {
       builder: (context, cart) {
         final count = cart.totalQuantity;
         final l10n = AppLocalizations.of(context)!;
+        final isDark = AutolabCustomer.isDark(context);
+        final backgroundColor = isDark
+            ? AutolabCustomer.customerChipBackgroundColor(context)
+            : AutolabCustomer.secondary;
+        final foregroundColor = isDark
+            ? AutolabCustomer.customerTextColor(context)
+            : AutolabCustomer.white;
 
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
@@ -32,7 +39,7 @@ class CartFloatingCheckoutButton extends StatelessWidget {
               ? const SizedBox.shrink(key: ValueKey('empty-cart-button'))
               : Material(
                   key: const ValueKey('cart-button'),
-                  color: AutolabCustomer.secondary,
+                  color: backgroundColor,
                   borderRadius: BorderRadius.circular(999),
                   elevation: 10,
                   shadowColor: AutolabCustomer.shadowBlackStrong,
@@ -47,16 +54,16 @@ class CartFloatingCheckoutButton extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.shopping_cart_outlined,
-                            color: AutolabCustomer.white,
+                            color: foregroundColor,
                             size: 22,
                           ),
                           const SizedBox(width: AutolabCustomer.spacingSm),
                           Text(
                             '${l10n.productDetailViewCartAction} · $count',
                             style: AutolabCustomer.body.copyWith(
-                              color: AutolabCustomer.white,
+                              color: foregroundColor,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
