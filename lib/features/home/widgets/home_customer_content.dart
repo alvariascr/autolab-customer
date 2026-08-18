@@ -33,6 +33,7 @@ class HomeCustomerContent extends StatelessWidget {
     required this.isWorkshopsLoading,
     required this.showSearchBar,
     required this.searchController,
+    required this.scrollController,
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.onLocationTap,
@@ -57,6 +58,7 @@ class HomeCustomerContent extends StatelessWidget {
   final bool isWorkshopsLoading;
   final bool showSearchBar;
   final TextEditingController searchController;
+  final ScrollController scrollController;
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
@@ -94,6 +96,7 @@ class HomeCustomerContent extends StatelessWidget {
             children: [
               SafeArea(
                 child: SingleChildScrollView(
+                  controller: scrollController,
                   padding: EdgeInsets.fromLTRB(
                     0,
                     AutolabCustomer.spacingSm,
@@ -156,25 +159,29 @@ class HomeCustomerContent extends StatelessWidget {
                                   ),
                           ),
                           const SizedBox(height: AutolabCustomer.spacingScreen),
-                          KeyedSubtree(
-                            key: workshopsSectionKey,
-                            child: WorkshopsSection(
-                              workshops: workshops,
-                              fallbackWorkshops: fallbackWorkshops,
-                              locationState: state,
-                              proximityFilter: proximityFilter,
-                              emptyStateResolver: emptyStateResolver,
-                              isLoading: isWorkshopsLoading,
-                              workshopFailure: workshopFailure,
-                              onViewAllTap: onViewAllWorkshopsTap,
-                              selectedServiceLabel: selectedServiceLabel,
-                              selectedServiceKey: selectedServiceKey,
-                              showCategoryNotFoundMessage:
-                                  showCategoryNotFoundMessage,
-                              onClearServiceFilter: selectedServiceLabel == null
-                                  ? null
-                                  : () => onServiceCategoryChanged(null, null),
-                            ),
+                          Column(
+                            children: [
+                              SizedBox(key: workshopsSectionKey, height: 12),
+                              WorkshopsSection(
+                                workshops: workshops,
+                                fallbackWorkshops: fallbackWorkshops,
+                                locationState: state,
+                                proximityFilter: proximityFilter,
+                                emptyStateResolver: emptyStateResolver,
+                                isLoading: isWorkshopsLoading,
+                                workshopFailure: workshopFailure,
+                                onViewAllTap: onViewAllWorkshopsTap,
+                                selectedServiceLabel: selectedServiceLabel,
+                                selectedServiceKey: selectedServiceKey,
+                                showCategoryNotFoundMessage:
+                                    showCategoryNotFoundMessage,
+                                onClearServiceFilter:
+                                    selectedServiceLabel == null
+                                    ? null
+                                    : () =>
+                                          onServiceCategoryChanged(null, null),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: AutolabCustomer.spacingScreen),
                           Padding(
@@ -539,8 +546,12 @@ class _ServiceCategories extends StatefulWidget {
 }
 
 class _ServiceCategoriesState extends State<_ServiceCategories> {
+  static const _popularityUpdateWindow = Duration(seconds: 7);
+
   Map<String, int> _clickCounts = const {};
+  Map<String, int>? _pendingClickCounts;
   StreamSubscription<Map<String, int>>? _popularitySubscription;
+  Timer? _popularityUpdateTimer;
 
   @override
   void initState() {
@@ -560,6 +571,7 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
 
   @override
   void dispose() {
+    _popularityUpdateTimer?.cancel();
     unawaited(_popularitySubscription?.cancel());
     super.dispose();
   }
@@ -574,13 +586,36 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
 
     _popularitySubscription = store.watchClickCounts().listen(
       (clickCounts) {
-        if (!mounted) return;
-        setState(() => _clickCounts = clickCounts);
+        _queuePopularityUpdate(clickCounts);
       },
       onError: (_) {
         // The initial query remains as fallback when Realtime is unavailable.
       },
     );
+  }
+
+  void _queuePopularityUpdate(Map<String, int> clickCounts) {
+    if (!mounted) return;
+    if (_clickCounts.isEmpty) {
+      setState(() => _clickCounts = clickCounts);
+      return;
+    }
+
+    _pendingClickCounts = clickCounts;
+    _popularityUpdateTimer ??= Timer(_popularityUpdateWindow, () {
+      _popularityUpdateTimer = null;
+      final pendingClickCounts = _pendingClickCounts;
+      _pendingClickCounts = null;
+      if (!mounted || pendingClickCounts == null) return;
+      setState(() => _clickCounts = pendingClickCounts);
+    });
+  }
+
+  void _queuePersistedCount(String serviceKey, int persistedCount) {
+    final pendingClickCounts = {..._clickCounts, ...?_pendingClickCounts};
+    if (persistedCount <= (pendingClickCounts[serviceKey] ?? 0)) return;
+    pendingClickCounts[serviceKey] = persistedCount;
+    _queuePopularityUpdate(pendingClickCounts);
   }
 
   Future<void> _loadClickCounts() async {
@@ -602,10 +637,8 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
 
     try {
       final persistedCount = await store.recordClick(serviceKey);
-      if (!mounted || persistedCount <= (_clickCounts[serviceKey] ?? 0)) return;
-      setState(() {
-        _clickCounts = {..._clickCounts, serviceKey: persistedCount};
-      });
+      if (!mounted) return;
+      _queuePersistedCount(serviceKey, persistedCount);
     } catch (_) {
       // A tracking failure must never prevent the customer from using the home.
     }
@@ -695,12 +728,6 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
             behavior: HitTestBehavior.opaque,
             onTap: () {
               final selectedServiceKey = isSelected ? null : item.serviceKey;
-              setState(() {
-                _clickCounts = {
-                  ..._clickCounts,
-                  item.serviceKey: (_clickCounts[item.serviceKey] ?? 0) + 1,
-                };
-              });
               unawaited(_recordClick(item.serviceKey));
               widget.onCategoryChanged(
                 selectedServiceKey,

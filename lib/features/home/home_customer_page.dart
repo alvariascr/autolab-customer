@@ -77,6 +77,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
   late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _homeScrollController = ScrollController();
   WorkshopDiscoveryQueryStore? _queryStore;
   GarageVehicleController? _garageVehicleController;
   GarageVehicle? _activeVehicle;
@@ -133,6 +134,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     widget.controller?._detach(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
+    _homeScrollController.dispose();
     super.dispose();
   }
 
@@ -172,6 +174,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         _matchingWorkshopIds = null;
         _isHomeServiceFilterLoading = false;
       });
+      await WidgetsBinding.instance.endOfFrame;
+      if (_homeScrollController.hasClients) {
+        await _homeScrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+        );
+      }
       return;
     }
 
@@ -217,7 +227,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       sectionContext,
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
-      alignment: 0.08,
+      alignment: 0,
     );
   }
 
@@ -447,6 +457,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                 _isHomeServiceFilterLoading,
             showSearchBar: _showSearchBar,
             searchController: _searchController,
+            scrollController: _homeScrollController,
             proximityFilter: _workshopProximityFilter,
             emptyStateResolver: _workshopEmptyStateResolver,
             onLocationTap: _showLocationOptions,
