@@ -546,9 +546,11 @@ class _ServiceCategories extends StatefulWidget {
 }
 
 class _ServiceCategoriesState extends State<_ServiceCategories> {
+  static const _tapCooldown = Duration(milliseconds: 500);
   static const _popularityUpdateWindow = Duration(seconds: 7);
 
   Map<String, int> _clickCounts = const {};
+  final Map<String, DateTime> _lastTapByService = {};
   Map<String, int>? _pendingClickCounts;
   StreamSubscription<Map<String, int>>? _popularitySubscription;
   Timer? _popularityUpdateTimer;
@@ -644,6 +646,17 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     }
   }
 
+  bool _acceptTap(String serviceKey) {
+    final now = DateTime.now();
+    final lastTap = _lastTapByService[serviceKey];
+    if (lastTap != null && now.difference(lastTap) < _tapCooldown) {
+      return false;
+    }
+
+    _lastTapByService[serviceKey] = now;
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -727,6 +740,7 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              if (!_acceptTap(item.serviceKey)) return;
               final selectedServiceKey = isSelected ? null : item.serviceKey;
               unawaited(_recordClick(item.serviceKey));
               widget.onCategoryChanged(
