@@ -684,11 +684,20 @@ function rejectReason(
 function certifierRejectReason(
   certifierResponse: Record<string, unknown> | null,
 ) {
-  return stringValue(
-    certifierResponse?.rejectReason ??
-      certifierResponse?.errorMessage ??
+  for (
+    const candidate of [
+      certifierResponse?.rejectReason,
+      certifierResponse?.errorMessage,
       certifierResponse?.resultDescription,
-  );
+    ]
+  ) {
+    const reason = stringValue(candidate);
+    if (reason !== "") {
+      return reason;
+    }
+  }
+
+  return "";
 }
 
 function authResponseCode(response: Record<string, unknown>) {
