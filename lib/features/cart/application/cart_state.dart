@@ -301,11 +301,21 @@ class CartWorkshopCart extends Equatable {
   final String workshopId;
   final List<CartItem> items;
 
-  Product get representativeProduct => items.first.product;
+  Product get representativeProduct {
+    return items
+        .map((item) => item.product)
+        .firstWhere(_hasWorkshopMetadata, orElse: () => items.first.product);
+  }
 
   String get workshopName => representativeProduct.workshopName.trim();
 
-  String get workshopAvatarUrl => representativeProduct.workshopAvatarUrl;
+  String get workshopAvatarUrl =>
+      representativeProduct.workshopAvatarUrl.trim();
+
+  bool _hasWorkshopMetadata(Product product) {
+    return product.workshopName.trim().isNotEmpty ||
+        product.workshopAvatarUrl.trim().isNotEmpty;
+  }
 
   int get totalQuantity {
     return items.fold(0, (total, item) => total + item.quantity);

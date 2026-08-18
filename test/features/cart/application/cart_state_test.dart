@@ -33,6 +33,40 @@ void main() {
       expect(workshopState.items.single.product.workshopId, 'workshop-b');
       expect(workshopState.currentWorkshopDeliveryFee, isNull);
     });
+
+    test(
+      'usa un producto con metadata válida como representante del taller',
+      () {
+        final cart = CartWorkshopCart(
+          workshopId: 'workshop-a',
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+                workshopName: ' ',
+                workshopAvatarUrl: ' ',
+              ),
+              quantity: 1,
+            ),
+            CartItem(
+              product: _product(
+                id: 'product-b',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+                workshopName: 'Taller Principal',
+                workshopAvatarUrl: 'https://example.com/avatar.png',
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        expect(cart.workshopName, 'Taller Principal');
+        expect(cart.workshopAvatarUrl, 'https://example.com/avatar.png');
+      },
+    );
   });
 }
 
@@ -40,6 +74,8 @@ Product _product({
   required String id,
   required String workshopId,
   required double deliveryFee,
+  String? workshopName,
+  String workshopAvatarUrl = '',
 }) {
   return Product(
     id: id,
@@ -58,8 +94,8 @@ Product _product({
     categoryName: '',
     brandName: '',
     providerName: '',
-    workshopName: 'Taller $workshopId',
-    workshopAvatarUrl: '',
+    workshopName: workshopName ?? 'Taller $workshopId',
+    workshopAvatarUrl: workshopAvatarUrl,
     workshopDeliveryFee: deliveryFee,
   );
 }
