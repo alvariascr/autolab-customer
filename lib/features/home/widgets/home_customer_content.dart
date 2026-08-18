@@ -29,6 +29,7 @@ class HomeCustomerContent extends StatelessWidget {
   const HomeCustomerContent({
     super.key,
     required this.workshops,
+    this.fallbackWorkshops = const [],
     required this.isWorkshopsLoading,
     required this.showSearchBar,
     required this.searchController,
@@ -47,10 +48,12 @@ class HomeCustomerContent extends StatelessWidget {
     this.servicePopularityStore,
     this.selectedServiceKey,
     this.selectedServiceLabel,
+    this.showCategoryNotFoundMessage = false,
     this.workshopsSectionKey,
   });
 
   final List<Workshop> workshops;
+  final List<Workshop> fallbackWorkshops;
   final bool isWorkshopsLoading;
   final bool showSearchBar;
   final TextEditingController searchController;
@@ -66,6 +69,7 @@ class HomeCustomerContent extends StatelessWidget {
   final HomeServicePopularityStore? servicePopularityStore;
   final String? selectedServiceKey;
   final String? selectedServiceLabel;
+  final bool showCategoryNotFoundMessage;
   final Key? workshopsSectionKey;
   final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
@@ -156,6 +160,7 @@ class HomeCustomerContent extends StatelessWidget {
                             key: workshopsSectionKey,
                             child: WorkshopsSection(
                               workshops: workshops,
+                              fallbackWorkshops: fallbackWorkshops,
                               locationState: state,
                               proximityFilter: proximityFilter,
                               emptyStateResolver: emptyStateResolver,
@@ -164,6 +169,8 @@ class HomeCustomerContent extends StatelessWidget {
                               onViewAllTap: onViewAllWorkshopsTap,
                               selectedServiceLabel: selectedServiceLabel,
                               selectedServiceKey: selectedServiceKey,
+                              showCategoryNotFoundMessage:
+                                  showCategoryNotFoundMessage,
                               onClearServiceFilter: selectedServiceLabel == null
                                   ? null
                                   : () => onServiceCategoryChanged(null, null),

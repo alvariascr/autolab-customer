@@ -16,6 +16,7 @@ class WorkshopsSection extends StatelessWidget {
   const WorkshopsSection({
     super.key,
     required this.workshops,
+    this.fallbackWorkshops = const [],
     required this.locationState,
     required this.proximityFilter,
     required this.emptyStateResolver,
@@ -24,12 +25,14 @@ class WorkshopsSection extends StatelessWidget {
     required this.onViewAllTap,
     this.selectedServiceLabel,
     this.selectedServiceKey,
+    this.showCategoryNotFoundMessage = false,
     this.onClearServiceFilter,
   });
 
   static const _searchLocationResolver = WorkshopSearchLocationResolver();
 
   final List<Workshop> workshops;
+  final List<Workshop> fallbackWorkshops;
   final LocationState locationState;
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
@@ -38,6 +41,7 @@ class WorkshopsSection extends StatelessWidget {
   final VoidCallback onViewAllTap;
   final String? selectedServiceLabel;
   final String? selectedServiceKey;
+  final bool showCategoryNotFoundMessage;
   final VoidCallback? onClearServiceFilter;
 
   @override
@@ -84,6 +88,18 @@ class WorkshopsSection extends StatelessWidget {
       workshops: workshops,
       currentLocation: searchLocation,
     );
+    final shouldUseNearbyFallback =
+        selectedServiceLabel != null && nearbyWorkshops.isEmpty;
+    final displayedWorkshops = shouldUseNearbyFallback
+        ? proximityFilter.filterNearby(
+            workshops: fallbackWorkshops.isEmpty
+                ? workshops
+                : fallbackWorkshops,
+            currentLocation: searchLocation,
+          )
+        : nearbyWorkshops;
+    final shouldShowCategoryMessage =
+        showCategoryNotFoundMessage || shouldUseNearbyFallback;
     final emptyMessage = emptyStateResolver.resolve(
       locationState,
       l10n: l10n,
@@ -104,6 +120,8 @@ class WorkshopsSection extends StatelessWidget {
                 child: Text(
                   selectedServiceLabel == null
                       ? l10n.workshopsSectionTitle
+                      : shouldShowCategoryMessage
+                      ? l10n.homeNearbyWorkshopsFallbackTitle
                       : l10n.homeFilteredWorkshopsTitle(selectedServiceLabel!),
                   style: AutolabCustomer.h2.copyWith(
                     color: textColor,
@@ -151,10 +169,46 @@ class WorkshopsSection extends StatelessWidget {
             ),
           )
         else ...[
+          if (shouldShowCategoryMessage) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalMargin),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AutolabCustomer.spacingSmd,
+                  vertical: AutolabCustomer.spacingSmd,
+                ),
+                decoration: BoxDecoration(
+                  color: AutolabCustomer.customerSoftSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: AutolabCustomer.primary,
+                      size: AutolabCustomer.iconSm,
+                    ),
+                    const SizedBox(width: AutolabCustomer.spacingSm),
+                    Expanded(
+                      child: Text(
+                        l10n.homeFilteredWorkshopsEmpty,
+                        style: AutolabCustomer.caption.copyWith(
+                          color: textColor,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AutolabCustomer.spacingSmd),
+          ],
           Padding(
             padding: EdgeInsets.symmetric(horizontal: horizontalMargin),
             child: Text(
-              l10n.homeWorkshopResultsCount(nearbyWorkshops.length),
+              l10n.homeWorkshopResultsCount(displayedWorkshops.length),
               style: AutolabCustomer.body.copyWith(
                 color: secondaryTextColor,
                 fontWeight: FontWeight.w600,
@@ -162,7 +216,7 @@ class WorkshopsSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AutolabCustomer.spacingSm),
-          if (nearbyWorkshops.isEmpty)
+          if (displayedWorkshops.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: horizontalMargin,
@@ -182,7 +236,7 @@ class WorkshopsSection extends StatelessWidget {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: horizontalMargin),
               child: Column(
-                children: nearbyWorkshops.map((workshop) {
+                children: displayedWorkshops.map((workshop) {
                   return Padding(
                     padding: const EdgeInsets.only(
                       bottom: AutolabCustomer.spacingSm,

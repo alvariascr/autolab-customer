@@ -1642,6 +1642,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'No encontramos talleres con esta categoría cerca de ti.';
 
   @override
+  String get homeNearbyWorkshopsFallbackTitle => 'Talleres cercanos';
+
+  @override
   String homeWorkshopResultsCount(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

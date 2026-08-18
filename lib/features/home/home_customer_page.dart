@@ -425,7 +425,12 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             (_) => null,
           );
           final matchingWorkshopIds = _matchingWorkshopIds;
-          final visibleWorkshops = matchingWorkshopIds == null
+          final isCategoryFallback =
+              _selectedHomeServiceKey != null &&
+              matchingWorkshopIds != null &&
+              matchingWorkshopIds.isEmpty;
+          final visibleWorkshops =
+              matchingWorkshopIds == null || isCategoryFallback
               ? workshops
               : workshops
                     .where(
@@ -436,6 +441,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
           return HomeCustomerContent(
             activeVehicle: _activeVehicle,
             workshops: visibleWorkshops,
+            fallbackWorkshops: workshops,
             isWorkshopsLoading:
                 snapshot.connectionState == ConnectionState.waiting ||
                 _isHomeServiceFilterLoading,
@@ -450,6 +456,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             onServiceCategoryChanged: _handleHomeServiceCategoryChanged,
             selectedServiceKey: _selectedHomeServiceKey,
             selectedServiceLabel: _selectedHomeServiceLabel,
+            showCategoryNotFoundMessage: isCategoryFallback,
             workshopsSectionKey: _workshopsSectionKey,
             productRepository: sl.isRegistered<ProductRepository>()
                 ? sl<ProductRepository>()

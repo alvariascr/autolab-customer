@@ -2992,6 +2992,12 @@ abstract class AppLocalizations {
   /// **'No encontramos talleres con esta categoría cerca de ti.'**
   String get homeFilteredWorkshopsEmpty;
 
+  /// No description provided for @homeNearbyWorkshopsFallbackTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Talleres cercanos'**
+  String get homeNearbyWorkshopsFallbackTitle;
+
   /// No description provided for @homeWorkshopResultsCount.
   ///
   /// In es, this message translates to:
