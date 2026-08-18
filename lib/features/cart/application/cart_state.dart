@@ -107,7 +107,6 @@ class CartState extends Equatable {
       deliveryPhoneNumber: deliveryPhoneNumber,
       selectedDeliveryAddressId: selectedDeliveryAddressId,
       deliveryAddresses: deliveryAddresses,
-      currentWorkshopDeliveryFee: currentWorkshopDeliveryFee,
       deliveryAddressesError: deliveryAddressesError,
       checkoutStatus: checkoutStatus,
       checkoutError: checkoutError,
