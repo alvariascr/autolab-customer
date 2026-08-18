@@ -134,6 +134,22 @@ void main() {
       expect(result.status, CartAddProductStatus.stockLimitReached);
       expect(result.items, isEmpty);
     });
+
+    test('rechaza cantidad acumulada superior al inventario', () {
+      final product = _product(
+        id: 'product-1',
+        workshopId: 'workshop-1',
+        currentStock: 3,
+      );
+      final state = CartState(items: [CartItem(product: product, quantity: 2)]);
+
+      final result = service.addProduct(state, product, quantity: 2);
+
+      expect(result.wasChanged, isFalse);
+      expect(result.status, CartAddProductStatus.stockLimitReached);
+      expect(result.items, hasLength(1));
+      expect(result.items.single.quantity, 2);
+    });
   });
 }
 

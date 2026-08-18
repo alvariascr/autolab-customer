@@ -47,6 +47,30 @@ void main() {
       },
     );
 
+    test(
+      'limpia la tarifa si no puede resolver el taller para refrescar envío',
+      () async {
+        final cubit = _cartCubit(
+          workshopRepository: _FakeWorkshopRepository(
+            feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+          ),
+        );
+        addTearDown(cubit.close);
+
+        cubit
+          ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+          ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'));
+        await cubit.refreshWorkshopDeliveryFee(workshopId: 'workshop-a');
+
+        expect(cubit.state.currentWorkshopDeliveryFee, 2500);
+
+        final wasRefreshed = await cubit.refreshWorkshopDeliveryFee();
+
+        expect(wasRefreshed, isFalse);
+        expect(cubit.state.currentWorkshopDeliveryFee, isNull);
+      },
+    );
+
     test('no crea orden con varios talleres sin seleccionar uno', () async {
       final cartRepository = _FakeCartRepository();
       final cubit = _cartCubit(

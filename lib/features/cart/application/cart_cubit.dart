@@ -387,17 +387,20 @@ class CartCubit extends Cubit<CartState> {
     );
   }
 
-  Future<void> refreshWorkshopDeliveryFee({String? workshopId}) async {
+  Future<bool> refreshWorkshopDeliveryFee({String? workshopId}) async {
     final targetWorkshopId = workshopId?.trim() ?? state.singleWorkshopId;
     if (targetWorkshopId == null || targetWorkshopId.isEmpty) {
-      return;
+      _emitAndSave(state.copyWith(clearCurrentWorkshopDeliveryFee: true));
+      return false;
     }
 
     try {
       final deliveryFee = await _getWorkshopDeliveryFee(targetWorkshopId);
       _emitAndSave(state.copyWith(currentWorkshopDeliveryFee: deliveryFee));
+      return true;
     } catch (_) {
       // Keep the persisted item fee as a fallback; checkout RPC remains authoritative.
+      return false;
     }
   }
 
