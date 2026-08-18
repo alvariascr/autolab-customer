@@ -16,6 +16,7 @@ import 'cart_items_service.dart';
 import 'cart_persistence.dart';
 import 'cart_state.dart';
 
+export 'cart_items_service.dart' show CartAddProductStatus;
 export 'cart_state.dart';
 
 class CartCubit extends Cubit<CartState> {
@@ -62,10 +63,10 @@ class CartCubit extends Cubit<CartState> {
   var _cartMutationVersion = 0;
   Future<void> _pendingSave = Future.value();
 
-  bool addProduct(Product product, {int quantity = 1}) {
+  CartAddProductStatus addProduct(Product product, {int quantity = 1}) {
     final update = _itemsService.addProduct(state, product, quantity: quantity);
     if (!update.wasChanged) {
-      return false;
+      return update.status;
     }
 
     _emitAndSave(
@@ -75,10 +76,13 @@ class CartCubit extends Cubit<CartState> {
         clearPendingCheckoutResult: true,
       ),
     );
-    return true;
+    return update.status;
   }
 
-  Future<bool> addProductAndPersist(Product product, {int quantity = 1}) async {
+  Future<CartAddProductStatus> addProductAndPersist(
+    Product product, {
+    int quantity = 1,
+  }) async {
     await _initialization;
 
     final baseState = await _persistence.load() ?? state;
@@ -88,7 +92,7 @@ class CartCubit extends Cubit<CartState> {
       quantity: quantity,
     );
     if (!update.wasChanged) {
-      return false;
+      return update.status;
     }
 
     final nextState = baseState.copyWith(
@@ -100,7 +104,7 @@ class CartCubit extends Cubit<CartState> {
     emit(nextState);
     await _enqueueSave(nextState);
 
-    return true;
+    return update.status;
   }
 
   bool increaseQuantity(String productId) {
@@ -127,6 +131,23 @@ class CartCubit extends Cubit<CartState> {
         clearCheckoutError: true,
         clearPendingCheckoutResult: true,
       ),
+    );
+  }
+
+  void clearWorkshop(String workshopId) {
+    final trimmedWorkshopId = workshopId.trim();
+    if (trimmedWorkshopId.isEmpty) {
+      return;
+    }
+
+    final remainingItems = state.items
+        .where((item) => item.product.workshopId.trim() != trimmedWorkshopId)
+        .toList(growable: false);
+
+    _emitAndSave(
+      _stateWithItems(
+        remainingItems,
+      ).copyWith(clearCurrentWorkshopDeliveryFee: true),
     );
   }
 
@@ -366,22 +387,50 @@ class CartCubit extends Cubit<CartState> {
     );
   }
 
-  Future<void> refreshWorkshopDeliveryFee() async {
-    final workshopId = state.singleWorkshopId;
-    if (workshopId == null) {
-      return;
+  Future<bool> refreshWorkshopDeliveryFee({String? workshopId}) async {
+    final targetWorkshopId = workshopId?.trim() ?? state.singleWorkshopId;
+    if (targetWorkshopId == null || targetWorkshopId.isEmpty) {
+      _emitAndSave(state.copyWith(clearCurrentWorkshopDeliveryFee: true));
+      return false;
     }
 
     try {
-      final deliveryFee = await _getWorkshopDeliveryFee(workshopId);
+      final deliveryFee = await _getWorkshopDeliveryFee(targetWorkshopId);
       _emitAndSave(state.copyWith(currentWorkshopDeliveryFee: deliveryFee));
+      return true;
     } catch (_) {
       // Keep the persisted item fee as a fallback; checkout RPC remains authoritative.
+      return false;
     }
   }
 
-  Future<CartCheckoutResult?> createOrder() async {
+  Future<CartCheckoutResult?> createOrder({String? workshopId}) async {
     if (state.items.isEmpty || state.checkoutStatus.isLoading) {
+      return null;
+    }
+
+    final targetWorkshopId = workshopId?.trim();
+    final resolvedWorkshopId =
+        targetWorkshopId == null || targetWorkshopId.isEmpty
+        ? state.singleWorkshopId
+        : targetWorkshopId;
+
+    if (resolvedWorkshopId == null || resolvedWorkshopId.isEmpty) {
+      emit(
+        state.copyWith(
+          checkoutStatus: CartCheckoutStatus.failure,
+          checkoutError: 'cart_products_multiple_workshops',
+          clearPendingCheckoutResult: true,
+        ),
+      );
+      return null;
+    }
+
+    final checkoutItems = state.items
+        .where((item) => item.product.workshopId.trim() == resolvedWorkshopId)
+        .toList(growable: false);
+
+    if (checkoutItems.isEmpty) {
       return null;
     }
 
@@ -395,11 +444,13 @@ class CartCubit extends Cubit<CartState> {
       return null;
     }
 
-    final workshopIds = state.items
+    final checkoutWorkshopIds = checkoutItems
         .map((item) => item.product.workshopId.trim())
         .toSet();
 
-    if (workshopIds.contains('') || workshopIds.length != 1) {
+    if (checkoutWorkshopIds.contains('') ||
+        checkoutWorkshopIds.length != 1 ||
+        !checkoutWorkshopIds.contains(resolvedWorkshopId)) {
       emit(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
@@ -423,10 +474,10 @@ class CartCubit extends Cubit<CartState> {
         return pendingResult;
       }
 
-      await refreshWorkshopDeliveryFee();
+      await refreshWorkshopDeliveryFee(workshopId: resolvedWorkshopId);
       final result = await _createCartOrder(
         CartCheckoutRequest(
-          products: state.items
+          products: checkoutItems
               .map(
                 (item) => CartCheckoutProduct(
                   inventoryItemId: item.product.id,
@@ -447,8 +498,9 @@ class CartCubit extends Cubit<CartState> {
         ),
       );
 
-      final workshopId = state.singleWorkshopId;
-      _productRepository.invalidateActiveProductsCache(workshopId: workshopId);
+      _productRepository.invalidateActiveProductsCache(
+        workshopId: resolvedWorkshopId,
+      );
       _inventoryRefreshNotifier.notify();
       emit(state.copyWith(pendingCheckoutResult: result));
       return result;

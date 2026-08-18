@@ -23,6 +23,8 @@ class CartState extends Equatable {
     this.pendingCheckoutResult,
   });
 
+  static final Expando<List<CartWorkshopCart>> _workshopCartsCache = Expando();
+
   final List<CartItem> items;
   final bool homeDelivery;
   final String deliveryAddress;
@@ -69,6 +71,53 @@ class CartState extends Equatable {
         .toSet();
 
     return workshopIds.length == 1 ? workshopIds.single : null;
+  }
+
+  List<CartWorkshopCart> get workshopCarts {
+    return _workshopCartsCache[this] ??= _buildWorkshopCarts();
+  }
+
+  List<CartWorkshopCart> _buildWorkshopCarts() {
+    final groupedItems = <String, List<CartItem>>{};
+
+    for (final item in items) {
+      final workshopId = item.product.workshopId.trim();
+      if (workshopId.isEmpty) {
+        continue;
+      }
+
+      groupedItems.putIfAbsent(workshopId, () => []).add(item);
+    }
+
+    return groupedItems.entries
+        .map(
+          (entry) =>
+              CartWorkshopCart(workshopId: entry.key, items: entry.value),
+        )
+        .toList(growable: false);
+  }
+
+  CartState forWorkshop(String workshopId) {
+    final trimmedWorkshopId = workshopId.trim();
+
+    return CartState(
+      items: items
+          .where((item) => item.product.workshopId.trim() == trimmedWorkshopId)
+          .toList(growable: false),
+      homeDelivery: homeDelivery,
+      deliveryAddress: deliveryAddress,
+      deliveryProvince: deliveryProvince,
+      deliveryCanton: deliveryCanton,
+      deliveryDistrict: deliveryDistrict,
+      deliveryExactAddress: deliveryExactAddress,
+      deliveryPhoneNumber: deliveryPhoneNumber,
+      selectedDeliveryAddressId: selectedDeliveryAddressId,
+      deliveryAddresses: deliveryAddresses,
+      deliveryAddressesError: deliveryAddressesError,
+      checkoutStatus: checkoutStatus,
+      checkoutError: checkoutError,
+      pendingCheckoutResult: pendingCheckoutResult,
+    );
   }
 
   bool get hasCompleteDeliveryDetails {
@@ -249,6 +298,41 @@ class CartItem extends Equatable {
 
   @override
   List<Object?> get props => [product, quantity];
+}
+
+class CartWorkshopCart extends Equatable {
+  const CartWorkshopCart({required this.workshopId, required this.items})
+    : assert(items.length > 0);
+
+  final String workshopId;
+  final List<CartItem> items;
+
+  Product get representativeProduct {
+    return items
+        .map((item) => item.product)
+        .firstWhere(_hasWorkshopMetadata, orElse: () => items.first.product);
+  }
+
+  String get workshopName => representativeProduct.workshopName.trim();
+
+  String get workshopAvatarUrl =>
+      representativeProduct.workshopAvatarUrl.trim();
+
+  bool _hasWorkshopMetadata(Product product) {
+    return product.workshopName.trim().isNotEmpty ||
+        product.workshopAvatarUrl.trim().isNotEmpty;
+  }
+
+  int get totalQuantity {
+    return items.fold(0, (total, item) => total + item.quantity);
+  }
+
+  double get productsTotal {
+    return CartPricing.subtotal(items.map((item) => item.lineSubtotal));
+  }
+
+  @override
+  List<Object?> get props => [workshopId, items];
 }
 
 extension _ProductCartJson on Product {
