@@ -1,6 +1,8 @@
 abstract interface class HomeServicePopularityStore {
   Future<Map<String, int>> loadClickCounts();
 
+  Stream<Map<String, int>> watchClickCounts();
+
   Future<int> recordClick(String serviceKey);
 }
 

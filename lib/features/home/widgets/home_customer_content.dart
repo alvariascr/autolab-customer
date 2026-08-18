@@ -533,11 +533,13 @@ class _ServiceCategories extends StatefulWidget {
 
 class _ServiceCategoriesState extends State<_ServiceCategories> {
   Map<String, int> _clickCounts = const {};
+  StreamSubscription<Map<String, int>>? _popularitySubscription;
 
   @override
   void initState() {
     super.initState();
     _loadClickCounts();
+    _subscribeToClickCounts();
   }
 
   @override
@@ -545,7 +547,33 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.popularityStore != widget.popularityStore) {
       _loadClickCounts();
+      _subscribeToClickCounts();
     }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_popularitySubscription?.cancel());
+    super.dispose();
+  }
+
+  void _subscribeToClickCounts() {
+    unawaited(_popularitySubscription?.cancel());
+    final store = widget.popularityStore;
+    if (store == null) {
+      _popularitySubscription = null;
+      return;
+    }
+
+    _popularitySubscription = store.watchClickCounts().listen(
+      (clickCounts) {
+        if (!mounted) return;
+        setState(() => _clickCounts = clickCounts);
+      },
+      onError: (_) {
+        // The initial query remains as fallback when Realtime is unavailable.
+      },
+    );
   }
 
   Future<void> _loadClickCounts() async {
