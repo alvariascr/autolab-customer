@@ -143,7 +143,7 @@ class _PhysicalProductDetailContentState
                                       ..showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            _cartAddFailureMessage(
+                                            _cartAddStatusMessage(
                                               addStatus,
                                               l10n,
                                             ),
@@ -201,7 +201,7 @@ class _PhysicalProductDetailContentState
                                       ..showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            _cartAddFailureMessage(
+                                            _cartAddStatusMessage(
                                               addStatus,
                                               l10n,
                                             ),
@@ -251,7 +251,7 @@ class _PhysicalProductDetailContentState
     }
   }
 
-  String _cartAddFailureMessage(
+  String _cartAddStatusMessage(
     CartAddProductStatus status,
     AppLocalizations l10n,
   ) {
