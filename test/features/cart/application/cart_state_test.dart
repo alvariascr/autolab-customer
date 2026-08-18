@@ -67,6 +67,28 @@ void main() {
         expect(cart.workshopAvatarUrl, 'https://example.com/avatar.png');
       },
     );
+
+    test('memoiza los carritos agrupados por instancia de estado', () {
+      final state = CartState(
+        items: [
+          CartItem(
+            product: _product(
+              id: 'product-a',
+              workshopId: 'workshop-a',
+              deliveryFee: 2500,
+            ),
+            quantity: 1,
+          ),
+        ],
+      );
+
+      final firstRead = state.workshopCarts;
+      final secondRead = state.workshopCarts;
+
+      expect(identical(firstRead, secondRead), isTrue);
+      expect(firstRead, hasLength(1));
+      expect(firstRead.single.workshopId, 'workshop-a');
+    });
   });
 }
 

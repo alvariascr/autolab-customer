@@ -23,6 +23,8 @@ class CartState extends Equatable {
     this.pendingCheckoutResult,
   });
 
+  static final Expando<List<CartWorkshopCart>> _workshopCartsCache = Expando();
+
   final List<CartItem> items;
   final bool homeDelivery;
   final String deliveryAddress;
@@ -72,6 +74,10 @@ class CartState extends Equatable {
   }
 
   List<CartWorkshopCart> get workshopCarts {
+    return _workshopCartsCache[this] ??= _buildWorkshopCarts();
+  }
+
+  List<CartWorkshopCart> _buildWorkshopCarts() {
     final groupedItems = <String, List<CartItem>>{};
 
     for (final item in items) {
