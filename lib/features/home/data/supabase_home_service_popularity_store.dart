@@ -20,19 +20,6 @@ class SupabaseHomeServicePopularityStore implements HomeServicePopularityStore {
   }
 
   @override
-  Stream<Map<String, int>> watchClickCounts() {
-    return _client
-        .from('home_service_click_counts')
-        .stream(primaryKey: ['service_key'])
-        .map(
-          (rows) => {
-            for (final row in rows)
-              row['service_key'] as String: (row['click_count'] as num).toInt(),
-          },
-        );
-  }
-
-  @override
   Future<int> recordClick(String serviceKey) async {
     final response = await _client.rpc<int>(
       'increment_home_service_click',

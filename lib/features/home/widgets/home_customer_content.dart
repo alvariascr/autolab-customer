@@ -547,19 +547,14 @@ class _ServiceCategories extends StatefulWidget {
 
 class _ServiceCategoriesState extends State<_ServiceCategories> {
   static const _tapCooldown = Duration(milliseconds: 500);
-  static const _popularityUpdateWindow = Duration(seconds: 7);
 
   Map<String, int> _clickCounts = const {};
   final Map<String, DateTime> _lastTapByService = {};
-  Map<String, int>? _pendingClickCounts;
-  StreamSubscription<Map<String, int>>? _popularitySubscription;
-  Timer? _popularityUpdateTimer;
 
   @override
   void initState() {
     super.initState();
     _loadClickCounts();
-    _subscribeToClickCounts();
   }
 
   @override
@@ -567,57 +562,7 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.popularityStore != widget.popularityStore) {
       _loadClickCounts();
-      _subscribeToClickCounts();
     }
-  }
-
-  @override
-  void dispose() {
-    _popularityUpdateTimer?.cancel();
-    unawaited(_popularitySubscription?.cancel());
-    super.dispose();
-  }
-
-  void _subscribeToClickCounts() {
-    unawaited(_popularitySubscription?.cancel());
-    final store = widget.popularityStore;
-    if (store == null) {
-      _popularitySubscription = null;
-      return;
-    }
-
-    _popularitySubscription = store.watchClickCounts().listen(
-      (clickCounts) {
-        _queuePopularityUpdate(clickCounts);
-      },
-      onError: (_) {
-        // The initial query remains as fallback when Realtime is unavailable.
-      },
-    );
-  }
-
-  void _queuePopularityUpdate(Map<String, int> clickCounts) {
-    if (!mounted) return;
-    if (_clickCounts.isEmpty) {
-      setState(() => _clickCounts = clickCounts);
-      return;
-    }
-
-    _pendingClickCounts = clickCounts;
-    _popularityUpdateTimer ??= Timer(_popularityUpdateWindow, () {
-      _popularityUpdateTimer = null;
-      final pendingClickCounts = _pendingClickCounts;
-      _pendingClickCounts = null;
-      if (!mounted || pendingClickCounts == null) return;
-      setState(() => _clickCounts = pendingClickCounts);
-    });
-  }
-
-  void _queuePersistedCount(String serviceKey, int persistedCount) {
-    final pendingClickCounts = {..._clickCounts, ...?_pendingClickCounts};
-    if (persistedCount <= (pendingClickCounts[serviceKey] ?? 0)) return;
-    pendingClickCounts[serviceKey] = persistedCount;
-    _queuePopularityUpdate(pendingClickCounts);
   }
 
   Future<void> _loadClickCounts() async {
@@ -638,9 +583,7 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     if (store == null) return;
 
     try {
-      final persistedCount = await store.recordClick(serviceKey);
-      if (!mounted) return;
-      _queuePersistedCount(serviceKey, persistedCount);
+      await store.recordClick(serviceKey);
     } catch (_) {
       // A tracking failure must never prevent the customer from using the home.
     }
