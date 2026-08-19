@@ -23,7 +23,9 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     try {
       return await request;
     } finally {
-      _defaultVehicleRequest = null;
+      if (identical(_defaultVehicleRequest, request)) {
+        _defaultVehicleRequest = null;
+      }
     }
   }
 
