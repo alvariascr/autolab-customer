@@ -210,7 +210,11 @@ class _WorkshopSearchProductsPageState
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(22, 20, 22, 14),
                     child: Text(
-                      '${visibleProducts.length} resultados',
+                      AppLocalizations.of(
+                        context,
+                      )!.workshopSearchProductsResultsCount(
+                        visibleProducts.length,
+                      ),
                       style: AutolabCustomer.bodyLarge.copyWith(
                         color: AutolabCustomer.customerSecondaryTextColor(
                           context,
@@ -367,6 +371,8 @@ class _FilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       height: 58,
       child: ListView(
@@ -374,46 +380,54 @@ class _FilterChips extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 22),
         children: [
           _MenuChip<_ProductSortOption>(
-            label: 'Ordenar',
+            label: l10n.workshopSearchProductsSortLabel,
             value: sortOption,
-            options: const {
-              _ProductSortOption.relevance: 'Relevancia',
-              _ProductSortOption.lowestPrice: 'Menor precio',
-              _ProductSortOption.highestPrice: 'Mayor precio',
-              _ProductSortOption.name: 'Nombre',
+            options: {
+              _ProductSortOption.relevance:
+                  l10n.workshopSearchProductsSortRelevance,
+              _ProductSortOption.lowestPrice:
+                  l10n.workshopSearchProductsSortLowestPrice,
+              _ProductSortOption.highestPrice:
+                  l10n.workshopSearchProductsSortHighestPrice,
+              _ProductSortOption.name: l10n.workshopSearchProductsSortName,
             },
             onSelected: onSortChanged,
           ),
           const SizedBox(width: 10),
           _MenuChip<String?>(
-            label: selectedBrand ?? 'Marca',
+            label: selectedBrand ?? l10n.workshopSearchProductsBrandLabel,
             value: selectedBrand,
-            options: {null: 'Todas', for (final brand in brands) brand: brand},
+            options: {
+              null: l10n.workshopSearchProductsAllOption,
+              for (final brand in brands) brand: brand,
+            },
             onSelected: onBrandChanged,
           ),
           const SizedBox(width: 10),
           _MenuChip<String?>(
-            label: selectedCategory ?? 'Categoria',
+            label: selectedCategory ?? l10n.workshopSearchProductsCategoryLabel,
             value: selectedCategory,
             options: {
-              null: 'Todas',
+              null: l10n.workshopSearchProductsAllOption,
               for (final category in categories) category: category,
             },
             onSelected: onCategoryChanged,
           ),
           const SizedBox(width: 10),
           _MenuChip<String?>(
-            label: selectedType == null ? 'Tipo' : _formatType(selectedType!),
+            label: selectedType == null
+                ? l10n.workshopSearchProductsTypeLabel
+                : _formatType(l10n, selectedType!),
             value: selectedType,
             options: {
-              null: 'Todos',
-              for (final type in types) type: _formatType(type),
+              null: l10n.workshopSearchProductsAllTypesOption,
+              for (final type in types) type: _formatType(l10n, type),
             },
             onSelected: onTypeChanged,
           ),
           const SizedBox(width: 10),
           FilterChip(
-            label: const Text('Disponibles'),
+            label: Text(l10n.workshopSearchProductsAvailableLabel),
             selected: onlyAvailable,
             onSelected: onAvailabilityChanged,
             backgroundColor: AutolabCustomer.customerSurfaceColor(context),
@@ -434,27 +448,27 @@ class _FilterChips extends StatelessWidget {
     );
   }
 
-  String _formatType(String value) {
+  String _formatType(AppLocalizations l10n, String value) {
     final normalized = value.trim().toLowerCase();
 
     if (normalized == 'service') {
-      return 'Servicios';
+      return l10n.workshopSearchProductsServiceType;
     }
 
     if (normalized == 'product') {
-      return 'Productos';
+      return l10n.workshopSearchProductsProductType;
     }
 
     if (normalized == 'part') {
-      return 'Repuestos';
+      return l10n.workshopSearchProductsPartType;
     }
 
     if (normalized == 'supply') {
-      return 'Insumos';
+      return l10n.workshopSearchProductsSupplyType;
     }
 
     if (normalized.isEmpty) {
-      return 'Sin tipo';
+      return l10n.workshopSearchProductsEmptyType;
     }
 
     return normalized[0].toUpperCase() + normalized.substring(1);
@@ -513,6 +527,7 @@ class _SearchProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasStock = (product.currentStock ?? 0) > 0;
+    final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
@@ -577,9 +592,9 @@ class _SearchProductTile extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           if (hasStock)
-            const _StockBadge(label: 'Muchos en stock')
+            _StockBadge(label: l10n.workshopSearchProductsStockAvailable)
           else if (product.requiresAppointment)
-            const _StockBadge(label: 'Requiere cita'),
+            _StockBadge(label: l10n.workshopSearchProductsRequiresAppointment),
         ],
       ),
     );

@@ -1229,6 +1229,65 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopSearchProductsViewWorkshopTooltip => 'Ver taller';
 
   @override
+  String workshopSearchProductsResultsCount(Object count) {
+    return '$count resultados';
+  }
+
+  @override
+  String get workshopSearchProductsSortLabel => 'Ordenar';
+
+  @override
+  String get workshopSearchProductsSortRelevance => 'Relevancia';
+
+  @override
+  String get workshopSearchProductsSortLowestPrice => 'Menor precio';
+
+  @override
+  String get workshopSearchProductsSortHighestPrice => 'Mayor precio';
+
+  @override
+  String get workshopSearchProductsSortName => 'Nombre';
+
+  @override
+  String get workshopSearchProductsBrandLabel => 'Marca';
+
+  @override
+  String get workshopSearchProductsCategoryLabel => 'Categoría';
+
+  @override
+  String get workshopSearchProductsTypeLabel => 'Tipo';
+
+  @override
+  String get workshopSearchProductsAllOption => 'Todas';
+
+  @override
+  String get workshopSearchProductsAllTypesOption => 'Todos';
+
+  @override
+  String get workshopSearchProductsAvailableLabel => 'Disponibles';
+
+  @override
+  String get workshopSearchProductsServiceType => 'Servicios';
+
+  @override
+  String get workshopSearchProductsProductType => 'Productos';
+
+  @override
+  String get workshopSearchProductsPartType => 'Repuestos';
+
+  @override
+  String get workshopSearchProductsSupplyType => 'Insumos';
+
+  @override
+  String get workshopSearchProductsEmptyType => 'Sin tipo';
+
+  @override
+  String get workshopSearchProductsStockAvailable => 'Muchos en stock';
+
+  @override
+  String get workshopSearchProductsRequiresAppointment => 'Requiere cita';
+
+  @override
   String get workshopProfileBusinessHoursTitle => 'Horario';
 
   @override
