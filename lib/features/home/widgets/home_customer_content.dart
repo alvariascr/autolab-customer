@@ -546,7 +546,7 @@ class _ServiceCategories extends StatefulWidget {
 }
 
 class _ServiceCategoriesState extends State<_ServiceCategories> {
-  static const _tapCooldown = Duration(milliseconds: 500);
+  static const _tapCooldown = Duration(seconds: 1);
 
   Map<String, int> _clickCounts = const {};
   final Map<String, DateTime> _lastTapByService = {};
