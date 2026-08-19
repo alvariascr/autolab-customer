@@ -3,6 +3,12 @@ import '../../products/domain/entities/product.dart';
 class HomeServiceInventoryMatcher {
   const HomeServiceInventoryMatcher();
 
+  static final _accentedA = RegExp('[áàäâ]');
+  static final _accentedE = RegExp('[éèëê]');
+  static final _accentedI = RegExp('[íìïî]');
+  static final _accentedO = RegExp('[óòöô]');
+  static final _accentedU = RegExp('[úùüû]');
+
   static const _rawTermsByService = <String, List<String>>{
     'inspeccion': ['inspeccion', 'revision', 'diagnostico'],
     'cambio_aceite': ['cambio de aceite', 'aceite'],
@@ -65,11 +71,11 @@ class HomeServiceInventoryMatcher {
   static String _normalize(String value) {
     return value
         .toLowerCase()
-        .replaceAll(RegExp('[áàäâ]'), 'a')
-        .replaceAll(RegExp('[éèëê]'), 'e')
-        .replaceAll(RegExp('[íìïî]'), 'i')
-        .replaceAll(RegExp('[óòöô]'), 'o')
-        .replaceAll(RegExp('[úùüû]'), 'u')
+        .replaceAll(_accentedA, 'a')
+        .replaceAll(_accentedE, 'e')
+        .replaceAll(_accentedI, 'i')
+        .replaceAll(_accentedO, 'o')
+        .replaceAll(_accentedU, 'u')
         .replaceAll('ñ', 'n');
   }
 }
