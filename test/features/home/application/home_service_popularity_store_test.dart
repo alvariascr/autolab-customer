@@ -21,4 +21,34 @@ void main() {
 
     expect(result, ['inspeccion', 'aceite', 'llantas']);
   });
+
+  test('admite mapas de conteo incompletos', () {
+    final result = sortByServicePopularity<String>(
+      items: const ['inspeccion', 'aceite', 'llantas'],
+      serviceKeyOf: (item) => item,
+      clickCounts: const {'llantas': 2},
+    );
+
+    expect(result, ['llantas', 'inspeccion', 'aceite']);
+  });
+
+  test('ignora claves de conteo compuestas solo por espacios', () {
+    final result = sortByServicePopularity<String>(
+      items: const ['inspeccion', 'aceite'],
+      serviceKeyOf: (item) => item,
+      clickCounts: const {'   ': 99, 'aceite': 1},
+    );
+
+    expect(result, ['aceite', 'inspeccion']);
+  });
+
+  test('devuelve una lista vacía cuando no hay categorías', () {
+    final result = sortByServicePopularity<String>(
+      items: const [],
+      serviceKeyOf: (item) => item,
+      clickCounts: const {},
+    );
+
+    expect(result, isEmpty);
+  });
 }
