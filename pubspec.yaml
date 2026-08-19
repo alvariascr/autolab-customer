@@ -57,6 +57,7 @@ dependencies:
   image_picker_ios: ^0.8.13+6
   image_picker_platform_interface: ^2.11.1
   path_provider: ^2.1.5
+  video_player: ^2.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -70,7 +71,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/virtual/
     - assets/images/splash/
     - assets/images/logo/
     - assets/images/onboarding/
