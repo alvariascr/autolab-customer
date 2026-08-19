@@ -183,7 +183,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     if (!mounted || _homeServiceFilterCubit.state.serviceKey != serviceKey) {
       return;
     }
-    await WidgetsBinding.instance.endOfFrame;
     final sectionContext = _workshopsSectionKey.currentContext;
     if (sectionContext == null || !sectionContext.mounted) return;
     await Scrollable.ensureVisible(
