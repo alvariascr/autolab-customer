@@ -486,7 +486,7 @@ async function persistStatusCheck(
       status: input.status,
       responseCode: stringValue(input.certifierResponse.response),
       responseDescription: responseDescription(input.certifierResponse),
-      rejectReason: rejectReason(input.verifyResponse, input.certifierResponse),
+      rejectReason: certifierRejectReason(input.certifierResponse),
       authResponseCode: authResponseCode(input.certifierResponse),
       payload: certifierResponse,
     });
@@ -679,6 +679,25 @@ function rejectReason(
       certifierResponse?.errorMessage ??
       certifierResponse?.resultDescription,
   );
+}
+
+function certifierRejectReason(
+  certifierResponse: Record<string, unknown> | null,
+) {
+  for (
+    const candidate of [
+      certifierResponse?.rejectReason,
+      certifierResponse?.errorMessage,
+      certifierResponse?.resultDescription,
+    ]
+  ) {
+    const reason = stringValue(candidate);
+    if (reason !== "") {
+      return reason;
+    }
+  }
+
+  return "";
 }
 
 function authResponseCode(response: Record<string, unknown>) {
