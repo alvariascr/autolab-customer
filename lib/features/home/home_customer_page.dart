@@ -86,6 +86,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   String? _selectedHomeServiceLabel;
   Set<String>? _matchingWorkshopIds;
   bool _isHomeServiceFilterLoading = false;
+  bool _homeServiceFilterFailed = false;
   int _homeServiceFilterGeneration = 0;
   int _activeVehicleLoadGeneration = 0;
 
@@ -173,6 +174,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         _selectedHomeServiceLabel = null;
         _matchingWorkshopIds = null;
         _isHomeServiceFilterLoading = false;
+        _homeServiceFilterFailed = false;
       });
       await WidgetsBinding.instance.endOfFrame;
       if (_homeScrollController.hasClients) {
@@ -190,16 +192,21 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       _selectedHomeServiceLabel = label;
       _matchingWorkshopIds = null;
       _isHomeServiceFilterLoading = true;
+      _homeServiceFilterFailed = false;
     });
 
     final repository = sl.isRegistered<ProductRepository>()
         ? sl<ProductRepository>()
         : null;
+    var filterFailed = repository == null;
     final matchingProducts = repository == null
         ? <Product>[]
         : await repository.getActiveProducts().then(
             (result) => result.fold(
-              (_) => <Product>[],
+              (_) {
+                filterFailed = true;
+                return <Product>[];
+              },
               (products) => products
                   .where(
                     (product) => _homeServiceInventoryMatcher.matchesProduct(
@@ -216,8 +223,9 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
     if (!mounted || generation != _homeServiceFilterGeneration) return;
     setState(() {
-      _matchingWorkshopIds = matchingWorkshopIds;
+      _matchingWorkshopIds = filterFailed ? null : matchingWorkshopIds;
       _isHomeServiceFilterLoading = false;
+      _homeServiceFilterFailed = filterFailed;
     });
 
     await WidgetsBinding.instance.endOfFrame;
@@ -437,6 +445,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
           final matchingWorkshopIds = _matchingWorkshopIds;
           final isCategoryFallback =
               _selectedHomeServiceKey != null &&
+              !_homeServiceFilterFailed &&
               matchingWorkshopIds != null &&
               matchingWorkshopIds.isEmpty;
           final visibleWorkshops =
@@ -468,6 +477,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
             selectedServiceKey: _selectedHomeServiceKey,
             selectedServiceLabel: _selectedHomeServiceLabel,
             showCategoryNotFoundMessage: isCategoryFallback,
+            serviceFilterFailed: _homeServiceFilterFailed,
             workshopsSectionKey: _workshopsSectionKey,
             productRepository: sl.isRegistered<ProductRepository>()
                 ? sl<ProductRepository>()

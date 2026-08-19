@@ -25,4 +25,18 @@ void main() {
       isFalse,
     );
   });
+
+  test('una llanta disponible cuenta para cambio y reparacion de llanta', () {
+    for (final serviceKey in const ['cambio_llanta', 'reparacion_llanta']) {
+      expect(
+        matcher.matches(
+          serviceKey: serviceKey,
+          name: 'Llanta 205/55 R16',
+          categoryName: 'Llantas',
+        ),
+        isTrue,
+        reason: 'La coincidencia amplia es intencional para $serviceKey',
+      );
+    }
+  });
 }

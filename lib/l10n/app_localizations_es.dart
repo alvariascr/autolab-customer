@@ -1642,6 +1642,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No encontramos talleres con esta categoría cerca de ti.';
 
   @override
+  String get homeServiceFilterLoadError =>
+      'No pudimos aplicar este filtro. Mostramos talleres cercanos para que puedas continuar.';
+
+  @override
   String get homeNearbyWorkshopsFallbackTitle => 'Talleres cercanos';
 
   @override

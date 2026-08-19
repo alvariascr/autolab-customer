@@ -26,6 +26,7 @@ class WorkshopsSection extends StatelessWidget {
     this.selectedServiceLabel,
     this.selectedServiceKey,
     this.showCategoryNotFoundMessage = false,
+    this.serviceFilterFailed = false,
     this.onClearServiceFilter,
   });
 
@@ -42,6 +43,7 @@ class WorkshopsSection extends StatelessWidget {
   final String? selectedServiceLabel;
   final String? selectedServiceKey;
   final bool showCategoryNotFoundMessage;
+  final bool serviceFilterFailed;
   final VoidCallback? onClearServiceFilter;
 
   @override
@@ -89,7 +91,8 @@ class WorkshopsSection extends StatelessWidget {
       currentLocation: searchLocation,
     );
     final shouldUseNearbyFallback =
-        selectedServiceLabel != null && nearbyWorkshops.isEmpty;
+        selectedServiceLabel != null &&
+        (serviceFilterFailed || nearbyWorkshops.isEmpty);
     final displayedWorkshops = shouldUseNearbyFallback
         ? proximityFilter.filterNearby(
             workshops: fallbackWorkshops.isEmpty
@@ -99,7 +102,9 @@ class WorkshopsSection extends StatelessWidget {
           )
         : nearbyWorkshops;
     final shouldShowCategoryMessage =
-        showCategoryNotFoundMessage || shouldUseNearbyFallback;
+        serviceFilterFailed ||
+        showCategoryNotFoundMessage ||
+        shouldUseNearbyFallback;
     final emptyMessage = emptyStateResolver.resolve(
       locationState,
       l10n: l10n,
@@ -192,7 +197,9 @@ class WorkshopsSection extends StatelessWidget {
                     const SizedBox(width: AutolabCustomer.spacingSm),
                     Expanded(
                       child: Text(
-                        l10n.homeFilteredWorkshopsEmpty,
+                        serviceFilterFailed
+                            ? l10n.homeServiceFilterLoadError
+                            : l10n.homeFilteredWorkshopsEmpty,
                         style: AutolabCustomer.caption.copyWith(
                           color: textColor,
                           height: 1.3,

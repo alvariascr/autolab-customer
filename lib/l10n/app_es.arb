@@ -568,6 +568,7 @@
   },
   "homeClearServiceFilter": "Quitar filtro",
   "homeFilteredWorkshopsEmpty": "No encontramos talleres con esta categoría cerca de ti.",
+  "homeServiceFilterLoadError": "No pudimos aplicar este filtro. Mostramos talleres cercanos para que puedas continuar.",
   "homeNearbyWorkshopsFallbackTitle": "Talleres cercanos",
   "homeWorkshopResultsCount": "{count, plural, =1{1 taller encontrado} other{{count} talleres encontrados}}",
   "@homeWorkshopResultsCount": {

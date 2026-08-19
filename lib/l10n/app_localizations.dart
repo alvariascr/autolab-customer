@@ -2992,6 +2992,12 @@ abstract class AppLocalizations {
   /// **'No encontramos talleres con esta categoría cerca de ti.'**
   String get homeFilteredWorkshopsEmpty;
 
+  /// No description provided for @homeServiceFilterLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos aplicar este filtro. Mostramos talleres cercanos para que puedas continuar.'**
+  String get homeServiceFilterLoadError;
+
   /// No description provided for @homeNearbyWorkshopsFallbackTitle.
   ///
   /// In es, this message translates to:

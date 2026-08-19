@@ -50,6 +50,7 @@ class HomeCustomerContent extends StatelessWidget {
     this.selectedServiceKey,
     this.selectedServiceLabel,
     this.showCategoryNotFoundMessage = false,
+    this.serviceFilterFailed = false,
     this.workshopsSectionKey,
   });
 
@@ -72,6 +73,7 @@ class HomeCustomerContent extends StatelessWidget {
   final String? selectedServiceKey;
   final String? selectedServiceLabel;
   final bool showCategoryNotFoundMessage;
+  final bool serviceFilterFailed;
   final Key? workshopsSectionKey;
   final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
@@ -175,6 +177,7 @@ class HomeCustomerContent extends StatelessWidget {
                                 selectedServiceKey: selectedServiceKey,
                                 showCategoryNotFoundMessage:
                                     showCategoryNotFoundMessage,
+                                serviceFilterFailed: serviceFilterFailed,
                                 onClearServiceFilter:
                                     selectedServiceLabel == null
                                     ? null
