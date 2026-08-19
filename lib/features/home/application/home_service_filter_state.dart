@@ -21,6 +21,24 @@ class HomeServiceFilterState extends Equatable {
   bool get hasNoMatches =>
       status == HomeServiceFilterStatus.success && matchingWorkshopIds.isEmpty;
 
+  HomeServiceFilterState copyWith({
+    HomeServiceFilterStatus? status,
+    String? serviceKey,
+    String? serviceLabel,
+    List<String>? matchingWorkshopIds,
+    bool clearSelection = false,
+    bool clearMatchingWorkshopIds = false,
+  }) {
+    return HomeServiceFilterState(
+      status: status ?? this.status,
+      serviceKey: clearSelection ? null : (serviceKey ?? this.serviceKey),
+      serviceLabel: clearSelection ? null : (serviceLabel ?? this.serviceLabel),
+      matchingWorkshopIds: clearMatchingWorkshopIds
+          ? const []
+          : (matchingWorkshopIds ?? this.matchingWorkshopIds),
+    );
+  }
+
   @override
   List<Object?> get props => [
     status,

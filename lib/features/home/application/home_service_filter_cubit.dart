@@ -18,10 +18,11 @@ class HomeServiceFilterCubit extends Cubit<HomeServiceFilterState> {
   }) async {
     final generation = ++_requestGeneration;
     emit(
-      HomeServiceFilterState(
+      state.copyWith(
         status: HomeServiceFilterStatus.loading,
         serviceKey: serviceKey,
         serviceLabel: serviceLabel,
+        clearMatchingWorkshopIds: true,
       ),
     );
 
@@ -31,18 +32,15 @@ class HomeServiceFilterCubit extends Cubit<HomeServiceFilterState> {
 
       result.fold(
         (_) => emit(
-          HomeServiceFilterState(
+          state.copyWith(
             status: HomeServiceFilterStatus.failure,
-            serviceKey: serviceKey,
-            serviceLabel: serviceLabel,
+            clearMatchingWorkshopIds: true,
           ),
         ),
         (workshopIds) {
           emit(
-            HomeServiceFilterState(
+            state.copyWith(
               status: HomeServiceFilterStatus.success,
-              serviceKey: serviceKey,
-              serviceLabel: serviceLabel,
               matchingWorkshopIds: workshopIds,
             ),
           );
@@ -51,10 +49,9 @@ class HomeServiceFilterCubit extends Cubit<HomeServiceFilterState> {
     } catch (_) {
       if (isClosed || generation != _requestGeneration) return;
       emit(
-        HomeServiceFilterState(
+        state.copyWith(
           status: HomeServiceFilterStatus.failure,
-          serviceKey: serviceKey,
-          serviceLabel: serviceLabel,
+          clearMatchingWorkshopIds: true,
         ),
       );
     }
