@@ -72,6 +72,20 @@ void main() {
     ],
   );
 
+  blocTest<HomeServiceFilterCubit, HomeServiceFilterState>(
+    'clear restablece la selección y los resultados',
+    build: () =>
+        HomeServiceFilterCubit(getHomeServiceWorkshopIds: getWorkshopIds),
+    seed: () => HomeServiceFilterState(
+      status: HomeServiceFilterStatus.success,
+      serviceKey: 'balanceo',
+      serviceLabel: 'Balanceo',
+      matchingWorkshopIds: const ['workshop-1'],
+    ),
+    act: (cubit) => cubit.clear(),
+    expect: () => [HomeServiceFilterState()],
+  );
+
   test(
     'ignora una respuesta antigua después de seleccionar otra categoría',
     () async {
