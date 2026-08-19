@@ -1288,7 +1288,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopSearchProductsEmptyType => 'Sin tipo';
 
   @override
-  String get workshopSearchProductsStockAvailable => 'Muchos en stock';
+  String get workshopSearchProductsStockAvailable => 'En stock';
 
   @override
   String get workshopSearchProductsRequiresAppointment => 'Requiere cita';

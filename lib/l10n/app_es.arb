@@ -425,7 +425,7 @@
   "workshopSearchProductsPartType": "Repuestos",
   "workshopSearchProductsSupplyType": "Insumos",
   "workshopSearchProductsEmptyType": "Sin tipo",
-  "workshopSearchProductsStockAvailable": "Muchos en stock",
+  "workshopSearchProductsStockAvailable": "En stock",
   "workshopSearchProductsRequiresAppointment": "Requiere cita",
   "workshopProfileBusinessHoursTitle": "Horario",
   "workshopProfileBusinessHoursEmpty": "Horario no disponible",

@@ -2377,7 +2377,7 @@ abstract class AppLocalizations {
   /// No description provided for @workshopSearchProductsStockAvailable.
   ///
   /// In es, this message translates to:
-  /// **'Muchos en stock'**
+  /// **'En stock'**
   String get workshopSearchProductsStockAvailable;
 
   /// No description provided for @workshopSearchProductsRequiresAppointment.
