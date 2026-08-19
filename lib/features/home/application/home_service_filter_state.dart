@@ -15,7 +15,12 @@ class HomeServiceFilterState extends Equatable {
   final String? serviceLabel;
   final List<String> matchingWorkshopIds;
 
-  bool get hasSelection => serviceKey != null && serviceLabel != null;
+  bool get hasSelection {
+    final key = serviceKey?.trim();
+    final label = serviceLabel?.trim();
+    return key != null && key.isNotEmpty && label != null && label.isNotEmpty;
+  }
+
   bool get isLoading => status == HomeServiceFilterStatus.loading;
   bool get hasFailed => status == HomeServiceFilterStatus.failure;
   bool get hasNoMatches =>

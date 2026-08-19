@@ -31,4 +31,21 @@ void main() {
     expect(cleared.serviceKey, isNull);
     expect(cleared.serviceLabel, isNull);
   });
+
+  test('hasSelection rechaza claves o etiquetas vacías', () {
+    expect(
+      HomeServiceFilterState(
+        serviceKey: '',
+        serviceLabel: 'Balanceo',
+      ).hasSelection,
+      isFalse,
+    );
+    expect(
+      HomeServiceFilterState(
+        serviceKey: 'balanceo',
+        serviceLabel: '   ',
+      ).hasSelection,
+      isFalse,
+    );
+  });
 }
