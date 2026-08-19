@@ -2049,64 +2049,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appointmentDateLabel => 'Fecha';
 
   @override
-  String get appointmentPaymentCard => 'Tarjeta';
-
-  @override
-  String get appointmentPaymentCardSubtitle =>
-      'Pago con tarjeta de crédito o débito.';
-
-  @override
-  String get appointmentMockPaymentBadge => 'Ambiente de prueba';
-
-  @override
-  String get appointmentMockPaymentTitle => 'Pago con tarjeta';
-
-  @override
-  String get appointmentMockPaymentSubtitle =>
-      'Esta pantalla simula la redirección al proveedor de pago. No se procesará ningún cobro real.';
-
-  @override
-  String get appointmentMockPaymentApprovedTitle => 'Pago simulado aprobado';
-
-  @override
-  String get appointmentMockPaymentApprovedSubtitle =>
-      'La cita fue creada correctamente. En producción, este estado llegará desde la confirmación segura del proveedor de pago.';
-
-  @override
-  String get appointmentMockPaymentAmountLabel => 'Monto';
-
-  @override
-  String get appointmentMockPaymentReferenceLabel => 'Referencia';
-
-  @override
-  String get appointmentMockPaymentMerchantLabel => 'Comercio';
-
-  @override
-  String get appointmentMockPaymentApproveAction => 'Simular pago aprobado';
-
-  @override
-  String get appointmentMockPaymentApprovedAction => 'Finalizar';
-
-  @override
-  String get appointmentMockPaymentBackAction => 'Volver al taller';
-
-  @override
-  String get appointmentMockPaymentTimeRemaining =>
-      'Tiempo para completar el pago';
-
-  @override
-  String get appointmentMockPaymentExpired =>
-      'El tiempo para completar este pago venció. Vuelve al taller y genera una nueva reserva.';
-
-  @override
-  String get appointmentMockPaymentApprovedNotice =>
-      'Este pago es una simulación visual. La orden permanece pendiente hasta integrar la confirmación real del proveedor.';
-
-  @override
-  String get appointmentMockPaymentNotice =>
-      'Cuando LaroPay esté integrado, este paso abrirá el navegador seguro y el pago se confirmará por callback.';
-
-  @override
   String get appointmentConfirmationDeliveryMessage =>
       'Recibirás los detalles por correo o WhatsApp.';
 

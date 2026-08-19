@@ -103,11 +103,6 @@ final class CustomerErrorCatalog {
     uiKey: 'workshopErrorNetwork',
   );
 
-  static const createAppointmentFailed = ErrorItem(
-    code: 'CUS_APT_001',
-    uiKey: 'appointmentCreateFailed',
-  );
-
   static const laropayInvalidRequest = ErrorItem(
     code: 'CUS_PAY_001',
     uiKey: 'paymentInvalidRequest',

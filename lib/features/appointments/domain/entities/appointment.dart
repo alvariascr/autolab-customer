@@ -76,49 +76,6 @@ class Appointment extends Equatable {
   ];
 }
 
-class AppointmentDraft extends Equatable {
-  const AppointmentDraft({
-    required this.workshopId,
-    required this.serviceId,
-    required this.customerName,
-    required this.customerPhone,
-    required this.customerEmail,
-    required this.vehicleType,
-    required this.scheduledAt,
-    this.paymentMethod,
-    this.notes,
-    this.totalAmount,
-    this.products = const [],
-  });
-
-  final String workshopId;
-  final String serviceId;
-  final String customerName;
-  final String customerPhone;
-  final String customerEmail;
-  final String vehicleType;
-  final DateTime scheduledAt;
-  final String? paymentMethod;
-  final String? notes;
-  final double? totalAmount;
-  final List<AppointmentProductLine> products;
-
-  @override
-  List<Object?> get props => [
-    workshopId,
-    serviceId,
-    customerName,
-    customerPhone,
-    customerEmail,
-    vehicleType,
-    scheduledAt,
-    paymentMethod,
-    notes,
-    totalAmount,
-    products,
-  ];
-}
-
 class AppointmentProductLine extends Equatable {
   const AppointmentProductLine({
     required this.productId,
