@@ -39,9 +39,7 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
   @override
   void dispose() {
     _timer?.cancel();
-    _videoController
-      ?..removeListener(_handleVideoProgress)
-      ..dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -53,7 +51,6 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
       await controller.initialize();
       await controller.setVolume(0);
       await controller.play();
-      controller.addListener(_handleVideoProgress);
       if (mounted) {
         setState(() {});
       }
@@ -61,22 +58,6 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
       if (mounted) {
         setState(() => _videoController = null);
       }
-    }
-  }
-
-  void _handleVideoProgress() {
-    final controller = _videoController;
-    if (controller == null || !controller.value.isInitialized) {
-      return;
-    }
-
-    final duration = controller.value.duration;
-    if (duration == Duration.zero) {
-      return;
-    }
-
-    if (controller.value.position >= duration) {
-      unawaited(_goToInitialRoute());
     }
   }
 
