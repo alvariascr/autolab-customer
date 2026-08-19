@@ -517,7 +517,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
                   child: Text(
                     message,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AutolabCustomer.customerLightText,
+                      color: config.color,
                       fontWeight: FontWeight.w700,
                       height: 1.25,
                     ),
