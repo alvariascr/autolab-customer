@@ -28,6 +28,7 @@ class AutolabCustomer {
   static const Color shadowBlack26 = Color(0x42000000);
   static const Color overlayBlackLight = Color(0x66000000);
   static const Color overlayBlackDark = Color(0x99000000);
+  static const Color overlayBlackMedium = Color(0x57000000);
   static const Color overlayWhiteLight = Color(0x26FFFFFF);
   static const Color overlayWhiteStrong = Color(0xCCFFFFFF);
 

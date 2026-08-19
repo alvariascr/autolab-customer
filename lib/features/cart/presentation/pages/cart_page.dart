@@ -410,7 +410,7 @@ class _CartCheckoutLoadingOverlay extends StatelessWidget {
 
     return Positioned.fill(
       child: ColoredBox(
-        color: AutolabCustomer.overlayBlackLight,
+        color: AutolabCustomer.overlayBlackMedium,
         child: Center(
           child: DecoratedBox(
             decoration: BoxDecoration(
