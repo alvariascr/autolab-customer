@@ -55,6 +55,7 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
         setState(() {});
       }
     } catch (_) {
+      await controller.dispose();
       if (mounted) {
         setState(() => _videoController = null);
       }
