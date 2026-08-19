@@ -1229,8 +1229,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workshopSearchProductsViewWorkshopTooltip => 'Ver taller';
 
   @override
-  String workshopSearchProductsResultsCount(Object count) {
-    return '$count resultados';
+  String workshopSearchProductsResultsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count resultados',
+      one: '1 resultado',
+    );
+    return '$_temp0';
   }
 
   @override

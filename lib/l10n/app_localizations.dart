@@ -2275,8 +2275,8 @@ abstract class AppLocalizations {
   /// No description provided for @workshopSearchProductsResultsCount.
   ///
   /// In es, this message translates to:
-  /// **'{count} resultados'**
-  String workshopSearchProductsResultsCount(Object count);
+  /// **'{count, plural, =1{1 resultado} other{{count} resultados}}'**
+  String workshopSearchProductsResultsCount(num count);
 
   /// No description provided for @workshopSearchProductsSortLabel.
   ///
