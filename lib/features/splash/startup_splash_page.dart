@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/theme/autolab_customer.dart';
+import 'startup_preloader.dart';
 
 class StartupSplashPage extends StatefulWidget {
   const StartupSplashPage({super.key});
@@ -27,6 +28,7 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(const StartupPreloader().preload());
     unawaited(_initializeVideo());
     _timer = Timer(
       StartupSplashPage.duration,

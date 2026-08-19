@@ -224,7 +224,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
         return;
       }
 
-      context.read<LocationCubit>().initialize();
+      final locationCubit = context.read<LocationCubit>();
+      final locationState = locationCubit.state;
+      if (locationState.status == LocationFlowStatus.loading ||
+          locationState.effectiveStatus == LocationFlowStatus.success) {
+        return;
+      }
+
+      locationCubit.initialize();
     });
   }
 
