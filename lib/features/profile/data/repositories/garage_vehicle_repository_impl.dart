@@ -6,7 +6,6 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
   GarageVehicleRepositoryImpl(this._remoteDataSource);
 
   final GarageVehicleRemoteDataSource _remoteDataSource;
-  GarageVehicle? _defaultVehicleCache;
   Future<GarageVehicle?>? _defaultVehicleRequest;
 
   @override
@@ -14,11 +13,6 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
 
   @override
   Future<GarageVehicle?> getDefaultVehicle() async {
-    final cachedVehicle = _defaultVehicleCache;
-    if (cachedVehicle != null) {
-      return cachedVehicle;
-    }
-
     final pendingRequest = _defaultVehicleRequest;
     if (pendingRequest != null) {
       return pendingRequest;
@@ -27,11 +21,7 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     final request = _remoteDataSource.getDefaultVehicle();
     _defaultVehicleRequest = request;
     try {
-      final vehicle = await request;
-      if (vehicle != null) {
-        _defaultVehicleCache = vehicle;
-      }
-      return vehicle;
+      return await request;
     } finally {
       _defaultVehicleRequest = null;
     }
@@ -48,7 +38,7 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     String? fuelType,
     String? transmissionType,
   }) {
-    _clearDefaultVehicleCache();
+    _clearDefaultVehicleRequest();
     return _remoteDataSource.createVehicle(
       licensePlate: licensePlate,
       vehicleType: vehicleType,
@@ -73,7 +63,7 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     String? fuelType,
     String? transmissionType,
   }) {
-    _clearDefaultVehicleCache();
+    _clearDefaultVehicleRequest();
     return _remoteDataSource.updateVehicle(
       id: id,
       licensePlate: licensePlate,
@@ -89,13 +79,13 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
 
   @override
   Future<void> deleteVehicle(String id) {
-    _clearDefaultVehicleCache();
+    _clearDefaultVehicleRequest();
     return _remoteDataSource.deleteVehicle(id);
   }
 
   @override
   Future<void> setDefaultVehicle(String vehicleId) {
-    _clearDefaultVehicleCache();
+    _clearDefaultVehicleRequest();
     return _remoteDataSource.setDefaultGarageVehicle(vehicleId);
   }
 
@@ -104,15 +94,14 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     required String garageVehicleId,
     required String localFilePath,
   }) {
-    _clearDefaultVehicleCache();
+    _clearDefaultVehicleRequest();
     return _remoteDataSource.uploadVehicleImage(
       garageVehicleId: garageVehicleId,
       localFilePath: localFilePath,
     );
   }
 
-  void _clearDefaultVehicleCache() {
-    _defaultVehicleCache = null;
+  void _clearDefaultVehicleRequest() {
     _defaultVehicleRequest = null;
   }
 }
