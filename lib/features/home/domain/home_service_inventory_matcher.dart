@@ -1,0 +1,81 @@
+import '../../products/domain/entities/product.dart';
+
+class HomeServiceInventoryMatcher {
+  const HomeServiceInventoryMatcher();
+
+  static final _accentedA = RegExp('[áàäâ]');
+  static final _accentedE = RegExp('[éèëê]');
+  static final _accentedI = RegExp('[íìïî]');
+  static final _accentedO = RegExp('[óòöô]');
+  static final _accentedU = RegExp('[úùüû]');
+
+  static const _rawTermsByService = <String, List<String>>{
+    'inspeccion': ['inspeccion', 'revision', 'diagnostico'],
+    'cambio_aceite': ['cambio de aceite', 'aceite'],
+    'cambio_llanta': ['cambio de llanta', 'llanta', 'neumatico'],
+    'balanceo': ['balanceo'],
+    'alineamiento': ['alineacion', 'alineamiento'],
+    'reparacion_llanta': ['reparacion de llanta', 'llanta', 'neumatico'],
+    'estetica_automotriz': ['estetica', 'detallado', 'detailing'],
+    'electrico': ['electrico', 'electricidad'],
+    'instalacion': ['instalacion'],
+    'aire_acondicionado': ['aire acondicionado', 'a/c'],
+    'grua': ['grua', 'remolque'],
+    'llantas': ['llanta', 'neumatico'],
+    'aceites': ['aceite'],
+    'repuestos': ['repuesto', 'parte'],
+    'coolant': ['coolant', 'refrigerante'],
+    'producto_auto_lavado': ['lavado', 'limpieza', 'car wash'],
+    'luces': ['luz', 'luces', 'bombillo', 'faro'],
+    'baterias': ['bateria'],
+    'liquidos': ['liquido', 'fluido'],
+    'lubricantes': ['lubricante', 'lubricacion'],
+    'quimicos': ['quimico'],
+    'aditivos': ['aditivo'],
+    'grasas': ['grasa'],
+    'filtros': ['filtro'],
+    'tecnologia': ['tecnologia', 'electronico', 'sensor'],
+    'aros': ['aro', 'rin'],
+    'racks': ['rack', 'portaequipaje'],
+    'alfombras': ['alfombra'],
+    'escobillas': ['escobilla', 'limpiaparabrisas'],
+  };
+
+  static final _normalizedTermsByService = <String, List<String>>{
+    for (final entry in _rawTermsByService.entries)
+      entry.key: entry.value.map(_normalize).toList(growable: false),
+  };
+
+  bool matchesProduct(String serviceKey, Product product) {
+    return matches(
+      serviceKey: serviceKey,
+      name: product.name,
+      categoryName: product.categoryName,
+      description: product.description,
+    );
+  }
+
+  bool matches({
+    required String serviceKey,
+    required String name,
+    required String categoryName,
+    String description = '',
+  }) {
+    final terms = _normalizedTermsByService[serviceKey];
+    if (terms == null) return false;
+
+    final searchableText = _normalize('$name $categoryName $description');
+    return terms.any(searchableText.contains);
+  }
+
+  static String _normalize(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(_accentedA, 'a')
+        .replaceAll(_accentedE, 'e')
+        .replaceAll(_accentedI, 'i')
+        .replaceAll(_accentedO, 'o')
+        .replaceAll(_accentedU, 'u')
+        .replaceAll('ñ', 'n');
+  }
+}

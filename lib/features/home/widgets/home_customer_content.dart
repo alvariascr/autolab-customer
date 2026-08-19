@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/location/location_cubit.dart';
 import '../../../core/location/location_state.dart';
@@ -13,43 +16,65 @@ import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
 import '../../workshops/domain/services/workshop_search_location_resolver.dart';
 import '../../workshops/presentation/workshop_empty_state_resolver.dart';
+import '../application/home_service_popularity_store.dart';
 import '../application/recent_searches_store.dart';
 import 'delivery_location_card.dart';
 import 'search_bar_overlay.dart';
 import 'workshops_section.dart';
 
+typedef HomeServiceCategoryChanged =
+    void Function(String? serviceKey, String? label);
+
 class HomeCustomerContent extends StatelessWidget {
   const HomeCustomerContent({
     super.key,
     required this.workshops,
+    this.fallbackWorkshops = const [],
     required this.isWorkshopsLoading,
     required this.showSearchBar,
     required this.searchController,
+    required this.scrollController,
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.onLocationTap,
     required this.onSearchClose,
     required this.onViewAllWorkshopsTap,
     required this.onViewAllVehiclesTap,
+    required this.onServiceCategoryChanged,
     this.activeVehicle,
     this.onSearchQueryChanged,
     this.workshopFailure,
     this.productRepository,
     this.recentSearchesStore,
+    this.servicePopularityStore,
+    this.selectedServiceKey,
+    this.selectedServiceLabel,
+    this.showCategoryNotFoundMessage = false,
+    this.serviceFilterFailed = false,
+    this.workshopsSectionKey,
   });
 
   final List<Workshop> workshops;
+  final List<Workshop> fallbackWorkshops;
   final bool isWorkshopsLoading;
   final bool showSearchBar;
   final TextEditingController searchController;
+  final ScrollController scrollController;
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
   final VoidCallback onSearchClose;
   final VoidCallback onViewAllWorkshopsTap;
   final VoidCallback onViewAllVehiclesTap;
+  final HomeServiceCategoryChanged onServiceCategoryChanged;
   final ProductRepository? productRepository;
   final RecentSearchesStore? recentSearchesStore;
+  final HomeServicePopularityStore? servicePopularityStore;
+  final String? selectedServiceKey;
+  final String? selectedServiceLabel;
+  final bool showCategoryNotFoundMessage;
+  final bool serviceFilterFailed;
+  final Key? workshopsSectionKey;
   final ValueChanged<String>? onSearchQueryChanged;
   final Failure? workshopFailure;
   final GarageVehicle? activeVehicle;
@@ -73,6 +98,7 @@ class HomeCustomerContent extends StatelessWidget {
             children: [
               SafeArea(
                 child: SingleChildScrollView(
+                  controller: scrollController,
                   padding: EdgeInsets.fromLTRB(
                     0,
                     AutolabCustomer.spacingSm,
@@ -115,7 +141,11 @@ class HomeCustomerContent extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: AutolabCustomer.spacingMd),
-                          const _ServiceCategories(),
+                          _ServiceCategories(
+                            popularityStore: servicePopularityStore,
+                            onCategoryChanged: onServiceCategoryChanged,
+                            selectedServiceKey: selectedServiceKey,
+                          ),
                           const SizedBox(height: AutolabCustomer.spacingMd),
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -131,14 +161,30 @@ class HomeCustomerContent extends StatelessWidget {
                                   ),
                           ),
                           const SizedBox(height: AutolabCustomer.spacingScreen),
-                          WorkshopsSection(
-                            workshops: workshops,
-                            locationState: state,
-                            proximityFilter: proximityFilter,
-                            emptyStateResolver: emptyStateResolver,
-                            isLoading: isWorkshopsLoading,
-                            workshopFailure: workshopFailure,
-                            onViewAllTap: onViewAllWorkshopsTap,
+                          Column(
+                            children: [
+                              SizedBox(key: workshopsSectionKey, height: 12),
+                              WorkshopsSection(
+                                workshops: workshops,
+                                fallbackWorkshops: fallbackWorkshops,
+                                locationState: state,
+                                proximityFilter: proximityFilter,
+                                emptyStateResolver: emptyStateResolver,
+                                isLoading: isWorkshopsLoading,
+                                workshopFailure: workshopFailure,
+                                onViewAllTap: onViewAllWorkshopsTap,
+                                selectedServiceLabel: selectedServiceLabel,
+                                selectedServiceKey: selectedServiceKey,
+                                showCategoryNotFoundMessage:
+                                    showCategoryNotFoundMessage,
+                                serviceFilterFailed: serviceFilterFailed,
+                                onClearServiceFilter:
+                                    selectedServiceLabel == null
+                                    ? null
+                                    : () =>
+                                          onServiceCategoryChanged(null, null),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: AutolabCustomer.spacingScreen),
                           Padding(
@@ -488,57 +534,144 @@ class _AutolabLogoPainter extends CustomPainter {
 }
 
 class _ServiceCategories extends StatefulWidget {
-  const _ServiceCategories();
+  const _ServiceCategories({
+    this.popularityStore,
+    required this.onCategoryChanged,
+    this.selectedServiceKey,
+  });
+
+  final HomeServicePopularityStore? popularityStore;
+  final HomeServiceCategoryChanged onCategoryChanged;
+  final String? selectedServiceKey;
 
   @override
   State<_ServiceCategories> createState() => _ServiceCategoriesState();
 }
 
 class _ServiceCategoriesState extends State<_ServiceCategories> {
-  int? _selectedIndex;
+  static const _tapCooldown = Duration(seconds: 1);
+
+  Map<String, int> _clickCounts = const {};
+  final Map<String, DateTime> _lastTapByService = {};
+  Locale? _itemsLocale;
+  List<_ServiceCategory> _defaultItems = const [];
+  List<_ServiceCategory> _sortedItems = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClickCounts();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ServiceCategories oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.popularityStore != widget.popularityStore) {
+      _loadClickCounts();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context);
+    if (_itemsLocale == locale) return;
+
+    _itemsLocale = locale;
+    _defaultItems = _buildDefaultItems(AppLocalizations.of(context)!);
+    _sortItems();
+  }
+
+  Future<void> _loadClickCounts() async {
+    final store = widget.popularityStore;
+    if (store == null) return;
+
+    try {
+      final clickCounts = await store.loadClickCounts();
+      if (!mounted) return;
+      setState(() {
+        _clickCounts = clickCounts;
+        _sortItems();
+      });
+    } catch (_) {
+      // Popularity is optional; the original order remains as fallback.
+    }
+  }
+
+  Future<void> _recordClick(String serviceKey) async {
+    final store = widget.popularityStore;
+    if (store == null) return;
+
+    try {
+      await store.recordClick(serviceKey);
+    } catch (_) {
+      // A tracking failure must never prevent the customer from using the home.
+    }
+  }
+
+  bool _acceptTap(String serviceKey) {
+    final now = DateTime.now();
+    final lastTap = _lastTapByService[serviceKey];
+    if (lastTap != null && now.difference(lastTap) < _tapCooldown) {
+      return false;
+    }
+
+    _lastTapByService[serviceKey] = now;
+    return true;
+  }
+
+  void _sortItems() {
+    _sortedItems = sortByServicePopularity<_ServiceCategory>(
+      items: _defaultItems,
+      serviceKeyOf: (item) => item.serviceKey,
+      clickCounts: _clickCounts,
+    );
+  }
+
+  List<_ServiceCategory> _buildDefaultItems(AppLocalizations l10n) {
+    return [
+      _ServiceCategory(l10n.homeServiceInspection, 'inspeccion'),
+      _ServiceCategory(l10n.homeServiceOilChange, 'cambio_aceite'),
+      _ServiceCategory(l10n.homeServiceTireChange, 'cambio_llanta'),
+      _ServiceCategory(l10n.homeServiceBalance, 'balanceo'),
+      _ServiceCategory(l10n.homeServiceAlignment, 'alineamiento'),
+      _ServiceCategory(l10n.homeServicePunctureRepair, 'reparacion_llanta'),
+      _ServiceCategory(l10n.homeServiceDetailing, 'estetica_automotriz'),
+      _ServiceCategory(l10n.homeServiceElectrical, 'electrico'),
+      _ServiceCategory(l10n.homeServiceInstallation, 'instalacion'),
+      _ServiceCategory(l10n.homeServiceAirConditioning, 'aire_acondicionado'),
+      _ServiceCategory(l10n.homeServiceTow, 'grua'),
+      _ServiceCategory(l10n.homeServiceTires, 'llantas'),
+      _ServiceCategory(l10n.homeServiceOils, 'aceites'),
+      _ServiceCategory(l10n.homeServiceParts, 'repuestos'),
+      _ServiceCategory(l10n.homeServiceCoolant, 'coolant'),
+      _ServiceCategory(l10n.homeServiceCarWashProduct, 'producto_auto_lavado'),
+      _ServiceCategory(l10n.homeServiceLights, 'luces'),
+      _ServiceCategory(l10n.homeServiceBatteries, 'baterias'),
+      _ServiceCategory(l10n.homeServiceFluids, 'liquidos'),
+      _ServiceCategory(l10n.homeServiceLubricants, 'lubricantes'),
+      _ServiceCategory(l10n.homeServiceChemicals, 'quimicos'),
+      _ServiceCategory(l10n.homeServiceAdditives, 'aditivos'),
+      _ServiceCategory(l10n.homeServiceGreases, 'grasas'),
+      _ServiceCategory(l10n.homeServiceFilters, 'filtros'),
+      _ServiceCategory(l10n.homeServiceTechnology, 'tecnologia'),
+      _ServiceCategory(l10n.homeServiceRims, 'aros'),
+      _ServiceCategory(l10n.homeServiceRacks, 'racks'),
+      _ServiceCategory(l10n.homeServiceFloorMats, 'alfombras'),
+      _ServiceCategory(l10n.homeServiceWipers, 'escobillas'),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final colors = _HomeColors.of(context);
     final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
-    final items = [
-      _ServiceCategory(
-        l10n.homeServiceBalance,
-        Icons.car_repair_outlined,
-        assetIcon: 'assets/images/icons/balanceo.png',
-      ),
-      _ServiceCategory(
-        l10n.homeServiceTow,
-        Icons.local_shipping_outlined,
-        assetIcon: 'assets/images/icons/grua.png',
-      ),
-      _ServiceCategory(
-        l10n.homeServiceTires,
-        Icons.tire_repair_outlined,
-        assetIcon: 'assets/images/icons/llantas.png',
-      ),
-      _ServiceCategory(
-        l10n.homeServiceGeneralReview,
-        Icons.oil_barrel_outlined,
-        assetIcon: 'assets/images/icons/revision_general.png',
-      ),
-      _ServiceCategory(
-        l10n.homeServiceElectricMechanic,
-        Icons.electric_car_outlined,
-        assetIcon: 'assets/images/icons/mecanica_electrica.png',
-      ),
-      _ServiceCategory(
-        l10n.homeServiceBattery,
-        Icons.battery_unknown_outlined,
-        assetIcon: 'assets/images/icons/bateria_de_coche.png',
-      ),
-    ];
+    final items = _sortedItems;
     final itemWidth = AutolabCustomer.responsiveDouble(
       context,
-      compact: 62,
-      regular: 72,
-      tablet: 84,
+      compact: 82,
+      regular: 92,
+      tablet: 104,
     );
     final iconSize = AutolabCustomer.responsiveDouble(
       context,
@@ -548,9 +681,9 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     );
     final listHeight = AutolabCustomer.responsiveDouble(
       context,
-      compact: 78,
-      regular: 86,
-      tablet: 96,
+      compact: 104,
+      regular: 110,
+      tablet: 118,
     );
     final separatorWidth = AutolabCustomer.responsiveDouble(
       context,
@@ -568,17 +701,22 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
         separatorBuilder: (_, _) => SizedBox(width: separatorWidth),
         itemBuilder: (context, index) {
           final item = items[index];
-          final isSelected = _selectedIndex == index;
+          final isSelected = widget.selectedServiceKey == item.serviceKey;
           final itemColor = isSelected
               ? AutolabCustomer.primary
               : AutolabCustomer.customerTextColor(context);
 
           return GestureDetector(
+            key: ValueKey('home-service-${item.serviceKey}'),
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              setState(() {
-                _selectedIndex = isSelected ? null : index;
-              });
+              if (!_acceptTap(item.serviceKey)) return;
+              final selectedServiceKey = isSelected ? null : item.serviceKey;
+              unawaited(_recordClick(item.serviceKey));
+              widget.onCategoryChanged(
+                selectedServiceKey,
+                selectedServiceKey == null ? null : item.label,
+              );
             },
             child: SizedBox(
               width: itemWidth,
@@ -587,25 +725,21 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
                   const SizedBox(height: 1),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
-                    child: item.assetIcon != null
-                        ? ImageIcon(
-                            AssetImage(item.assetIcon!),
-                            key: ValueKey('${item.assetIcon}-$isSelected'),
-                            color: itemColor,
-                            size: iconSize,
-                          )
-                        : Icon(
-                            item.icon,
-                            key: ValueKey(isSelected),
-                            color: itemColor,
-                            size: iconSize,
-                          ),
+                    child: SvgPicture.asset(
+                      item.assetIcon,
+                      key: ValueKey('${item.assetIcon}-$isSelected'),
+                      width: iconSize,
+                      height: iconSize,
+                      fit: BoxFit.contain,
+                      colorFilter: ColorFilter.mode(itemColor, BlendMode.srcIn),
+                    ),
                   ),
                   const SizedBox(height: AutolabCustomer.spacingSm),
                   Text(
                     item.label,
                     textAlign: TextAlign.center,
-                    maxLines: 2,
+                    maxLines: 3,
+                    softWrap: true,
                     overflow: TextOverflow.ellipsis,
                     style: AutolabCustomer.caption.copyWith(
                       color: isSelected ? AutolabCustomer.primary : colors.text,
@@ -626,11 +760,13 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
 }
 
 class _ServiceCategory {
-  const _ServiceCategory(this.label, this.icon, {this.assetIcon});
+  const _ServiceCategory(this.label, String assetName)
+    : serviceKey = assetName,
+      assetIcon = 'assets/images/icons/$assetName.svg';
 
   final String label;
-  final IconData icon;
-  final String? assetIcon;
+  final String serviceKey;
+  final String assetIcon;
 }
 
 class _PromotionsSection extends StatelessWidget {

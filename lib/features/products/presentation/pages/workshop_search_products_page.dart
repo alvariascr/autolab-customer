@@ -5,6 +5,7 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../home/domain/home_service_inventory_matcher.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
@@ -18,10 +19,12 @@ class WorkshopSearchProductsPage extends StatefulWidget {
     super.key,
     required this.workshopId,
     required this.query,
+    this.serviceKey,
   });
 
   final String workshopId;
   final String query;
+  final String? serviceKey;
 
   @override
   State<WorkshopSearchProductsPage> createState() =>
@@ -31,6 +34,7 @@ class WorkshopSearchProductsPage extends StatefulWidget {
 class _WorkshopSearchProductsPageState
     extends State<WorkshopSearchProductsPage> {
   static const _searchFilter = ProductSearchFilter();
+  static const _homeServiceMatcher = HomeServiceInventoryMatcher();
 
   late final TextEditingController _controller;
   late Future<List<Product>> _productsFuture;
@@ -39,11 +43,13 @@ class _WorkshopSearchProductsPageState
   String? _selectedCategory;
   String? _selectedType;
   bool _onlyAvailable = false;
+  late bool _useInitialServiceFilter;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.query);
+    _useInitialServiceFilter = widget.serviceKey?.trim().isNotEmpty ?? false;
     _productsFuture = _loadProducts();
   }
 
@@ -63,7 +69,17 @@ class _WorkshopSearchProductsPageState
 
   List<Product> _applyFilters(List<Product> products) {
     final query = _controller.text.trim();
-    final matchingProducts = query.isEmpty
+    final serviceKey = widget.serviceKey?.trim();
+    final shouldFilterByService =
+        _useInitialServiceFilter && serviceKey != null && serviceKey.isNotEmpty;
+    final matchingProducts = shouldFilterByService
+        ? products
+              .where(
+                (product) =>
+                    _homeServiceMatcher.matchesProduct(serviceKey, product),
+              )
+              .toList()
+        : query.isEmpty
         ? products
         : _searchFilter.filter(products: products, query: query);
 
@@ -147,7 +163,8 @@ class _WorkshopSearchProductsPageState
                 SliverToBoxAdapter(
                   child: _SearchHeader(
                     controller: _controller,
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) =>
+                        setState(() => _useInitialServiceFilter = false),
                     onBackTap: _returnToWorkshop,
                     onWorkshopTap: _returnToWorkshop,
                   ),

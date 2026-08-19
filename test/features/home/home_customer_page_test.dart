@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:autolab_core/autolab_core.dart';
+import 'package:autolab_customer/core/di/app_injection.dart';
 import 'package:autolab_customer/core/errors/customer_error_catalog.dart';
 import 'package:autolab_customer/core/location/current_location.dart';
 import 'package:autolab_customer/core/location/current_location_data_source.dart';
@@ -10,7 +11,11 @@ import 'package:autolab_customer/core/location/location_permission_service.dart'
 import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
+import 'package:autolab_customer/features/home/application/home_service_filter_cubit.dart';
+import 'package:autolab_customer/features/home/domain/usecases/get_home_service_workshop_ids.dart';
 import 'package:autolab_customer/features/home/home_customer_page.dart';
+import 'package:autolab_customer/features/products/domain/entities/product.dart';
+import 'package:autolab_customer/features/products/domain/repositories/product_repository.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +43,8 @@ class MockAppLogger extends Mock implements AppLogger {}
 
 class MockFeatureLogger extends Mock implements FeatureLogger {}
 
+class MockProductRepository extends Mock implements ProductRepository {}
+
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
 
 void main() {
@@ -52,6 +59,7 @@ void main() {
     late MockAuthRepository authRepository;
     late AuthSessionCubit authSessionCubit;
     late LocationCubit locationCubit;
+    late MockProductRepository productRepository;
 
     setUpAll(() {
       registerFallbackValue(FakeCurrentLocation());
@@ -67,6 +75,20 @@ void main() {
       featureLogger = MockFeatureLogger();
       authRepository = MockAuthRepository();
       authSessionCubit = AuthSessionCubit(authRepository, featureLogger);
+      productRepository = MockProductRepository();
+      when(
+        () => productRepository.getActiveProducts(),
+      ).thenAnswer((_) async => const Right(<Product>[]));
+      if (sl.isRegistered<HomeServiceFilterCubit>()) {
+        await sl.unregister<HomeServiceFilterCubit>();
+      }
+      sl.registerFactory<HomeServiceFilterCubit>(
+        () => HomeServiceFilterCubit(
+          getHomeServiceWorkshopIds: GetHomeServiceWorkshopIds(
+            productRepository: productRepository,
+          ),
+        ),
+      );
 
       when(() => errorHandler.logger).thenReturn(logger);
       when(
@@ -123,6 +145,9 @@ void main() {
     tearDown(() async {
       await authSessionCubit.close();
       await locationCubit.close();
+      if (sl.isRegistered<HomeServiceFilterCubit>()) {
+        await sl.unregister<HomeServiceFilterCubit>();
+      }
     });
 
     testWidgets('muestra mensaje claro cuando el permiso fue rechazado', (

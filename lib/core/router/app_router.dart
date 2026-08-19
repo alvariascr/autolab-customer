@@ -205,6 +205,7 @@ class AppRouter {
           return WorkshopSearchProductsPage(
             workshopId: workshopId,
             query: state.uri.queryParameters['query'] ?? '',
+            serviceKey: state.uri.queryParameters['serviceKey'],
           );
         },
       ),

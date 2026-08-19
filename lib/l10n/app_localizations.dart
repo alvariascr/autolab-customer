@@ -2974,11 +2974,101 @@ abstract class AppLocalizations {
   /// **'¿Qué necesitas hoy?'**
   String get homeNeedsTitle;
 
+  /// No description provided for @homeFilteredWorkshopsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Talleres para {service}'**
+  String homeFilteredWorkshopsTitle(Object service);
+
+  /// No description provided for @homeClearServiceFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar filtro'**
+  String get homeClearServiceFilter;
+
+  /// No description provided for @homeFilteredWorkshopsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos talleres con esta categoría cerca de ti.'**
+  String get homeFilteredWorkshopsEmpty;
+
+  /// No description provided for @homeServiceFilterLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos aplicar este filtro. Mostramos talleres cercanos para que puedas continuar.'**
+  String get homeServiceFilterLoadError;
+
+  /// No description provided for @homeNearbyWorkshopsFallbackTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Talleres cercanos'**
+  String get homeNearbyWorkshopsFallbackTitle;
+
+  /// No description provided for @homeWorkshopResultsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 taller encontrado} other{{count} talleres encontrados}}'**
+  String homeWorkshopResultsCount(num count);
+
+  /// No description provided for @homeServiceInspection.
+  ///
+  /// In es, this message translates to:
+  /// **'Inspección'**
+  String get homeServiceInspection;
+
+  /// No description provided for @homeServiceOilChange.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambio de aceite'**
+  String get homeServiceOilChange;
+
+  /// No description provided for @homeServiceTireChange.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambio de llanta'**
+  String get homeServiceTireChange;
+
   /// No description provided for @homeServiceBalance.
   ///
   /// In es, this message translates to:
   /// **'Balanceo'**
   String get homeServiceBalance;
+
+  /// No description provided for @homeServiceAlignment.
+  ///
+  /// In es, this message translates to:
+  /// **'Alineación'**
+  String get homeServiceAlignment;
+
+  /// No description provided for @homeServicePunctureRepair.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparación de llanta'**
+  String get homeServicePunctureRepair;
+
+  /// No description provided for @homeServiceDetailing.
+  ///
+  /// In es, this message translates to:
+  /// **'Estética automotriz'**
+  String get homeServiceDetailing;
+
+  /// No description provided for @homeServiceElectrical.
+  ///
+  /// In es, this message translates to:
+  /// **'Eléctrico'**
+  String get homeServiceElectrical;
+
+  /// No description provided for @homeServiceInstallation.
+  ///
+  /// In es, this message translates to:
+  /// **'Instalación'**
+  String get homeServiceInstallation;
+
+  /// No description provided for @homeServiceAirConditioning.
+  ///
+  /// In es, this message translates to:
+  /// **'Aire acondicionado'**
+  String get homeServiceAirConditioning;
 
   /// No description provided for @homeServiceTow.
   ///
@@ -2992,23 +3082,107 @@ abstract class AppLocalizations {
   /// **'Llantas'**
   String get homeServiceTires;
 
-  /// No description provided for @homeServiceGeneralReview.
+  /// No description provided for @homeServiceOils.
   ///
   /// In es, this message translates to:
-  /// **'Revisión\ngeneral'**
-  String get homeServiceGeneralReview;
+  /// **'Aceites'**
+  String get homeServiceOils;
 
-  /// No description provided for @homeServiceElectricMechanic.
+  /// No description provided for @homeServiceParts.
   ///
   /// In es, this message translates to:
-  /// **'Mecánica\neléctrica'**
-  String get homeServiceElectricMechanic;
+  /// **'Repuestos'**
+  String get homeServiceParts;
 
-  /// No description provided for @homeServiceBattery.
+  /// No description provided for @homeServiceCoolant.
   ///
   /// In es, this message translates to:
-  /// **'Batería'**
-  String get homeServiceBattery;
+  /// **'Refrigerante'**
+  String get homeServiceCoolant;
+
+  /// No description provided for @homeServiceCarWashProduct.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto de auto lavado'**
+  String get homeServiceCarWashProduct;
+
+  /// No description provided for @homeServiceLights.
+  ///
+  /// In es, this message translates to:
+  /// **'Luces'**
+  String get homeServiceLights;
+
+  /// No description provided for @homeServiceBatteries.
+  ///
+  /// In es, this message translates to:
+  /// **'Baterías'**
+  String get homeServiceBatteries;
+
+  /// No description provided for @homeServiceFluids.
+  ///
+  /// In es, this message translates to:
+  /// **'Líquidos'**
+  String get homeServiceFluids;
+
+  /// No description provided for @homeServiceLubricants.
+  ///
+  /// In es, this message translates to:
+  /// **'Lubricantes'**
+  String get homeServiceLubricants;
+
+  /// No description provided for @homeServiceChemicals.
+  ///
+  /// In es, this message translates to:
+  /// **'Químicos'**
+  String get homeServiceChemicals;
+
+  /// No description provided for @homeServiceAdditives.
+  ///
+  /// In es, this message translates to:
+  /// **'Aditivos'**
+  String get homeServiceAdditives;
+
+  /// No description provided for @homeServiceGreases.
+  ///
+  /// In es, this message translates to:
+  /// **'Grasas'**
+  String get homeServiceGreases;
+
+  /// No description provided for @homeServiceFilters.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtros'**
+  String get homeServiceFilters;
+
+  /// No description provided for @homeServiceTechnology.
+  ///
+  /// In es, this message translates to:
+  /// **'Tecnología'**
+  String get homeServiceTechnology;
+
+  /// No description provided for @homeServiceRims.
+  ///
+  /// In es, this message translates to:
+  /// **'Aros'**
+  String get homeServiceRims;
+
+  /// No description provided for @homeServiceRacks.
+  ///
+  /// In es, this message translates to:
+  /// **'Racks'**
+  String get homeServiceRacks;
+
+  /// No description provided for @homeServiceFloorMats.
+  ///
+  /// In es, this message translates to:
+  /// **'Alfombras'**
+  String get homeServiceFloorMats;
+
+  /// No description provided for @homeServiceWipers.
+  ///
+  /// In es, this message translates to:
+  /// **'Escobillas'**
+  String get homeServiceWipers;
 
   /// No description provided for @homePromotionsComingSoon.
   ///

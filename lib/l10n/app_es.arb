@@ -560,12 +560,53 @@
   "homePlaceholderTitle": "Explora talleres cerca de ti",
   "homePlaceholderSubtitle": "Este espacio queda libre para integrar carruseles, listados y resultados dinámicos sin mezclar contenido demo dentro del home.",
   "homeNeedsTitle": "¿Qué necesitas hoy?",
+  "homeFilteredWorkshopsTitle": "Talleres para {service}",
+  "@homeFilteredWorkshopsTitle": {
+    "placeholders": {
+      "service": {}
+    }
+  },
+  "homeClearServiceFilter": "Quitar filtro",
+  "homeFilteredWorkshopsEmpty": "No encontramos talleres con esta categoría cerca de ti.",
+  "homeServiceFilterLoadError": "No pudimos aplicar este filtro. Mostramos talleres cercanos para que puedas continuar.",
+  "homeNearbyWorkshopsFallbackTitle": "Talleres cercanos",
+  "homeWorkshopResultsCount": "{count, plural, =1{1 taller encontrado} other{{count} talleres encontrados}}",
+  "@homeWorkshopResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "homeServiceInspection": "Inspección",
+  "homeServiceOilChange": "Cambio de aceite",
+  "homeServiceTireChange": "Cambio de llanta",
   "homeServiceBalance": "Balanceo",
+  "homeServiceAlignment": "Alineación",
+  "homeServicePunctureRepair": "Reparación de llanta",
+  "homeServiceDetailing": "Estética automotriz",
+  "homeServiceElectrical": "Eléctrico",
+  "homeServiceInstallation": "Instalación",
+  "homeServiceAirConditioning": "Aire acondicionado",
   "homeServiceTow": "Grúa",
   "homeServiceTires": "Llantas",
-  "homeServiceGeneralReview": "Revisión\ngeneral",
-  "homeServiceElectricMechanic": "Mecánica\neléctrica",
-  "homeServiceBattery": "Batería",
+  "homeServiceOils": "Aceites",
+  "homeServiceParts": "Repuestos",
+  "homeServiceCoolant": "Refrigerante",
+  "homeServiceCarWashProduct": "Producto de auto lavado",
+  "homeServiceLights": "Luces",
+  "homeServiceBatteries": "Baterías",
+  "homeServiceFluids": "Líquidos",
+  "homeServiceLubricants": "Lubricantes",
+  "homeServiceChemicals": "Químicos",
+  "homeServiceAdditives": "Aditivos",
+  "homeServiceGreases": "Grasas",
+  "homeServiceFilters": "Filtros",
+  "homeServiceTechnology": "Tecnología",
+  "homeServiceRims": "Aros",
+  "homeServiceRacks": "Racks",
+  "homeServiceFloorMats": "Alfombras",
+  "homeServiceWipers": "Escobillas",
   "homePromotionsComingSoon": "Próximamente",
   "homePromotionsTitle": "Promociones y beneficios",
   "homePromotionsSubtitle": "Muy pronto estarán disponibles para ti.",
