@@ -684,6 +684,7 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
               : AutolabCustomer.customerTextColor(context);
 
           return GestureDetector(
+            key: ValueKey('home-service-${item.serviceKey}'),
             behavior: HitTestBehavior.opaque,
             onTap: () {
               if (!_acceptTap(item.serviceKey)) return;

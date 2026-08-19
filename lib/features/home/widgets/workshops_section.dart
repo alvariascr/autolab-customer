@@ -83,6 +83,7 @@ class WorkshopsSection extends StatelessWidget {
     final searchLocation = _searchLocationResolver.resolve(
       locationState.location,
     );
+    final serviceLabel = selectedServiceLabel;
     final isUsingFallbackLocation = _searchLocationResolver.isUsingFallback(
       locationState.location,
     );
@@ -91,7 +92,7 @@ class WorkshopsSection extends StatelessWidget {
       currentLocation: searchLocation,
     );
     final shouldUseNearbyFallback =
-        selectedServiceLabel != null &&
+        serviceLabel != null &&
         (serviceFilterFailed || nearbyWorkshops.isEmpty);
     final displayedWorkshops = shouldUseNearbyFallback
         ? proximityFilter.filterNearby(
@@ -110,7 +111,7 @@ class WorkshopsSection extends StatelessWidget {
       l10n: l10n,
       isUsingFallbackLocation: isUsingFallbackLocation,
     );
-    final effectiveEmptyMessage = selectedServiceLabel == null
+    final effectiveEmptyMessage = serviceLabel == null
         ? emptyMessage
         : l10n.homeFilteredWorkshopsEmpty;
 
@@ -123,11 +124,11 @@ class WorkshopsSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  selectedServiceLabel == null
+                  serviceLabel == null
                       ? l10n.workshopsSectionTitle
                       : shouldShowCategoryMessage
                       ? l10n.homeNearbyWorkshopsFallbackTitle
-                      : l10n.homeFilteredWorkshopsTitle(selectedServiceLabel!),
+                      : l10n.homeFilteredWorkshopsTitle(serviceLabel),
                   style: AutolabCustomer.h2.copyWith(
                     color: textColor,
                     fontSize: AutolabCustomer.responsiveDouble(
@@ -163,7 +164,7 @@ class WorkshopsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AutolabCustomer.spacingSmd + 2),
-        if (selectedServiceLabel == null)
+        if (serviceLabel == null)
           SizedBox(
             height: carouselHeight,
             child: WorkshopsCarousel(
@@ -249,13 +250,12 @@ class WorkshopsSection extends StatelessWidget {
                       bottom: AutolabCustomer.spacingSm,
                     ),
                     child: InkWell(
+                      key: ValueKey('home-service-workshop-${workshop.id}'),
                       borderRadius: BorderRadius.circular(
                         AutolabCustomer.radiusCard + 2,
                       ),
                       onTap: () {
-                        final query = Uri.encodeQueryComponent(
-                          selectedServiceLabel!,
-                        );
+                        final query = Uri.encodeQueryComponent(serviceLabel);
                         final serviceKey = Uri.encodeQueryComponent(
                           selectedServiceKey ?? '',
                         );

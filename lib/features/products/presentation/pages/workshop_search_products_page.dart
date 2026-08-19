@@ -69,13 +69,14 @@ class _WorkshopSearchProductsPageState
 
   List<Product> _applyFilters(List<Product> products) {
     final query = _controller.text.trim();
-    final matchingProducts = _useInitialServiceFilter
+    final serviceKey = widget.serviceKey?.trim();
+    final shouldFilterByService =
+        _useInitialServiceFilter && serviceKey != null && serviceKey.isNotEmpty;
+    final matchingProducts = shouldFilterByService
         ? products
               .where(
-                (product) => _homeServiceMatcher.matchesProduct(
-                  widget.serviceKey!,
-                  product,
-                ),
+                (product) =>
+                    _homeServiceMatcher.matchesProduct(serviceKey, product),
               )
               .toList()
         : query.isEmpty

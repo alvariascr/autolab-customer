@@ -13,7 +13,6 @@ import '../../core/theme/autolab_customer.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
-import '../products/domain/entities/product.dart';
 import '../products/domain/repositories/product_repository.dart';
 import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
@@ -24,9 +23,10 @@ import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
 import '../workshops/domain/services/workshop_proximity_filter.dart';
 import '../workshops/presentation/workshop_empty_state_resolver.dart';
+import 'application/home_service_filter_cubit.dart';
+import 'application/home_service_filter_state.dart';
 import 'application/home_service_popularity_store.dart';
 import 'application/recent_searches_store.dart';
-import 'domain/home_service_inventory_matcher.dart';
 import 'location/location_ui_presenter.dart';
 import 'widgets/home_customer_content.dart';
 import 'widgets/location_option_tile.dart';
@@ -73,21 +73,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
   static const _workshopProximityFilter = WorkshopProximityFilter();
   static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
-  static const _homeServiceInventoryMatcher = HomeServiceInventoryMatcher();
-
   late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
+  late final HomeServiceFilterCubit _homeServiceFilterCubit;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _homeScrollController = ScrollController();
   WorkshopDiscoveryQueryStore? _queryStore;
   GarageVehicleController? _garageVehicleController;
   GarageVehicle? _activeVehicle;
   final GlobalKey _workshopsSectionKey = GlobalKey();
-  String? _selectedHomeServiceKey;
-  String? _selectedHomeServiceLabel;
-  Set<String>? _matchingWorkshopIds;
-  bool _isHomeServiceFilterLoading = false;
-  bool _homeServiceFilterFailed = false;
-  int _homeServiceFilterGeneration = 0;
   int _activeVehicleLoadGeneration = 0;
 
   int _currentIndex = 0;
@@ -97,6 +90,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   @override
   void initState() {
     super.initState();
+    _homeServiceFilterCubit = sl<HomeServiceFilterCubit>();
     if (sl.isRegistered<GarageVehicleController>()) {
       _garageVehicleController = sl<GarageVehicleController>()
         ..addListener(_onGarageVehiclesChanged);
@@ -136,6 +130,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _homeScrollController.dispose();
+    unawaited(_homeServiceFilterCubit.close());
     super.dispose();
   }
 
@@ -167,15 +162,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     String? serviceKey,
     String? label,
   ) async {
-    final generation = ++_homeServiceFilterGeneration;
     if (serviceKey == null || label == null) {
-      setState(() {
-        _selectedHomeServiceKey = null;
-        _selectedHomeServiceLabel = null;
-        _matchingWorkshopIds = null;
-        _isHomeServiceFilterLoading = false;
-        _homeServiceFilterFailed = false;
-      });
+      _homeServiceFilterCubit.clear();
       await WidgetsBinding.instance.endOfFrame;
       if (_homeScrollController.hasClients) {
         await _homeScrollController.animateTo(
@@ -187,47 +175,14 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       return;
     }
 
-    setState(() {
-      _selectedHomeServiceKey = serviceKey;
-      _selectedHomeServiceLabel = label;
-      _matchingWorkshopIds = null;
-      _isHomeServiceFilterLoading = true;
-      _homeServiceFilterFailed = false;
-    });
+    await _homeServiceFilterCubit.select(
+      serviceKey: serviceKey,
+      serviceLabel: label,
+    );
 
-    final repository = sl.isRegistered<ProductRepository>()
-        ? sl<ProductRepository>()
-        : null;
-    var filterFailed = repository == null;
-    final matchingProducts = repository == null
-        ? <Product>[]
-        : await repository.getActiveProducts().then(
-            (result) => result.fold(
-              (_) {
-                filterFailed = true;
-                return <Product>[];
-              },
-              (products) => products
-                  .where(
-                    (product) => _homeServiceInventoryMatcher.matchesProduct(
-                      serviceKey,
-                      product,
-                    ),
-                  )
-                  .toList(),
-            ),
-          );
-    final matchingWorkshopIds = matchingProducts
-        .map((product) => product.workshopId)
-        .toSet();
-
-    if (!mounted || generation != _homeServiceFilterGeneration) return;
-    setState(() {
-      _matchingWorkshopIds = filterFailed ? null : matchingWorkshopIds;
-      _isHomeServiceFilterLoading = false;
-      _homeServiceFilterFailed = filterFailed;
-    });
-
+    if (!mounted || _homeServiceFilterCubit.state.serviceKey != serviceKey) {
+      return;
+    }
     await WidgetsBinding.instance.endOfFrame;
     final sectionContext = _workshopsSectionKey.currentContext;
     if (sectionContext == null || !sectionContext.mounted) return;
@@ -428,69 +383,73 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
       extendBody: true,
-      body: FutureBuilder<Either<Failure, List<Workshop>>>(
-        future: _workshopsFuture,
-        builder: (context, snapshot) {
-          final workshopsResult = snapshot.data;
-          final workshops =
-              workshopsResult?.fold(
-                (_) => const <Workshop>[],
-                (items) => items,
-              ) ??
-              const <Workshop>[];
-          final workshopFailure = workshopsResult?.fold(
-            (failure) => failure,
-            (_) => null,
-          );
-          final matchingWorkshopIds = _matchingWorkshopIds;
-          final isCategoryFallback =
-              _selectedHomeServiceKey != null &&
-              !_homeServiceFilterFailed &&
-              matchingWorkshopIds != null &&
-              matchingWorkshopIds.isEmpty;
-          final visibleWorkshops =
-              matchingWorkshopIds == null || isCategoryFallback
-              ? workshops
-              : workshops
-                    .where(
-                      (workshop) => matchingWorkshopIds.contains(workshop.id),
-                    )
-                    .toList();
+      body: BlocBuilder<HomeServiceFilterCubit, HomeServiceFilterState>(
+        bloc: _homeServiceFilterCubit,
+        builder: (context, filterState) {
+          return FutureBuilder<Either<Failure, List<Workshop>>>(
+            future: _workshopsFuture,
+            builder: (context, snapshot) {
+              final workshopsResult = snapshot.data;
+              final workshops =
+                  workshopsResult?.fold(
+                    (_) => const <Workshop>[],
+                    (items) => items,
+                  ) ??
+                  const <Workshop>[];
+              final workshopFailure = workshopsResult?.fold(
+                (failure) => failure,
+                (_) => null,
+              );
+              final matchingWorkshopIds =
+                  filterState.status == HomeServiceFilterStatus.success
+                  ? filterState.matchingWorkshopIds.toSet()
+                  : null;
+              final visibleWorkshops =
+                  matchingWorkshopIds == null || filterState.hasNoMatches
+                  ? workshops
+                  : workshops
+                        .where(
+                          (workshop) =>
+                              matchingWorkshopIds.contains(workshop.id),
+                        )
+                        .toList(growable: false);
 
-          return HomeCustomerContent(
-            activeVehicle: _activeVehicle,
-            workshops: visibleWorkshops,
-            fallbackWorkshops: workshops,
-            isWorkshopsLoading:
-                snapshot.connectionState == ConnectionState.waiting ||
-                _isHomeServiceFilterLoading,
-            showSearchBar: _showSearchBar,
-            searchController: _searchController,
-            scrollController: _homeScrollController,
-            proximityFilter: _workshopProximityFilter,
-            emptyStateResolver: _workshopEmptyStateResolver,
-            onLocationTap: _showLocationOptions,
-            onSearchClose: _closeSearch,
-            onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
-            onViewAllVehiclesTap: _openVehiclesPage,
-            onServiceCategoryChanged: _handleHomeServiceCategoryChanged,
-            selectedServiceKey: _selectedHomeServiceKey,
-            selectedServiceLabel: _selectedHomeServiceLabel,
-            showCategoryNotFoundMessage: isCategoryFallback,
-            serviceFilterFailed: _homeServiceFilterFailed,
-            workshopsSectionKey: _workshopsSectionKey,
-            productRepository: sl.isRegistered<ProductRepository>()
-                ? sl<ProductRepository>()
-                : null,
-            recentSearchesStore: sl.isRegistered<RecentSearchesStore>()
-                ? sl<RecentSearchesStore>()
-                : null,
-            servicePopularityStore:
-                sl.isRegistered<HomeServicePopularityStore>()
-                ? sl<HomeServicePopularityStore>()
-                : null,
-            onSearchQueryChanged: _queryStore?.setQuery,
-            workshopFailure: workshopFailure,
+              return HomeCustomerContent(
+                activeVehicle: _activeVehicle,
+                workshops: visibleWorkshops,
+                fallbackWorkshops: workshops,
+                isWorkshopsLoading:
+                    snapshot.connectionState == ConnectionState.waiting ||
+                    filterState.isLoading,
+                showSearchBar: _showSearchBar,
+                searchController: _searchController,
+                scrollController: _homeScrollController,
+                proximityFilter: _workshopProximityFilter,
+                emptyStateResolver: _workshopEmptyStateResolver,
+                onLocationTap: _showLocationOptions,
+                onSearchClose: _closeSearch,
+                onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
+                onViewAllVehiclesTap: _openVehiclesPage,
+                onServiceCategoryChanged: _handleHomeServiceCategoryChanged,
+                selectedServiceKey: filterState.serviceKey,
+                selectedServiceLabel: filterState.serviceLabel,
+                showCategoryNotFoundMessage: filterState.hasNoMatches,
+                serviceFilterFailed: filterState.hasFailed,
+                workshopsSectionKey: _workshopsSectionKey,
+                productRepository: sl.isRegistered<ProductRepository>()
+                    ? sl<ProductRepository>()
+                    : null,
+                recentSearchesStore: sl.isRegistered<RecentSearchesStore>()
+                    ? sl<RecentSearchesStore>()
+                    : null,
+                servicePopularityStore:
+                    sl.isRegistered<HomeServicePopularityStore>()
+                    ? sl<HomeServicePopularityStore>()
+                    : null,
+                onSearchQueryChanged: _queryStore?.setQuery,
+                workshopFailure: workshopFailure,
+              );
+            },
           );
         },
       ),

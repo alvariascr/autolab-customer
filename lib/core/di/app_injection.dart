@@ -24,6 +24,7 @@ import '../../features/cart/domain/usecases/get_workshop_delivery_fee.dart';
 import '../../features/cart/domain/usecases/load_delivery_addresses.dart';
 import '../../features/cart/domain/usecases/save_delivery_address.dart';
 import '../../features/cart/domain/usecases/set_default_delivery_address.dart';
+import '../../features/home/application/home_service_filter_cubit.dart';
 import '../../features/home/application/home_service_popularity_store.dart';
 import '../../features/home/application/recent_searches_store.dart';
 import '../../features/home/data/supabase_home_service_popularity_store.dart';
@@ -266,6 +267,9 @@ void _registerFeatureDependencies() {
       errorHandler: sl<GlobalErrorHandler>(),
       featureLogger: sl<FeatureLogger>(),
     ),
+  );
+  sl.registerFactory<HomeServiceFilterCubit>(
+    () => HomeServiceFilterCubit(productRepository: sl<ProductRepository>()),
   );
   sl.registerLazySingleton<GarageVehicleRemoteDataSource>(
     () => GarageVehicleRemoteDataSource(sl<SupabaseClient>()),
