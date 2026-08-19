@@ -553,6 +553,9 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
 
   Map<String, int> _clickCounts = const {};
   final Map<String, DateTime> _lastTapByService = {};
+  Locale? _itemsLocale;
+  List<_ServiceCategory> _defaultItems = const [];
+  List<_ServiceCategory> _sortedItems = const [];
 
   @override
   void initState() {
@@ -568,6 +571,17 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final locale = Localizations.localeOf(context);
+    if (_itemsLocale == locale) return;
+
+    _itemsLocale = locale;
+    _defaultItems = _buildDefaultItems(AppLocalizations.of(context)!);
+    _sortItems();
+  }
+
   Future<void> _loadClickCounts() async {
     final store = widget.popularityStore;
     if (store == null) return;
@@ -575,7 +589,10 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     try {
       final clickCounts = await store.loadClickCounts();
       if (!mounted) return;
-      setState(() => _clickCounts = clickCounts);
+      setState(() {
+        _clickCounts = clickCounts;
+        _sortItems();
+      });
     } catch (_) {
       // Popularity is optional; the original order remains as fallback.
     }
@@ -603,12 +620,16 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
     return true;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colors = _HomeColors.of(context);
-    final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
-    final defaultItems = [
+  void _sortItems() {
+    _sortedItems = sortByServicePopularity<_ServiceCategory>(
+      items: _defaultItems,
+      serviceKeyOf: (item) => item.serviceKey,
+      clickCounts: _clickCounts,
+    );
+  }
+
+  List<_ServiceCategory> _buildDefaultItems(AppLocalizations l10n) {
+    return [
       _ServiceCategory(l10n.homeServiceInspection, 'inspeccion'),
       _ServiceCategory(l10n.homeServiceOilChange, 'cambio_aceite'),
       _ServiceCategory(l10n.homeServiceTireChange, 'cambio_llanta'),
@@ -639,11 +660,13 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
       _ServiceCategory(l10n.homeServiceFloorMats, 'alfombras'),
       _ServiceCategory(l10n.homeServiceWipers, 'escobillas'),
     ];
-    final items = sortByServicePopularity<_ServiceCategory>(
-      items: defaultItems,
-      serviceKeyOf: (item) => item.serviceKey,
-      clickCounts: _clickCounts,
-    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _HomeColors.of(context);
+    final horizontalMargin = AutolabCustomer.responsiveScreenMargin(context);
+    final items = _sortedItems;
     final itemWidth = AutolabCustomer.responsiveDouble(
       context,
       compact: 82,

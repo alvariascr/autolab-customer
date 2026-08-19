@@ -73,7 +73,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     with WidgetsBindingObserver {
   static const _workshopProximityFilter = WorkshopProximityFilter();
   static const _workshopEmptyStateResolver = WorkshopEmptyStateResolver();
-  late Future<Either<Failure, List<Workshop>>> _workshopsFuture;
+  late final Future<Either<Failure, List<Workshop>>> _workshopsFuture;
   late final HomeServiceFilterCubit _homeServiceFilterCubit;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _homeScrollController = ScrollController();
@@ -183,7 +183,6 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     if (!mounted || _homeServiceFilterCubit.state.serviceKey != serviceKey) {
       return;
     }
-    await WidgetsBinding.instance.endOfFrame;
     final sectionContext = _workshopsSectionKey.currentContext;
     if (sectionContext == null || !sectionContext.mounted) return;
     await Scrollable.ensureVisible(

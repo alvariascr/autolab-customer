@@ -3,7 +3,13 @@ import '../../products/domain/entities/product.dart';
 class HomeServiceInventoryMatcher {
   const HomeServiceInventoryMatcher();
 
-  static const _termsByService = <String, List<String>>{
+  static final _accentedA = RegExp('[áàäâ]');
+  static final _accentedE = RegExp('[éèëê]');
+  static final _accentedI = RegExp('[íìïî]');
+  static final _accentedO = RegExp('[óòöô]');
+  static final _accentedU = RegExp('[úùüû]');
+
+  static const _rawTermsByService = <String, List<String>>{
     'inspeccion': ['inspeccion', 'revision', 'diagnostico'],
     'cambio_aceite': ['cambio de aceite', 'aceite'],
     'cambio_llanta': ['cambio de llanta', 'llanta', 'neumatico'],
@@ -35,6 +41,11 @@ class HomeServiceInventoryMatcher {
     'escobillas': ['escobilla', 'limpiaparabrisas'],
   };
 
+  static final _normalizedTermsByService = <String, List<String>>{
+    for (final entry in _rawTermsByService.entries)
+      entry.key: entry.value.map(_normalize).toList(growable: false),
+  };
+
   bool matchesProduct(String serviceKey, Product product) {
     return matches(
       serviceKey: serviceKey,
@@ -50,21 +61,21 @@ class HomeServiceInventoryMatcher {
     required String categoryName,
     String description = '',
   }) {
-    final terms = _termsByService[serviceKey];
+    final terms = _normalizedTermsByService[serviceKey];
     if (terms == null) return false;
 
     final searchableText = _normalize('$name $categoryName $description');
-    return terms.any((term) => searchableText.contains(_normalize(term)));
+    return terms.any(searchableText.contains);
   }
 
-  String _normalize(String value) {
+  static String _normalize(String value) {
     return value
         .toLowerCase()
-        .replaceAll(RegExp('[áàäâ]'), 'a')
-        .replaceAll(RegExp('[éèëê]'), 'e')
-        .replaceAll(RegExp('[íìïî]'), 'i')
-        .replaceAll(RegExp('[óòöô]'), 'o')
-        .replaceAll(RegExp('[úùüû]'), 'u')
+        .replaceAll(_accentedA, 'a')
+        .replaceAll(_accentedE, 'e')
+        .replaceAll(_accentedI, 'i')
+        .replaceAll(_accentedO, 'o')
+        .replaceAll(_accentedU, 'u')
         .replaceAll('ñ', 'n');
   }
 }

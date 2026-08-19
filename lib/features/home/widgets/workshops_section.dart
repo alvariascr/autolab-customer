@@ -255,6 +255,11 @@ class WorkshopsSection extends StatelessWidget {
                         AutolabCustomer.radiusCard + 2,
                       ),
                       onTap: () {
+                        if (shouldUseNearbyFallback) {
+                          context.push('/workshops/${workshop.id}');
+                          return;
+                        }
+
                         final query = Uri.encodeQueryComponent(serviceLabel);
                         final serviceKey = Uri.encodeQueryComponent(
                           selectedServiceKey ?? '',

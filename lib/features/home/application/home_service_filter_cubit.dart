@@ -1,19 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../products/domain/repositories/product_repository.dart';
-import '../domain/home_service_inventory_matcher.dart';
+import '../domain/usecases/get_home_service_workshop_ids.dart';
 import 'home_service_filter_state.dart';
 
 class HomeServiceFilterCubit extends Cubit<HomeServiceFilterState> {
   HomeServiceFilterCubit({
-    required ProductRepository productRepository,
-    HomeServiceInventoryMatcher matcher = const HomeServiceInventoryMatcher(),
-  }) : _productRepository = productRepository,
-       _matcher = matcher,
+    required GetHomeServiceWorkshopIds getHomeServiceWorkshopIds,
+  }) : _getHomeServiceWorkshopIds = getHomeServiceWorkshopIds,
        super(HomeServiceFilterState());
 
-  final ProductRepository _productRepository;
-  final HomeServiceInventoryMatcher _matcher;
+  final GetHomeServiceWorkshopIds _getHomeServiceWorkshopIds;
   int _requestGeneration = 0;
 
   Future<void> select({
@@ -22,37 +18,29 @@ class HomeServiceFilterCubit extends Cubit<HomeServiceFilterState> {
   }) async {
     final generation = ++_requestGeneration;
     emit(
-      HomeServiceFilterState(
+      state.copyWith(
         status: HomeServiceFilterStatus.loading,
         serviceKey: serviceKey,
         serviceLabel: serviceLabel,
+        clearMatchingWorkshopIds: true,
       ),
     );
 
     try {
-      final result = await _productRepository.getActiveProducts();
+      final result = await _getHomeServiceWorkshopIds(serviceKey);
       if (isClosed || generation != _requestGeneration) return;
 
       result.fold(
         (_) => emit(
-          HomeServiceFilterState(
+          state.copyWith(
             status: HomeServiceFilterStatus.failure,
-            serviceKey: serviceKey,
-            serviceLabel: serviceLabel,
+            clearMatchingWorkshopIds: true,
           ),
         ),
-        (products) {
-          final workshopIds = products
-              .where((product) => _matcher.matchesProduct(serviceKey, product))
-              .map((product) => product.workshopId)
-              .where((workshopId) => workshopId.trim().isNotEmpty)
-              .toSet()
-              .toList(growable: false);
+        (workshopIds) {
           emit(
-            HomeServiceFilterState(
+            state.copyWith(
               status: HomeServiceFilterStatus.success,
-              serviceKey: serviceKey,
-              serviceLabel: serviceLabel,
               matchingWorkshopIds: workshopIds,
             ),
           );
@@ -61,10 +49,9 @@ class HomeServiceFilterCubit extends Cubit<HomeServiceFilterState> {
     } catch (_) {
       if (isClosed || generation != _requestGeneration) return;
       emit(
-        HomeServiceFilterState(
+        state.copyWith(
           status: HomeServiceFilterStatus.failure,
-          serviceKey: serviceKey,
-          serviceLabel: serviceLabel,
+          clearMatchingWorkshopIds: true,
         ),
       );
     }

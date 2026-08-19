@@ -12,6 +12,7 @@ import 'package:autolab_customer/core/location/location_place_resolver.dart';
 import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/home/application/home_service_filter_cubit.dart';
+import 'package:autolab_customer/features/home/domain/usecases/get_home_service_workshop_ids.dart';
 import 'package:autolab_customer/features/home/home_customer_page.dart';
 import 'package:autolab_customer/features/products/domain/entities/product.dart';
 import 'package:autolab_customer/features/products/domain/repositories/product_repository.dart';
@@ -82,7 +83,11 @@ void main() {
         await sl.unregister<HomeServiceFilterCubit>();
       }
       sl.registerFactory<HomeServiceFilterCubit>(
-        () => HomeServiceFilterCubit(productRepository: productRepository),
+        () => HomeServiceFilterCubit(
+          getHomeServiceWorkshopIds: GetHomeServiceWorkshopIds(
+            productRepository: productRepository,
+          ),
+        ),
       );
 
       when(() => errorHandler.logger).thenReturn(logger);
