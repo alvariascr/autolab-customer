@@ -163,7 +163,8 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                 ),
                               ],
                               const SizedBox(height: AutolabCustomer.spacingSm),
-                              if (!isShowingCartList)
+                              if (!isShowingCartList &&
+                                  activeCart.items.isNotEmpty)
                                 _CartPrimaryButton(
                                   label: showCheckout
                                       ? isCheckingOut
