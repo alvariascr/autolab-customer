@@ -31,7 +31,7 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     try {
       final vehicle = await request;
       if (requestGeneration != _defaultVehicleRequestGeneration) {
-        return getDefaultVehicle();
+        return await getDefaultVehicle();
       }
 
       return vehicle;
