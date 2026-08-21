@@ -55,12 +55,12 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
                     notificationTooltip:
                         l10n.myAppointmentsNotificationsTooltip,
                     onBack: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
+                      if (context.canPop()) {
+                        context.pop();
                         return;
                       }
 
-                      context.go('/profile');
+                      context.go('/home-customer?tab=profile');
                     },
                   ),
                   const SizedBox(height: AutolabCustomer.spacingLg),

@@ -49,7 +49,7 @@ void main() {
 
     expect(
       router.routerDelegate.currentConfiguration.uri.toString(),
-      '/home-customer',
+      '/home-customer?tab=home',
     );
   });
 

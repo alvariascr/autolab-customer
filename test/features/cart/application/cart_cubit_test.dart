@@ -119,7 +119,35 @@ void main() {
         'product-b',
       );
       expect(productRepository.invalidatedWorkshopId, 'workshop-b');
+      expect(cubit.state.checkoutStatus, CartCheckoutStatus.initial);
     });
+
+    test(
+      'no queda bloqueado en loading tras crear la orden, permite reintentar',
+      () async {
+        final cartRepository = _FakeCartRepository();
+        final cubit = _cartCubit(
+          cartRepository: cartRepository,
+          workshopRepository: _FakeWorkshopRepository(
+            feesByWorkshopId: const {'workshop-a': 2500},
+          ),
+        );
+        addTearDown(cubit.close);
+
+        cubit.addProduct(_product(id: 'product-a', workshopId: 'workshop-a'));
+
+        final firstResult = await cubit.createOrder(workshopId: 'workshop-a');
+        expect(firstResult, isNotNull);
+        expect(cubit.state.checkoutStatus.isLoading, isFalse);
+
+        cubit.addProduct(_product(id: 'product-b', workshopId: 'workshop-a'));
+        final secondResult = await cubit.createOrder(workshopId: 'workshop-a');
+
+        expect(secondResult, isNotNull);
+        expect(cartRepository.createOrderCallCount, 2);
+        expect(cubit.state.checkoutStatus.isLoading, isFalse);
+      },
+    );
   });
 }
 
