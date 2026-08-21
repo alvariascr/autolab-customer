@@ -35,6 +35,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   String? _selectedWorkshopId;
   _CartCheckoutLoadingPhase? _checkoutLoadingPhase;
   Completer<void>? _externalCheckoutTransitionCompleter;
+  Timer? _checkoutReturnFallbackTimer;
   bool _awaitingCheckoutReturn = false;
   bool _checkoutReturnFallbackScheduled = false;
   int? _checkoutReturnBaselineCallbackCount;
@@ -48,6 +49,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cancelCheckoutReturnFallback();
     _completeExternalCheckoutTransition();
     super.dispose();
   }
@@ -88,7 +90,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
 
     final baselineCallbackCount = _checkoutReturnBaselineCallbackCount;
 
-    Future.delayed(_paymentReturnFallbackDelay, () {
+    _checkoutReturnFallbackTimer = Timer(_paymentReturnFallbackDelay, () {
       if (!mounted || !_awaitingCheckoutReturn) {
         return;
       }
@@ -97,11 +99,11 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         // A real Laropay deep-link result was processed while we were
         // waiting -- it owns navigation, not this fallback.
         _awaitingCheckoutReturn = false;
-        _checkoutReturnFallbackScheduled = false;
+        _cancelCheckoutReturnFallback();
         return;
       }
       _awaitingCheckoutReturn = false;
-      _checkoutReturnFallbackScheduled = false;
+      _cancelCheckoutReturnFallback();
       final l10n = AppLocalizations.of(context)!;
       setState(() => _checkoutLoadingPhase = null);
       showAppSnackBar(
@@ -114,10 +116,16 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   }
 
   void _startAwaitingCheckoutReturn() {
+    _cancelCheckoutReturnFallback();
     _checkoutReturnBaselineCallbackCount =
         LaropayReturnNavigationController.handledCallbackCount.value;
-    _checkoutReturnFallbackScheduled = false;
     _awaitingCheckoutReturn = true;
+  }
+
+  void _cancelCheckoutReturnFallback() {
+    _checkoutReturnFallbackTimer?.cancel();
+    _checkoutReturnFallbackTimer = null;
+    _checkoutReturnFallbackScheduled = false;
   }
 
   @override
@@ -430,6 +438,9 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     final completer = _externalCheckoutTransitionCompleter;
     if (completer != null && !completer.isCompleted) {
       completer.complete();
+    }
+    if (identical(_externalCheckoutTransitionCompleter, completer)) {
+      _externalCheckoutTransitionCompleter = null;
     }
   }
 

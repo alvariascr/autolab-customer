@@ -490,6 +490,25 @@ to service_role;
 -- since 202608130001 but nothing has ever invoked it.
 create extension if not exists pg_cron with schema pg_catalog;
 
+do $$
+begin
+  if exists (
+    select 1
+    from cron.job
+    where jobname = 'expire-abandoned-cart-orders'
+  ) then
+    perform cron.unschedule('expire-abandoned-cart-orders');
+  end if;
+
+  if exists (
+    select 1
+    from cron.job
+    where jobname = 'expire-abandoned-appointment-orders'
+  ) then
+    perform cron.unschedule('expire-abandoned-appointment-orders');
+  end if;
+end $$;
+
 select cron.schedule(
   'expire-abandoned-cart-orders',
   '*/15 * * * *',

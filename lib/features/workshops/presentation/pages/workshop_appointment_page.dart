@@ -43,6 +43,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
 
   _AppointmentLoadingPhase? _loadingPhase;
   Completer<void>? _externalPaymentTransitionCompleter;
+  Timer? _paymentReturnFallbackTimer;
   bool _awaitingPaymentReturn = false;
   bool _paymentReturnFallbackScheduled = false;
   int? _paymentReturnBaselineCallbackCount;
@@ -56,6 +57,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cancelPaymentReturnFallback();
     _completeExternalPaymentTransition();
     super.dispose();
   }
@@ -94,7 +96,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
 
     final baselineCallbackCount = _paymentReturnBaselineCallbackCount;
 
-    Future.delayed(_paymentReturnFallbackDelay, () {
+    _paymentReturnFallbackTimer = Timer(_paymentReturnFallbackDelay, () {
       if (!mounted || !_awaitingPaymentReturn) {
         return;
       }
@@ -103,11 +105,11 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         // A real Laropay deep-link result was processed while we were
         // waiting -- it owns navigation, not this fallback.
         _awaitingPaymentReturn = false;
-        _paymentReturnFallbackScheduled = false;
+        _cancelPaymentReturnFallback();
         return;
       }
       _awaitingPaymentReturn = false;
-      _paymentReturnFallbackScheduled = false;
+      _cancelPaymentReturnFallback();
       final l10n = AppLocalizations.of(context)!;
       setState(() => _loadingPhase = null);
       _showAppointmentMessage(
@@ -120,10 +122,16 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
   }
 
   void _startAwaitingPaymentReturn() {
+    _cancelPaymentReturnFallback();
     _paymentReturnBaselineCallbackCount =
         LaropayReturnNavigationController.handledCallbackCount.value;
-    _paymentReturnFallbackScheduled = false;
     _awaitingPaymentReturn = true;
+  }
+
+  void _cancelPaymentReturnFallback() {
+    _paymentReturnFallbackTimer?.cancel();
+    _paymentReturnFallbackTimer = null;
+    _paymentReturnFallbackScheduled = false;
   }
 
   @override
@@ -320,6 +328,9 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
     final completer = _externalPaymentTransitionCompleter;
     if (completer != null && !completer.isCompleted) {
       completer.complete();
+    }
+    if (identical(_externalPaymentTransitionCompleter, completer)) {
+      _externalPaymentTransitionCompleter = null;
     }
   }
 
