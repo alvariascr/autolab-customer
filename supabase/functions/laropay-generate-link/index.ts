@@ -360,7 +360,7 @@ async function loadOrderPaymentData(
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, workshop_id, payment_status, payment_expires_at, total_amount, customers!inner(user_id)",
+      "id, workshop_id, order_number, order_status, payment_status, payment_expires_at, total_amount, customers!inner(user_id)",
     )
     .eq("id", stringValue(input.internalTransactionId))
     .eq("customers.user_id", user.id)
@@ -375,11 +375,32 @@ async function loadOrderPaymentData(
   }
 
   const order = data as Record<string, unknown>;
+  if (isCancelledOrderStatus(order.order_status)) {
+    throw new Error("order_cancelled");
+  }
+
   if (stringValue(order.payment_status).toLowerCase() !== "unpaid") {
     throw new Error("invalid_order_payment_status");
   }
 
-  if (isExpiredAt(order.payment_expires_at)) {
+  // Appointment orders' payment window is recalculated on every link
+  // generation attempt (see ensureAppointmentOrderPaymentExpiration below),
+  // so a stale/expired payment_expires_at from a previous attempt must not
+  // block a retry before that recalculation runs -- otherwise a customer
+  // whose order sat past its old deadline could never regenerate a link
+  // even though the refreshed end-of-day window would still allow it.
+  let effectivePaymentExpiresAt = order.payment_expires_at;
+  if (stringValue(order.order_number).startsWith("APP-")) {
+    const refreshedExpiresAt = await ensureAppointmentOrderPaymentExpiration(
+      env,
+      stringValue(input.internalTransactionId),
+    );
+    if (refreshedExpiresAt !== null) {
+      effectivePaymentExpiresAt = refreshedExpiresAt.toISOString();
+    }
+  }
+
+  if (isExpiredAt(effectivePaymentExpiresAt)) {
     throw new Error("order_payment_expired");
   }
 
@@ -428,6 +449,93 @@ async function loadOrderPaymentData(
     currencyCode: currencyCode(env.laropayTransactionType),
     workshopId: stringValue(order.workshop_id),
   };
+}
+
+// Appointment orders never get a TTL just from being booked (see migration
+// 202606240001 keep_appointment_order_active) -- the service can be paid at
+// the workshop. Once the customer actually opens a Laropay checkout for one,
+// bound its payment window to the end of the appointment's own day (Costa
+// Rica local time), per MIT-143. This gives the workshop room to check the
+// vehicle in and record payment before the order is swept as abandoned --
+// the sweep itself only ever touches orders still in draft/pending/scheduled
+// (see 202608190003), so once work actually starts this window stops
+// mattering regardless. Recalculated (and returned) on every call, including
+// retries, so a stale expires_at from a previous attempt never gets checked
+// instead of the refreshed one -- see loadOrderPaymentData. Best-effort:
+// failures here must not block link generation.
+async function ensureAppointmentOrderPaymentExpiration(
+  env: Env,
+  orderId: string,
+): Promise<Date | null> {
+  try {
+    const supabase = adminSupabaseClient(env);
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("scheduled_datetime, appointment_status, order_services!inner(order_id)")
+      .eq("order_services.order_id", orderId)
+      .not("appointment_status", "in", "(cancelled,no_show)")
+      .order("scheduled_datetime", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error !== null || data === null) {
+      return null;
+    }
+
+    const scheduledAt = stringValue(
+      (data as Record<string, unknown>).scheduled_datetime,
+    );
+    if (scheduledAt === "") {
+      return null;
+    }
+
+    const expiresAt = endOfCostaRicaDayUtc(scheduledAt);
+    if (expiresAt === null) {
+      return null;
+    }
+
+    await supabase
+      .from("orders")
+      .update({ payment_expires_at: expiresAt.toISOString() })
+      .eq("id", orderId)
+      .eq("payment_status", "unpaid");
+
+    return expiresAt;
+  } catch (error) {
+    console.warn(
+      "[laropay.generate_link] appointment_payment_expiration_failed",
+      safeError(error),
+    );
+    return null;
+  }
+}
+
+// Costa Rica has no DST and is always UTC-6. Given a UTC timestamp, returns
+// the UTC instant for 23:59:59.999 of that same day in Costa Rica local time.
+function endOfCostaRicaDayUtc(value: string): Date | null {
+  const utcDate = new Date(value);
+  if (Number.isNaN(utcDate.getTime())) {
+    return null;
+  }
+
+  const crShifted = new Date(utcDate.getTime() - 6 * 60 * 60 * 1000);
+  return new Date(
+    Date.UTC(
+      crShifted.getUTCFullYear(),
+      crShifted.getUTCMonth(),
+      crShifted.getUTCDate(),
+      29, // 23:59:59.999 CR (UTC-6) normalizes to next-day 05:59:59.999 UTC
+      59,
+      59,
+      999,
+    ),
+  );
+}
+
+function isCancelledOrderStatus(value: unknown) {
+  return ["cancelled", "canceled", "expired"].includes(
+    stringValue(value).toLowerCase(),
+  );
 }
 
 async function reservePendingLink(
@@ -782,6 +890,7 @@ function isBadRequestError(message: string) {
     "invalid_order_total",
     "order_payment_expired",
     "order_has_no_chargeable_products",
+    "order_cancelled",
   ].includes(message);
 }
 

@@ -42,7 +42,31 @@ type LaropayStatusOutcome =
   | "pending"
   | "rejected"
   | "expired"
-  | "failed";
+  | "failed"
+  | "cancelled";
+
+// On this gateway (Cloud2Pay/Pay-me), the top-level `response` field is
+// always "00" regardless of outcome -- the real result lives inside
+// listOfAuthorizations[].autorizationResponseCode/Description. When the
+// customer explicitly cancels, Laropay's own "Motivo de Cancelacion" dialog
+// echoes back one of its fixed reasons in that description field. These are
+// the exhaustive set of reasons offered by that dialog (confirmed against a
+// live test), not a guess from the static response-code catalog.
+const EXPLICIT_CANCELLATION_REASONS = new Set([
+  "no reconoce el cargo",
+  "rechazo por monto invalido",
+  "ya no requiere servicio",
+]);
+
+const _combiningDiacriticsPattern = new RegExp("[\\u0300-\\u036f]", "g");
+
+function isExplicitCancellationDescription(value: unknown) {
+  const normalized = stringValue(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(_combiningDiacriticsPattern, "");
+  return EXPLICIT_CANCELLATION_REASONS.has(normalized);
+}
 
 const corsHeaders = {
   "access-control-allow-origin": "*",
@@ -156,7 +180,11 @@ Deno.serve(async (request) => {
     let certifierResponse: Record<string, unknown> | null = null;
     let certifierOutcome: LaropayStatusOutcome | null = null;
 
-    if (verifyOutcome !== "rejected" && verifyOutcome !== "expired") {
+    if (
+      verifyOutcome !== "rejected" &&
+      verifyOutcome !== "expired" &&
+      verifyOutcome !== "cancelled"
+    ) {
       certifierResponse = await callLaropayStatus(
         "ConsultTransactionInCertifier",
         linkID,
@@ -579,6 +607,19 @@ function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {
       return "paid";
     }
 
+    // Checked unconditionally: the cancellation description is the
+    // authoritative signal regardless of whether Laropay also populated
+    // autorizationResponseCode for this authorization -- a cancellation
+    // with an empty code must still be detected, not silently ignored.
+    if (
+      isExplicitCancellationDescription(
+        authorization.autorizationResponseCodeDescription ??
+          authorization.authorizationResponseCodeDescription,
+      )
+    ) {
+      return "cancelled";
+    }
+
     if (code !== "") {
       hasDeclinedAuthorization = true;
     }
@@ -631,6 +672,13 @@ function resolveFinalStatus(input: {
 }): LaropayStatusOutcome {
   if (input.certifierOutcome === "paid" || input.verifyOutcome === "paid") {
     return "paid";
+  }
+
+  if (
+    input.certifierOutcome === "cancelled" ||
+    input.verifyOutcome === "cancelled"
+  ) {
+    return "cancelled";
   }
 
   if (
@@ -748,9 +796,14 @@ function responseFromPaymentLink(paymentLink: PaymentLinkRow, cached: boolean) {
 }
 
 function isFinalStatus(status: unknown) {
-  return ["paid", "approved", "completed", "rejected", "expired"].includes(
-    stringValue(status).toLowerCase(),
-  );
+  return [
+    "paid",
+    "approved",
+    "completed",
+    "rejected",
+    "expired",
+    "cancelled",
+  ].includes(stringValue(status).toLowerCase());
 }
 
 function statusIncludes(value: string, patterns: string[]) {
