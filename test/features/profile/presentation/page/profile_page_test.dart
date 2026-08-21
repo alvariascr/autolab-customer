@@ -176,7 +176,10 @@ GoRouter _buildRouter() {
       ),
       GoRoute(
         path: '/appointments',
-        builder: (_, _) => const MyAppointmentsPage(),
+        builder: (_, _) => BlocProvider<NotificationsCubit>.value(
+          value: notificationsCubit,
+          child: const MyAppointmentsPage(),
+        ),
       ),
       GoRoute(path: '/vehicles', builder: (_, _) => const VehiclesPage()),
       GoRoute(

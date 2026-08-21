@@ -7,18 +7,29 @@ import '../cubit/notifications_cubit.dart';
 import '../cubit/notifications_state.dart';
 
 class CustomerNotificationBell extends StatelessWidget {
-  const CustomerNotificationBell({super.key, required this.onTap});
+  const CustomerNotificationBell({
+    super.key,
+    required this.onTap,
+    this.iconColor,
+    this.indicatorBorderColor,
+    this.iconSize,
+  });
 
   final VoidCallback onTap;
+  final Color? iconColor;
+  final Color? indicatorBorderColor;
+  final double? iconSize;
 
   @override
   Widget build(BuildContext context) {
-    final iconSize = AutolabCustomer.responsiveDouble(
-      context,
-      compact: AutolabCustomer.iconMd,
-      regular: AutolabCustomer.iconLg - 4,
-      tablet: AutolabCustomer.iconLg,
-    );
+    final resolvedIconSize =
+        iconSize ??
+        AutolabCustomer.responsiveDouble(
+          context,
+          compact: AutolabCustomer.iconMd,
+          regular: AutolabCustomer.iconLg - 4,
+          tablet: AutolabCustomer.iconLg,
+        );
 
     return BlocSelector<NotificationsCubit, NotificationsState, bool>(
       selector: (state) => state.hasUnread,
@@ -32,8 +43,8 @@ class CustomerNotificationBell extends StatelessWidget {
           children: [
             Icon(
               Icons.notifications_none_rounded,
-              color: AutolabCustomer.customerTextColor(context),
-              size: iconSize,
+              color: iconColor ?? AutolabCustomer.customerTextColor(context),
+              size: resolvedIconSize,
             ),
             if (hasUnread)
               Positioned(
@@ -47,7 +58,9 @@ class CustomerNotificationBell extends StatelessWidget {
                     color: AutolabCustomer.primary,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AutolabCustomer.customerBackgroundColor(context),
+                      color:
+                          indicatorBorderColor ??
+                          AutolabCustomer.customerBackgroundColor(context),
                       width: 1.5,
                     ),
                   ),

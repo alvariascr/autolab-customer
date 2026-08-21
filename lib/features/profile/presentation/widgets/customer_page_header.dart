@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../notifications/presentation/widgets/customer_notification_bell.dart';
 
 class CustomerPageHeader extends StatelessWidget {
   const CustomerPageHeader({
     super.key,
     required this.title,
     required this.onBack,
-    this.notificationTooltip,
     this.onNotificationTap,
   });
 
   final String title;
   final VoidCallback onBack;
-  final String? notificationTooltip;
   final VoidCallback? onNotificationTap;
 
   @override
@@ -57,14 +56,7 @@ class CustomerPageHeader extends StatelessWidget {
               Positioned(
                 right: 0,
                 bottom: 0,
-                child: IconButton(
-                  tooltip: notificationTooltip,
-                  onPressed: onNotificationTap,
-                  icon: Icon(
-                    Icons.notifications_none_rounded,
-                    color: AutolabCustomer.customerTextColor(context),
-                  ),
-                ),
+                child: CustomerNotificationBell(onTap: onNotificationTap!),
               ),
           ],
         ),
