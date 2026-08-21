@@ -2138,11 +2138,17 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tu orden fue aprobada correctamente. Ya puedes revisar el detalle en Mis órdenes.';
 
   @override
+  String get laropayPaymentResultCancelledTitle => 'Orden cancelada';
+
+  @override
+  String get laropayPaymentResultCancelledMessage => '';
+
+  @override
   String get laropayPaymentResultRejectedTitle => 'Pago no procesado';
 
   @override
   String get laropayPaymentResultRejectedMessage =>
-      'Laropay no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.';
+      'La pasarela de pago no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.';
 
   @override
   String get laropayPaymentResultExpiredTitle => 'Link vencido';
@@ -2156,20 +2162,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get laropayPaymentResultPendingMessage =>
-      'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis órdenes.';
+      'Estamos esperando la confirmación de la pasarela de pago. Puedes actualizar el estado desde Mis órdenes.';
 
   @override
   String get laropayPaymentResultViewPurchasesAction => 'Ver mis órdenes';
+
+  @override
+  String get laropayPaymentResultCloseAction => 'Cerrar';
 
   @override
   String get laropayPaymentResultBackToWorkshopAction => 'Volver al taller';
 
   @override
   String get laropayPaymentStartError =>
-      'La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.';
+      'La cita fue creada, pero no fue posible abrir la pasarela de pago. Revisa el estado de tu cita más tarde.';
 
   @override
-  String get laropayPaymentStartErrorTitle => 'No fue posible abrir Laropay';
+  String get laropayPaymentStartErrorTitle =>
+      'No fue posible abrir la pasarela de pago';
+
+  @override
+  String get laropayPaymentGatewayClosedMessage =>
+      'Cerraste la pasarela de pago. Revisa el estado de tu orden en Mis órdenes.';
 
   @override
   String get laropayRetryAction => 'Reintentar';
@@ -2405,6 +2419,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Estamos abriendo la pasarela de pago. No cierres la app.';
 
   @override
+  String get cartConfirmingPaymentTitle => 'Confirmando tu pago';
+
+  @override
+  String get cartConfirmingPaymentMessage =>
+      'Estamos verificando el resultado, un momento.';
+
+  @override
   String cartCreateOrderSuccess(Object orderNumber) {
     return 'Orden $orderNumber creada correctamente.';
   }
@@ -2476,6 +2497,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPurchasesSubtitle => 'Consulta tus órdenes y pagos';
 
   @override
+  String get myPurchasesFilterByDateAction => 'Filtrar por fecha';
+
+  @override
+  String get myPurchasesClearFilterAction => 'Limpiar filtro';
+
+  @override
+  String get myPurchasesFilterEmptyTitle => 'Sin resultados';
+
+  @override
+  String get myPurchasesFilterEmptyMessage =>
+      'No hay órdenes en ese rango de fechas.';
+
+  @override
   String get myPurchasesEmptyTitle => 'Aún no tienes órdenes';
 
   @override
@@ -2498,6 +2532,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPurchasesApprovedStatus => 'Procesado';
 
   @override
+  String get myPurchasesCancelledStatus => 'Cancelado';
+
+  @override
   String get myPurchasesRejectedStatus => 'No procesado';
 
   @override
@@ -2511,7 +2548,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPurchasesPendingMessage =>
-      'El link fue generado. Esperamos la confirmación de Laropay.';
+      'El link fue generado. Esperamos la confirmación de la pasarela de pago.';
 
   @override
   String get myPurchasesPartialMessage =>
@@ -2520,6 +2557,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get myPurchasesApprovedMessage =>
       'El pago fue confirmado correctamente.';
+
+  @override
+  String get myPurchasesCancelledMessage =>
+      'Los productos y el cupo quedaron liberados. Puedes agendar o comprar de nuevo cuando quieras.';
 
   @override
   String get myPurchasesRejectedMessage => 'El pago no pudo ser procesado.';
@@ -2569,8 +2610,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPurchasesRefreshStatusAction => 'Actualizar estado';
 
   @override
-  String get myPurchasesRefreshingReturnedPayment =>
-      'Estamos confirmando tu pago con Laropay.';
+  String get myPurchasesShowDetailAction => 'Ver detalle';
+
+  @override
+  String get myPurchasesHideDetailAction => 'Ocultar detalle';
 
   @override
   String get myPurchasesStatusRefreshSuccess => 'Estado de pago actualizado.';

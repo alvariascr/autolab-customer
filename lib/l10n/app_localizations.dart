@@ -3874,6 +3874,18 @@ abstract class AppLocalizations {
   /// **'Tu orden fue aprobada correctamente. Ya puedes revisar el detalle en Mis órdenes.'**
   String get laropayPaymentResultPaidMessage;
 
+  /// No description provided for @laropayPaymentResultCancelledTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Orden cancelada'**
+  String get laropayPaymentResultCancelledTitle;
+
+  /// No description provided for @laropayPaymentResultCancelledMessage.
+  ///
+  /// In es, this message translates to:
+  /// **''**
+  String get laropayPaymentResultCancelledMessage;
+
   /// No description provided for @laropayPaymentResultRejectedTitle.
   ///
   /// In es, this message translates to:
@@ -3883,7 +3895,7 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultRejectedMessage.
   ///
   /// In es, this message translates to:
-  /// **'Laropay no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.'**
+  /// **'La pasarela de pago no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.'**
   String get laropayPaymentResultRejectedMessage;
 
   /// No description provided for @laropayPaymentResultExpiredTitle.
@@ -3907,7 +3919,7 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultPendingMessage.
   ///
   /// In es, this message translates to:
-  /// **'Estamos esperando la confirmación de Laropay. Puedes actualizar el estado desde Mis órdenes.'**
+  /// **'Estamos esperando la confirmación de la pasarela de pago. Puedes actualizar el estado desde Mis órdenes.'**
   String get laropayPaymentResultPendingMessage;
 
   /// No description provided for @laropayPaymentResultViewPurchasesAction.
@@ -3915,6 +3927,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver mis órdenes'**
   String get laropayPaymentResultViewPurchasesAction;
+
+  /// No description provided for @laropayPaymentResultCloseAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get laropayPaymentResultCloseAction;
 
   /// No description provided for @laropayPaymentResultBackToWorkshopAction.
   ///
@@ -3925,14 +3943,20 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentStartError.
   ///
   /// In es, this message translates to:
-  /// **'La cita fue creada, pero no fue posible abrir el pago de Laropay. Revisa el estado de tu cita más tarde.'**
+  /// **'La cita fue creada, pero no fue posible abrir la pasarela de pago. Revisa el estado de tu cita más tarde.'**
   String get laropayPaymentStartError;
 
   /// No description provided for @laropayPaymentStartErrorTitle.
   ///
   /// In es, this message translates to:
-  /// **'No fue posible abrir Laropay'**
+  /// **'No fue posible abrir la pasarela de pago'**
   String get laropayPaymentStartErrorTitle;
+
+  /// No description provided for @laropayPaymentGatewayClosedMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerraste la pasarela de pago. Revisa el estado de tu orden en Mis órdenes.'**
+  String get laropayPaymentGatewayClosedMessage;
 
   /// No description provided for @laropayRetryAction.
   ///
@@ -4330,6 +4354,18 @@ abstract class AppLocalizations {
   /// **'Estamos abriendo la pasarela de pago. No cierres la app.'**
   String get cartOpeningLaropayMessage;
 
+  /// No description provided for @cartConfirmingPaymentTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmando tu pago'**
+  String get cartConfirmingPaymentTitle;
+
+  /// No description provided for @cartConfirmingPaymentMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos verificando el resultado, un momento.'**
+  String get cartConfirmingPaymentMessage;
+
   /// No description provided for @cartCreateOrderSuccess.
   ///
   /// In es, this message translates to:
@@ -4450,6 +4486,30 @@ abstract class AppLocalizations {
   /// **'Consulta tus órdenes y pagos'**
   String get myPurchasesSubtitle;
 
+  /// No description provided for @myPurchasesFilterByDateAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtrar por fecha'**
+  String get myPurchasesFilterByDateAction;
+
+  /// No description provided for @myPurchasesClearFilterAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar filtro'**
+  String get myPurchasesClearFilterAction;
+
+  /// No description provided for @myPurchasesFilterEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin resultados'**
+  String get myPurchasesFilterEmptyTitle;
+
+  /// No description provided for @myPurchasesFilterEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay órdenes en ese rango de fechas.'**
+  String get myPurchasesFilterEmptyMessage;
+
   /// No description provided for @myPurchasesEmptyTitle.
   ///
   /// In es, this message translates to:
@@ -4492,6 +4552,12 @@ abstract class AppLocalizations {
   /// **'Procesado'**
   String get myPurchasesApprovedStatus;
 
+  /// No description provided for @myPurchasesCancelledStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelado'**
+  String get myPurchasesCancelledStatus;
+
   /// No description provided for @myPurchasesRejectedStatus.
   ///
   /// In es, this message translates to:
@@ -4519,7 +4585,7 @@ abstract class AppLocalizations {
   /// No description provided for @myPurchasesPendingMessage.
   ///
   /// In es, this message translates to:
-  /// **'El link fue generado. Esperamos la confirmación de Laropay.'**
+  /// **'El link fue generado. Esperamos la confirmación de la pasarela de pago.'**
   String get myPurchasesPendingMessage;
 
   /// No description provided for @myPurchasesPartialMessage.
@@ -4533,6 +4599,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El pago fue confirmado correctamente.'**
   String get myPurchasesApprovedMessage;
+
+  /// No description provided for @myPurchasesCancelledMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Los productos y el cupo quedaron liberados. Puedes agendar o comprar de nuevo cuando quieras.'**
+  String get myPurchasesCancelledMessage;
 
   /// No description provided for @myPurchasesRejectedMessage.
   ///
@@ -4624,11 +4696,17 @@ abstract class AppLocalizations {
   /// **'Actualizar estado'**
   String get myPurchasesRefreshStatusAction;
 
-  /// No description provided for @myPurchasesRefreshingReturnedPayment.
+  /// No description provided for @myPurchasesShowDetailAction.
   ///
   /// In es, this message translates to:
-  /// **'Estamos confirmando tu pago con Laropay.'**
-  String get myPurchasesRefreshingReturnedPayment;
+  /// **'Ver detalle'**
+  String get myPurchasesShowDetailAction;
+
+  /// No description provided for @myPurchasesHideDetailAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ocultar detalle'**
+  String get myPurchasesHideDetailAction;
 
   /// No description provided for @myPurchasesStatusRefreshSuccess.
   ///
