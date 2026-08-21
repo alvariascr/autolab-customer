@@ -42,8 +42,7 @@ class StartupPreloader {
     }
 
     final locationCubit = sl<LocationCubit>();
-    if (locationCubit.state.status == LocationFlowStatus.loading ||
-        locationCubit.state.effectiveStatus == LocationFlowStatus.success) {
+    if (locationCubit.state.status == LocationFlowStatus.loading) {
       return;
     }
 
