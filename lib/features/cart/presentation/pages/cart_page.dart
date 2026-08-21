@@ -163,7 +163,8 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                 ),
                               ],
                               const SizedBox(height: AutolabCustomer.spacingSm),
-                              if (!isShowingCartList)
+                              if (!isShowingCartList &&
+                                  activeCart.items.isNotEmpty)
                                 _CartPrimaryButton(
                                   label: showCheckout
                                       ? isCheckingOut
@@ -410,7 +411,7 @@ class _CartCheckoutLoadingOverlay extends StatelessWidget {
 
     return Positioned.fill(
       child: ColoredBox(
-        color: AutolabCustomer.overlayBlackLight,
+        color: AutolabCustomer.overlayBlackMedium,
         child: Center(
           child: DecoratedBox(
             decoration: BoxDecoration(

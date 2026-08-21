@@ -328,7 +328,7 @@ class _WorkshopCardColors {
       text: AutolabCustomer.customerTextColor(context),
       secondaryText: AutolabCustomer.customerSecondaryTextColor(context),
       avatarBackground: AutolabCustomer.background,
-      iconOnAvatar: AutolabCustomer.customerLightText,
+      iconOnAvatar: AutolabCustomer.secondary,
       chipBackground: AutolabCustomer.customerChipBackgroundColor(context),
     );
   }

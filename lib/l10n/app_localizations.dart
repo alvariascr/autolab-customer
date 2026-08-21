@@ -2272,6 +2272,120 @@ abstract class AppLocalizations {
   /// **'Ver taller'**
   String get workshopSearchProductsViewWorkshopTooltip;
 
+  /// No description provided for @workshopSearchProductsResultsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 resultado} other{{count} resultados}}'**
+  String workshopSearchProductsResultsCount(num count);
+
+  /// No description provided for @workshopSearchProductsSortLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Ordenar'**
+  String get workshopSearchProductsSortLabel;
+
+  /// No description provided for @workshopSearchProductsSortRelevance.
+  ///
+  /// In es, this message translates to:
+  /// **'Relevancia'**
+  String get workshopSearchProductsSortRelevance;
+
+  /// No description provided for @workshopSearchProductsSortLowestPrice.
+  ///
+  /// In es, this message translates to:
+  /// **'Menor precio'**
+  String get workshopSearchProductsSortLowestPrice;
+
+  /// No description provided for @workshopSearchProductsSortHighestPrice.
+  ///
+  /// In es, this message translates to:
+  /// **'Mayor precio'**
+  String get workshopSearchProductsSortHighestPrice;
+
+  /// No description provided for @workshopSearchProductsSortName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get workshopSearchProductsSortName;
+
+  /// No description provided for @workshopSearchProductsBrandLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca'**
+  String get workshopSearchProductsBrandLabel;
+
+  /// No description provided for @workshopSearchProductsCategoryLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get workshopSearchProductsCategoryLabel;
+
+  /// No description provided for @workshopSearchProductsTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo'**
+  String get workshopSearchProductsTypeLabel;
+
+  /// No description provided for @workshopSearchProductsAllOption.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get workshopSearchProductsAllOption;
+
+  /// No description provided for @workshopSearchProductsAllTypesOption.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get workshopSearchProductsAllTypesOption;
+
+  /// No description provided for @workshopSearchProductsAvailableLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Disponibles'**
+  String get workshopSearchProductsAvailableLabel;
+
+  /// No description provided for @workshopSearchProductsServiceType.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios'**
+  String get workshopSearchProductsServiceType;
+
+  /// No description provided for @workshopSearchProductsProductType.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos'**
+  String get workshopSearchProductsProductType;
+
+  /// No description provided for @workshopSearchProductsPartType.
+  ///
+  /// In es, this message translates to:
+  /// **'Repuestos'**
+  String get workshopSearchProductsPartType;
+
+  /// No description provided for @workshopSearchProductsSupplyType.
+  ///
+  /// In es, this message translates to:
+  /// **'Insumos'**
+  String get workshopSearchProductsSupplyType;
+
+  /// No description provided for @workshopSearchProductsEmptyType.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin tipo'**
+  String get workshopSearchProductsEmptyType;
+
+  /// No description provided for @workshopSearchProductsStockAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'En stock'**
+  String get workshopSearchProductsStockAvailable;
+
+  /// No description provided for @workshopSearchProductsRequiresAppointment.
+  ///
+  /// In es, this message translates to:
+  /// **'Requiere cita'**
+  String get workshopSearchProductsRequiresAppointment;
+
   /// No description provided for @workshopProfileBusinessHoursTitle.
   ///
   /// In es, this message translates to:

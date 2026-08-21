@@ -401,6 +401,32 @@
   "workshopSearchProductsEmpty": "No encontramos productos o servicios con esos filtros.",
   "workshopSearchProductsClearTooltip": "Limpiar búsqueda",
   "workshopSearchProductsViewWorkshopTooltip": "Ver taller",
+  "workshopSearchProductsResultsCount": "{count, plural, =1{1 resultado} other{{count} resultados}}",
+  "@workshopSearchProductsResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "workshopSearchProductsSortLabel": "Ordenar",
+  "workshopSearchProductsSortRelevance": "Relevancia",
+  "workshopSearchProductsSortLowestPrice": "Menor precio",
+  "workshopSearchProductsSortHighestPrice": "Mayor precio",
+  "workshopSearchProductsSortName": "Nombre",
+  "workshopSearchProductsBrandLabel": "Marca",
+  "workshopSearchProductsCategoryLabel": "Categoría",
+  "workshopSearchProductsTypeLabel": "Tipo",
+  "workshopSearchProductsAllOption": "Todas",
+  "workshopSearchProductsAllTypesOption": "Todos",
+  "workshopSearchProductsAvailableLabel": "Disponibles",
+  "workshopSearchProductsServiceType": "Servicios",
+  "workshopSearchProductsProductType": "Productos",
+  "workshopSearchProductsPartType": "Repuestos",
+  "workshopSearchProductsSupplyType": "Insumos",
+  "workshopSearchProductsEmptyType": "Sin tipo",
+  "workshopSearchProductsStockAvailable": "En stock",
+  "workshopSearchProductsRequiresAppointment": "Requiere cita",
   "workshopProfileBusinessHoursTitle": "Horario",
   "workshopProfileBusinessHoursEmpty": "Horario no disponible",
   "workshopProfileClosed": "Cerrado",

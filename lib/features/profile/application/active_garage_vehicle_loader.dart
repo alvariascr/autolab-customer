@@ -3,4 +3,10 @@ import '../domain/usecases/get_default_garage_vehicle.dart';
 
 Future<GarageVehicle?> loadActiveGarageVehicle(
   GetDefaultGarageVehicle getDefaultGarageVehicle,
-) => getDefaultGarageVehicle();
+) async {
+  try {
+    return await getDefaultGarageVehicle();
+  } catch (_) {
+    return null;
+  }
+}
