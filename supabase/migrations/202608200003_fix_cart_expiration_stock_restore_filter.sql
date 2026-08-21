@@ -9,6 +9,23 @@
 -- (202608190001/202608190003), which filters product_status = 'pending' in
 -- both the restored_units count and the stock-restore update -- this
 -- function was simply missing that same filter.
+--
+-- Operational audit query for environments where the previous function may
+-- have already run. Review the result before applying manual inventory fixes:
+--
+-- select
+--   op.inventory_item_id,
+--   ii.name,
+--   sum(op.quantity)::integer as quantity_from_non_pending_lines
+-- from public.orders o
+-- join public.order_products op on op.order_id = o.id
+-- left join public.inventory_items ii on ii.id = op.inventory_item_id
+-- where o.order_number like 'CART-%'
+--   and o.order_status::text in ('expired', 'cancelled', 'canceled')
+--   and coalesce(o.paid_amount, 0) = 0
+--   and op.product_status::text <> 'pending'
+-- group by op.inventory_item_id, ii.name
+-- order by quantity_from_non_pending_lines desc;
 
 create or replace function public.expire_abandoned_cart_orders(
   p_limit integer default 100

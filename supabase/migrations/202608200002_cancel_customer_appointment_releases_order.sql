@@ -28,6 +28,7 @@ declare
   v_note text;
   v_reason text;
   v_order_id uuid;
+  v_active_appointment_count integer;
   v_result jsonb;
 begin
   if v_user_id is null then
@@ -58,6 +59,17 @@ begin
     raise exception using message = 'appointment_not_cancelable';
   end if;
 
+  select count(*)::integer
+  into v_active_appointment_count
+  from public.appointments a
+  join public.order_services os on os.id = a.order_service_id
+  where os.order_id = v_order_id
+    and a.appointment_status not in ('cancelled', 'no_show');
+
+  if v_active_appointment_count <> 1 then
+    raise exception using message = 'appointment_order_has_other_appointments';
+  end if;
+
   v_result := public.cancel_order_and_release_resources(
     v_order_id,
     'customer_cancelled_appointment',
@@ -72,6 +84,7 @@ begin
 
   update public.appointments a
   set
+    cancellation_reason = v_reason,
     note = case
       when coalesce(trim(a.note), '') = '' then v_note
       else a.note || E'\n' || v_note

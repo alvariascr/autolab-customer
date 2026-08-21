@@ -140,4 +140,16 @@ from public, anon, authenticated;
 grant execute on function public.expire_abandoned_cart_orders(integer)
 to service_role;
 
+-- Backfill CART orders that were swept before cancellation_reason/cancelled_at
+-- were populated by expire_abandoned_cart_orders.
+update public.orders o
+set
+  cancellation_reason = 'payment_ttl_expired',
+  cancelled_at = coalesce(o.cancelled_at, o.updated_at),
+  updated_at = now()
+where o.order_number like 'CART-%'
+  and o.order_status::text in ('expired', 'cancelled', 'canceled')
+  and o.cancellation_reason is null
+  and coalesce(o.paid_amount, 0) = 0;
+
 notify pgrst, 'reload schema';

@@ -13,6 +13,7 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../cart/presentation/widgets/cart_floating_checkout_button.dart';
+import '../../../payments/application/laropay_payment_url_policy.dart';
 import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../../../payments/presentation/widgets/laropay_payment_result_dialog.dart';
 import '../../../products/application/product_inventory_refresh_notifier.dart';
@@ -256,7 +257,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
   }
 
   Future<void> _reopenPaymentLink(Uri linkUrl) async {
-    if (!linkUrl.isScheme('https')) {
+    if (!LaropayPaymentUrlPolicy.isAllowed(linkUrl)) {
       return;
     }
 

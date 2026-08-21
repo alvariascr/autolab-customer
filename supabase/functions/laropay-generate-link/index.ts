@@ -461,8 +461,9 @@ async function loadOrderPaymentData(
 // (see 202608190003), so once work actually starts this window stops
 // mattering regardless. Recalculated (and returned) on every call, including
 // retries, so a stale expires_at from a previous attempt never gets checked
-// instead of the refreshed one -- see loadOrderPaymentData. Best-effort:
-// failures here must not block link generation.
+// instead of the refreshed one -- see loadOrderPaymentData. If persisting the
+// refreshed value fails, return null so callers validate the value actually
+// stored in the database instead of an in-memory timestamp.
 async function ensureAppointmentOrderPaymentExpiration(
   env: Env,
   orderId: string,
@@ -494,11 +495,18 @@ async function ensureAppointmentOrderPaymentExpiration(
       return null;
     }
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("orders")
       .update({ payment_expires_at: expiresAt.toISOString() })
       .eq("id", orderId)
       .eq("payment_status", "unpaid");
+    if (updateError !== null) {
+      console.warn(
+        "[laropay.generate_link] appointment_payment_expiration_update_failed",
+        safeError(updateError),
+      );
+      return null;
+    }
 
     return expiresAt;
   } catch (error) {
@@ -891,6 +899,7 @@ function isBadRequestError(message: string) {
     "order_payment_expired",
     "order_has_no_chargeable_products",
     "order_cancelled",
+    "invalid_order_payment_status",
   ].includes(message);
 }
 

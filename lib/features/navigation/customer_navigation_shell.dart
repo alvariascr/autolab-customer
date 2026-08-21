@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/di/app_injection.dart';
 import '../../core/theme/autolab_customer.dart';
@@ -35,6 +36,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   // not per-widget) so returning to /home-customer without an explicit tab
   // remembers where the customer actually was.
   static int _lastNavIndex = 0;
+  static String? _lastAuthUserId;
 
   final HomeCustomerController _homeController = HomeCustomerController();
   late final CartCubit _cartCubit;
@@ -45,6 +47,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   void initState() {
     super.initState();
     _cartCubit = sl<CartCubit>();
+    _resetRememberedTabIfUserChanged();
     _setInitialIndex(widget.initialIndex ?? _lastNavIndex);
     _refreshCartIfSelected();
   }
@@ -70,6 +73,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   void _setInitialIndex(int index) {
     _navIndex = index;
     _lastNavIndex = index;
+    _lastAuthUserId = _currentAuthUserId();
     _pageIndex = switch (index) {
       0 => 0,
       1 => 1,
@@ -78,6 +82,21 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
       4 => 2,
       _ => 0,
     };
+  }
+
+  void _resetRememberedTabIfUserChanged() {
+    final currentUserId = _currentAuthUserId();
+    if (_lastAuthUserId != null && _lastAuthUserId != currentUserId) {
+      _lastNavIndex = 0;
+    }
+    _lastAuthUserId = currentUserId;
+  }
+
+  String? _currentAuthUserId() {
+    if (!sl.isRegistered<SupabaseClient>()) {
+      return null;
+    }
+    return sl<SupabaseClient>().auth.currentUser?.id;
   }
 
   void _handleNavigation(int index) {

@@ -10,6 +10,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../../profile/presentation/widgets/customer_page_header.dart';
+import '../../application/laropay_payment_url_policy.dart';
 import '../../domain/entities/laropay_purchase.dart';
 import '../../domain/usecases/get_laropay_purchases.dart';
 import '../../domain/usecases/refresh_laropay_purchase_status.dart';
@@ -325,7 +326,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     final linkUrl = purchase.linkUrl;
     final l10n = AppLocalizations.of(context)!;
 
-    if (linkUrl == null || !linkUrl.isScheme('https')) {
+    if (!LaropayPaymentUrlPolicy.isAllowed(linkUrl)) {
       _showMessage(
         message: l10n.myPurchasesLinkOpenError,
         color: AutolabCustomer.error,
@@ -334,7 +335,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     }
 
     final opened = await launchUrl(
-      linkUrl,
+      linkUrl!,
       mode: LaunchMode.externalApplication,
     );
 
@@ -383,6 +384,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
   Future<void> _refreshReturnedPayment(String paymentLinkId) async {
     final l10n = AppLocalizations.of(context)!;
+    var shouldClearPaymentLink = false;
 
     try {
       final result = await sl<RefreshLaropayPurchaseStatus>()(paymentLinkId);
@@ -409,6 +411,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
           ),
         ],
       );
+      shouldClearPaymentLink = true;
 
       if (mounted) {
         await _reload();
@@ -416,7 +419,9 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     } finally {
       if (mounted) {
         setState(() => _isProcessingPaymentReturn = false);
-        context.replace('/purchases');
+        if (shouldClearPaymentLink) {
+          context.replace('/purchases');
+        }
       }
     }
   }

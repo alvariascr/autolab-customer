@@ -82,6 +82,11 @@ begin
   if v_order.order_status::text <> 'pending'
     or v_order.payment_status::text <> 'unpaid'
     or coalesce(v_order.paid_amount, 0) <> 0
+    or exists (
+      select 1
+      from public.payments p
+      where p.order_id = p_order_id
+    )
   then
     return jsonb_build_object(
       'orderId', p_order_id,
@@ -483,7 +488,7 @@ to service_role;
 
 -- Actually schedule both sweeps -- expire_abandoned_cart_orders has existed
 -- since 202608130001 but nothing has ever invoked it.
-create extension if not exists pg_cron;
+create extension if not exists pg_cron with schema pg_catalog;
 
 select cron.schedule(
   'expire-abandoned-cart-orders',

@@ -44,6 +44,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
   _AppointmentLoadingPhase? _loadingPhase;
   Completer<void>? _externalPaymentTransitionCompleter;
   bool _awaitingPaymentReturn = false;
+  bool _paymentReturnFallbackScheduled = false;
   int? _paymentReturnBaselineCallbackCount;
 
   @override
@@ -81,6 +82,10 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
     if (!_awaitingPaymentReturn) {
       return;
     }
+    if (_paymentReturnFallbackScheduled) {
+      return;
+    }
+    _paymentReturnFallbackScheduled = true;
 
     // The gateway is no longer "opening" once we're back -- update the
     // overlay copy so it doesn't read as if we're about to reopen it while
@@ -98,9 +103,11 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         // A real Laropay deep-link result was processed while we were
         // waiting -- it owns navigation, not this fallback.
         _awaitingPaymentReturn = false;
+        _paymentReturnFallbackScheduled = false;
         return;
       }
       _awaitingPaymentReturn = false;
+      _paymentReturnFallbackScheduled = false;
       final l10n = AppLocalizations.of(context)!;
       setState(() => _loadingPhase = null);
       _showAppointmentMessage(
@@ -110,6 +117,13 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
       );
       context.go('/purchases');
     });
+  }
+
+  void _startAwaitingPaymentReturn() {
+    _paymentReturnBaselineCallbackCount =
+        LaropayReturnNavigationController.handledCallbackCount.value;
+    _paymentReturnFallbackScheduled = false;
+    _awaitingPaymentReturn = true;
   }
 
   @override
@@ -368,6 +382,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
             if (!context.mounted) {
               return;
             }
+            _startAwaitingPaymentReturn();
             await _waitForExternalPaymentTransition();
             if (!context.mounted) {
               return;
@@ -375,9 +390,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
             // Keep the payment overlay visible; only navigate away if the
             // customer comes back without a payment result already having
             // taken over (see _handlePaymentReturnIfAbandoned).
-            _paymentReturnBaselineCallbackCount =
-                LaropayReturnNavigationController.handledCallbackCount.value;
-            _awaitingPaymentReturn = true;
+            _handlePaymentReturnIfAbandoned();
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
               return;

@@ -52,20 +52,28 @@ type LaropayStatusOutcome =
 // echoes back one of its fixed reasons in that description field. These are
 // the exhaustive set of reasons offered by that dialog (confirmed against a
 // live test), not a guess from the static response-code catalog.
-const EXPLICIT_CANCELLATION_REASONS = new Set([
+const EXPLICIT_CANCELLATION_REASONS = [
   "no reconoce el cargo",
   "rechazo por monto invalido",
   "ya no requiere servicio",
-]);
+];
 
 const _combiningDiacriticsPattern = new RegExp("[\\u0300-\\u036f]", "g");
+const _whitespacePattern = new RegExp("\\s+", "g");
 
 function isExplicitCancellationDescription(value: unknown) {
   const normalized = stringValue(value)
     .toLowerCase()
     .normalize("NFD")
-    .replace(_combiningDiacriticsPattern, "");
-  return EXPLICIT_CANCELLATION_REASONS.has(normalized);
+    .replace(_combiningDiacriticsPattern, "")
+    .replace(_whitespacePattern, " ")
+    .trim();
+  if (normalized === "") {
+    return false;
+  }
+  return EXPLICIT_CANCELLATION_REASONS.some((reason) =>
+    normalized.includes(reason)
+  );
 }
 
 const corsHeaders = {

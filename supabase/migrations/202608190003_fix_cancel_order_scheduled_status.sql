@@ -81,6 +81,11 @@ begin
   if v_order.order_status::text not in ('draft', 'pending', 'scheduled')
     or v_order.payment_status::text <> 'unpaid'
     or coalesce(v_order.paid_amount, 0) <> 0
+    or exists (
+      select 1
+      from public.payments p
+      where p.order_id = p_order_id
+    )
   then
     return jsonb_build_object(
       'orderId', p_order_id,
@@ -175,6 +180,36 @@ from public, anon, authenticated;
 
 grant execute on function public.cancel_order_and_release_resources(uuid, text, uuid)
 to service_role;
+
+-- Backfill links that were already marked cancelled before this migration
+-- made draft/scheduled orders eligible for the shared cancellation path.
+do $$
+declare
+  v_link record;
+begin
+  for v_link in
+    select distinct on (o.id)
+      o.id as order_id
+    from public.laropay_payment_links lpl
+    join public.orders o on o.id::text = lpl.internal_transaction_id
+    where lpl.status = 'cancelled'
+      and o.order_status::text in ('draft', 'pending', 'scheduled')
+      and o.payment_status::text = 'unpaid'
+      and coalesce(o.paid_amount, 0) = 0
+      and not exists (
+        select 1
+        from public.payments p
+        where p.order_id = o.id
+      )
+    order by o.id, lpl.updated_at desc nulls last, lpl.created_at desc
+  loop
+    perform public.cancel_order_and_release_resources(
+      v_link.order_id,
+      'laropay_customer_cancelled',
+      null
+    );
+  end loop;
+end $$;
 
 create or replace function public.expire_abandoned_appointment_orders(
   p_limit integer default 100

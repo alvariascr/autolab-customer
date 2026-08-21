@@ -3883,7 +3883,7 @@ abstract class AppLocalizations {
   /// No description provided for @laropayPaymentResultCancelledMessage.
   ///
   /// In es, this message translates to:
-  /// **''**
+  /// **'La orden fue cancelada. Revisa Mis órdenes para ver los detalles.'**
   String get laropayPaymentResultCancelledMessage;
 
   /// No description provided for @laropayPaymentResultRejectedTitle.

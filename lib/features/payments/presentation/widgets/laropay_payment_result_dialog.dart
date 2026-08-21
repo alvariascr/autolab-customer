@@ -59,13 +59,13 @@ class LaropayPaymentNotice {
         icon: Icons.pending_actions_outlined,
       ),
       'error' => LaropayPaymentNotice(
-        title: l10n.laropayPaymentResultPendingTitle,
+        title: l10n.laropayPaymentStartErrorTitle,
         message: l10n.laropayPaymentStartError,
         color: AutolabCustomer.error,
         icon: Icons.error_outline,
       ),
       _ => LaropayPaymentNotice(
-        title: l10n.laropayPaymentResultPendingTitle,
+        title: l10n.laropayPaymentStartErrorTitle,
         message: l10n.laropayPaymentStartError,
         color: AutolabCustomer.error,
         icon: Icons.error_outline,

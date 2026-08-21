@@ -743,7 +743,7 @@
   "laropayPaymentResultPaidTitle": "Pago confirmado",
   "laropayPaymentResultPaidMessage": "Tu orden fue aprobada correctamente. Ya puedes revisar el detalle en Mis órdenes.",
   "laropayPaymentResultCancelledTitle": "Orden cancelada",
-  "laropayPaymentResultCancelledMessage": "",
+  "laropayPaymentResultCancelledMessage": "La orden fue cancelada. Revisa Mis órdenes para ver los detalles.",
   "laropayPaymentResultRejectedTitle": "Pago no procesado",
   "laropayPaymentResultRejectedMessage": "La pasarela de pago no pudo procesar el pago. Puedes revisar el estado o intentar nuevamente desde Mis órdenes.",
   "laropayPaymentResultExpiredTitle": "Link vencido",

@@ -36,6 +36,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   _CartCheckoutLoadingPhase? _checkoutLoadingPhase;
   Completer<void>? _externalCheckoutTransitionCompleter;
   bool _awaitingCheckoutReturn = false;
+  bool _checkoutReturnFallbackScheduled = false;
   int? _checkoutReturnBaselineCallbackCount;
 
   @override
@@ -73,6 +74,10 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     if (!_awaitingCheckoutReturn) {
       return;
     }
+    if (_checkoutReturnFallbackScheduled) {
+      return;
+    }
+    _checkoutReturnFallbackScheduled = true;
 
     // The gateway is no longer "opening" once we're back -- update the
     // overlay copy so it doesn't read as if we're about to reopen it while
@@ -92,9 +97,11 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         // A real Laropay deep-link result was processed while we were
         // waiting -- it owns navigation, not this fallback.
         _awaitingCheckoutReturn = false;
+        _checkoutReturnFallbackScheduled = false;
         return;
       }
       _awaitingCheckoutReturn = false;
+      _checkoutReturnFallbackScheduled = false;
       final l10n = AppLocalizations.of(context)!;
       setState(() => _checkoutLoadingPhase = null);
       showAppSnackBar(
@@ -104,6 +111,13 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       );
       context.go('/purchases');
     });
+  }
+
+  void _startAwaitingCheckoutReturn() {
+    _checkoutReturnBaselineCallbackCount =
+        LaropayReturnNavigationController.handledCallbackCount.value;
+    _checkoutReturnFallbackScheduled = false;
+    _awaitingCheckoutReturn = true;
   }
 
   @override
@@ -344,6 +358,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
           .launchForOrder(orderId: result.orderId)
           .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
+      _startAwaitingCheckoutReturn();
       await _waitForExternalCheckoutTransition();
       if (!mounted || !context.mounted) return;
       if (targetWorkshopId == null) {
@@ -358,9 +373,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       // Keep the payment overlay visible; only navigate away if the
       // customer comes back without a payment result already having taken
       // over (see _handleCheckoutReturnIfAbandoned).
-      _checkoutReturnBaselineCallbackCount =
-          LaropayReturnNavigationController.handledCallbackCount.value;
-      _awaitingCheckoutReturn = true;
+      _handleCheckoutReturnIfAbandoned();
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
       setState(() => _checkoutLoadingPhase = null);

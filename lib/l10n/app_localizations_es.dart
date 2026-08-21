@@ -2141,7 +2141,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get laropayPaymentResultCancelledTitle => 'Orden cancelada';
 
   @override
-  String get laropayPaymentResultCancelledMessage => '';
+  String get laropayPaymentResultCancelledMessage =>
+      'La orden fue cancelada. Revisa Mis órdenes para ver los detalles.';
 
   @override
   String get laropayPaymentResultRejectedTitle => 'Pago no procesado';
