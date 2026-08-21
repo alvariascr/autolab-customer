@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/utils/uuid_validator.dart';
 
 class LaropayReturnNavigationController {
@@ -11,6 +13,16 @@ class LaropayReturnNavigationController {
 
   final void Function(String location) _navigate;
 
+  // Bumped synchronously the instant a real Laropay deep-link callback is
+  // handled, before navigation happens. Checkout pages waiting to decide
+  // "gateway closed abruptly" vs. "a real result arrived" compare this
+  // against a baseline captured before launching the gateway, so a callback
+  // that arrives just as (or slightly after) their own fallback timer fires
+  // is never mistaken for an abrupt close.
+  static final ValueNotifier<int> handledCallbackCount = ValueNotifier<int>(
+    0,
+  );
+
   bool handleAppLink(Uri uri) {
     if (!_isLaropayCallback(uri)) {
       return false;
@@ -23,6 +35,7 @@ class LaropayReturnNavigationController {
 
     final target = uri.queryParameters['target']?.trim();
     if (target == 'purchases') {
+      handledCallbackCount.value++;
       _navigate(
         Uri(
           path: '/purchases',
@@ -37,6 +50,7 @@ class LaropayReturnNavigationController {
       return false;
     }
 
+    handledCallbackCount.value++;
     _navigate(
       Uri(
         path: '/workshops/$workshopId',

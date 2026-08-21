@@ -9,8 +9,10 @@ import 'package:intl/intl.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
+import '../../../payments/application/laropay_return_navigation_controller.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../application/cart_cubit.dart';
 import '../../domain/entities/cart_checkout.dart';
@@ -27,11 +29,14 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   static const _checkoutLaunchTimeout = Duration(seconds: 45);
   static const _externalCheckoutTransitionTimeout = Duration(seconds: 5);
+  static const _paymentReturnFallbackDelay = Duration(seconds: 3);
 
   bool _showCheckout = false;
   String? _selectedWorkshopId;
   _CartCheckoutLoadingPhase? _checkoutLoadingPhase;
   Completer<void>? _externalCheckoutTransitionCompleter;
+  bool _awaitingCheckoutReturn = false;
+  int? _checkoutReturnBaselineCallbackCount;
 
   @override
   void initState() {
@@ -52,7 +57,53 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       _completeExternalCheckoutTransition();
+      return;
     }
+
+    if (state == AppLifecycleState.resumed) {
+      _handleCheckoutReturnIfAbandoned();
+    }
+  }
+
+  // Called when the app comes back to the foreground while a Laropay
+  // checkout was in flight. A brief delay gives a deep-link payment result
+  // (which navigates on its own) a chance to arrive first; if nothing
+  // arrives, the customer closed the gateway without finishing.
+  void _handleCheckoutReturnIfAbandoned() {
+    if (!_awaitingCheckoutReturn) {
+      return;
+    }
+
+    // The gateway is no longer "opening" once we're back -- update the
+    // overlay copy so it doesn't read as if we're about to reopen it while
+    // we briefly wait to see whether a real result is on its way.
+    setState(
+      () => _checkoutLoadingPhase = _CartCheckoutLoadingPhase.confirmingReturn,
+    );
+
+    final baselineCallbackCount = _checkoutReturnBaselineCallbackCount;
+
+    Future.delayed(_paymentReturnFallbackDelay, () {
+      if (!mounted || !_awaitingCheckoutReturn) {
+        return;
+      }
+      if (LaropayReturnNavigationController.handledCallbackCount.value !=
+          baselineCallbackCount) {
+        // A real Laropay deep-link result was processed while we were
+        // waiting -- it owns navigation, not this fallback.
+        _awaitingCheckoutReturn = false;
+        return;
+      }
+      _awaitingCheckoutReturn = false;
+      final l10n = AppLocalizations.of(context)!;
+      setState(() => _checkoutLoadingPhase = null);
+      showAppSnackBar(
+        context,
+        message: l10n.laropayPaymentGatewayClosedMessage,
+        type: AppMessageType.warning,
+      );
+      context.go('/purchases');
+    });
   }
 
   @override
@@ -256,7 +307,6 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     required String? workshopId,
   }) async {
     final l10n = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
     final cartCubit = context.read<CartCubit>();
     final targetWorkshopId = workshopId?.trim().isNotEmpty == true
         ? workshopId!.trim()
@@ -277,7 +327,11 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         l10n,
         cartCubit.state.checkoutError,
       );
-      messenger.showSnackBar(SnackBar(content: Text(errorMessage)));
+      showAppSnackBar(
+        context,
+        message: errorMessage,
+        type: AppMessageType.error,
+      );
       return;
     }
 
@@ -298,10 +352,15 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         cartCubit.clearWorkshop(targetWorkshopId);
       }
       setState(() {
-        _checkoutLoadingPhase = null;
         _showCheckout = false;
         _selectedWorkshopId = null;
       });
+      // Keep the payment overlay visible; only navigate away if the
+      // customer comes back without a payment result already having taken
+      // over (see _handleCheckoutReturnIfAbandoned).
+      _checkoutReturnBaselineCallbackCount =
+          LaropayReturnNavigationController.handledCallbackCount.value;
+      _awaitingCheckoutReturn = true;
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
       setState(() => _checkoutLoadingPhase = null);
@@ -391,7 +450,11 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   }
 }
 
-enum _CartCheckoutLoadingPhase { creatingOrder, openingLaropay }
+enum _CartCheckoutLoadingPhase {
+  creatingOrder,
+  openingLaropay,
+  confirmingReturn,
+}
 
 class _CartCheckoutLoadingOverlay extends StatelessWidget {
   const _CartCheckoutLoadingOverlay({required this.phase});
@@ -401,13 +464,20 @@ class _CartCheckoutLoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isOpeningLaropay = phase == _CartCheckoutLoadingPhase.openingLaropay;
-    final title = isOpeningLaropay
-        ? l10n.cartOpeningLaropayTitle
-        : l10n.cartCreatingOrder;
-    final message = isOpeningLaropay
-        ? l10n.cartOpeningLaropayMessage
-        : l10n.cartCreatingOrderMessage;
+    final (title, message) = switch (phase) {
+      _CartCheckoutLoadingPhase.openingLaropay => (
+        l10n.cartOpeningLaropayTitle,
+        l10n.cartOpeningLaropayMessage,
+      ),
+      _CartCheckoutLoadingPhase.confirmingReturn => (
+        l10n.cartConfirmingPaymentTitle,
+        l10n.cartConfirmingPaymentMessage,
+      ),
+      _CartCheckoutLoadingPhase.creatingOrder => (
+        l10n.cartCreatingOrder,
+        l10n.cartCreatingOrderMessage,
+      ),
+    };
 
     return Positioned.fill(
       child: ColoredBox(
@@ -1308,18 +1378,21 @@ Future<void> _confirmDeleteDeliveryAddress(
     return;
   }
 
-  final messenger = ScaffoldMessenger.of(context);
   final wasDeleted = await context.read<CartCubit>().deleteDeliveryAddress(
     address.id,
   );
 
   if (!wasDeleted && context.mounted) {
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.cartDeleteAddressError)),
+    showAppSnackBar(
+      context,
+      message: l10n.cartDeleteAddressError,
+      type: AppMessageType.error,
     );
   } else if (context.mounted) {
-    messenger.showSnackBar(
-      SnackBar(content: Text(l10n.cartDeleteAddressSuccess)),
+    showAppSnackBar(
+      context,
+      message: l10n.cartDeleteAddressSuccess,
+      type: AppMessageType.success,
     );
   }
 }
@@ -1612,10 +1685,10 @@ class _DeliveryDetailsSheetState extends State<_DeliveryDetailsSheet> {
       Navigator.pop(context);
       return;
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.cartSaveAddressError),
-        ),
+      showAppSnackBar(
+        context,
+        message: AppLocalizations.of(context)!.cartSaveAddressError,
+        type: AppMessageType.error,
       );
     }
 
@@ -1767,12 +1840,10 @@ class _QuantityStepper extends StatelessWidget {
                 item.product.id,
               );
               if (!wasIncreased) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      AppLocalizations.of(context)!.cartStockLimitReached,
-                    ),
-                  ),
+                showAppSnackBar(
+                  context,
+                  message: AppLocalizations.of(context)!.cartStockLimitReached,
+                  type: AppMessageType.warning,
                 );
               }
             },
