@@ -458,9 +458,6 @@ class _MenuProductTile extends StatelessWidget {
                   regular: 112,
                   tablet: 140,
                 ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AutolabCustomer.radiusCard),
-                ),
                 placeholderIconSize: 42,
               ),
               Padding(
