@@ -1,0 +1,85 @@
+import 'package:autolab_core/autolab_core.dart';
+import 'package:dartz/dartz.dart';
+
+import '../../domain/entities/customer_notification.dart';
+import '../../domain/repositories/notification_repository.dart';
+import '../datasources/notification_remote_data_source.dart';
+
+class NotificationRepositoryImpl implements NotificationRepository {
+  const NotificationRepositoryImpl({
+    required this.remoteDataSource,
+    required this.currentUserIdProvider,
+  });
+
+  final NotificationRemoteDataSource remoteDataSource;
+  final String? Function() currentUserIdProvider;
+
+  @override
+  Future<Either<Failure, List<CustomerNotification>>>
+  loadNotifications() async {
+    try {
+      final userId = _currentUserId();
+      final notifications = await remoteDataSource.loadNotifications(
+        userId: userId,
+      );
+      return Right(notifications);
+    } catch (error, stackTrace) {
+      return Left(
+        Failure(
+          'No fue posible cargar las notificaciones.',
+          code: 'NOTIFICATIONS_LOAD_FAILED',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  @override
+  Stream<Either<Failure, List<CustomerNotification>>>
+  watchNotifications() async* {
+    try {
+      final userId = _currentUserId();
+      await for (final notifications in remoteDataSource.watchNotifications(
+        userId: userId,
+      )) {
+        yield Right(notifications);
+      }
+    } catch (_) {
+      yield Left(
+        Failure(
+          'No fue posible actualizar las notificaciones.',
+          code: 'NOTIFICATIONS_WATCH_FAILED',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> markAsRead(String notificationId) async {
+    try {
+      await remoteDataSource.markAsRead(
+        notificationId: notificationId,
+        userId: _currentUserId(),
+      );
+      return const Right(unit);
+    } catch (error, stackTrace) {
+      return Left(
+        Failure(
+          'No fue posible actualizar la notificación.',
+          code: 'NOTIFICATION_UPDATE_FAILED',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+  }
+
+  String _currentUserId() {
+    final userId = currentUserIdProvider()?.trim();
+    if (userId == null || userId.isEmpty) {
+      throw StateError('Authenticated user required');
+    }
+    return userId;
+  }
+}

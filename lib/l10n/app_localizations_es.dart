@@ -2576,4 +2576,35 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get myPurchasesLinkOpenError =>
       'No fue posible abrir el link de pago.';
+
+  @override
+  String get notificationsPageTitle => 'Notificaciones';
+
+  @override
+  String get notificationsEmptyTitle => 'No tienes notificaciones';
+
+  @override
+  String get notificationsEmptyMessage =>
+      'Te avisaremos cuando haya novedades sobre tus servicios y vehículos.';
+
+  @override
+  String get notificationsLoadError => 'No pudimos cargar tus notificaciones.';
+
+  @override
+  String get notificationsRetry => 'Reintentar';
+
+  @override
+  String get notificationsTypeAppointment => 'Cita';
+
+  @override
+  String get notificationsTypePayment => 'Pago';
+
+  @override
+  String get notificationsTypeVehicle => 'Vehículo';
+
+  @override
+  String get notificationsTypePromotion => 'Promoción';
+
+  @override
+  String get notificationsTypeMessage => 'Mensaje';
 }

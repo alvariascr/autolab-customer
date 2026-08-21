@@ -909,6 +909,16 @@
   "myPurchasesRefreshingReturnedPayment": "Estamos confirmando tu pago con Laropay.",
   "myPurchasesStatusRefreshSuccess": "Estado de pago actualizado.",
   "myPurchasesStatusRefreshError": "No fue posible actualizar el estado del pago.",
-  "myPurchasesLinkOpenError": "No fue posible abrir el link de pago."
+  "myPurchasesLinkOpenError": "No fue posible abrir el link de pago.",
+  "notificationsPageTitle": "Notificaciones",
+  "notificationsEmptyTitle": "No tienes notificaciones",
+  "notificationsEmptyMessage": "Te avisaremos cuando haya novedades sobre tus servicios y vehículos.",
+  "notificationsLoadError": "No pudimos cargar tus notificaciones.",
+  "notificationsRetry": "Reintentar",
+  "notificationsTypeAppointment": "Cita",
+  "notificationsTypePayment": "Pago",
+  "notificationsTypeVehicle": "Vehículo",
+  "notificationsTypePromotion": "Promoción",
+  "notificationsTypeMessage": "Mensaje"
 }
 

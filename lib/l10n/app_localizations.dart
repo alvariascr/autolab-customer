@@ -4647,6 +4647,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No fue posible abrir el link de pago.'**
   String get myPurchasesLinkOpenError;
+
+  /// No description provided for @notificationsPageTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones'**
+  String get notificationsPageTitle;
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes notificaciones'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Te avisaremos cuando haya novedades sobre tus servicios y vehículos.'**
+  String get notificationsEmptyMessage;
+
+  /// No description provided for @notificationsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus notificaciones.'**
+  String get notificationsLoadError;
+
+  /// No description provided for @notificationsRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get notificationsRetry;
+
+  /// No description provided for @notificationsTypeAppointment.
+  ///
+  /// In es, this message translates to:
+  /// **'Cita'**
+  String get notificationsTypeAppointment;
+
+  /// No description provided for @notificationsTypePayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago'**
+  String get notificationsTypePayment;
+
+  /// No description provided for @notificationsTypeVehicle.
+  ///
+  /// In es, this message translates to:
+  /// **'Vehículo'**
+  String get notificationsTypeVehicle;
+
+  /// No description provided for @notificationsTypePromotion.
+  ///
+  /// In es, this message translates to:
+  /// **'Promoción'**
+  String get notificationsTypePromotion;
+
+  /// No description provided for @notificationsTypeMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Mensaje'**
+  String get notificationsTypeMessage;
 }
 
 class _AppLocalizationsDelegate
