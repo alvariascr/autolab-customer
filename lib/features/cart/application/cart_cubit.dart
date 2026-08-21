@@ -471,6 +471,7 @@ class CartCubit extends Cubit<CartState> {
     try {
       final pendingResult = state.pendingCheckoutResult;
       if (pendingResult != null) {
+        emit(state.copyWith(checkoutStatus: CartCheckoutStatus.initial));
         return pendingResult;
       }
 
@@ -502,7 +503,12 @@ class CartCubit extends Cubit<CartState> {
         workshopId: resolvedWorkshopId,
       );
       _inventoryRefreshNotifier.notify();
-      emit(state.copyWith(pendingCheckoutResult: result));
+      emit(
+        state.copyWith(
+          checkoutStatus: CartCheckoutStatus.initial,
+          pendingCheckoutResult: result,
+        ),
+      );
       return result;
     } catch (error) {
       emit(
