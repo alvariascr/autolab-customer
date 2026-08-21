@@ -150,12 +150,13 @@ class _WorkshopSearchProductsPageState
         child: FutureBuilder<List<Product>>(
           future: _productsFuture,
           builder: (context, snapshot) {
-            final products = snapshot.data ?? const <Product>[];
-            final visibleProducts = _applyFilters(products);
-
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
+
+            final products = snapshot.data ?? const <Product>[];
+            final visibleProducts = _applyFilters(products);
+            final visibleProductCount = visibleProducts.length;
 
             return CustomScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -213,7 +214,7 @@ class _WorkshopSearchProductsPageState
                       AppLocalizations.of(
                         context,
                       )!.workshopSearchProductsResultsCount(
-                        visibleProducts.length,
+                        visibleProductCount,
                       ),
                       style: AutolabCustomer.bodyLarge.copyWith(
                         color: AutolabCustomer.customerSecondaryTextColor(
@@ -224,7 +225,7 @@ class _WorkshopSearchProductsPageState
                     ),
                   ),
                 ),
-                if (visibleProducts.isEmpty)
+                if (visibleProductCount == 0)
                   const SliverFillRemaining(
                     hasScrollBody: false,
                     child: _EmptyProductsMessage(),
@@ -249,7 +250,7 @@ class _WorkshopSearchProductsPageState
                         return _SearchProductTile(
                           product: visibleProducts[index],
                         );
-                      }, childCount: visibleProducts.length),
+                      }, childCount: visibleProductCount),
                     ),
                   ),
               ],
