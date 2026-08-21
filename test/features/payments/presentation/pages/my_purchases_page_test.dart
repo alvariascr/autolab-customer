@@ -40,9 +40,9 @@ void main() {
     testWidgets(
       'muestra Cancelado con mensaje propio, distinto de Rechazado, y sin acciones de reintento',
       (tester) async {
-        when(() => repository.getRecentPurchases()).thenAnswer(
-          (_) async => Right([_purchase(status: 'cancelled')]),
-        );
+        when(
+          () => repository.getRecentPurchases(),
+        ).thenAnswer((_) async => Right([_purchase(status: 'cancelled')]));
 
         await tester.pumpWidget(_TestApp(router: _buildRouter()));
         await tester.pumpAndSettle();
@@ -53,10 +53,20 @@ void main() {
         expect(find.text('Actualizar estado'), findsNothing);
 
         // The status message lives behind "Ver detalle" now.
-        expect(find.text('Los productos y el cupo quedaron liberados. Puedes agendar o comprar de nuevo cuando quieras.'), findsNothing);
+        expect(
+          find.text(
+            'Los productos y el cupo quedaron liberados. Puedes agendar o comprar de nuevo cuando quieras.',
+          ),
+          findsNothing,
+        );
         await tester.tap(find.text('Ver detalle'));
         await tester.pumpAndSettle();
-        expect(find.text('Los productos y el cupo quedaron liberados. Puedes agendar o comprar de nuevo cuando quieras.'), findsOneWidget);
+        expect(
+          find.text(
+            'Los productos y el cupo quedaron liberados. Puedes agendar o comprar de nuevo cuando quieras.',
+          ),
+          findsOneWidget,
+        );
       },
     );
 
@@ -67,9 +77,9 @@ void main() {
         when(
           () => repository.getRecentPurchases(),
         ).thenAnswer((_) async => const Right([]));
-        when(() => repository.refreshPurchaseStatus(paymentLinkId)).thenAnswer(
-          (_) async => Right(_purchase(status: 'cancelled')),
-        );
+        when(
+          () => repository.refreshPurchaseStatus(paymentLinkId),
+        ).thenAnswer((_) async => Right(_purchase(status: 'cancelled')));
 
         await tester.pumpWidget(
           _TestApp(router: _buildRouter(paymentLinkId: paymentLinkId)),
@@ -98,15 +108,15 @@ void main() {
       'mientras se confirma el resultado del pago, no muestra acciones de una orden ya resuelta',
       (tester) async {
         const paymentLinkId = '123e4567-e89b-12d3-a456-426614174000';
-        final refreshCompleter =
-            Completer<Either<Failure, LaropayPurchase>>();
+        final refreshCompleter = Completer<Either<Failure, LaropayPurchase>>();
         // Mirrors the real backend: the order still reads as pending until
         // the return-payment check finishes persisting the cancellation.
         var hasBeenCancelled = false;
 
         when(() => repository.getRecentPurchases()).thenAnswer(
-          (_) async =>
-              Right([_purchase(status: hasBeenCancelled ? 'cancelled' : 'pending')]),
+          (_) async => Right([
+            _purchase(status: hasBeenCancelled ? 'cancelled' : 'pending'),
+          ]),
         );
         when(
           () => repository.refreshPurchaseStatus(paymentLinkId),

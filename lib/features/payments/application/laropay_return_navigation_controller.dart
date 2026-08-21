@@ -19,9 +19,7 @@ class LaropayReturnNavigationController {
   // against a baseline captured before launching the gateway, so a callback
   // that arrives just as (or slightly after) their own fallback timer fires
   // is never mistaken for an abrupt close.
-  static final ValueNotifier<int> handledCallbackCount = ValueNotifier<int>(
-    0,
-  );
+  static final ValueNotifier<int> handledCallbackCount = ValueNotifier<int>(0);
 
   bool handleAppLink(Uri uri) {
     if (!_isLaropayCallback(uri)) {

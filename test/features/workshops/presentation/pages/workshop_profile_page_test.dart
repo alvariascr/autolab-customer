@@ -59,7 +59,9 @@ void main() {
           () => purchaseRepository.refreshPurchaseStatus(_paymentLinkId),
         ).thenAnswer((_) async => Right(_purchase(status: 'cancelled')));
 
-        await tester.pumpWidget(_TestApp(router: _buildRouter(), cartCubit: cartCubit));
+        await tester.pumpWidget(
+          _TestApp(router: _buildRouter(), cartCubit: cartCubit),
+        );
         await tester.pumpAndSettle();
 
         expect(find.text('Orden cancelada'), findsOneWidget);
@@ -67,19 +69,20 @@ void main() {
       },
     );
 
-    testWidgets(
-      'pago pendiente: ofrece reintentar el mismo link',
-      (tester) async {
-        when(
-          () => purchaseRepository.refreshPurchaseStatus(_paymentLinkId),
-        ).thenAnswer((_) async => Right(_purchase(status: 'pending')));
+    testWidgets('pago pendiente: ofrece reintentar el mismo link', (
+      tester,
+    ) async {
+      when(
+        () => purchaseRepository.refreshPurchaseStatus(_paymentLinkId),
+      ).thenAnswer((_) async => Right(_purchase(status: 'pending')));
 
-        await tester.pumpWidget(_TestApp(router: _buildRouter(), cartCubit: cartCubit));
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _TestApp(router: _buildRouter(), cartCubit: cartCubit),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('Reintentar pago'), findsOneWidget);
-      },
-    );
+      expect(find.text('Reintentar pago'), findsOneWidget);
+    });
   });
 }
 

@@ -105,7 +105,11 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
     final local = createdAt.toLocal();
     final day = DateTime(local.year, local.month, local.day);
-    final endInclusive = DateTime(range.end.year, range.end.month, range.end.day);
+    final endInclusive = DateTime(
+      range.end.year,
+      range.end.month,
+      range.end.day,
+    );
     return !day.isBefore(range.start) && !day.isAfter(endInclusive);
   }
 
@@ -152,9 +156,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AutolabCustomer.customerBorderColor(
-                              context,
-                            ),
+                            color: AutolabCustomer.customerBorderColor(context),
                           ),
                         ),
                         child: Row(
@@ -818,7 +820,8 @@ class _PurchaseDetailRow extends StatelessWidget {
                   value,
                   style: AutolabCustomer.caption.copyWith(
                     color:
-                        valueColor ?? AutolabCustomer.customerTextColor(context),
+                        valueColor ??
+                        AutolabCustomer.customerTextColor(context),
                     fontWeight: FontWeight.w800,
                   ),
                 ),

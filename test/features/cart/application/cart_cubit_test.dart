@@ -141,9 +141,7 @@ void main() {
         expect(cubit.state.checkoutStatus.isLoading, isFalse);
 
         cubit.addProduct(_product(id: 'product-b', workshopId: 'workshop-a'));
-        final secondResult = await cubit.createOrder(
-          workshopId: 'workshop-a',
-        );
+        final secondResult = await cubit.createOrder(workshopId: 'workshop-a');
 
         expect(secondResult, isNotNull);
         expect(cartRepository.createOrderCallCount, 2);
