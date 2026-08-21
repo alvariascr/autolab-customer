@@ -9,6 +9,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
+import '../../../../core/theme/autolab_theme_extension.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../products/domain/entities/product.dart';
@@ -479,7 +480,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
       ),
       _AppointmentMessageType.error => (
         icon: Icons.error_outline,
-        color: context.appointmentPrimary,
+        color: context.customerPrimary,
         background: AutolabCustomer.errorSoftBackground,
       ),
     };
@@ -596,23 +597,6 @@ String _appointmentSubmitErrorMessage(
   };
 }
 
-extension _AppointmentThemeTokens on BuildContext {
-  Color get appointmentPrimary => Theme.of(this).colorScheme.primary;
-
-  Color get appointmentInk => AutolabCustomer.customerTextColor(this);
-
-  Color get appointmentMuted =>
-      AutolabCustomer.customerSecondaryTextColor(this);
-
-  Color get appointmentElevatedSurface =>
-      AutolabCustomer.customerElevatedSurfaceColor(this);
-
-  Color get appointmentSoftSurface =>
-      AutolabCustomer.customerSoftSurfaceColor(this);
-
-  Color get appointmentBorder => AutolabCustomer.customerBorderColor(this);
-}
-
 class _DesktopRail extends StatelessWidget {
   const _DesktopRail({
     required this.steps,
@@ -647,7 +631,7 @@ class _DesktopRail extends StatelessWidget {
             AppLocalizations.of(context)!.appointmentStepWorkshop,
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: context.appointmentPrimary,
+              color: context.customerPrimary,
               fontWeight: FontWeight.w900,
               fontSize: 17,
             ),
@@ -657,7 +641,7 @@ class _DesktopRail extends StatelessWidget {
             workshopName,
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: context.appointmentInk,
+              color: context.customerInk,
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
@@ -677,7 +661,7 @@ class _DesktopRail extends StatelessWidget {
             'Autolab Customer',
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: context.appointmentMuted,
+              color: context.customerMuted,
             ),
           ),
         ],
@@ -704,11 +688,11 @@ class _DesktopStepItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active || done
-        ? context.appointmentPrimary
+        ? context.customerPrimary
         : AutolabCustomer.gray;
     final titleColor = active || done
-        ? context.appointmentPrimary
-        : context.appointmentMuted;
+        ? context.customerPrimary
+        : context.customerMuted;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -720,9 +704,7 @@ class _DesktopStepItem extends StatelessWidget {
               height: 32,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active || done
-                    ? color
-                    : context.appointmentElevatedSurface,
+                color: active || done ? color : context.customerElevatedSurface,
                 shape: BoxShape.circle,
                 boxShadow: const [
                   BoxShadow(
@@ -742,7 +724,7 @@ class _DesktopStepItem extends StatelessWidget {
               ),
             ),
             if (showLine)
-              Container(width: 1, height: 48, color: context.appointmentBorder),
+              Container(width: 1, height: 48, color: context.customerBorder),
           ],
         ),
         const SizedBox(width: 30),
@@ -798,8 +780,8 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: context.appointmentElevatedSurface,
-            border: Border.all(color: context.appointmentBorder),
+            color: context.customerElevatedSurface,
+            border: Border.all(color: context.customerBorder),
             boxShadow: const [
               BoxShadow(
                 color: AutolabCustomer.shadowBlackLight,
@@ -815,7 +797,7 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
                   l10n.appointmentProductsSwitchLabel,
                   style: TextStyle(
                     fontFamily: AutolabCustomer.primaryFont,
-                    color: context.appointmentInk,
+                    color: context.customerInk,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                   ),
@@ -823,7 +805,7 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
               ),
               Switch(
                 value: widget.includeProducts,
-                activeThumbColor: context.appointmentPrimary,
+                activeThumbColor: context.customerPrimary,
                 onChanged: widget.onIncludeChanged,
               ),
             ],
@@ -893,19 +875,19 @@ class _ServiceMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: context.appointmentSoftSurface,
+        color: context.customerSoftSurface,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: context.appointmentPrimary),
+          Icon(icon, size: 16, color: context.customerPrimary),
           const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: context.appointmentInk,
+              color: context.customerInk,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -934,8 +916,8 @@ class _ProductOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? context.appointmentSoftSurface
-          : context.appointmentElevatedSurface,
+          ? context.customerSoftSurface
+          : context.customerElevatedSurface,
       elevation: 2,
       shadowColor: AutolabCustomer.shadowBlack26,
       child: InkWell(
@@ -946,8 +928,8 @@ class _ProductOptionCard extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(
               color: selected
-                  ? context.appointmentPrimary
-                  : context.appointmentBorder,
+                  ? context.customerPrimary
+                  : context.customerBorder,
               width: selected ? 2 : 1,
             ),
           ),
@@ -958,7 +940,7 @@ class _ProductOptionCard extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: context.appointmentPrimary,
+                  color: context.customerPrimary,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -976,7 +958,7 @@ class _ProductOptionCard extends StatelessWidget {
                       product.name,
                       style: TextStyle(
                         fontFamily: AutolabCustomer.primaryFont,
-                        color: context.appointmentInk,
+                        color: context.customerInk,
                         fontSize: 19,
                         fontWeight: FontWeight.w900,
                       ),
@@ -986,7 +968,7 @@ class _ProductOptionCard extends StatelessWidget {
                       product.effectiveDescription,
                       style: TextStyle(
                         fontFamily: AutolabCustomer.primaryFont,
-                        color: context.appointmentMuted,
+                        color: context.customerMuted,
                         fontSize: 15,
                         height: 1.3,
                       ),
@@ -1031,19 +1013,19 @@ class _ProductsInfoMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: context.appointmentElevatedSurface,
-        border: Border.all(color: context.appointmentBorder),
+        color: context.customerElevatedSurface,
+        border: Border.all(color: context.customerBorder),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline_rounded, color: context.appointmentPrimary),
+          Icon(Icons.info_outline_rounded, color: context.customerPrimary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
                 fontFamily: AutolabCustomer.primaryFont,
-                color: context.appointmentInk,
+                color: context.customerInk,
                 fontSize: 16,
               ),
             ),
@@ -1064,8 +1046,8 @@ class _QuantityStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: context.appointmentElevatedSurface,
-        border: Border.all(color: context.appointmentBorder),
+        color: context.customerElevatedSurface,
+        border: Border.all(color: context.customerBorder),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1082,7 +1064,7 @@ class _QuantityStepper extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AutolabCustomer.primaryFont,
-                color: context.appointmentInk,
+                color: context.customerInk,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1108,7 +1090,7 @@ class _QuantityButton extends StatelessWidget {
       child: SizedBox(
         width: 34,
         height: 34,
-        child: Icon(icon, size: 20, color: context.appointmentPrimary),
+        child: Icon(icon, size: 20, color: context.customerPrimary),
       ),
     );
   }
@@ -1145,8 +1127,8 @@ class _BookingSubmittingOverlay extends StatelessWidget {
               width: 280,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
               decoration: BoxDecoration(
-                color: context.appointmentElevatedSurface,
-                border: Border.all(color: context.appointmentBorder),
+                color: context.customerElevatedSurface,
+                border: Border.all(color: context.customerBorder),
                 boxShadow: const [
                   BoxShadow(
                     color: AutolabCustomer.shadowBlackStrong,
@@ -1163,7 +1145,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     height: 42,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
-                      color: context.appointmentPrimary,
+                      color: context.customerPrimary,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -1172,7 +1154,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AutolabCustomer.primaryFont,
-                      color: context.appointmentInk,
+                      color: context.customerInk,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -1183,7 +1165,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AutolabCustomer.primaryFont,
-                      color: context.appointmentMuted,
+                      color: context.customerMuted,
                       fontSize: 14,
                       height: 1.35,
                       fontWeight: FontWeight.w600,
@@ -1296,7 +1278,7 @@ class _OutlineActionButton extends StatelessWidget {
               : AutolabCustomer.transparent,
           foregroundColor: isPrimary
               ? AutolabCustomer.white
-              : AutolabCustomer.customerTextColor(context),
+              : context.customerInk,
           disabledBackgroundColor: isPrimary
               ? AutolabCustomer.primary.withValues(alpha: 0.45)
               : AutolabCustomer.transparent,
@@ -1352,7 +1334,7 @@ class _AppointmentFlowHeader extends StatelessWidget {
         Text(
           title,
           style: AutolabCustomer.bodyLarge.copyWith(
-            color: AutolabCustomer.customerTextColor(context),
+            color: context.customerInk,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1539,12 +1521,12 @@ class _AppointmentCalendar extends StatelessWidget {
             titleCentered: true,
             leftChevronIcon: Icon(
               Icons.chevron_left,
-              color: AutolabCustomer.customerTextColor(context),
+              color: context.customerInk,
               size: AutolabCustomer.iconSm,
             ),
             rightChevronIcon: Icon(
               Icons.chevron_right,
-              color: AutolabCustomer.customerTextColor(context),
+              color: context.customerInk,
               size: AutolabCustomer.iconSm,
             ),
             leftChevronPadding: EdgeInsets.zero,
@@ -1553,7 +1535,7 @@ class _AppointmentCalendar extends StatelessWidget {
             rightChevronMargin: EdgeInsets.zero,
             titleTextStyle: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: AutolabCustomer.customerTextColor(context),
+              color: context.customerInk,
               fontSize: AutolabCustomer.responsiveDouble(
                 context,
                 compact: 12,
@@ -1574,13 +1556,13 @@ class _AppointmentCalendar extends StatelessWidget {
           daysOfWeekStyle: DaysOfWeekStyle(
             weekdayStyle: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: AutolabCustomer.customerTextColor(context),
+              color: context.customerInk,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
             weekendStyle: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: AutolabCustomer.customerTextColor(context),
+              color: context.customerInk,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -1613,7 +1595,7 @@ class _AppointmentCalendar extends StatelessWidget {
             ),
             _CalendarLegend(
               color: AutolabCustomer.transparent,
-              borderColor: AutolabCustomer.customerBorderColor(context),
+              borderColor: context.customerBorder,
               label: l10n.appointmentAvailableDayLegend,
             ),
             if (shouldBlockUnavailableDates)
@@ -1656,7 +1638,7 @@ class _TableCalendarDay extends StatelessWidget {
         ? AutolabCustomer.gray.withValues(alpha: 0.45)
         : day.weekday == DateTime.saturday || day.weekday == DateTime.sunday
         ? AutolabCustomer.primary
-        : AutolabCustomer.customerTextColor(context);
+        : context.customerInk;
 
     return Center(
       child: AnimatedContainer(
@@ -1719,7 +1701,7 @@ class _CalendarLegend extends StatelessWidget {
         Text(
           label,
           style: AutolabCustomer.caption.copyWith(
-            color: AutolabCustomer.customerTextColor(context),
+            color: context.customerInk,
             fontSize: 10,
           ),
         ),
@@ -1752,7 +1734,7 @@ class _AvailableHoursPanel extends StatelessWidget {
         Text(
           l10n.appointmentAvailableHoursTitle,
           style: AutolabCustomer.bodyLarge.copyWith(
-            color: AutolabCustomer.customerTextColor(context),
+            color: context.customerInk,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1810,13 +1792,13 @@ class _AvailableHoursPanel extends StatelessWidget {
                         ? AutolabCustomer.gray
                         : selected
                         ? AutolabCustomer.white
-                        : AutolabCustomer.customerTextColor(context),
+                        : context.customerInk,
                     side: BorderSide(
                       color: unavailable
                           ? AutolabCustomer.gray.withValues(alpha: 0.5)
                           : selected
                           ? AutolabCustomer.primary
-                          : AutolabCustomer.customerBorderColor(context),
+                          : context.customerBorder,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
@@ -1895,9 +1877,7 @@ class _AppointmentNoteInput extends StatelessWidget {
       maxLines: 5,
       maxLength: 280,
       onChanged: onChanged,
-      style: AutolabCustomer.caption.copyWith(
-        color: AutolabCustomer.customerTextColor(context),
-      ),
+      style: AutolabCustomer.caption.copyWith(color: context.customerInk),
       decoration: InputDecoration(
         hintText: AppLocalizations.of(context)!.appointmentNoteHint,
         hintStyle: AutolabCustomer.caption.copyWith(
@@ -1915,7 +1895,7 @@ class _AppointmentNoteInput extends StatelessWidget {
           ),
         ),
         counterStyle: AutolabCustomer.label.copyWith(
-          color: AutolabCustomer.customerTextColor(context),
+          color: context.customerInk,
         ),
       ),
     );
@@ -2062,7 +2042,7 @@ class _BookingReviewStep extends StatelessWidget {
               Text(
                 l10n.appointmentOptionalNoteLabel,
                 style: AutolabCustomer.bodyLarge.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
+                  color: context.customerInk,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -2075,7 +2055,7 @@ class _BookingReviewStep extends StatelessWidget {
               Text(
                 l10n.appointmentProductsLabel,
                 style: AutolabCustomer.bodyLarge.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
+                  color: context.customerInk,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -2174,7 +2154,7 @@ class _SummaryRow extends StatelessWidget {
       tablet: 132,
     );
     final valueStyle = AutolabCustomer.caption.copyWith(
-      color: AutolabCustomer.customerTextColor(context),
+      color: context.customerInk,
       fontSize: AutolabCustomer.responsiveDouble(
         context,
         compact: emphasize ? 12 : 11,
@@ -2196,7 +2176,7 @@ class _SummaryRow extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.caption.copyWith(
-                color: labelColor ?? AutolabCustomer.customerTextColor(context),
+                color: labelColor ?? context.customerInk,
                 fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
               ),
             ),
@@ -2241,7 +2221,7 @@ class _ProductSummaryRow extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AutolabCustomer.body.copyWith(
-                    color: AutolabCustomer.customerTextColor(context),
+                    color: context.customerInk,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -2251,7 +2231,7 @@ class _ProductSummaryRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AutolabCustomer.caption.copyWith(
-                    color: AutolabCustomer.customerTextColor(context),
+                    color: context.customerInk,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -2268,7 +2248,7 @@ class _ProductSummaryRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AutolabCustomer.body.copyWith(
-                color: AutolabCustomer.customerTextColor(context),
+                color: context.customerInk,
                 fontWeight: FontWeight.w900,
               ),
             ),
