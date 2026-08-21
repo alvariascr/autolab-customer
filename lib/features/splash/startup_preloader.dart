@@ -10,6 +10,8 @@ import '../workshops/domain/repositories/workshop_repository.dart';
 class StartupPreloader {
   const StartupPreloader();
 
+  static const _taskTimeout = Duration(seconds: 4);
+
   Future<void> preload() {
     return Future.wait<void>([
       _runSafely(_preloadWorkshops),
@@ -20,7 +22,7 @@ class StartupPreloader {
 
   Future<void> _runSafely(Future<void> Function() task) async {
     try {
-      await task();
+      await task().timeout(_taskTimeout);
     } catch (_) {
       // Startup preloading is best-effort and must never block the splash flow.
     }
