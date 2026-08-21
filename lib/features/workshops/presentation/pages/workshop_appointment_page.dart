@@ -479,7 +479,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
       ),
       _AppointmentMessageType.error => (
         icon: Icons.error_outline,
-        color: _appointmentPrimary(context),
+        color: context.appointmentPrimary,
         background: AutolabCustomer.errorSoftBackground,
       ),
     };
@@ -596,28 +596,21 @@ String _appointmentSubmitErrorMessage(
   };
 }
 
-Color _appointmentPrimary(BuildContext context) {
-  return Theme.of(context).colorScheme.primary;
-}
+extension _AppointmentThemeTokens on BuildContext {
+  Color get appointmentPrimary => Theme.of(this).colorScheme.primary;
 
-Color _appointmentInk(BuildContext context) {
-  return AutolabCustomer.customerTextColor(context);
-}
+  Color get appointmentInk => AutolabCustomer.customerTextColor(this);
 
-Color _appointmentMuted(BuildContext context) {
-  return AutolabCustomer.customerSecondaryTextColor(context);
-}
+  Color get appointmentMuted =>
+      AutolabCustomer.customerSecondaryTextColor(this);
 
-Color _appointmentElevatedSurface(BuildContext context) {
-  return AutolabCustomer.customerElevatedSurfaceColor(context);
-}
+  Color get appointmentElevatedSurface =>
+      AutolabCustomer.customerElevatedSurfaceColor(this);
 
-Color _appointmentSoftSurface(BuildContext context) {
-  return AutolabCustomer.customerSoftSurfaceColor(context);
-}
+  Color get appointmentSoftSurface =>
+      AutolabCustomer.customerSoftSurfaceColor(this);
 
-Color _appointmentBorder(BuildContext context) {
-  return AutolabCustomer.customerBorderColor(context);
+  Color get appointmentBorder => AutolabCustomer.customerBorderColor(this);
 }
 
 class _DesktopRail extends StatelessWidget {
@@ -654,7 +647,7 @@ class _DesktopRail extends StatelessWidget {
             AppLocalizations.of(context)!.appointmentStepWorkshop,
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: _appointmentPrimary(context),
+              color: context.appointmentPrimary,
               fontWeight: FontWeight.w900,
               fontSize: 17,
             ),
@@ -664,7 +657,7 @@ class _DesktopRail extends StatelessWidget {
             workshopName,
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: _appointmentInk(context),
+              color: context.appointmentInk,
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
@@ -684,7 +677,7 @@ class _DesktopRail extends StatelessWidget {
             'Autolab Customer',
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: _appointmentMuted(context),
+              color: context.appointmentMuted,
             ),
           ),
         ],
@@ -711,11 +704,11 @@ class _DesktopStepItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active || done
-        ? _appointmentPrimary(context)
+        ? context.appointmentPrimary
         : AutolabCustomer.gray;
     final titleColor = active || done
-        ? _appointmentPrimary(context)
-        : _appointmentMuted(context);
+        ? context.appointmentPrimary
+        : context.appointmentMuted;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,7 +722,7 @@ class _DesktopStepItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: active || done
                     ? color
-                    : _appointmentElevatedSurface(context),
+                    : context.appointmentElevatedSurface,
                 shape: BoxShape.circle,
                 boxShadow: const [
                   BoxShadow(
@@ -749,11 +742,7 @@ class _DesktopStepItem extends StatelessWidget {
               ),
             ),
             if (showLine)
-              Container(
-                width: 1,
-                height: 48,
-                color: _appointmentBorder(context),
-              ),
+              Container(width: 1, height: 48, color: context.appointmentBorder),
           ],
         ),
         const SizedBox(width: 30),
@@ -809,8 +798,8 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: _appointmentElevatedSurface(context),
-            border: Border.all(color: _appointmentBorder(context)),
+            color: context.appointmentElevatedSurface,
+            border: Border.all(color: context.appointmentBorder),
             boxShadow: const [
               BoxShadow(
                 color: AutolabCustomer.shadowBlackLight,
@@ -826,7 +815,7 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
                   l10n.appointmentProductsSwitchLabel,
                   style: TextStyle(
                     fontFamily: AutolabCustomer.primaryFont,
-                    color: _appointmentInk(context),
+                    color: context.appointmentInk,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                   ),
@@ -834,7 +823,7 @@ class _ProductsSelectionStepState extends State<_ProductsSelectionStep> {
               ),
               Switch(
                 value: widget.includeProducts,
-                activeThumbColor: _appointmentPrimary(context),
+                activeThumbColor: context.appointmentPrimary,
                 onChanged: widget.onIncludeChanged,
               ),
             ],
@@ -904,19 +893,19 @@ class _ServiceMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: _appointmentSoftSurface(context),
+        color: context.appointmentSoftSurface,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: _appointmentPrimary(context)),
+          Icon(icon, size: 16, color: context.appointmentPrimary),
           const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
               fontFamily: AutolabCustomer.primaryFont,
-              color: _appointmentInk(context),
+              color: context.appointmentInk,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -945,8 +934,8 @@ class _ProductOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? _appointmentSoftSurface(context)
-          : _appointmentElevatedSurface(context),
+          ? context.appointmentSoftSurface
+          : context.appointmentElevatedSurface,
       elevation: 2,
       shadowColor: AutolabCustomer.shadowBlack26,
       child: InkWell(
@@ -957,8 +946,8 @@ class _ProductOptionCard extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(
               color: selected
-                  ? _appointmentPrimary(context)
-                  : _appointmentBorder(context),
+                  ? context.appointmentPrimary
+                  : context.appointmentBorder,
               width: selected ? 2 : 1,
             ),
           ),
@@ -969,7 +958,7 @@ class _ProductOptionCard extends StatelessWidget {
                 width: 54,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: _appointmentPrimary(context),
+                  color: context.appointmentPrimary,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -987,7 +976,7 @@ class _ProductOptionCard extends StatelessWidget {
                       product.name,
                       style: TextStyle(
                         fontFamily: AutolabCustomer.primaryFont,
-                        color: _appointmentInk(context),
+                        color: context.appointmentInk,
                         fontSize: 19,
                         fontWeight: FontWeight.w900,
                       ),
@@ -997,7 +986,7 @@ class _ProductOptionCard extends StatelessWidget {
                       product.effectiveDescription,
                       style: TextStyle(
                         fontFamily: AutolabCustomer.primaryFont,
-                        color: _appointmentMuted(context),
+                        color: context.appointmentMuted,
                         fontSize: 15,
                         height: 1.3,
                       ),
@@ -1042,19 +1031,19 @@ class _ProductsInfoMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _appointmentElevatedSurface(context),
-        border: Border.all(color: _appointmentBorder(context)),
+        color: context.appointmentElevatedSurface,
+        border: Border.all(color: context.appointmentBorder),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline_rounded, color: _appointmentPrimary(context)),
+          Icon(Icons.info_outline_rounded, color: context.appointmentPrimary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
                 fontFamily: AutolabCustomer.primaryFont,
-                color: _appointmentInk(context),
+                color: context.appointmentInk,
                 fontSize: 16,
               ),
             ),
@@ -1075,8 +1064,8 @@ class _QuantityStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _appointmentElevatedSurface(context),
-        border: Border.all(color: _appointmentBorder(context)),
+        color: context.appointmentElevatedSurface,
+        border: Border.all(color: context.appointmentBorder),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1093,7 +1082,7 @@ class _QuantityStepper extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AutolabCustomer.primaryFont,
-                color: _appointmentInk(context),
+                color: context.appointmentInk,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1119,7 +1108,7 @@ class _QuantityButton extends StatelessWidget {
       child: SizedBox(
         width: 34,
         height: 34,
-        child: Icon(icon, size: 20, color: _appointmentPrimary(context)),
+        child: Icon(icon, size: 20, color: context.appointmentPrimary),
       ),
     );
   }
@@ -1156,8 +1145,8 @@ class _BookingSubmittingOverlay extends StatelessWidget {
               width: 280,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
               decoration: BoxDecoration(
-                color: _appointmentElevatedSurface(context),
-                border: Border.all(color: _appointmentBorder(context)),
+                color: context.appointmentElevatedSurface,
+                border: Border.all(color: context.appointmentBorder),
                 boxShadow: const [
                   BoxShadow(
                     color: AutolabCustomer.shadowBlackStrong,
@@ -1174,7 +1163,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     height: 42,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
-                      color: _appointmentPrimary(context),
+                      color: context.appointmentPrimary,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -1183,7 +1172,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AutolabCustomer.primaryFont,
-                      color: _appointmentInk(context),
+                      color: context.appointmentInk,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
                     ),
@@ -1194,7 +1183,7 @@ class _BookingSubmittingOverlay extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AutolabCustomer.primaryFont,
-                      color: _appointmentMuted(context),
+                      color: context.appointmentMuted,
                       fontSize: 14,
                       height: 1.35,
                       fontWeight: FontWeight.w600,
