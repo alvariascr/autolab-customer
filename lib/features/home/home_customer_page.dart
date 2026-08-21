@@ -226,11 +226,11 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
 
       final locationCubit = context.read<LocationCubit>();
       final locationState = locationCubit.state;
-      if (locationState.status == LocationFlowStatus.loading ||
-          locationState.effectiveStatus == LocationFlowStatus.success) {
+      if (locationState.status == LocationFlowStatus.loading) {
         return;
       }
 
+      // Splash preloading should not replace the Home initialization flow.
       locationCubit.initialize();
     });
   }
