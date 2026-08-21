@@ -433,6 +433,7 @@ class _MenuProductTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
         onTap: () {
           context.push(
             '/workshops/${product.workshopId}/products/${product.id}',
