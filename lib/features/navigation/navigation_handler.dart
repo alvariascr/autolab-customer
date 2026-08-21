@@ -11,7 +11,7 @@ class NavigationHandler {
   }) {
     switch (index) {
       case 0:
-        context.go('/home-customer');
+        context.go('/home-customer?tab=home');
         return;
 
       case 1:

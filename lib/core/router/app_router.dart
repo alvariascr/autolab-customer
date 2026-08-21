@@ -79,13 +79,19 @@ class AppRouter {
       GoRoute(
         path: '/home-customer',
         builder: (context, state) {
+          // No `tab` at all means "don't force a tab" (e.g. a back-navigation
+          // fallback, or the router re-evaluating this route without one) --
+          // the shell falls back to whichever tab the customer last had
+          // selected instead of resetting to home. An explicit `tab=home`
+          // is how the bottom nav's own "Inicio" tap requests home for real.
           final initialIndex = switch (state.uri.queryParameters['tab']) {
+            'home' => 0,
             'map' => 1,
             'search' => 2,
             'cart' => 3,
             'profile' => 4,
             'garage' => 4,
-            _ => 0,
+            _ => null,
           };
 
           return CustomerNavigationShell(initialIndex: initialIndex);

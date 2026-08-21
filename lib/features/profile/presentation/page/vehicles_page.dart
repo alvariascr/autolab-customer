@@ -368,12 +368,12 @@ class _VehiclesPageState extends State<VehiclesPage> {
   }
 
   void _goBack(BuildContext context) {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
+    if (context.canPop()) {
+      context.pop();
       return;
     }
 
-    context.go('/profile');
+    context.go('/home-customer?tab=profile');
   }
 }
 
@@ -1046,11 +1046,11 @@ class _VehicleFormState extends State<_VehicleForm> {
                 ),
               ),
               onPressed: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
+                if (context.canPop()) {
+                  context.pop();
                   return;
                 }
-                context.go('/profile');
+                context.go('/home-customer?tab=profile');
               },
               child: Text(
                 l10n.vehiclesNextAction,

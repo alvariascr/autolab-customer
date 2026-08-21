@@ -15,9 +15,15 @@ import 'navigation_handler.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
 class CustomerNavigationShell extends StatefulWidget {
-  const CustomerNavigationShell({super.key, this.initialIndex = 0});
+  const CustomerNavigationShell({super.key, this.initialIndex});
 
-  final int initialIndex;
+  /// Which bottom-nav tab to show. Null means "whatever the customer had
+  /// last selected" (see [_CustomerNavigationShellState._lastNavIndex]) --
+  /// routes that don't carry an explicit `?tab=` (e.g. a bare
+  /// `/home-customer` reached after the router re-evaluates a redirect,
+  /// or a back-navigation fallback) should not silently reset the customer
+  /// to the home tab.
+  final int? initialIndex;
 
   @override
   State<CustomerNavigationShell> createState() =>
@@ -25,6 +31,11 @@ class CustomerNavigationShell extends StatefulWidget {
 }
 
 class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
+  // Persists across rebuilds/instances of this shell (module-level state,
+  // not per-widget) so returning to /home-customer without an explicit tab
+  // remembers where the customer actually was.
+  static int _lastNavIndex = 0;
+
   final HomeCustomerController _homeController = HomeCustomerController();
   late final CartCubit _cartCubit;
   int _navIndex = 0;
@@ -34,17 +45,18 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
   void initState() {
     super.initState();
     _cartCubit = sl<CartCubit>();
-    _setInitialIndex(widget.initialIndex);
+    _setInitialIndex(widget.initialIndex ?? _lastNavIndex);
     _refreshCartIfSelected();
   }
 
   @override
   void didUpdateWidget(covariant CustomerNavigationShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialIndex != widget.initialIndex ||
-        _navIndex != widget.initialIndex) {
+    final targetIndex = widget.initialIndex;
+    if (targetIndex != null &&
+        (oldWidget.initialIndex != targetIndex || _navIndex != targetIndex)) {
       setState(() {
-        _setInitialIndex(widget.initialIndex);
+        _setInitialIndex(targetIndex);
       });
       _refreshCartIfSelected();
     }
@@ -57,6 +69,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
   void _setInitialIndex(int index) {
     _navIndex = index;
+    _lastNavIndex = index;
     _pageIndex = switch (index) {
       0 => 0,
       1 => 1,
@@ -71,6 +84,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
     if (index == 0) {
       setState(() {
         _navIndex = 0;
+        _lastNavIndex = 0;
         _pageIndex = 0;
       });
       _homeController.closeSearch();
@@ -81,6 +95,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
     if (index == 2) {
       setState(() {
         _navIndex = 2;
+        _lastNavIndex = 2;
         _pageIndex = 0;
       });
       _homeController.openSearch();
@@ -90,6 +105,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
     setState(() {
       _navIndex = index;
+      _lastNavIndex = index;
       _pageIndex = switch (index) {
         0 => 0,
         1 => 1,
@@ -109,6 +125,7 @@ class _CustomerNavigationShellState extends State<CustomerNavigationShell> {
 
     setState(() {
       _navIndex = 0;
+      _lastNavIndex = 0;
       _pageIndex = 0;
     });
   }
