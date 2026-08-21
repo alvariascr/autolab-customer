@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/theme/autolab_customer.dart';
+import 'startup_preloader.dart';
 
 class StartupSplashPage extends StatefulWidget {
   const StartupSplashPage({super.key});
@@ -27,6 +28,7 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(const StartupPreloader().preload());
     unawaited(_initializeVideo());
     _timer = Timer(
       StartupSplashPage.duration,
@@ -37,9 +39,7 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
   @override
   void dispose() {
     _timer?.cancel();
-    _videoController
-      ?..removeListener(_handleVideoProgress)
-      ..dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -51,30 +51,14 @@ class _StartupSplashPageState extends State<StartupSplashPage> {
       await controller.initialize();
       await controller.setVolume(0);
       await controller.play();
-      controller.addListener(_handleVideoProgress);
       if (mounted) {
         setState(() {});
       }
     } catch (_) {
+      await controller.dispose();
       if (mounted) {
         setState(() => _videoController = null);
       }
-    }
-  }
-
-  void _handleVideoProgress() {
-    final controller = _videoController;
-    if (controller == null || !controller.value.isInitialized) {
-      return;
-    }
-
-    final duration = controller.value.duration;
-    if (duration == Duration.zero) {
-      return;
-    }
-
-    if (controller.value.position >= duration) {
-      unawaited(_goToInitialRoute());
     }
   }
 

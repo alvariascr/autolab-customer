@@ -2275,8 +2275,8 @@ abstract class AppLocalizations {
   /// No description provided for @workshopSearchProductsResultsCount.
   ///
   /// In es, this message translates to:
-  /// **'{count} resultados'**
-  String workshopSearchProductsResultsCount(Object count);
+  /// **'{count, plural, =1{1 resultado} other{{count} resultados}}'**
+  String workshopSearchProductsResultsCount(num count);
 
   /// No description provided for @workshopSearchProductsSortLabel.
   ///
@@ -2377,7 +2377,7 @@ abstract class AppLocalizations {
   /// No description provided for @workshopSearchProductsStockAvailable.
   ///
   /// In es, this message translates to:
-  /// **'Muchos en stock'**
+  /// **'En stock'**
   String get workshopSearchProductsStockAvailable;
 
   /// No description provided for @workshopSearchProductsRequiresAppointment.
