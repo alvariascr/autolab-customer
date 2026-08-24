@@ -11,6 +11,82 @@ class _ProfileHero extends StatefulWidget {
 
 class _ProfileHeroState extends State<_ProfileHero> {
   bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
+
+  FavoriteWorkshopsRepository get _favoriteRepository =>
+      sl<FavoriteWorkshopsRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProfileHero oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workshop.id != widget.workshop.id) {
+      unawaited(_loadFavoriteStatus());
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final isFavorite = await _favoriteRepository.isFavoriteWorkshop(
+        widget.workshop.id,
+      );
+      if (!mounted) return;
+      setState(() => _isFavorite = isFavorite);
+    } catch (_) {
+      // Favorite status is optional for the hero; keep the screen usable.
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isFavoriteLoading) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final previousValue = _isFavorite;
+
+    setState(() {
+      _isFavorite = !previousValue;
+      _isFavoriteLoading = true;
+    });
+
+    try {
+      final nextValue = await _favoriteRepository.toggleFavoriteWorkshop(
+        widget.workshop.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = nextValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              nextValue
+                  ? l10n.workshopFavoriteAdded
+                  : l10n.workshopFavoriteRemoved,
+            ),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.workshopFavoriteError)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +144,7 @@ class _ProfileHeroState extends State<_ProfileHero> {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   iconColor: AutolabCustomer.primary,
-                  onTap: () {
-                    setState(() => _isFavorite = !_isFavorite);
-                  },
+                  onTap: () => unawaited(_toggleFavorite()),
                 ),
                 const SizedBox(width: AutolabCustomer.spacingSm),
                 _HeroIconButton(

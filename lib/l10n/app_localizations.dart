@@ -1060,11 +1060,179 @@ abstract class AppLocalizations {
   /// **'Favoritos'**
   String get garageFavorites;
 
+  /// No description provided for @favoritesWorkshopsFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Talleres'**
+  String get favoritesWorkshopsFilter;
+
+  /// No description provided for @favoritesProductsFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Productos'**
+  String get favoritesProductsFilter;
+
+  /// No description provided for @favoritesServicesFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicios'**
+  String get favoritesServicesFilter;
+
+  /// No description provided for @favoritesEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes talleres favoritos'**
+  String get favoritesEmptyTitle;
+
+  /// No description provided for @favoritesEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca el corazón dentro de un taller para guardarlo aquí.'**
+  String get favoritesEmptyMessage;
+
+  /// No description provided for @favoritesProductsEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes productos favoritos'**
+  String get favoritesProductsEmptyTitle;
+
+  /// No description provided for @favoritesProductsEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca el corazón dentro de un producto para guardarlo aquí.'**
+  String get favoritesProductsEmptyMessage;
+
+  /// No description provided for @favoritesServicesEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes servicios favoritos'**
+  String get favoritesServicesEmptyTitle;
+
+  /// No description provided for @favoritesServicesEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Toca el corazón dentro de un servicio para guardarlo aquí.'**
+  String get favoritesServicesEmptyMessage;
+
+  /// No description provided for @favoritesLoadErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus favoritos'**
+  String get favoritesLoadErrorTitle;
+
+  /// No description provided for @workshopFavoriteAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Taller agregado a favoritos.'**
+  String get workshopFavoriteAdded;
+
+  /// No description provided for @workshopFavoriteRemoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Taller eliminado de favoritos.'**
+  String get workshopFavoriteRemoved;
+
+  /// No description provided for @workshopFavoriteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible actualizar favoritos. Intenta nuevamente.'**
+  String get workshopFavoriteError;
+
+  /// No description provided for @productFavoriteAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto agregado a favoritos.'**
+  String get productFavoriteAdded;
+
+  /// No description provided for @productFavoriteRemoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Producto eliminado de favoritos.'**
+  String get productFavoriteRemoved;
+
+  /// No description provided for @serviceFavoriteAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio agregado a favoritos.'**
+  String get serviceFavoriteAdded;
+
+  /// No description provided for @serviceFavoriteRemoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Servicio eliminado de favoritos.'**
+  String get serviceFavoriteRemoved;
+
+  /// No description provided for @inventoryFavoriteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible actualizar favoritos. Intenta nuevamente.'**
+  String get inventoryFavoriteError;
+
   /// No description provided for @garageAddresses.
   ///
   /// In es, this message translates to:
   /// **'Direcciones'**
   String get garageAddresses;
+
+  /// No description provided for @garageAddressesCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Sin direcciones guardadas} =1{1 dirección guardada} other{{count} direcciones guardadas}}'**
+  String garageAddressesCount(num count);
+
+  /// No description provided for @garageAddressesEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes direcciones guardadas'**
+  String get garageAddressesEmptyTitle;
+
+  /// No description provided for @garageAddressesEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrega una dirección para usarla en tus compras con envío.'**
+  String get garageAddressesEmptyMessage;
+
+  /// No description provided for @garageAddressesAddAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar dirección'**
+  String get garageAddressesAddAction;
+
+  /// No description provided for @garageAddressesEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar dirección'**
+  String get garageAddressesEditTitle;
+
+  /// No description provided for @garageAddressesNewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva dirección'**
+  String get garageAddressesNewTitle;
+
+  /// No description provided for @garageAddressesDefaultLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Predeterminada'**
+  String get garageAddressesDefaultLabel;
+
+  /// No description provided for @garageAddressesSetDefaultAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar como predeterminada'**
+  String get garageAddressesSetDefaultAction;
+
+  /// No description provided for @garageAddressesSaveSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección guardada correctamente.'**
+  String get garageAddressesSaveSuccess;
+
+  /// No description provided for @garageAddressesDefaultSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección predeterminada actualizada.'**
+  String get garageAddressesDefaultSuccess;
 
   /// No description provided for @garagePaymentMethods.
   ///
@@ -1077,6 +1245,138 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ajustes'**
   String get garageSettings;
+
+  /// No description provided for @settingsAccountTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta'**
+  String get settingsAccountTitle;
+
+  /// No description provided for @settingsEditProfile.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar perfil'**
+  String get settingsEditProfile;
+
+  /// No description provided for @settingsChangePassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar contraseña'**
+  String get settingsChangePassword;
+
+  /// No description provided for @settingsPreferencesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Preferencias'**
+  String get settingsPreferencesTitle;
+
+  /// No description provided for @settingsThemeMode.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo oscuro'**
+  String get settingsThemeMode;
+
+  /// No description provided for @settingsThemeModeEnabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Activado'**
+  String get settingsThemeModeEnabled;
+
+  /// No description provided for @settingsThemeModeDisabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Desactivado'**
+  String get settingsThemeModeDisabled;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In es, this message translates to:
+  /// **'Idioma'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageSpanish.
+  ///
+  /// In es, this message translates to:
+  /// **'Español'**
+  String get settingsLanguageSpanish;
+
+  /// No description provided for @settingsNotificationsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones'**
+  String get settingsNotificationsTitle;
+
+  /// No description provided for @settingsAppointmentNotifications.
+  ///
+  /// In es, this message translates to:
+  /// **'Citas'**
+  String get settingsAppointmentNotifications;
+
+  /// No description provided for @settingsPurchaseNotifications.
+  ///
+  /// In es, this message translates to:
+  /// **'Compras'**
+  String get settingsPurchaseNotifications;
+
+  /// No description provided for @settingsPromotionsNotifications.
+  ///
+  /// In es, this message translates to:
+  /// **'Promociones'**
+  String get settingsPromotionsNotifications;
+
+  /// No description provided for @settingsPrivacyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad y seguridad'**
+  String get settingsPrivacyTitle;
+
+  /// No description provided for @settingsPrivacyPolicy.
+  ///
+  /// In es, this message translates to:
+  /// **'Política de privacidad'**
+  String get settingsPrivacyPolicy;
+
+  /// No description provided for @settingsTerms.
+  ///
+  /// In es, this message translates to:
+  /// **'Términos y condiciones'**
+  String get settingsTerms;
+
+  /// No description provided for @settingsDeleteAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar cuenta'**
+  String get settingsDeleteAccount;
+
+  /// No description provided for @settingsAppTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aplicación'**
+  String get settingsAppTitle;
+
+  /// No description provided for @settingsReportProblem.
+  ///
+  /// In es, this message translates to:
+  /// **'Reportar un problema'**
+  String get settingsReportProblem;
+
+  /// No description provided for @settingsClearCache.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar caché'**
+  String get settingsClearCache;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In es, this message translates to:
+  /// **'Versión'**
+  String get settingsVersion;
+
+  /// No description provided for @settingsComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximamente'**
+  String get settingsComingSoon;
 
   /// No description provided for @garageSupportTitle.
   ///

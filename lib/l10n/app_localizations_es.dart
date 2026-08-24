@@ -554,13 +554,179 @@ class AppLocalizationsEs extends AppLocalizations {
   String get garageFavorites => 'Favoritos';
 
   @override
+  String get favoritesWorkshopsFilter => 'Talleres';
+
+  @override
+  String get favoritesProductsFilter => 'Productos';
+
+  @override
+  String get favoritesServicesFilter => 'Servicios';
+
+  @override
+  String get favoritesEmptyTitle => 'No tienes talleres favoritos';
+
+  @override
+  String get favoritesEmptyMessage =>
+      'Toca el corazón dentro de un taller para guardarlo aquí.';
+
+  @override
+  String get favoritesProductsEmptyTitle => 'No tienes productos favoritos';
+
+  @override
+  String get favoritesProductsEmptyMessage =>
+      'Toca el corazón dentro de un producto para guardarlo aquí.';
+
+  @override
+  String get favoritesServicesEmptyTitle => 'No tienes servicios favoritos';
+
+  @override
+  String get favoritesServicesEmptyMessage =>
+      'Toca el corazón dentro de un servicio para guardarlo aquí.';
+
+  @override
+  String get favoritesLoadErrorTitle => 'No pudimos cargar tus favoritos';
+
+  @override
+  String get workshopFavoriteAdded => 'Taller agregado a favoritos.';
+
+  @override
+  String get workshopFavoriteRemoved => 'Taller eliminado de favoritos.';
+
+  @override
+  String get workshopFavoriteError =>
+      'No fue posible actualizar favoritos. Intenta nuevamente.';
+
+  @override
+  String get productFavoriteAdded => 'Producto agregado a favoritos.';
+
+  @override
+  String get productFavoriteRemoved => 'Producto eliminado de favoritos.';
+
+  @override
+  String get serviceFavoriteAdded => 'Servicio agregado a favoritos.';
+
+  @override
+  String get serviceFavoriteRemoved => 'Servicio eliminado de favoritos.';
+
+  @override
+  String get inventoryFavoriteError =>
+      'No fue posible actualizar favoritos. Intenta nuevamente.';
+
+  @override
   String get garageAddresses => 'Direcciones';
+
+  @override
+  String garageAddressesCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count direcciones guardadas',
+      one: '1 dirección guardada',
+      zero: 'Sin direcciones guardadas',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get garageAddressesEmptyTitle => 'No tienes direcciones guardadas';
+
+  @override
+  String get garageAddressesEmptyMessage =>
+      'Agrega una dirección para usarla en tus compras con envío.';
+
+  @override
+  String get garageAddressesAddAction => 'Agregar dirección';
+
+  @override
+  String get garageAddressesEditTitle => 'Editar dirección';
+
+  @override
+  String get garageAddressesNewTitle => 'Nueva dirección';
+
+  @override
+  String get garageAddressesDefaultLabel => 'Predeterminada';
+
+  @override
+  String get garageAddressesSetDefaultAction => 'Usar como predeterminada';
+
+  @override
+  String get garageAddressesSaveSuccess => 'Dirección guardada correctamente.';
+
+  @override
+  String get garageAddressesDefaultSuccess =>
+      'Dirección predeterminada actualizada.';
 
   @override
   String get garagePaymentMethods => 'Métodos de pago';
 
   @override
   String get garageSettings => 'Ajustes';
+
+  @override
+  String get settingsAccountTitle => 'Cuenta';
+
+  @override
+  String get settingsEditProfile => 'Editar perfil';
+
+  @override
+  String get settingsChangePassword => 'Cambiar contraseña';
+
+  @override
+  String get settingsPreferencesTitle => 'Preferencias';
+
+  @override
+  String get settingsThemeMode => 'Modo oscuro';
+
+  @override
+  String get settingsThemeModeEnabled => 'Activado';
+
+  @override
+  String get settingsThemeModeDisabled => 'Desactivado';
+
+  @override
+  String get settingsLanguage => 'Idioma';
+
+  @override
+  String get settingsLanguageSpanish => 'Español';
+
+  @override
+  String get settingsNotificationsTitle => 'Notificaciones';
+
+  @override
+  String get settingsAppointmentNotifications => 'Citas';
+
+  @override
+  String get settingsPurchaseNotifications => 'Compras';
+
+  @override
+  String get settingsPromotionsNotifications => 'Promociones';
+
+  @override
+  String get settingsPrivacyTitle => 'Privacidad y seguridad';
+
+  @override
+  String get settingsPrivacyPolicy => 'Política de privacidad';
+
+  @override
+  String get settingsTerms => 'Términos y condiciones';
+
+  @override
+  String get settingsDeleteAccount => 'Eliminar cuenta';
+
+  @override
+  String get settingsAppTitle => 'Aplicación';
+
+  @override
+  String get settingsReportProblem => 'Reportar un problema';
+
+  @override
+  String get settingsClearCache => 'Limpiar caché';
+
+  @override
+  String get settingsVersion => 'Versión';
+
+  @override
+  String get settingsComingSoon => 'Próximamente';
 
   @override
   String get garageSupportTitle => 'Soporte';

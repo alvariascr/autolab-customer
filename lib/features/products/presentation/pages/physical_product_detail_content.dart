@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../cart/application/cart_cubit.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/favorite_inventory_items_repository.dart';
 import '../widgets/product_price_text.dart';
 import 'product_detail_hero.dart';
 
@@ -22,9 +26,87 @@ class PhysicalProductDetailContent extends StatefulWidget {
 class _PhysicalProductDetailContentState
     extends State<PhysicalProductDetailContent> {
   bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
   int _quantity = 1;
 
+  FavoriteInventoryItemsRepository get _favoriteRepository =>
+      sl<FavoriteInventoryItemsRepository>();
+
   int get _availableStock => widget.product.currentStock?.clamp(0, 9999) ?? 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void didUpdateWidget(covariant PhysicalProductDetailContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product.id != widget.product.id) {
+      unawaited(_loadFavoriteStatus());
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final isFavorite = await _favoriteRepository.isFavoriteInventoryItem(
+        widget.product.id,
+      );
+      if (!mounted) return;
+      setState(() => _isFavorite = isFavorite);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isFavorite = false);
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isFavoriteLoading) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final previousValue = _isFavorite;
+
+    setState(() {
+      _isFavorite = !previousValue;
+      _isFavoriteLoading = true;
+    });
+
+    try {
+      final nextValue = await _favoriteRepository.toggleFavoriteInventoryItem(
+        widget.product.id,
+        itemType: widget.product.itemType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = nextValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              nextValue
+                  ? l10n.productFavoriteAdded
+                  : l10n.productFavoriteRemoved,
+            ),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.inventoryFavoriteError)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +125,7 @@ class _PhysicalProductDetailContentState
             child: ProductDetailHero(
               product: product,
               isFavorite: _isFavorite,
-              onFavoriteTap: () {
-                setState(() => _isFavorite = !_isFavorite);
-              },
+              onFavoriteTap: () => unawaited(_toggleFavorite()),
             ),
           ),
           SliverPadding(

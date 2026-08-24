@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/di/app_injection.dart';
-import '../../../../core/theme/app_theme_mode_cubit.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
@@ -22,6 +21,9 @@ import '../../application/garage_vehicle_controller.dart';
 import '../../domain/entities/garage_vehicle.dart';
 import '../../domain/usecases/get_default_garage_vehicle.dart';
 import '../helpers/garage_vehicle_display.dart';
+import 'delivery_addresses_page.dart';
+import 'favorite_workshops_page.dart';
+import 'settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -169,12 +171,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 _GarageMenuItem(
                   icon: Icons.favorite_border_rounded,
                   label: l10n.garageFavorites,
-                  enabled: false,
+                  onTap: () => context.push(FavoriteWorkshopsPage.routePath),
                 ),
                 _GarageMenuItem(
                   icon: Icons.location_on_outlined,
                   label: l10n.garageAddresses,
-                  enabled: false,
+                  onTap: () => context.push(DeliveryAddressesPage.routePath),
                 ),
                 _GarageMenuItem(
                   icon: Icons.credit_card_rounded,
@@ -189,9 +191,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 _GarageMenuItem(
                   icon: Icons.settings_outlined,
                   label: l10n.garageSettings,
-                  enabled: false,
+                  onTap: () => context.push(SettingsPage.routePath),
+                  showDivider: false,
                 ),
-                const _GarageThemeModeItem(showDivider: false),
               ],
             ),
             const SizedBox(height: AutolabCustomer.spacingLg),
@@ -877,92 +879,6 @@ class _GarageMenuItem extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _GarageThemeModeItem extends StatelessWidget {
-  const _GarageThemeModeItem({this.showDivider = true});
-
-  final bool showDivider;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return BlocBuilder<AppThemeModeCubit, ThemeMode>(
-      builder: (context, mode) {
-        final isDark = switch (mode) {
-          ThemeMode.dark => true,
-          ThemeMode.light => false,
-          ThemeMode.system =>
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark,
-        };
-        final textColor = AutolabCustomer.customerTextColor(context);
-        final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
-          context,
-        );
-
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AutolabCustomer.spacingMd,
-                vertical: AutolabCustomer.spacingSm,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isDark
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                    color: textColor,
-                    size: AutolabCustomer.iconSm,
-                  ),
-                  const SizedBox(width: AutolabCustomer.spacingMd),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.profileDarkModeTitle,
-                          style: AutolabCustomer.body.copyWith(
-                            color: textColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isDark
-                              ? l10n.profileDarkModeEnabled
-                              : l10n.profileDarkModeDisabled,
-                          style: AutolabCustomer.caption.copyWith(
-                            color: secondaryTextColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: isDark,
-                    activeThumbColor: AutolabCustomer.primary,
-                    activeTrackColor: AutolabCustomer.primary.withValues(
-                      alpha: 0.32,
-                    ),
-                    onChanged: context.read<AppThemeModeCubit>().setDarkMode,
-                  ),
-                ],
-              ),
-            ),
-            if (showDivider)
-              Divider(
-                height: 1,
-                indent: 48,
-                color: AutolabCustomer.customerBorderColor(context),
-              ),
-          ],
-        );
-      },
     );
   }
 }

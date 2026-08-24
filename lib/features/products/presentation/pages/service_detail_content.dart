@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +11,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../workshops/application/appointment_state.dart';
 import '../../../workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/favorite_inventory_items_repository.dart';
 import '../../domain/usecases/get_additional_products_by_workshop.dart';
 import '../widgets/product_image.dart';
 import '../widgets/product_price_text.dart';
@@ -32,6 +35,84 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   bool _includeProducts = false;
   bool _showProductsStep = false;
   bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
+
+  FavoriteInventoryItemsRepository get _favoriteRepository =>
+      sl<FavoriteInventoryItemsRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void didUpdateWidget(covariant ServiceDetailContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service.id != widget.service.id) {
+      unawaited(_loadFavoriteStatus());
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final isFavorite = await _favoriteRepository.isFavoriteInventoryItem(
+        widget.service.id,
+      );
+      if (!mounted) return;
+      setState(() => _isFavorite = isFavorite);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isFavorite = false);
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isFavoriteLoading) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final previousValue = _isFavorite;
+
+    setState(() {
+      _isFavorite = !previousValue;
+      _isFavoriteLoading = true;
+    });
+
+    try {
+      final nextValue = await _favoriteRepository.toggleFavoriteInventoryItem(
+        widget.service.id,
+        itemType: widget.service.itemType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = nextValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              nextValue
+                  ? l10n.serviceFavoriteAdded
+                  : l10n.serviceFavoriteRemoved,
+            ),
+          ),
+        );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.inventoryFavoriteError)));
+    }
+  }
 
   Future<List<Product>> _loadRelatedProducts() async {
     final result = await sl<GetAdditionalProductsByWorkshop>()(
@@ -114,9 +195,7 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                     child: ProductDetailHero(
                       product: service,
                       isFavorite: _isFavorite,
-                      onFavoriteTap: () {
-                        setState(() => _isFavorite = !_isFavorite);
-                      },
+                      onFavoriteTap: () => unawaited(_toggleFavorite()),
                     ),
                   ),
                 SliverPadding(

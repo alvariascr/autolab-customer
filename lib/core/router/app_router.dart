@@ -18,8 +18,11 @@ import '../../features/products/domain/entities/product.dart';
 import '../../features/products/presentation/pages/product_detail_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
 import '../../features/profile/application/garage_vehicle_controller.dart';
+import '../../features/profile/presentation/page/delivery_addresses_page.dart';
+import '../../features/profile/presentation/page/favorite_workshops_page.dart';
 import '../../features/profile/presentation/page/loyalty_programs_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
+import '../../features/profile/presentation/page/settings_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
 import '../../features/splash/startup_splash_page.dart';
 import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
@@ -128,6 +131,18 @@ class AppRouter {
       GoRoute(
         path: '/loyalty-programs',
         builder: (context, state) => const LoyaltyProgramsPage(),
+      ),
+      GoRoute(
+        path: FavoriteWorkshopsPage.routePath,
+        builder: (context, state) => const FavoriteWorkshopsPage(),
+      ),
+      GoRoute(
+        path: DeliveryAddressesPage.routePath,
+        builder: (context, state) => const DeliveryAddressesPage(),
+      ),
+      GoRoute(
+        path: SettingsPage.routePath,
+        builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
         path: '/workshops/:id',
