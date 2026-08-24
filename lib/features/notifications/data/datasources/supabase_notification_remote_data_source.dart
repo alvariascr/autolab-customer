@@ -17,7 +17,8 @@ class SupabaseNotificationRemoteDataSource
         .from('notifications')
         .select('id, workshop_id, title, body, type, is_read, updated_at')
         .eq('user_id', userId)
-        .order('updated_at', ascending: false);
+        .order('updated_at', ascending: false)
+        .limit(50);
 
     return response
         .map(CustomerNotificationModel.fromMap)
@@ -34,6 +35,7 @@ class SupabaseNotificationRemoteDataSource
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .order('updated_at', ascending: false)
+        .limit(50)
         .map(
           (response) => response
               .map(CustomerNotificationModel.fromMap)
