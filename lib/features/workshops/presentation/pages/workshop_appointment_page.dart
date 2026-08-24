@@ -10,8 +10,10 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
 import '../../../../core/theme/autolab_theme_extension.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
+import '../../../payments/application/laropay_return_navigation_controller.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../application/appointment_cubit.dart';
@@ -37,9 +39,14 @@ class WorkshopAppointmentPage extends StatefulWidget {
 class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
     with WidgetsBindingObserver {
   static const _externalPaymentTransitionTimeout = Duration(seconds: 5);
+  static const _paymentReturnFallbackDelay = Duration(seconds: 3);
 
   _AppointmentLoadingPhase? _loadingPhase;
   Completer<void>? _externalPaymentTransitionCompleter;
+  Timer? _paymentReturnFallbackTimer;
+  bool _awaitingPaymentReturn = false;
+  bool _paymentReturnFallbackScheduled = false;
+  int? _paymentReturnBaselineCallbackCount;
 
   @override
   void initState() {
@@ -50,6 +57,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _cancelPaymentReturnFallback();
     _completeExternalPaymentTransition();
     super.dispose();
   }
@@ -60,7 +68,70 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       _completeExternalPaymentTransition();
+      return;
     }
+
+    if (state == AppLifecycleState.resumed) {
+      _handlePaymentReturnIfAbandoned();
+    }
+  }
+
+  // Called when the app comes back to the foreground while a Laropay
+  // checkout was in flight. A brief delay gives a deep-link payment result
+  // (which navigates on its own) a chance to arrive first; if nothing
+  // arrives, the customer closed the gateway without finishing.
+  void _handlePaymentReturnIfAbandoned() {
+    if (!_awaitingPaymentReturn) {
+      return;
+    }
+    if (_paymentReturnFallbackScheduled) {
+      return;
+    }
+    _paymentReturnFallbackScheduled = true;
+
+    // The gateway is no longer "opening" once we're back -- update the
+    // overlay copy so it doesn't read as if we're about to reopen it while
+    // we briefly wait to see whether a real result is on its way.
+    setState(() => _loadingPhase = _AppointmentLoadingPhase.confirmingReturn);
+
+    final baselineCallbackCount = _paymentReturnBaselineCallbackCount;
+
+    _paymentReturnFallbackTimer = Timer(_paymentReturnFallbackDelay, () {
+      if (!mounted || !_awaitingPaymentReturn) {
+        return;
+      }
+      if (LaropayReturnNavigationController.handledCallbackCount.value !=
+          baselineCallbackCount) {
+        // A real Laropay deep-link result was processed while we were
+        // waiting -- it owns navigation, not this fallback.
+        _awaitingPaymentReturn = false;
+        _cancelPaymentReturnFallback();
+        return;
+      }
+      _awaitingPaymentReturn = false;
+      _cancelPaymentReturnFallback();
+      final l10n = AppLocalizations.of(context)!;
+      setState(() => _loadingPhase = null);
+      _showAppointmentMessage(
+        context,
+        message: l10n.laropayPaymentGatewayClosedMessage,
+        type: AppMessageType.warning,
+      );
+      context.go('/purchases');
+    });
+  }
+
+  void _startAwaitingPaymentReturn() {
+    _cancelPaymentReturnFallback();
+    _paymentReturnBaselineCallbackCount =
+        LaropayReturnNavigationController.handledCallbackCount.value;
+    _awaitingPaymentReturn = true;
+  }
+
+  void _cancelPaymentReturnFallback() {
+    _paymentReturnFallbackTimer?.cancel();
+    _paymentReturnFallbackTimer = null;
+    _paymentReturnFallbackScheduled = false;
   }
 
   @override
@@ -258,6 +329,9 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
     if (completer != null && !completer.isCompleted) {
       completer.complete();
     }
+    if (identical(_externalPaymentTransitionCompleter, completer)) {
+      _externalPaymentTransitionCompleter = null;
+    }
   }
 
   String _workshopName(AppointmentState state) {
@@ -319,11 +393,15 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
             if (!context.mounted) {
               return;
             }
+            _startAwaitingPaymentReturn();
             await _waitForExternalPaymentTransition();
             if (!context.mounted) {
               return;
             }
-            setState(() => _loadingPhase = null);
+            // Keep the payment overlay visible; only navigate away if the
+            // customer comes back without a payment result already having
+            // taken over (see _handlePaymentReturnIfAbandoned).
+            _handlePaymentReturnIfAbandoned();
           } on LaropayCheckoutLaunchException catch (_) {
             if (!context.mounted) {
               return;
@@ -333,7 +411,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
             _showAppointmentMessage(
               context,
               message: l10n.laropayPaymentStartError,
-              type: _AppointmentMessageType.error,
+              type: AppMessageType.error,
             );
             _goToWorkshopProfileOrHome(context);
           }
@@ -351,7 +429,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         _showAppointmentMessage(
           context,
           message: _appointmentSubmitErrorMessage(submitState, l10n),
-          type: _AppointmentMessageType.error,
+          type: AppMessageType.error,
         );
       }
       return;
@@ -369,7 +447,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         _showAppointmentMessage(
           context,
           message: _appointmentSubmitErrorMessage(cubit.state, l10n),
-          type: _AppointmentMessageType.warning,
+          type: AppMessageType.warning,
         );
         return;
       }
@@ -379,7 +457,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
       _showAppointmentMessage(
         context,
         message: l10n.appointmentNoSchedulableServices,
-        type: _AppointmentMessageType.warning,
+        type: AppMessageType.warning,
       );
       return;
     }
@@ -389,7 +467,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         _showAppointmentMessage(
           context,
           message: l10n.appointmentSelectDateTimeRequired,
-          type: _AppointmentMessageType.warning,
+          type: AppMessageType.warning,
         );
         return;
       }
@@ -406,7 +484,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
         _showAppointmentMessage(
           context,
           message: _appointmentSubmitErrorMessage(cubit.state, l10n),
-          type: _AppointmentMessageType.warning,
+          type: AppMessageType.warning,
         );
         return;
       }
@@ -464,70 +542,9 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
   void _showAppointmentMessage(
     BuildContext context, {
     required String message,
-    required _AppointmentMessageType type,
+    required AppMessageType type,
   }) {
-    final theme = Theme.of(context);
-    final config = switch (type) {
-      _AppointmentMessageType.success => (
-        icon: Icons.check_circle_outline,
-        color: AutolabCustomer.successText,
-        background: AutolabCustomer.successSoftBackground,
-      ),
-      _AppointmentMessageType.warning => (
-        icon: Icons.info_outline,
-        color: AutolabCustomer.warningText,
-        background: AutolabCustomer.warningSoftBackground,
-      ),
-      _AppointmentMessageType.error => (
-        icon: Icons.error_outline,
-        color: context.customerPrimary,
-        background: AutolabCustomer.errorSoftBackground,
-      ),
-    };
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          elevation: 4,
-          margin: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-          padding: EdgeInsets.zero,
-          backgroundColor: AutolabCustomer.transparent,
-          duration: const Duration(seconds: 4),
-          content: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: config.background,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: config.color.withValues(alpha: 0.35)),
-              boxShadow: const [
-                BoxShadow(
-                  color: AutolabCustomer.shadowBlackStrong,
-                  blurRadius: 14,
-                  offset: Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Icon(config.icon, color: config.color, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: config.color,
-                      fontWeight: FontWeight.w700,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+    showAppSnackBar(context, message: message, type: type);
   }
 }
 
@@ -540,8 +557,6 @@ class WorkshopAppointmentInitialSelection {
   final Product service;
   final List<AppointmentSelectedProduct> products;
 }
-
-enum _AppointmentMessageType { success, warning, error }
 
 List<_AppointmentStep> _appointmentSteps(AppLocalizations l10n) {
   return [
@@ -1096,7 +1111,7 @@ class _QuantityButton extends StatelessWidget {
   }
 }
 
-enum _AppointmentLoadingPhase { creating, payment }
+enum _AppointmentLoadingPhase { creating, payment, confirmingReturn }
 
 class _BookingSubmittingOverlay extends StatelessWidget {
   const _BookingSubmittingOverlay({required this.phase});
@@ -1106,13 +1121,20 @@ class _BookingSubmittingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isOpeningPayment = phase == _AppointmentLoadingPhase.payment;
-    final title = isOpeningPayment
-        ? l10n.appointmentOpeningPaymentTitle
-        : l10n.appointmentCreatingTitle;
-    final message = isOpeningPayment
-        ? l10n.appointmentOpeningPaymentMessage
-        : l10n.appointmentCreatingMessage;
+    final (title, message) = switch (phase) {
+      _AppointmentLoadingPhase.payment => (
+        l10n.appointmentOpeningPaymentTitle,
+        l10n.appointmentOpeningPaymentMessage,
+      ),
+      _AppointmentLoadingPhase.confirmingReturn => (
+        l10n.cartConfirmingPaymentTitle,
+        l10n.cartConfirmingPaymentMessage,
+      ),
+      _AppointmentLoadingPhase.creating => (
+        l10n.appointmentCreatingTitle,
+        l10n.appointmentCreatingMessage,
+      ),
+    };
 
     return Positioned.fill(
       child: AbsorbPointer(

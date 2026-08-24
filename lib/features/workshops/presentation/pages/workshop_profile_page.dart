@@ -13,7 +13,9 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../cart/presentation/widgets/cart_floating_checkout_button.dart';
+import '../../../payments/application/laropay_payment_url_policy.dart';
 import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
+import '../../../payments/presentation/widgets/laropay_payment_result_dialog.dart';
 import '../../../products/application/product_inventory_refresh_notifier.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../products/domain/repositories/product_repository.dart';
@@ -189,15 +191,16 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
   }
 
   Future<void> _validateAndShowPaymentResult(String paymentLinkId) async {
-    String paymentStatus;
+    String paymentStatus = 'error';
+    Uri? linkUrl;
     try {
       final result = await sl<RefreshLaropayPurchaseStatus>()(
         paymentLinkId,
       ).timeout(_paymentStatusTimeout);
-      paymentStatus = result.fold(
-        (_) => 'error',
-        (purchase) => purchase.status,
-      );
+      result.fold((_) => paymentStatus = 'error', (purchase) {
+        paymentStatus = purchase.status;
+        linkUrl = purchase.linkUrl;
+      });
     } on Exception catch (error, stackTrace) {
       sl<FeatureLogger>().warn(
         feature: 'payments',
@@ -212,58 +215,67 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
       return;
     }
 
-    await _showPaymentResultDialog(paymentStatus);
+    await _showPaymentResultDialog(paymentStatus, linkUrl);
   }
 
-  Future<void> _showPaymentResultDialog(String paymentStatus) async {
+  Future<void> _showPaymentResultDialog(
+    String paymentStatus,
+    Uri? linkUrl,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
-    final notice = _LaropayPaymentNoticeData.fromStatus(paymentStatus, l10n);
+    final canRetry =
+        linkUrl != null && paymentStatus.trim().toLowerCase() == 'pending';
 
-    await showDialog<void>(
+    await showLaropayPaymentResultDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return PopScope(
-          canPop: false,
-          child: AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            icon: Icon(notice.icon, color: notice.color, size: 42),
-            title: Text(
-              notice.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: AutolabCustomer.primaryFont,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            content: Text(
-              notice.message,
-              textAlign: TextAlign.center,
-              style: AutolabCustomer.body.copyWith(height: 1.35),
-            ),
-            actionsAlignment: MainAxisAlignment.center,
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  _clearPaymentQuery();
-                },
-                child: Text(l10n.laropayPaymentResultBackToWorkshopAction),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  context.go('/purchases');
-                },
-                child: Text(l10n.laropayPaymentResultViewPurchasesAction),
-              ),
-            ],
+      status: paymentStatus,
+      actionsBuilder: (dialogContext) => [
+        TextButton(
+          onPressed: () {
+            Navigator.of(dialogContext).pop();
+            _clearPaymentQuery();
+          },
+          child: Text(l10n.laropayPaymentResultBackToWorkshopAction),
+        ),
+        if (canRetry)
+          FilledButton.tonal(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              _reopenPaymentLink(linkUrl);
+            },
+            child: Text(l10n.myPurchasesOpenLinkAction),
           ),
-        );
-      },
+        FilledButton(
+          onPressed: () {
+            Navigator.of(dialogContext).pop();
+            context.go('/purchases');
+          },
+          child: Text(l10n.laropayPaymentResultViewPurchasesAction),
+        ),
+      ],
     );
+  }
+
+  Future<void> _reopenPaymentLink(Uri linkUrl) async {
+    if (!LaropayPaymentUrlPolicy.isAllowed(linkUrl)) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final opened = await launchUrl(
+      linkUrl,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AutolabCustomer.error,
+          content: Text(l10n.myPurchasesLinkOpenError),
+        ),
+      );
+    }
   }
 
   void _clearPaymentQuery() {
@@ -323,63 +335,5 @@ class _CartAddedBanner extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _LaropayPaymentNoticeData {
-  const _LaropayPaymentNoticeData({
-    required this.title,
-    required this.message,
-    required this.color,
-    required this.icon,
-  });
-
-  final String title;
-  final String message;
-  final Color color;
-  final IconData icon;
-
-  factory _LaropayPaymentNoticeData.fromStatus(
-    String status,
-    AppLocalizations l10n,
-  ) {
-    return switch (status.trim().toLowerCase()) {
-      'paid' => _LaropayPaymentNoticeData(
-        title: l10n.laropayPaymentResultPaidTitle,
-        message: l10n.laropayPaymentResultPaidMessage,
-        color: AutolabCustomer.success,
-        icon: Icons.check_circle_outline,
-      ),
-      'rejected' => _LaropayPaymentNoticeData(
-        title: l10n.laropayPaymentResultRejectedTitle,
-        message: l10n.laropayPaymentResultRejectedMessage,
-        color: AutolabCustomer.error,
-        icon: Icons.cancel_outlined,
-      ),
-      'expired' => _LaropayPaymentNoticeData(
-        title: l10n.laropayPaymentResultExpiredTitle,
-        message: l10n.laropayPaymentResultExpiredMessage,
-        color: AutolabCustomer.warning,
-        icon: Icons.hourglass_disabled_outlined,
-      ),
-      'pending' => _LaropayPaymentNoticeData(
-        title: l10n.laropayPaymentResultPendingTitle,
-        message: l10n.laropayPaymentResultPendingMessage,
-        color: AutolabCustomer.info,
-        icon: Icons.pending_actions_outlined,
-      ),
-      'error' => _LaropayPaymentNoticeData(
-        title: l10n.laropayPaymentResultPendingTitle,
-        message: l10n.laropayPaymentStartError,
-        color: AutolabCustomer.error,
-        icon: Icons.error_outline,
-      ),
-      _ => _LaropayPaymentNoticeData(
-        title: l10n.laropayPaymentResultPendingTitle,
-        message: l10n.laropayPaymentStartError,
-        color: AutolabCustomer.error,
-        icon: Icons.error_outline,
-      ),
-    };
   }
 }

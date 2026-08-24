@@ -57,12 +57,12 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
                     onNotificationTap: () =>
                         context.push(NotificationsPage.routePath),
                     onBack: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
+                      if (context.canPop()) {
+                        context.pop();
                         return;
                       }
 
-                      context.go('/profile');
+                      context.go('/home-customer?tab=profile');
                     },
                   ),
                   const SizedBox(height: AutolabCustomer.spacingLg),

@@ -10,9 +10,11 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../../profile/presentation/widgets/customer_page_header.dart';
+import '../../application/laropay_payment_url_policy.dart';
 import '../../domain/entities/laropay_purchase.dart';
 import '../../domain/usecases/get_laropay_purchases.dart';
 import '../../domain/usecases/refresh_laropay_purchase_status.dart';
+import '../widgets/laropay_payment_result_dialog.dart';
 
 class MyPurchasesPage extends StatefulWidget {
   const MyPurchasesPage({
@@ -32,6 +34,8 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
   late Future<List<LaropayPurchase>> _future;
   final Set<String> _refreshingPurchaseIds = <String>{};
   String? _handledPaymentLinkId;
+  bool _isProcessingPaymentReturn = false;
+  DateTimeRange? _dateFilter;
 
   @override
   void initState() {
@@ -63,6 +67,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     }
 
     _handledPaymentLinkId = paymentLinkId;
+    _isProcessingPaymentReturn = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -79,6 +84,41 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     });
   }
 
+  Future<void> _pickDateFilter() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      initialDateRange: _dateFilter,
+    );
+
+    if (picked != null && mounted) {
+      setState(() => _dateFilter = picked);
+    }
+  }
+
+  bool _isWithinDateFilter(LaropayPurchase purchase, DateTimeRange range) {
+    final createdAt = purchase.createdAt;
+    if (createdAt == null) {
+      return false;
+    }
+
+    final local = createdAt.toLocal();
+    final day = DateTime(local.year, local.month, local.day);
+    final endInclusive = DateTime(
+      range.end.year,
+      range.end.month,
+      range.end.day,
+    );
+    return !day.isBefore(range.start) && !day.isAfter(endInclusive);
+  }
+
+  String _formattedDateFilter(DateTimeRange range) {
+    final formatter = DateFormat('d MMM', 'es_CR');
+    return '${formatter.format(range.start)} - ${formatter.format(range.end)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -91,19 +131,89 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
             CustomerPageHeader(
               title: l10n.myPurchasesTitle,
               onBack: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
+                if (context.canPop()) {
+                  context.pop();
                   return;
                 }
 
-                context.go('/home-customer');
+                context.go('/home-customer?tab=profile');
               },
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+              child: Row(
+                children: [
+                  Material(
+                    color: AutolabCustomer.customerSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: _pickDateFilter,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AutolabCustomer.customerBorderColor(context),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_month_outlined,
+                              size: 15,
+                              color: AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _dateFilter == null
+                                  ? l10n.myPurchasesFilterByDateAction
+                                  : _formattedDateFilter(_dateFilter!),
+                              style: AutolabCustomer.caption.copyWith(
+                                color:
+                                    AutolabCustomer.customerSecondaryTextColor(
+                                      context,
+                                    ),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_dateFilter != null) ...[
+                    const SizedBox(width: 4),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => setState(() => _dateFilter = null),
+                      child: Padding(
+                        padding: const EdgeInsets.all(7),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: AutolabCustomer.customerSecondaryTextColor(
+                            context,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
             Expanded(
               child: FutureBuilder<List<LaropayPurchase>>(
                 future: _future,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (_isProcessingPaymentReturn ||
+                      snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
@@ -121,7 +231,15 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                   }
 
                   final purchases = snapshot.data ?? const <LaropayPurchase>[];
-                  if (purchases.isEmpty) {
+                  final dateFilter = _dateFilter;
+                  final visiblePurchases = dateFilter == null
+                      ? purchases
+                      : purchases
+                            .where((p) => _isWithinDateFilter(p, dateFilter))
+                            .toList(growable: false);
+
+                  if (visiblePurchases.isEmpty) {
+                    final isFiltered = dateFilter != null;
                     return RefreshIndicator(
                       onRefresh: _reload,
                       child: LayoutBuilder(
@@ -133,10 +251,22 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                                 minHeight: constraints.maxHeight,
                               ),
                               child: _PurchaseMessageState(
-                                icon: Icons.shopping_bag_outlined,
-                                title: l10n.myPurchasesEmptyTitle,
-                                message: l10n.myPurchasesEmptyMessage,
+                                icon: isFiltered
+                                    ? Icons.event_busy_outlined
+                                    : Icons.shopping_bag_outlined,
+                                title: isFiltered
+                                    ? l10n.myPurchasesFilterEmptyTitle
+                                    : l10n.myPurchasesEmptyTitle,
+                                message: isFiltered
+                                    ? l10n.myPurchasesFilterEmptyMessage
+                                    : l10n.myPurchasesEmptyMessage,
                                 color: AutolabCustomer.primary,
+                                actionLabel: isFiltered
+                                    ? l10n.myPurchasesClearFilterAction
+                                    : null,
+                                onAction: isFiltered
+                                    ? () => setState(() => _dateFilter = null)
+                                    : null,
                               ),
                             ),
                           );
@@ -164,17 +294,17 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                         }
 
                         return _PurchaseCard(
-                          purchase: purchases[index - 1],
+                          purchase: visiblePurchases[index - 1],
                           onOpenLink: _openPurchaseLink,
                           onRefreshStatus: _refreshPurchaseStatus,
                           refreshing: _refreshingPurchaseIds.contains(
-                            purchases[index - 1].id,
+                            visiblePurchases[index - 1].id,
                           ),
                         );
                       },
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 14),
-                      itemCount: purchases.length + 1,
+                      itemCount: visiblePurchases.length + 1,
                     ),
                   );
                 },
@@ -196,7 +326,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     final linkUrl = purchase.linkUrl;
     final l10n = AppLocalizations.of(context)!;
 
-    if (linkUrl == null || !linkUrl.isScheme('https')) {
+    if (!LaropayPaymentUrlPolicy.isAllowed(linkUrl)) {
       _showMessage(
         message: l10n.myPurchasesLinkOpenError,
         color: AutolabCustomer.error,
@@ -205,7 +335,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
     }
 
     final opened = await launchUrl(
-      linkUrl,
+      linkUrl!,
       mode: LaunchMode.externalApplication,
     );
 
@@ -254,10 +384,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
   Future<void> _refreshReturnedPayment(String paymentLinkId) async {
     final l10n = AppLocalizations.of(context)!;
-    _showMessage(
-      message: l10n.myPurchasesRefreshingReturnedPayment,
-      color: AutolabCustomer.secondary,
-    );
+    var shouldClearPaymentLink = false;
 
     try {
       final result = await sl<RefreshLaropayPurchaseStatus>()(paymentLinkId);
@@ -265,22 +392,53 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
         return;
       }
 
-      result.fold(
-        (_) => _showMessage(
+      final purchase = result.fold((_) => null, (purchase) => purchase);
+      if (purchase == null) {
+        _showMessage(
           message: l10n.myPurchasesStatusRefreshError,
           color: AutolabCustomer.error,
-        ),
-        (purchase) {
-          final outcome = _returnedPaymentOutcome(purchase);
-          _showMessage(message: outcome.message(l10n), color: outcome.color);
-          _reload();
-        },
+        );
+        return;
+      }
+
+      await showLaropayPaymentResultDialog(
+        context: context,
+        status: _effectiveReturnedPaymentStatus(purchase),
+        actionsBuilder: (dialogContext) => [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.laropayPaymentResultCloseAction),
+          ),
+        ],
       );
+      shouldClearPaymentLink = true;
+
+      if (mounted) {
+        await _reload();
+      }
     } finally {
       if (mounted) {
-        context.replace('/purchases');
+        setState(() => _isProcessingPaymentReturn = false);
+        if (shouldClearPaymentLink) {
+          context.replace('/purchases');
+        }
       }
     }
+  }
+
+  // laropay_payment_links.status can lag orders.payment_status for orders
+  // with a service balance paid at the workshop (product paid online =
+  // order partially/fully settled, even if the link itself hasn't been
+  // marked 'paid' yet) -- prefer the order-level signal in that case.
+  String _effectiveReturnedPaymentStatus(LaropayPurchase purchase) {
+    final status = purchase.status.toLowerCase();
+    final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
+    if (status != 'paid' &&
+        (orderPaymentStatus == 'paid' || orderPaymentStatus == 'partial')) {
+      return 'paid';
+    }
+
+    return purchase.status;
   }
 
   void _showMessage({required String message, required Color color}) {
@@ -298,53 +456,7 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
   }
 }
 
-enum _ReturnedPaymentOutcome { paid, rejected, expired, pending }
-
-_ReturnedPaymentOutcome _returnedPaymentOutcome(LaropayPurchase purchase) {
-  final status = purchase.status.toLowerCase();
-  final orderPaymentStatus = purchase.orderPaymentStatus?.toLowerCase();
-
-  if (status == 'paid' ||
-      orderPaymentStatus == 'paid' ||
-      orderPaymentStatus == 'partial') {
-    return _ReturnedPaymentOutcome.paid;
-  }
-
-  if (status == 'rejected' || status == 'failed') {
-    return _ReturnedPaymentOutcome.rejected;
-  }
-
-  if (status == 'expired') {
-    return _ReturnedPaymentOutcome.expired;
-  }
-
-  return _ReturnedPaymentOutcome.pending;
-}
-
-extension _ReturnedPaymentOutcomeView on _ReturnedPaymentOutcome {
-  String message(AppLocalizations l10n) {
-    return switch (this) {
-      _ReturnedPaymentOutcome.paid => l10n.laropayPaymentResultPaidMessage,
-      _ReturnedPaymentOutcome.rejected =>
-        l10n.laropayPaymentResultRejectedMessage,
-      _ReturnedPaymentOutcome.expired =>
-        l10n.laropayPaymentResultExpiredMessage,
-      _ReturnedPaymentOutcome.pending =>
-        l10n.laropayPaymentResultPendingMessage,
-    };
-  }
-
-  Color get color {
-    return switch (this) {
-      _ReturnedPaymentOutcome.paid => AutolabCustomer.success,
-      _ReturnedPaymentOutcome.rejected ||
-      _ReturnedPaymentOutcome.expired => AutolabCustomer.error,
-      _ReturnedPaymentOutcome.pending => AutolabCustomer.warning,
-    };
-  }
-}
-
-class _PurchaseCard extends StatelessWidget {
+class _PurchaseCard extends StatefulWidget {
   const _PurchaseCard({
     required this.purchase,
     required this.onOpenLink,
@@ -358,25 +470,26 @@ class _PurchaseCard extends StatelessWidget {
   final bool refreshing;
 
   @override
+  State<_PurchaseCard> createState() => _PurchaseCardState();
+}
+
+class _PurchaseCardState extends State<_PurchaseCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final purchase = widget.purchase;
     final viewState = _PurchaseViewState.fromPurchase(purchase, l10n);
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AutolabCustomer.customerSurfaceColor(context),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
         border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
-        boxShadow: [
-          BoxShadow(
-            color: AutolabCustomer.secondary.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -391,7 +504,7 @@ class _PurchaseCard extends StatelessWidget {
                     children: [
                       Text(
                         purchase.title(l10n),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textScaler: TextScaler.noScaling,
                         style: AutolabCustomer.bodyLarge.copyWith(
@@ -399,14 +512,13 @@ class _PurchaseCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        viewState.message,
+                        purchase.summaryLine(l10n),
                         style: AutolabCustomer.caption.copyWith(
                           color: AutolabCustomer.customerSecondaryTextColor(
                             context,
                           ),
-                          height: 1.35,
                         ),
                       ),
                     ],
@@ -416,68 +528,125 @@ class _PurchaseCard extends StatelessWidget {
                 _StatusBadge(viewState: viewState),
               ],
             ),
-            const SizedBox(height: 16),
-            _PurchaseDetailRow(
-              icon: Icons.payments_outlined,
-              label: purchase.hasOrderAmounts
-                  ? purchase.hasPaymentLink
-                        ? l10n.myPurchasesPaidOnlineLabel
-                        : l10n.myPurchasesPaidLabel
-                  : l10n.myPurchasesAmountLabel,
-              value: purchase.formattedPaidAmount,
+            AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              alignment: Alignment.topLeft,
+              child: !_expanded
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            viewState.message,
+                            style: AutolabCustomer.caption.copyWith(
+                              color: AutolabCustomer.customerSecondaryTextColor(
+                                context,
+                              ),
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _PurchaseDetailRow(
+                            icon: Icons.payments_outlined,
+                            label: purchase.hasOrderAmounts
+                                ? purchase.hasPaymentLink
+                                      ? l10n.myPurchasesPaidOnlineLabel
+                                      : l10n.myPurchasesPaidLabel
+                                : l10n.myPurchasesAmountLabel,
+                            value: purchase.formattedPaidAmount,
+                          ),
+                          if (purchase.hasOrderAmounts) ...[
+                            _PurchaseDetailRow(
+                              icon: Icons.account_balance_wallet_outlined,
+                              label: l10n.myPurchasesPendingAtWorkshopLabel,
+                              value: purchase.formattedRemainingAmount,
+                              valueColor: purchase.hasOutstandingBalance
+                                  ? AutolabCustomer.warning
+                                  : null,
+                            ),
+                            _PurchaseDetailRow(
+                              icon: Icons.receipt_long_outlined,
+                              label: l10n.myPurchasesOrderTotalLabel,
+                              value: purchase.formattedOrderTotalAmount,
+                            ),
+                          ],
+                          _PurchaseDetailRow(
+                            icon: Icons.calendar_month_outlined,
+                            label: l10n.myPurchasesDateLabel,
+                            value: purchase.formattedCreatedAt(l10n),
+                          ),
+                          _PurchaseDetailRow(
+                            icon: Icons.confirmation_number_outlined,
+                            label: l10n.myPurchasesReferenceLabel,
+                            value: purchase.reference,
+                          ),
+                        ],
+                      ),
+                    ),
             ),
-            if (purchase.hasOrderAmounts) ...[
-              _PurchaseDetailRow(
-                icon: Icons.account_balance_wallet_outlined,
-                label: l10n.myPurchasesPendingAtWorkshopLabel,
-                value: purchase.formattedRemainingAmount,
-                valueColor: purchase.hasOutstandingBalance
-                    ? AutolabCustomer.warning
-                    : null,
-              ),
-              _PurchaseDetailRow(
-                icon: Icons.receipt_long_outlined,
-                label: l10n.myPurchasesOrderTotalLabel,
-                value: purchase.formattedOrderTotalAmount,
-              ),
-            ],
-            _PurchaseDetailRow(
-              icon: Icons.calendar_month_outlined,
-              label: l10n.myPurchasesDateLabel,
-              value: purchase.formattedCreatedAt(l10n),
-            ),
-            _PurchaseDetailRow(
-              icon: Icons.confirmation_number_outlined,
-              label: l10n.myPurchasesReferenceLabel,
-              value: purchase.reference,
-            ),
-            if (purchase.canReopenLink) ...[
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => onOpenLink(purchase),
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: Text(l10n.myPurchasesOpenLinkAction),
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _expanded
+                          ? l10n.myPurchasesHideDetailAction
+                          : l10n.myPurchasesShowDetailAction,
+                      style: AutolabCustomer.caption.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _expanded
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      size: 16,
+                      color: AutolabCustomer.customerSecondaryTextColor(
+                        context,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-            if (purchase.canRefreshStatus) ...[
+            ),
+            if (purchase.canReopenLink || purchase.canRefreshStatus) ...[
+              const SizedBox(height: 8),
+              Divider(
+                height: 1,
+                color: AutolabCustomer.customerBorderColor(context),
+              ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: refreshing
-                      ? null
-                      : () => onRefreshStatus(purchase),
-                  icon: refreshing
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.sync_rounded),
-                  label: Text(l10n.myPurchasesRefreshStatusAction),
-                ),
+              Row(
+                children: [
+                  if (purchase.canReopenLink)
+                    Expanded(
+                      child: _PurchaseActionButton(
+                        onPressed: () => widget.onOpenLink(purchase),
+                        icon: Icons.open_in_new_rounded,
+                        label: l10n.myPurchasesOpenLinkAction,
+                      ),
+                    ),
+                  if (purchase.canReopenLink && purchase.canRefreshStatus)
+                    const SizedBox(width: 8),
+                  if (purchase.canRefreshStatus)
+                    _PurchaseActionButton(
+                      onPressed: widget.refreshing
+                          ? null
+                          : () => widget.onRefreshStatus(purchase),
+                      tooltip: l10n.myPurchasesRefreshStatusAction,
+                      icon: Icons.sync_rounded,
+                      loading: widget.refreshing,
+                    ),
+                ],
               ),
             ],
           ],
@@ -495,11 +664,11 @@ class _PurchaseStatusIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 46,
-      height: 46,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: viewState.color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
       ),
       child: Icon(viewState.icon, color: viewState.color),
     );
@@ -516,7 +685,7 @@ class _StatusBadge extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: viewState.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -529,6 +698,88 @@ class _StatusBadge extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _PurchaseActionButton extends StatelessWidget {
+  const _PurchaseActionButton({
+    required this.onPressed,
+    required this.icon,
+    this.label,
+    this.tooltip,
+    this.loading = false,
+  });
+
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String? label;
+  final String? tooltip;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onPressed == null;
+    final borderColor = AutolabCustomer.customerBorderColor(
+      context,
+    ).withValues(alpha: disabled ? 0.5 : 1);
+    final contentColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    ).withValues(alpha: disabled ? 0.5 : 1);
+
+    final iconWidget = loading
+        ? SizedBox.square(
+            dimension: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: contentColor,
+            ),
+          )
+        : Icon(icon, size: 17, color: contentColor);
+
+    final button = Material(
+      color: AutolabCustomer.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: 38,
+          width: label == null ? 38 : null,
+          padding: label == null
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: borderColor),
+          ),
+          child: label == null
+              ? iconWidget
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    iconWidget,
+                    const SizedBox(width: 6),
+                    Text(
+                      label!,
+                      style: AutolabCustomer.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AutolabCustomer.customerTextColor(
+                          context,
+                        ).withValues(alpha: disabled ? 0.5 : 1),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+
+    if (tooltip == null) {
+      return button;
+    }
+
+    return Tooltip(message: tooltip!, child: button);
   }
 }
 
@@ -550,6 +801,7 @@ class _PurchaseDetailRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
@@ -557,23 +809,28 @@ class _PurchaseDetailRow extends StatelessWidget {
             color: AutolabCustomer.customerSecondaryTextColor(context),
           ),
           const SizedBox(width: 10),
-          Text(
-            label,
-            style: AutolabCustomer.caption.copyWith(
-              color: AutolabCustomer.customerSecondaryTextColor(context),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Spacer(),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-              style: AutolabCustomer.caption.copyWith(
-                color: valueColor ?? AutolabCustomer.customerTextColor(context),
-                fontWeight: FontWeight.w800,
-              ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.customerSecondaryTextColor(context),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: AutolabCustomer.caption.copyWith(
+                    color:
+                        valueColor ??
+                        AutolabCustomer.customerTextColor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -675,6 +932,12 @@ class _PurchaseViewState {
         color: AutolabCustomer.success,
         icon: Icons.check_circle_outline_rounded,
       ),
+      _PurchaseState.cancelled => _PurchaseViewState(
+        label: l10n.myPurchasesCancelledStatus,
+        message: l10n.myPurchasesCancelledMessage,
+        color: AutolabCustomer.error,
+        icon: Icons.block_outlined,
+      ),
       _PurchaseState.rejected => _PurchaseViewState(
         label: l10n.myPurchasesRejectedStatus,
         message: l10n.myPurchasesRejectedMessage,
@@ -713,6 +976,7 @@ enum _PurchaseState {
   pending,
   partial,
   approved,
+  cancelled,
   rejected,
   expired,
   workshopPayment,
@@ -755,9 +1019,11 @@ extension _LaropayPurchaseView on LaropayPurchase {
       return _PurchaseState.approved;
     }
 
+    if (normalizedStatus == 'cancelled' || normalizedStatus == 'canceled') {
+      return _PurchaseState.cancelled;
+    }
+
     if (normalizedStatus == 'rejected' ||
-        normalizedStatus == 'cancelled' ||
-        normalizedStatus == 'canceled' ||
         normalizedStatus == 'failed' ||
         normalizedStatus == 'error') {
       return _PurchaseState.rejected;
@@ -826,6 +1092,24 @@ extension _LaropayPurchaseView on LaropayPurchase {
     }
 
     return DateFormat('dd/MM/yyyy h:mm a', 'es_CR').format(date.toLocal());
+  }
+
+  String formattedCreatedAtShort(AppLocalizations l10n) {
+    final date = createdAt;
+    if (date == null) {
+      return l10n.myPurchasesUnknownValue;
+    }
+
+    return DateFormat('d MMM', 'es_CR').format(date.toLocal());
+  }
+
+  // Collapsed-card summary: date + total, so the customer sees the
+  // essentials without the full amount breakdown always on screen.
+  String summaryLine(AppLocalizations l10n) {
+    final amount = hasOrderAmounts
+        ? formattedOrderTotalAmount
+        : formattedPaidAmount;
+    return '${formattedCreatedAtShort(l10n)} · $amount';
   }
 
   String get reference {
