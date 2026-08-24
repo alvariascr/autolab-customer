@@ -18,6 +18,7 @@ begin
 
   update public.vehicles v
   set
+    license_plate = upper(trim(new.license_plate)),
     vehicle_type = coalesce(
       nullif(trim(coalesce(new.vehicle_type::text, '')), ''),
       v.vehicle_type
