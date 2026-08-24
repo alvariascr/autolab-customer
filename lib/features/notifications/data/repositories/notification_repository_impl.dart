@@ -58,10 +58,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   @override
   Future<Either<Failure, Unit>> markAsRead(String notificationId) async {
     try {
-      await remoteDataSource.markAsRead(
-        notificationId: notificationId,
-        userId: _currentUserId(),
-      );
+      await remoteDataSource.markAsRead(notificationId: notificationId);
       return const Right(unit);
     } catch (error, stackTrace) {
       return Left(

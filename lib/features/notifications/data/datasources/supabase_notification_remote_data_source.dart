@@ -43,10 +43,7 @@ class SupabaseNotificationRemoteDataSource
   }
 
   @override
-  Future<void> markAsRead({
-    required String notificationId,
-    required String userId,
-  }) async {
+  Future<void> markAsRead({required String notificationId}) async {
     await client.rpc(
       'mark_customer_notification_read',
       params: {'p_notification_id': notificationId},

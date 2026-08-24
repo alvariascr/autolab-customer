@@ -9,8 +9,5 @@ abstract interface class NotificationRemoteDataSource {
     required String userId,
   });
 
-  Future<void> markAsRead({
-    required String notificationId,
-    required String userId,
-  });
+  Future<void> markAsRead({required String notificationId});
 }
