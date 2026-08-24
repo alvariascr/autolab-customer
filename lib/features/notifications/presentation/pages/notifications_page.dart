@@ -58,7 +58,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
               onRetry: context.read<NotificationsCubit>().load,
             );
           }
-          if (state.notifications.isEmpty) return const _NotificationsEmpty();
+          if (state.notifications.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: context.read<NotificationsCubit>().load,
+              child: const CustomScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _NotificationsEmpty(),
+                  ),
+                ],
+              ),
+            );
+          }
 
           return RefreshIndicator(
             onRefresh: context.read<NotificationsCubit>().load,
