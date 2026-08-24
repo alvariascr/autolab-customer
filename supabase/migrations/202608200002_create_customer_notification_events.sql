@@ -94,9 +94,11 @@ begin
     v_user_id,
     new.workshop_id,
     'Estado de pago actualizado',
-    'El pago de la orden ' || new.order_number || ' ahora está: ' || new.payment_status::text || '.',
+    'El pago de la orden ' || coalesce(new.order_number, 'sin número') ||
+      ' ahora está: ' || coalesce(new.payment_status::text, 'desconocido') || '.',
     'payment',
-    'order_payment:' || new.id::text || ':' || new.payment_status::text
+    'order_payment:' || new.id::text || ':' ||
+      coalesce(new.payment_status::text, 'unknown')
   ) on conflict do nothing;
 
   return new;
@@ -180,8 +182,8 @@ begin
     user_id, title, body, type, event_key
   ) values (
     v_recipient_id,
-    'Nuevo mensaje de ' || new.sender_name,
-    left(new.content, 180),
+    'Nuevo mensaje de ' || coalesce(new.sender_name, 'Autolab'),
+    left(coalesce(new.content, 'Tienes un nuevo mensaje.'), 180),
     'message',
     'message:' || new.id::text
   ) on conflict do nothing;
