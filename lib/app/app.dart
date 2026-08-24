@@ -66,9 +66,13 @@ class _MyAppState extends State<MyApp> {
     );
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
-    _notificationAuthSubscription = widget.authSessionCubit.stream.listen(
-      _syncNotifications,
-    );
+    _notificationAuthSubscription = widget.authSessionCubit.stream
+        .distinct(
+          (previous, current) =>
+              previous.status == current.status &&
+              previous.userId == current.userId,
+        )
+        .listen(_syncNotifications);
     _syncNotifications(widget.authSessionCubit.state);
     unawaited(_listenForAppLinks());
   }

@@ -21,6 +21,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   final MarkNotificationAsRead _markNotificationAsRead;
   final WatchCustomerNotifications _watchCustomerNotifications;
   StreamSubscription? _notificationsSubscription;
+  int _watchGeneration = 0;
 
   Future<void> load() async {
     if (state.status == NotificationsStatus.loading) return;
@@ -69,8 +70,15 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> startWatching() async {
-    await _notificationsSubscription?.cancel();
+    final generation = ++_watchGeneration;
+    final previousSubscription = _notificationsSubscription;
+    _notificationsSubscription = null;
+    await previousSubscription?.cancel();
+
+    if (isClosed || generation != _watchGeneration) return;
+
     _notificationsSubscription = _watchCustomerNotifications().listen((result) {
+      if (generation != _watchGeneration) return;
       if (isClosed) return;
       result.fold(
         (failure) {
@@ -95,8 +103,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> stopWatching() async {
-    await _notificationsSubscription?.cancel();
+    _watchGeneration++;
+    final subscription = _notificationsSubscription;
     _notificationsSubscription = null;
+    await subscription?.cancel();
   }
 
   void clear() {
