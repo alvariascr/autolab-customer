@@ -351,17 +351,16 @@ void main() {
       );
     });
 
-    test('lanza FormatException cuando falta vehiculo requerido', () {
-      expect(
-        () => AppointmentModel.fromMap({
-          'id': 'appointment-1',
-          'workshop_id': 'workshop-1',
-          'service_id': 'service-1',
-          'scheduled_at': '2026-05-28T06:15:00.000Z',
-          'status': 'pending',
-        }),
-        throwsA(isA<FormatException>()),
-      );
+    test('permite cargar una cita sin tipo de vehiculo', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'pending',
+      });
+
+      expect(model.vehicleType, isNull);
     });
 
     test('lanza FormatException cuando total_amount es malformado', () {
