@@ -54,19 +54,21 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     );
     if (index < 0 || state.notifications[index].isRead) return;
 
-    final previous = state.notifications;
-    final updated = [...previous];
+    final originalNotification = state.notifications[index];
+    final updated = [...state.notifications];
     updated[index] = updated[index].copyWith(isRead: true);
     emit(state.copyWith(notifications: updated, clearMessage: true));
 
     final result = await _markNotificationAsRead(notificationId);
     if (isClosed) return;
-    result.fold(
-      (failure) => emit(
-        state.copyWith(notifications: previous, message: failure.message),
-      ),
-      (_) {},
-    );
+    result.fold((failure) {
+      final rolledBack = state.notifications
+          .map(
+            (item) => item.id == notificationId ? originalNotification : item,
+          )
+          .toList(growable: false);
+      emit(state.copyWith(notifications: rolledBack, message: failure.message));
+    }, (_) {});
   }
 
   Future<void> startWatching() async {
