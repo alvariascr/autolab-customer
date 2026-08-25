@@ -110,10 +110,16 @@ class _MyAppState extends State<MyApp> {
     _notificationSyncOperation = () async {
       await previousOperation;
       final cubit = sl<NotificationsCubit>();
-      if (state.isAuthenticated) {
-        await cubit.startWatching();
-      } else {
-        await cubit.clear();
+      switch (state.status) {
+        case AuthSessionStatus.authenticated:
+          final userId = state.userId?.trim();
+          if (userId == null || userId.isEmpty) return;
+          await cubit.startWatching(userId: userId);
+        case AuthSessionStatus.unauthenticated:
+          await cubit.clear();
+        case AuthSessionStatus.initial:
+        case AuthSessionStatus.loading:
+          return;
       }
     }();
   }

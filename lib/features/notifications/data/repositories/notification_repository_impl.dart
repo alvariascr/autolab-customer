@@ -36,12 +36,16 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Stream<Either<Failure, List<CustomerNotification>>>
-  watchNotifications() async* {
+  Stream<Either<Failure, List<CustomerNotification>>> watchNotifications({
+    required String userId,
+  }) async* {
     try {
-      final userId = _currentUserId();
+      final normalizedUserId = userId.trim();
+      if (normalizedUserId.isEmpty) {
+        throw StateError('Authenticated user required');
+      }
       await for (final notifications in remoteDataSource.watchNotifications(
-        userId: userId,
+        userId: normalizedUserId,
       )) {
         yield Right(notifications);
       }
