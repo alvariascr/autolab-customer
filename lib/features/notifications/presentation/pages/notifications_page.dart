@@ -45,7 +45,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         ),
       ),
-      body: BlocBuilder<NotificationsCubit, NotificationsState>(
+      body: BlocConsumer<NotificationsCubit, NotificationsState>(
+        listenWhen: (previous, current) =>
+            current.notifications.isNotEmpty &&
+            current.message != null &&
+            previous.message != current.message,
+        listener: (context, state) {
+          final messenger = ScaffoldMessenger.of(context);
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(state.message!),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+        },
         builder: (context, state) {
           if (state.status == NotificationsStatus.loading &&
               state.notifications.isEmpty) {
