@@ -19,15 +19,24 @@ class CustomerNotification extends Equatable {
   final DateTime createdAt;
   final String? workshopId;
 
-  CustomerNotification copyWith({bool? isRead}) {
+  CustomerNotification copyWith({
+    String? id,
+    String? title,
+    String? body,
+    String? type,
+    bool? isRead,
+    DateTime? createdAt,
+    String? workshopId,
+    bool clearWorkshopId = false,
+  }) {
     return CustomerNotification(
-      id: id,
-      title: title,
-      body: body,
-      type: type,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      type: type ?? this.type,
       isRead: isRead ?? this.isRead,
-      createdAt: createdAt,
-      workshopId: workshopId,
+      createdAt: createdAt ?? this.createdAt,
+      workshopId: clearWorkshopId ? null : (workshopId ?? this.workshopId),
     );
   }
 
