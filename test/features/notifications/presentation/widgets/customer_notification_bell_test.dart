@@ -26,7 +26,7 @@ void main() {
             id: 'notification-1',
             title: 'Cita confirmada',
             body: 'Tu cita fue confirmada.',
-            type: 'appointment',
+            type: NotificationType.appointment,
             isRead: false,
             createdAt: DateTime(2026, 8, 20),
           ),

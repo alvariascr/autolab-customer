@@ -18,7 +18,7 @@ class CustomerNotificationModel extends CustomerNotification {
       id: map['id']?.toString() ?? '',
       title: map['title']?.toString().trim() ?? '',
       body: map['body']?.toString().trim() ?? '',
-      type: map['type']?.toString().trim() ?? 'message',
+      type: _notificationTypeFromDatabase(map['type']),
       isRead: map['is_read'] == true,
       createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(0),
       workshopId: map['workshop_id']?.toString(),
@@ -31,9 +31,31 @@ class CustomerNotificationModel extends CustomerNotification {
       'workshop_id': workshopId,
       'title': title,
       'body': body,
-      'type': type,
+      'type': _notificationTypeToDatabase(type),
       'is_read': isRead,
       'created_at': createdAt.toUtc().toIso8601String(),
+    };
+  }
+
+  static NotificationType _notificationTypeFromDatabase(Object? value) {
+    return switch (value?.toString().trim().toLowerCase()) {
+      'appointment' || 'cita' => NotificationType.appointment,
+      'payment' || 'pago' => NotificationType.payment,
+      'vehicle' || 'vehiculo' => NotificationType.vehicle,
+      'message' || 'mensaje' => NotificationType.message,
+      'promotion' || 'promocion' => NotificationType.promotion,
+      _ => NotificationType.unknown,
+    };
+  }
+
+  static String _notificationTypeToDatabase(NotificationType type) {
+    return switch (type) {
+      NotificationType.appointment => 'appointment',
+      NotificationType.payment => 'payment',
+      NotificationType.vehicle => 'vehicle',
+      NotificationType.message => 'message',
+      NotificationType.promotion => 'promotion',
+      NotificationType.unknown => 'unknown',
     };
   }
 }

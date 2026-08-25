@@ -7,7 +7,7 @@ void main() {
       id: 'notification-1',
       title: 'Título original',
       body: 'Contenido original',
-      type: 'message',
+      type: NotificationType.message,
       isRead: false,
       createdAt: DateTime.utc(2026, 8, 25),
       workshopId: 'workshop-1',
@@ -16,7 +16,7 @@ void main() {
     final updated = notification.copyWith(
       title: 'Título actualizado',
       body: 'Contenido actualizado',
-      type: 'appointment',
+      type: NotificationType.appointment,
       isRead: true,
       createdAt: DateTime.utc(2026, 8, 26),
       clearWorkshopId: true,
@@ -25,7 +25,7 @@ void main() {
     expect(updated.id, notification.id);
     expect(updated.title, 'Título actualizado');
     expect(updated.body, 'Contenido actualizado');
-    expect(updated.type, 'appointment');
+    expect(updated.type, NotificationType.appointment);
     expect(updated.isRead, isTrue);
     expect(updated.createdAt, DateTime.utc(2026, 8, 26));
     expect(updated.workshopId, isNull);

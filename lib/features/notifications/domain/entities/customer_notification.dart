@@ -1,5 +1,14 @@
 import 'package:equatable/equatable.dart';
 
+enum NotificationType {
+  appointment,
+  payment,
+  vehicle,
+  message,
+  promotion,
+  unknown,
+}
+
 class CustomerNotification extends Equatable {
   const CustomerNotification({
     required this.id,
@@ -14,7 +23,7 @@ class CustomerNotification extends Equatable {
   final String id;
   final String title;
   final String body;
-  final String type;
+  final NotificationType type;
   final bool isRead;
   final DateTime createdAt;
   final String? workshopId;
@@ -23,7 +32,7 @@ class CustomerNotification extends Equatable {
     String? id,
     String? title,
     String? body,
-    String? type,
+    NotificationType? type,
     bool? isRead,
     DateTime? createdAt,
     String? workshopId,

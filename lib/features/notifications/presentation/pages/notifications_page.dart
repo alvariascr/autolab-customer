@@ -345,24 +345,26 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  IconData _iconForType(String type) {
-    return switch (type.toLowerCase()) {
-      'appointment' || 'cita' => Icons.calendar_month_rounded,
-      'payment' || 'pago' => Icons.receipt_long_rounded,
-      'vehicle' || 'vehiculo' => Icons.directions_car_rounded,
-      'promotion' || 'promocion' => Icons.local_offer_rounded,
-      _ => Icons.notifications_rounded,
+  IconData _iconForType(NotificationType type) {
+    return switch (type) {
+      NotificationType.appointment => Icons.calendar_month_rounded,
+      NotificationType.payment => Icons.receipt_long_rounded,
+      NotificationType.vehicle => Icons.directions_car_rounded,
+      NotificationType.promotion => Icons.local_offer_rounded,
+      NotificationType.message ||
+      NotificationType.unknown => Icons.notifications_rounded,
     };
   }
 
-  String _labelForType(BuildContext context, String type) {
+  String _labelForType(BuildContext context, NotificationType type) {
     final l10n = AppLocalizations.of(context)!;
-    return switch (type.toLowerCase()) {
-      'appointment' || 'cita' => l10n.notificationsTypeAppointment,
-      'payment' || 'pago' => l10n.notificationsTypePayment,
-      'vehicle' || 'vehiculo' => l10n.notificationsTypeVehicle,
-      'promotion' || 'promocion' => l10n.notificationsTypePromotion,
-      _ => l10n.notificationsTypeMessage,
+    return switch (type) {
+      NotificationType.appointment => l10n.notificationsTypeAppointment,
+      NotificationType.payment => l10n.notificationsTypePayment,
+      NotificationType.vehicle => l10n.notificationsTypeVehicle,
+      NotificationType.promotion => l10n.notificationsTypePromotion,
+      NotificationType.message ||
+      NotificationType.unknown => l10n.notificationsTypeMessage,
     };
   }
 }
