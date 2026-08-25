@@ -28,7 +28,7 @@ void main() {
             body: 'Tu cita fue confirmada.',
             type: 'appointment',
             isRead: false,
-            updatedAt: DateTime(2026, 8, 20),
+            createdAt: DateTime(2026, 8, 20),
           ),
         ],
       ),

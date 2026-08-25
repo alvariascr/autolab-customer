@@ -7,12 +7,12 @@ class CustomerNotificationModel extends CustomerNotification {
     required super.body,
     required super.type,
     required super.isRead,
-    required super.updatedAt,
+    required super.createdAt,
     super.workshopId,
   });
 
   factory CustomerNotificationModel.fromMap(Map<String, dynamic> map) {
-    final updatedAt = DateTime.tryParse(map['updated_at']?.toString() ?? '');
+    final createdAt = DateTime.tryParse(map['created_at']?.toString() ?? '');
 
     return CustomerNotificationModel(
       id: map['id']?.toString() ?? '',
@@ -20,7 +20,7 @@ class CustomerNotificationModel extends CustomerNotification {
       body: map['body']?.toString().trim() ?? '',
       type: map['type']?.toString().trim() ?? 'message',
       isRead: map['is_read'] == true,
-      updatedAt: updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt: createdAt ?? DateTime.fromMillisecondsSinceEpoch(0),
       workshopId: map['workshop_id']?.toString(),
     );
   }

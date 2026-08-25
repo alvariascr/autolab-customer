@@ -210,7 +210,7 @@ class _NotificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final secondary = AutolabCustomer.customerSecondaryTextColor(context);
     final localizations = MaterialLocalizations.of(context);
-    final date = notification.updatedAt.toLocal();
+    final date = notification.createdAt.toLocal();
     return Material(
       color: notification.isRead
           ? AutolabCustomer.customerSurfaceColor(context)

@@ -7,7 +7,7 @@ class CustomerNotification extends Equatable {
     required this.body,
     required this.type,
     required this.isRead,
-    required this.updatedAt,
+    required this.createdAt,
     this.workshopId,
   });
 
@@ -16,7 +16,7 @@ class CustomerNotification extends Equatable {
   final String body;
   final String type;
   final bool isRead;
-  final DateTime updatedAt;
+  final DateTime createdAt;
   final String? workshopId;
 
   CustomerNotification copyWith({bool? isRead}) {
@@ -26,7 +26,7 @@ class CustomerNotification extends Equatable {
       body: body,
       type: type,
       isRead: isRead ?? this.isRead,
-      updatedAt: updatedAt,
+      createdAt: createdAt,
       workshopId: workshopId,
     );
   }
@@ -38,7 +38,7 @@ class CustomerNotification extends Equatable {
     body,
     type,
     isRead,
-    updatedAt,
+    createdAt,
     workshopId,
   ];
 }
