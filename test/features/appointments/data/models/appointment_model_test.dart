@@ -363,6 +363,30 @@ void main() {
       expect(model.vehicleType, isNull);
     });
 
+    test('serializa una cita con tipo de vehiculo presente', () {
+      final model = AppointmentModel.fromMap({
+        'id': 'appointment-1',
+        'customer_id': 'user-1',
+        'workshop_id': 'workshop-1',
+        'service_id': 'service-1',
+        'vehicle_type': 'AUTOMOVIL',
+        'vehicle_plate': 'ABC123',
+        'scheduled_at': '2026-05-28T06:15:00.000Z',
+        'status': 'scheduled',
+      });
+
+      final map = model.toMap();
+
+      expect(model.vehicleType, 'AUTOMOVIL');
+      expect(map['id'], 'appointment-1');
+      expect(map['customer_id'], 'user-1');
+      expect(map['workshop_id'], 'workshop-1');
+      expect(map['service_id'], 'service-1');
+      expect(map['vehicle_type'], 'AUTOMOVIL');
+      expect(map['vehicle_plate'], 'ABC123');
+      expect(map['status'], 'scheduled');
+    });
+
     test('lanza FormatException cuando total_amount es malformado', () {
       expect(
         () => AppointmentModel.fromMap({
