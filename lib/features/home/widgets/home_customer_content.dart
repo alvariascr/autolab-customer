@@ -9,6 +9,7 @@ import '../../../core/location/location_cubit.dart';
 import '../../../core/location/location_state.dart';
 import '../../../core/theme/autolab_customer.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../notifications/presentation/widgets/customer_notification_bell.dart';
 import '../../products/domain/repositories/product_repository.dart';
 import '../../profile/domain/entities/garage_vehicle.dart';
 import '../../profile/presentation/helpers/garage_vehicle_display.dart';
@@ -37,6 +38,7 @@ class HomeCustomerContent extends StatelessWidget {
     required this.proximityFilter,
     required this.emptyStateResolver,
     required this.onLocationTap,
+    required this.onNotificationTap,
     required this.onSearchClose,
     required this.onViewAllWorkshopsTap,
     required this.onViewAllVehiclesTap,
@@ -63,6 +65,7 @@ class HomeCustomerContent extends StatelessWidget {
   final WorkshopProximityFilter proximityFilter;
   final WorkshopEmptyStateResolver emptyStateResolver;
   final ValueChanged<LocationState> onLocationTap;
+  final VoidCallback onNotificationTap;
   final VoidCallback onSearchClose;
   final VoidCallback onViewAllWorkshopsTap;
   final VoidCallback onViewAllVehiclesTap;
@@ -118,6 +121,7 @@ class HomeCustomerContent extends StatelessWidget {
                             child: _AutolabHomeHeader(
                               state: state,
                               onLocationTap: () => onLocationTap(state),
+                              onNotificationTap: onNotificationTap,
                             ),
                           ),
                           const SizedBox(height: AutolabCustomer.spacingMd + 2),
@@ -410,38 +414,31 @@ class _HomeVehicleNetworkImage extends StatelessWidget {
 }
 
 class _AutolabHomeHeader extends StatelessWidget {
-  const _AutolabHomeHeader({required this.state, required this.onLocationTap});
+  const _AutolabHomeHeader({
+    required this.state,
+    required this.onLocationTap,
+    required this.onNotificationTap,
+  });
 
   final LocationState state;
   final VoidCallback onLocationTap;
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
-    final colors = _HomeColors.of(context);
     final logoWidth = AutolabCustomer.responsiveDouble(
       context,
       compact: 88,
       regular: 104,
       tablet: 124,
     );
-    final notificationSize = AutolabCustomer.responsiveDouble(
-      context,
-      compact: AutolabCustomer.iconMd,
-      regular: AutolabCustomer.iconLg - 4,
-      tablet: AutolabCustomer.iconLg,
-    );
-
     return Column(
       children: [
         Row(
           children: [
             _AutolabLogoMark(width: logoWidth, height: logoWidth * 0.37),
             const Spacer(),
-            Icon(
-              Icons.notifications_none_rounded,
-              color: colors.text,
-              size: notificationSize,
-            ),
+            CustomerNotificationBell(onTap: onNotificationTap),
           ],
         ),
         const SizedBox(height: AutolabCustomer.spacingSm),

@@ -14,9 +14,12 @@ import 'package:autolab_customer/features/auth/application/auth_session_cubit.da
 import 'package:autolab_customer/features/home/application/home_service_filter_cubit.dart';
 import 'package:autolab_customer/features/home/domain/usecases/get_home_service_workshop_ids.dart';
 import 'package:autolab_customer/features/home/home_customer_page.dart';
+import 'package:autolab_customer/features/notifications/presentation/cubit/notifications_cubit.dart';
+import 'package:autolab_customer/features/notifications/presentation/cubit/notifications_state.dart';
 import 'package:autolab_customer/features/products/domain/entities/product.dart';
 import 'package:autolab_customer/features/products/domain/repositories/product_repository.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,6 +47,9 @@ class MockAppLogger extends Mock implements AppLogger {}
 class MockFeatureLogger extends Mock implements FeatureLogger {}
 
 class MockProductRepository extends Mock implements ProductRepository {}
+
+class MockNotificationsCubit extends MockCubit<NotificationsState>
+    implements NotificationsCubit {}
 
 class FakeCurrentLocation extends Fake implements CurrentLocation {}
 
@@ -444,6 +450,11 @@ Widget _buildTestApp(
   LocationCubit locationCubit, {
   Widget child = const HomeCustomerPage(),
 }) {
+  final notificationsCubit = MockNotificationsCubit();
+  when(
+    () => notificationsCubit.state,
+  ).thenReturn(NotificationsState(status: NotificationsStatus.success));
+
   return MaterialApp(
     localizationsDelegates: const [
       AppLocalizations.delegate,
@@ -456,6 +467,7 @@ Widget _buildTestApp(
       providers: [
         BlocProvider<AuthSessionCubit>.value(value: authSessionCubit),
         BlocProvider<LocationCubit>.value(value: locationCubit),
+        BlocProvider<NotificationsCubit>.value(value: notificationsCubit),
       ],
       child: child,
     ),

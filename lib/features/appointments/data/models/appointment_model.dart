@@ -10,7 +10,7 @@ class AppointmentModel extends Appointment {
     required super.customerName,
     required super.customerPhone,
     required super.customerEmail,
-    required super.vehicleType,
+    super.vehicleType,
     super.vehiclePlate,
     required super.scheduledAt,
     required super.status,
@@ -43,10 +43,10 @@ class AppointmentModel extends Appointment {
       customerName: _nullableString(map['customer_name']) ?? '',
       customerPhone: _nullableString(map['customer_phone']) ?? '',
       customerEmail: _nullableString(map['customer_email']) ?? '',
-      vehicleType: _requiredFirstString([
+      vehicleType: _firstString([
         map['vehicle_type'],
         _nestedValue(map, ['vehicles', 'vehicle_type']),
-      ], 'vehicle_type'),
+      ]),
       vehiclePlate:
           _nullableString(map['vehicle_plate']) ??
           _nestedString(map, ['vehicles', 'license_plate']),

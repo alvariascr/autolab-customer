@@ -13,6 +13,7 @@ import '../../core/theme/autolab_customer.dart';
 import '../../l10n/app_localizations.dart';
 import '../navigation/navigation_handler.dart';
 import '../navigation/widgets/custom_bottom_navbar.dart';
+import '../notifications/presentation/pages/notifications_page.dart';
 import '../products/domain/repositories/product_repository.dart';
 import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
@@ -433,6 +434,8 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                 proximityFilter: _workshopProximityFilter,
                 emptyStateResolver: _workshopEmptyStateResolver,
                 onLocationTap: _showLocationOptions,
+                onNotificationTap: () =>
+                    context.push(NotificationsPage.routePath),
                 onSearchClose: _closeSearch,
                 onViewAllWorkshopsTap: () => _handleBottomNavigation(1),
                 onViewAllVehiclesTap: _openVehiclesPage,

@@ -18,6 +18,7 @@ import '../features/auth/application/auth_session_state.dart';
 import '../features/auth/repository/auth_repository.dart';
 import '../features/auth/ui/auth_ui_error_resolver.dart';
 import '../features/cart/application/cart_persistence.dart';
+import '../features/notifications/presentation/cubit/notifications_cubit.dart';
 import '../features/payments/application/laropay_return_navigation_controller.dart';
 import '../l10n/app_localizations.dart';
 
@@ -43,6 +44,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   StreamSubscription<AuthState>? _authStateSubscription;
+  StreamSubscription<AuthSessionState>? _notificationAuthSubscription;
+  Future<void> _notificationSyncOperation = Future.value();
   StreamSubscription<Uri>? _appLinkSubscription;
   final AppLinks _appLinks = AppLinks();
   late final AuthNavigationController _authNavigationController;
@@ -64,12 +67,21 @@ class _MyAppState extends State<MyApp> {
     );
     _authStateSubscription = Supabase.instance.client.auth.onAuthStateChange
         .listen(_authNavigationController.handleAuthState);
+    _notificationAuthSubscription = widget.authSessionCubit.stream
+        .distinct(
+          (previous, current) =>
+              previous.status == current.status &&
+              previous.userId == current.userId,
+        )
+        .listen(_syncNotifications);
+    _syncNotifications(widget.authSessionCubit.state);
     unawaited(_listenForAppLinks());
   }
 
   @override
   void dispose() {
     _authStateSubscription?.cancel();
+    _notificationAuthSubscription?.cancel();
     _appLinkSubscription?.cancel();
     super.dispose();
   }
@@ -93,6 +105,25 @@ class _MyAppState extends State<MyApp> {
     await _authNavigationController.handleAppLink(uri);
   }
 
+  void _syncNotifications(AuthSessionState state) {
+    final previousOperation = _notificationSyncOperation;
+    _notificationSyncOperation = () async {
+      await previousOperation;
+      final cubit = sl<NotificationsCubit>();
+      switch (state.status) {
+        case AuthSessionStatus.authenticated:
+          final userId = state.userId?.trim();
+          if (userId == null || userId.isEmpty) return;
+          await cubit.startWatching(userId: userId);
+        case AuthSessionStatus.unauthenticated:
+          await cubit.clear();
+        case AuthSessionStatus.initial:
+        case AuthSessionStatus.loading:
+          return;
+      }
+    }();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -100,6 +131,7 @@ class _MyAppState extends State<MyApp> {
         RepositoryProvider.value(value: widget.authRepository),
         BlocProvider.value(value: widget.authSessionCubit),
         BlocProvider.value(value: widget.locationCubit),
+        BlocProvider.value(value: sl<NotificationsCubit>()),
         BlocProvider(create: (_) => AppThemeModeCubit()),
       ],
       child: BlocBuilder<AppThemeModeCubit, ThemeMode>(

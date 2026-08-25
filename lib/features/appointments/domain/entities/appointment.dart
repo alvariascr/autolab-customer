@@ -9,7 +9,7 @@ class Appointment extends Equatable {
     required this.customerName,
     required this.customerPhone,
     required this.customerEmail,
-    required this.vehicleType,
+    this.vehicleType,
     this.vehiclePlate,
     required this.scheduledAt,
     required this.status,
@@ -33,7 +33,7 @@ class Appointment extends Equatable {
   final String customerName;
   final String customerPhone;
   final String customerEmail;
-  final String vehicleType;
+  final String? vehicleType;
   final String? vehiclePlate;
   final DateTime scheduledAt;
   final String status;

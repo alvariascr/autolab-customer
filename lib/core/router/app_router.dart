@@ -11,6 +11,7 @@ import '../../features/auth/ui/reset_password_page.dart';
 import '../../features/cart/application/cart_cubit.dart';
 import '../../features/home/home_page.dart';
 import '../../features/navigation/customer_navigation_shell.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/onboarding/customer_onboarding_page.dart';
 import '../../features/payments/presentation/pages/my_purchases_page.dart';
 import '../../features/products/domain/entities/product.dart';
@@ -104,6 +105,10 @@ class AppRouter {
       GoRoute(
         path: '/appointments',
         builder: (context, state) => const MyAppointmentsPage(),
+      ),
+      GoRoute(
+        path: NotificationsPage.routePath,
+        builder: (context, state) => const NotificationsPage(),
       ),
       GoRoute(
         path: '/purchases',

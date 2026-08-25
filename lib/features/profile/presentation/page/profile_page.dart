@@ -15,6 +15,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../notifications/presentation/widgets/customer_notification_bell.dart';
 import '../../application/active_garage_vehicle_loader.dart';
 import '../../application/garage_vehicle_controller.dart';
 import '../../domain/entities/garage_vehicle.dart';
@@ -104,7 +106,10 @@ class _ProfilePageState extends State<ProfilePage> {
             AutolabCustomer.spacingXxl,
           ),
           children: [
-            const _GarageHeader(),
+            _GarageHeader(
+              onNotificationTap: () =>
+                  context.push(NotificationsPage.routePath),
+            ),
             const SizedBox(height: AutolabCustomer.spacingSm),
             Text(
               l10n.garageTitle,
@@ -179,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 _GarageMenuItem(
                   icon: Icons.notifications_none_rounded,
                   label: l10n.myAppointmentsNotificationsTooltip,
-                  enabled: false,
+                  onTap: () => context.push(NotificationsPage.routePath),
                 ),
                 _GarageMenuItem(
                   icon: Icons.settings_outlined,
@@ -394,7 +399,9 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class _GarageHeader extends StatelessWidget {
-  const _GarageHeader();
+  const _GarageHeader({required this.onNotificationTap});
+
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -406,11 +413,7 @@ class _GarageHeader extends StatelessWidget {
           const _GarageLogo(),
           Align(
             alignment: Alignment.centerRight,
-            child: Icon(
-              Icons.notifications_none_rounded,
-              color: AutolabCustomer.customerTextColor(context),
-              size: AutolabCustomer.iconMd,
-            ),
+            child: CustomerNotificationBell(onTap: onNotificationTap),
           ),
         ],
       ),
@@ -815,24 +818,27 @@ class _GarageMenuItem extends StatelessWidget {
     required this.icon,
     required this.label,
     this.enabled = true,
+    this.onTap,
     this.showDivider = true,
   });
 
   final IconData icon;
   final String label;
   final bool enabled;
+  final VoidCallback? onTap;
   final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    final color = enabled
+    final isInteractive = enabled && onTap != null;
+    final color = isInteractive
         ? AutolabCustomer.customerTextColor(context)
         : AutolabCustomer.customerSecondaryTextColor(
             context,
           ).withValues(alpha: 0.45);
 
     return InkWell(
-      onTap: null,
+      onTap: isInteractive ? onTap : null,
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
       child: Column(
         children: [
@@ -854,7 +860,7 @@ class _GarageMenuItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (enabled)
+                if (isInteractive)
                   Icon(
                     Icons.chevron_right_rounded,
                     color: color,

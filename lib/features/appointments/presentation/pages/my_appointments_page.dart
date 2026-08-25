@@ -11,6 +11,8 @@ import '../../../auth/application/auth_session_cubit.dart';
 import '../../../auth/domain/errors/auth_error_catalog.dart';
 import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../notifications/presentation/widgets/customer_notification_bell.dart';
 import '../../../workshops/domain/entities/booked_appointment_slot.dart';
 import '../../../workshops/domain/repositories/workshop_repository.dart';
 import '../../../workshops/domain/services/workshop_availability_calculator.dart';
@@ -52,8 +54,8 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
                 children: [
                   _AppointmentsHeader(
                     title: l10n.myAppointmentsTitle,
-                    notificationTooltip:
-                        l10n.myAppointmentsNotificationsTooltip,
+                    onNotificationTap: () =>
+                        context.push(NotificationsPage.routePath),
                     onBack: () {
                       if (context.canPop()) {
                         context.pop();
@@ -344,13 +346,13 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
 class _AppointmentsHeader extends StatelessWidget {
   const _AppointmentsHeader({
     required this.title,
-    required this.notificationTooltip,
     required this.onBack,
+    required this.onNotificationTap,
   });
 
   final String title;
-  final String notificationTooltip;
   final VoidCallback onBack;
+  final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
@@ -390,14 +392,7 @@ class _AppointmentsHeader extends StatelessWidget {
             Positioned(
               right: 0,
               bottom: 0,
-              child: IconButton(
-                tooltip: notificationTooltip,
-                onPressed: () {},
-                icon: Icon(
-                  Icons.notifications_none_rounded,
-                  color: AutolabCustomer.customerTextColor(context),
-                ),
-              ),
+              child: CustomerNotificationBell(onTap: onNotificationTap),
             ),
           ],
         ),

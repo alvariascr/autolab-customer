@@ -5,6 +5,9 @@ import 'package:autolab_customer/features/appointments/presentation/cubit/my_app
 import 'package:autolab_customer/features/appointments/presentation/pages/my_appointments_page.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_cubit.dart';
 import 'package:autolab_customer/features/auth/application/auth_session_state.dart';
+import 'package:autolab_customer/features/notifications/presentation/cubit/notifications_cubit.dart';
+import 'package:autolab_customer/features/notifications/presentation/cubit/notifications_state.dart';
+import 'package:autolab_customer/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:autolab_customer/features/profile/application/garage_vehicle_image_service.dart';
 import 'package:autolab_customer/features/profile/domain/repositories/garage_vehicle_repository.dart';
 import 'package:autolab_customer/features/profile/domain/usecases/get_default_garage_vehicle.dart';
@@ -32,6 +35,9 @@ class _MockGarageVehicleRepository extends Mock
 
 class _MockGarageVehicleImageService extends Mock
     implements GarageVehicleImageService {}
+
+class _MockNotificationsCubit extends MockCubit<NotificationsState>
+    implements NotificationsCubit {}
 
 void main() {
   group('ProfilePage navigation', () {
@@ -126,19 +132,63 @@ void main() {
 
       expect(find.byType(ProfilePage), findsOneWidget);
     });
+
+    testWidgets('abre notificaciones manteniendo perfil en el stack', (
+      tester,
+    ) async {
+      final router = _buildRouter();
+
+      await tester.pumpWidget(
+        _TestApp(router: router, authSessionCubit: authSessionCubit),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Notificaciones').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NotificationsPage), findsOneWidget);
+      expect(find.text('No tienes notificaciones'), findsOneWidget);
+      expect(router.canPop(), true);
+
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProfilePage), findsOneWidget);
+    });
   });
 }
 
 GoRouter _buildRouter() {
+  final notificationsCubit = _MockNotificationsCubit();
+  when(
+    () => notificationsCubit.state,
+  ).thenReturn(NotificationsState(status: NotificationsStatus.success));
+  when(() => notificationsCubit.load()).thenAnswer((_) async {});
   return GoRouter(
     initialLocation: '/profile',
     routes: [
-      GoRoute(path: '/profile', builder: (_, _) => const ProfilePage()),
+      GoRoute(
+        path: '/profile',
+        builder: (_, _) => BlocProvider<NotificationsCubit>.value(
+          value: notificationsCubit,
+          child: const ProfilePage(),
+        ),
+      ),
       GoRoute(
         path: '/appointments',
-        builder: (_, _) => const MyAppointmentsPage(),
+        builder: (_, _) => BlocProvider<NotificationsCubit>.value(
+          value: notificationsCubit,
+          child: const MyAppointmentsPage(),
+        ),
       ),
       GoRoute(path: '/vehicles', builder: (_, _) => const VehiclesPage()),
+      GoRoute(
+        path: NotificationsPage.routePath,
+        builder: (_, _) => BlocProvider<NotificationsCubit>.value(
+          value: notificationsCubit,
+          child: const NotificationsPage(),
+        ),
+      ),
     ],
   );
 }

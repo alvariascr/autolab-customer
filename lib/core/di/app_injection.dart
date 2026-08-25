@@ -30,6 +30,14 @@ import '../../features/home/application/recent_searches_store.dart';
 import '../../features/home/data/supabase_home_service_popularity_store.dart';
 import '../../features/home/domain/usecases/get_home_service_workshop_ids.dart';
 import '../../features/map/presentation/cubit/map_cubit.dart';
+import '../../features/notifications/data/datasources/notification_remote_data_source.dart';
+import '../../features/notifications/data/datasources/supabase_notification_remote_data_source.dart';
+import '../../features/notifications/data/repositories/notification_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notification_repository.dart';
+import '../../features/notifications/domain/usecases/get_customer_notifications.dart';
+import '../../features/notifications/domain/usecases/mark_notification_as_read.dart';
+import '../../features/notifications/domain/usecases/watch_customer_notifications.dart';
+import '../../features/notifications/presentation/cubit/notifications_cubit.dart';
 import '../../features/payments/application/laropay_checkout_launcher.dart';
 import '../../features/payments/data/datasources/laropay_checkout_remote_data_source.dart';
 import '../../features/payments/data/datasources/laropay_link_remote_data_source.dart';
@@ -143,6 +151,31 @@ void _registerFeatureDependencies() {
   registerAuthDependencies(sl);
   sl.registerLazySingleton<HomeServicePopularityStore>(
     () => SupabaseHomeServicePopularityStore(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<NotificationRemoteDataSource>(
+    () => SupabaseNotificationRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(
+      remoteDataSource: sl<NotificationRemoteDataSource>(),
+      currentUserIdProvider: () => sl<SupabaseClient>().auth.currentUser?.id,
+    ),
+  );
+  sl.registerLazySingleton<GetCustomerNotifications>(
+    () => GetCustomerNotifications(sl<NotificationRepository>()),
+  );
+  sl.registerLazySingleton<MarkNotificationAsRead>(
+    () => MarkNotificationAsRead(sl<NotificationRepository>()),
+  );
+  sl.registerLazySingleton<WatchCustomerNotifications>(
+    () => WatchCustomerNotifications(sl<NotificationRepository>()),
+  );
+  sl.registerLazySingleton<NotificationsCubit>(
+    () => NotificationsCubit(
+      getCustomerNotifications: sl<GetCustomerNotifications>(),
+      markNotificationAsRead: sl<MarkNotificationAsRead>(),
+      watchCustomerNotifications: sl<WatchCustomerNotifications>(),
+    ),
   );
   sl.registerLazySingleton<ICartCheckoutRemoteDataSource>(
     () => SupabaseCartCheckoutRemoteDataSource(sl<SupabaseClient>()),
