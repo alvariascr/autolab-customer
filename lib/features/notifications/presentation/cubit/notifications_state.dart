@@ -5,12 +5,12 @@ import '../../domain/entities/customer_notification.dart';
 enum NotificationsStatus { initial, loading, success, failure }
 
 class NotificationsState extends Equatable {
-  const NotificationsState({
+  NotificationsState({
     this.status = NotificationsStatus.initial,
-    this.notifications = const [],
+    List<CustomerNotification> notifications = const [],
     this.message,
     this.isRealtimeConnected = true,
-  });
+  }) : notifications = List.unmodifiable(notifications);
 
   final NotificationsStatus status;
   final List<CustomerNotification> notifications;

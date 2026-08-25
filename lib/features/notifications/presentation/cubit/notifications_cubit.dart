@@ -15,7 +15,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }) : _getCustomerNotifications = getCustomerNotifications,
        _markNotificationAsRead = markNotificationAsRead,
        _watchCustomerNotifications = watchCustomerNotifications,
-       super(const NotificationsState());
+       super(NotificationsState());
 
   final GetCustomerNotifications _getCustomerNotifications;
   final MarkNotificationAsRead _markNotificationAsRead;
@@ -141,7 +141,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await stopWatching();
     _activeUserId = null;
     if (isClosed) return;
-    emit(const NotificationsState());
+    emit(NotificationsState());
   }
 
   @override
