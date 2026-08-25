@@ -2,6 +2,7 @@ import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
 
 import '../../domain/entities/customer_notification.dart';
+import '../../domain/exceptions/notification_unauthenticated_exception.dart';
 import '../../domain/repositories/notification_repository.dart';
 import '../datasources/notification_remote_data_source.dart';
 
@@ -23,6 +24,8 @@ class NotificationRepositoryImpl implements NotificationRepository {
         userId: userId,
       );
       return Right(notifications);
+    } on NotificationUnauthenticatedException catch (error, stackTrace) {
+      return Left(_unauthenticatedFailure(error, stackTrace));
     } catch (error, stackTrace) {
       return Left(
         Failure(
@@ -42,13 +45,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
     try {
       final normalizedUserId = userId.trim();
       if (normalizedUserId.isEmpty) {
-        throw StateError('Authenticated user required');
+        throw const NotificationUnauthenticatedException();
       }
       await for (final notifications in remoteDataSource.watchNotifications(
         userId: normalizedUserId,
       )) {
         yield Right(notifications);
       }
+    } on NotificationUnauthenticatedException catch (error, stackTrace) {
+      yield Left(_unauthenticatedFailure(error, stackTrace));
     } catch (_) {
       yield Left(
         Failure(
@@ -62,8 +67,11 @@ class NotificationRepositoryImpl implements NotificationRepository {
   @override
   Future<Either<Failure, Unit>> markAsRead(String notificationId) async {
     try {
+      _currentUserId();
       await remoteDataSource.markAsRead(notificationId: notificationId);
       return const Right(unit);
+    } on NotificationUnauthenticatedException catch (error, stackTrace) {
+      return Left(_unauthenticatedFailure(error, stackTrace));
     } catch (error, stackTrace) {
       return Left(
         Failure(
@@ -79,8 +87,17 @@ class NotificationRepositoryImpl implements NotificationRepository {
   String _currentUserId() {
     final userId = currentUserIdProvider()?.trim();
     if (userId == null || userId.isEmpty) {
-      throw StateError('Authenticated user required');
+      throw const NotificationUnauthenticatedException();
     }
     return userId;
+  }
+
+  Failure _unauthenticatedFailure(Object error, StackTrace stackTrace) {
+    return Failure(
+      'Debes iniciar sesión para consultar tus notificaciones.',
+      code: 'NOTIFICATIONS_UNAUTHENTICATED',
+      cause: error,
+      stackTrace: stackTrace,
+    );
   }
 }
