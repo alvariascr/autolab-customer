@@ -1,4 +1,17 @@
 alter table public.notifications
+add column if not exists created_at timestamptz;
+
+update public.notifications
+set created_at = coalesce(updated_at, now())
+where created_at is null;
+
+alter table public.notifications
+alter column created_at set default now();
+
+alter table public.notifications
+alter column created_at set not null;
+
+alter table public.notifications
 add column if not exists event_key text;
 
 create unique index if not exists notifications_event_key_unique
