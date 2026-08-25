@@ -24,4 +24,16 @@ class CustomerNotificationModel extends CustomerNotification {
       workshopId: map['workshop_id']?.toString(),
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'workshop_id': workshopId,
+      'title': title,
+      'body': body,
+      'type': type,
+      'is_read': isRead,
+      'created_at': createdAt.toUtc().toIso8601String(),
+    };
+  }
 }
