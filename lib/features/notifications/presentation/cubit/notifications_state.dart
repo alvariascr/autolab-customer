@@ -9,11 +9,13 @@ class NotificationsState extends Equatable {
     this.status = NotificationsStatus.initial,
     this.notifications = const [],
     this.message,
+    this.isRealtimeConnected = true,
   });
 
   final NotificationsStatus status;
   final List<CustomerNotification> notifications;
   final String? message;
+  final bool isRealtimeConnected;
 
   bool get hasUnread =>
       notifications.any((notification) => !notification.isRead);
@@ -22,15 +24,22 @@ class NotificationsState extends Equatable {
     NotificationsStatus? status,
     List<CustomerNotification>? notifications,
     String? message,
+    bool? isRealtimeConnected,
     bool clearMessage = false,
   }) {
     return NotificationsState(
       status: status ?? this.status,
       notifications: notifications ?? this.notifications,
       message: clearMessage ? null : message ?? this.message,
+      isRealtimeConnected: isRealtimeConnected ?? this.isRealtimeConnected,
     );
   }
 
   @override
-  List<Object?> get props => [status, notifications, message];
+  List<Object?> get props => [
+    status,
+    notifications,
+    message,
+    isRealtimeConnected,
+  ];
 }

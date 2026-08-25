@@ -106,6 +106,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
                   state.copyWith(
                     status: NotificationsStatus.failure,
                     message: failure.message,
+                    isRealtimeConnected: false,
+                  ),
+                );
+              } else {
+                emit(
+                  state.copyWith(
+                    message: failure.message,
+                    isRealtimeConnected: false,
                   ),
                 );
               }
@@ -115,6 +123,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
                 status: NotificationsStatus.success,
                 notifications: items,
                 clearMessage: true,
+                isRealtimeConnected: true,
               ),
             ),
           );

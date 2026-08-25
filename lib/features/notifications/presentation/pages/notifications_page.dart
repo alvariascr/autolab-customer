@@ -73,31 +73,80 @@ class _NotificationsPageState extends State<NotificationsPage> {
             );
           }
 
-          return RefreshIndicator(
-            onRefresh: context.read<NotificationsCubit>().load,
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                AutolabCustomer.responsiveScreenMargin(context),
-                AutolabCustomer.spacingMd,
-                AutolabCustomer.responsiveScreenMargin(context),
-                AutolabCustomer.spacingXxl,
-              ),
-              itemCount: state.notifications.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AutolabCustomer.spacingSmd),
-              itemBuilder: (context, index) {
-                final notification = state.notifications[index];
-                return _NotificationCard(
-                  notification: notification,
-                  onTap: () => context.read<NotificationsCubit>().markAsRead(
-                    notification.id,
+          return Column(
+            children: [
+              if (!state.isRealtimeConnected)
+                _RealtimeWarning(
+                  message: state.message ?? l10n.notificationsLoadError,
+                ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: context.read<NotificationsCubit>().load,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      AutolabCustomer.responsiveScreenMargin(context),
+                      AutolabCustomer.spacingMd,
+                      AutolabCustomer.responsiveScreenMargin(context),
+                      AutolabCustomer.spacingXxl,
+                    ),
+                    itemCount: state.notifications.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AutolabCustomer.spacingSmd),
+                    itemBuilder: (context, index) {
+                      final notification = state.notifications[index];
+                      return _NotificationCard(
+                        notification: notification,
+                        onTap: () => context
+                            .read<NotificationsCubit>()
+                            .markAsRead(notification.id),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _RealtimeWarning extends StatelessWidget {
+  const _RealtimeWarning({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(
+        AutolabCustomer.responsiveScreenMargin(context),
+        AutolabCustomer.spacingSm,
+        AutolabCustomer.responsiveScreenMargin(context),
+        0,
+      ),
+      padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+        border: Border.all(color: AutolabCustomer.primary),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AutolabCustomer.primary),
+          const SizedBox(width: AutolabCustomer.spacingSm),
+          Expanded(
+            child: Text(
+              message,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
