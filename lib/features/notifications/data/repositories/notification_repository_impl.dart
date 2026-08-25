@@ -54,11 +54,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
       }
     } on NotificationUnauthenticatedException catch (error, stackTrace) {
       yield Left(_unauthenticatedFailure(error, stackTrace));
-    } catch (_) {
+    } catch (error, stackTrace) {
       yield Left(
         Failure(
           'No fue posible actualizar las notificaciones.',
           code: 'NOTIFICATIONS_WATCH_FAILED',
+          cause: error,
+          stackTrace: stackTrace,
         ),
       );
     }
