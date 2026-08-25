@@ -111,8 +111,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await subscription?.cancel();
   }
 
-  void clear() {
-    unawaited(stopWatching());
+  Future<void> clear() async {
+    await stopWatching();
+    if (isClosed) return;
     emit(const NotificationsState());
   }
 
