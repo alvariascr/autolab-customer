@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_core/autolab_core.dart';
 import 'package:dartz/dartz.dart';
 
@@ -41,28 +43,27 @@ class NotificationRepositoryImpl implements NotificationRepository {
   @override
   Stream<Either<Failure, List<CustomerNotification>>> watchNotifications({
     required String userId,
-  }) async* {
+  }) {
     try {
       final normalizedUserId = userId.trim();
       if (normalizedUserId.isEmpty) {
         throw const NotificationUnauthenticatedException();
       }
-      await for (final notifications in remoteDataSource.watchNotifications(
-        userId: normalizedUserId,
-      )) {
-        yield Right(notifications);
-      }
+
+      return remoteDataSource
+          .watchNotifications(userId: normalizedUserId)
+          .map<Either<Failure, List<CustomerNotification>>>(Right.new)
+          .transform(
+            StreamTransformer.fromHandlers(
+              handleError: (error, stackTrace, sink) {
+                sink.add(Left(_watchFailure(error, stackTrace)));
+              },
+            ),
+          );
     } on NotificationUnauthenticatedException catch (error, stackTrace) {
-      yield Left(_unauthenticatedFailure(error, stackTrace));
+      return Stream.value(Left(_unauthenticatedFailure(error, stackTrace)));
     } catch (error, stackTrace) {
-      yield Left(
-        Failure(
-          'No fue posible actualizar las notificaciones.',
-          code: 'NOTIFICATIONS_WATCH_FAILED',
-          cause: error,
-          stackTrace: stackTrace,
-        ),
-      );
+      return Stream.value(Left(_watchFailure(error, stackTrace)));
     }
   }
 
@@ -98,6 +99,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
     return Failure(
       'Debes iniciar sesión para consultar tus notificaciones.',
       code: 'NOTIFICATIONS_UNAUTHENTICATED',
+      cause: error,
+      stackTrace: stackTrace,
+    );
+  }
+
+  Failure _watchFailure(Object error, StackTrace stackTrace) {
+    return Failure(
+      'No fue posible actualizar las notificaciones.',
+      code: 'NOTIFICATIONS_WATCH_FAILED',
       cause: error,
       stackTrace: stackTrace,
     );
