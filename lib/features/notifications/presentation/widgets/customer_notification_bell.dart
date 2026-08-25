@@ -22,6 +22,7 @@ class CustomerNotificationBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final resolvedIconSize =
         iconSize ??
         AutolabCustomer.responsiveDouble(
@@ -35,9 +36,7 @@ class CustomerNotificationBell extends StatelessWidget {
       selector: (state) => state.hasUnread,
       builder: (context, hasUnread) => IconButton(
         onPressed: onTap,
-        tooltip: AppLocalizations.of(
-          context,
-        )!.myAppointmentsNotificationsTooltip,
+        tooltip: l10n?.myAppointmentsNotificationsTooltip,
         icon: Stack(
           clipBehavior: Clip.none,
           children: [
