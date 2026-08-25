@@ -59,6 +59,9 @@ begin
 end;
 $$;
 
+revoke all on function public.notify_customer_appointment_change()
+from public, anon, authenticated;
+
 drop trigger if exists notify_customer_appointment_change
 on public.appointments;
 
@@ -105,6 +108,9 @@ begin
 end;
 $$;
 
+revoke all on function public.notify_customer_payment_change()
+from public, anon, authenticated;
+
 drop trigger if exists notify_customer_payment_change
 on public.orders;
 
@@ -150,6 +156,9 @@ begin
 end;
 $$;
 
+revoke all on function public.notify_customer_vehicle_ready()
+from public, anon, authenticated;
+
 drop trigger if exists notify_customer_vehicle_ready
 on public.appointment_check_outs;
 
@@ -191,6 +200,9 @@ begin
   return new;
 end;
 $$;
+
+revoke all on function public.notify_message_recipient()
+from public, anon, authenticated;
 
 drop trigger if exists notify_message_recipient
 on public.messages;
