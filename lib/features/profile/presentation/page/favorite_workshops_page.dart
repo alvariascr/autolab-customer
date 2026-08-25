@@ -354,7 +354,7 @@ class _FavoritesFilterChip extends StatelessWidget {
       selected: selected,
       label: Text(label),
       onSelected: (_) => onSelected(),
-      backgroundColor: AutolabCustomer.customerElevatedSurfaceColor(context),
+      backgroundColor: AutolabCustomer.customerSoftSurfaceColor(context),
       selectedColor: AutolabCustomer.primary,
       side: BorderSide(color: AutolabCustomer.customerBorderColor(context)),
       labelStyle: AutolabCustomer.caption.copyWith(
@@ -386,7 +386,7 @@ class _FavoriteWorkshopCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Material(
-      color: AutolabCustomer.customerElevatedSurfaceColor(context),
+      color: AutolabCustomer.customerSoftSurfaceColor(context),
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -479,7 +479,7 @@ class _FavoriteProductCard extends StatelessWidget {
         : product.workshopName.trim();
 
     return Material(
-      color: AutolabCustomer.customerElevatedSurfaceColor(context),
+      color: AutolabCustomer.customerSoftSurfaceColor(context),
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       clipBehavior: Clip.antiAlias,
       child: InkWell(

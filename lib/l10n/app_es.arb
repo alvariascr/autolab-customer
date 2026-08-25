@@ -231,6 +231,7 @@
   "settingsPrivacyTitle": "Privacidad y seguridad",
   "settingsPrivacyPolicy": "Política de privacidad",
   "settingsTerms": "Términos y condiciones",
+  "settingsOpenLinkError": "No fue posible abrir el enlace. Intenta nuevamente.",
   "settingsDeleteAccount": "Eliminar cuenta",
   "settingsAppTitle": "Aplicación",
   "settingsReportProblem": "Reportar un problema",

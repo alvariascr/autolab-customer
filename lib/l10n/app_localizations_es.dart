@@ -711,6 +711,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTerms => 'Términos y condiciones';
 
   @override
+  String get settingsOpenLinkError =>
+      'No fue posible abrir el enlace. Intenta nuevamente.';
+
+  @override
   String get settingsDeleteAccount => 'Eliminar cuenta';
 
   @override

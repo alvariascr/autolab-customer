@@ -82,34 +82,74 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               final cardHeight = (h * 0.86).clamp(540.0, 680.0);
               final logoSize = isTabletWeb ? 210.0 : 180.0;
 
-              return Center(
-                child: AuthCardShell(
-                  cardWidth: cardWidth,
-                  cardHeight: cardHeight,
-                  logoSize: logoSize,
-                  child: _ResetPasswordForm(
-                    formKey: _formKey,
-                    passwordCtrl: _passwordCtrl,
-                    confirmPasswordCtrl: _confirmPasswordCtrl,
-                    isPasswordHidden: _isPasswordHidden,
-                    isConfirmPasswordHidden: _isConfirmPasswordHidden,
-                    onTogglePassword: () {
-                      setState(() {
-                        _isPasswordHidden = !_isPasswordHidden;
-                      });
-                    },
-                    onToggleConfirmPassword: () {
-                      setState(() {
-                        _isConfirmPasswordHidden = !_isConfirmPasswordHidden;
-                      });
-                    },
-                    onSubmit: () => _submit(context),
+              return Stack(
+                children: [
+                  Center(
+                    child: AuthCardShell(
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      logoSize: logoSize,
+                      child: _ResetPasswordForm(
+                        formKey: _formKey,
+                        passwordCtrl: _passwordCtrl,
+                        confirmPasswordCtrl: _confirmPasswordCtrl,
+                        isPasswordHidden: _isPasswordHidden,
+                        isConfirmPasswordHidden: _isConfirmPasswordHidden,
+                        onTogglePassword: () {
+                          setState(() {
+                            _isPasswordHidden = !_isPasswordHidden;
+                          });
+                        },
+                        onToggleConfirmPassword: () {
+                          setState(() {
+                            _isConfirmPasswordHidden =
+                                !_isConfirmPasswordHidden;
+                          });
+                        },
+                        onSubmit: () => _submit(context),
+                      ),
+                    ),
                   ),
-                ),
+                  Positioned(
+                    top:
+                        MediaQuery.paddingOf(context).top +
+                        AutolabCustomer.spacingSmd,
+                    left: AutolabCustomer.responsiveScreenMargin(context),
+                    child: const _ResetPasswordBackButton(),
+                  ),
+                ],
               );
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ResetPasswordBackButton extends StatelessWidget {
+  const _ResetPasswordBackButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AutolabCustomer.customerSoftSurfaceColor(context),
+      shape: const CircleBorder(),
+      child: IconButton(
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          color: AutolabCustomer.customerTextColor(context),
+          size: AutolabCustomer.iconXs,
+        ),
+        onPressed: () {
+          if (context.canPop()) {
+            context.pop();
+            return;
+          }
+
+          context.go('/login');
+        },
       ),
     );
   }
@@ -171,6 +211,7 @@ class _ResetPasswordForm extends StatelessWidget {
       child: Form(
         key: formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               l10n.authResetPasswordTitle,
@@ -251,8 +292,7 @@ class _ResetPasswordForm extends StatelessWidget {
             ),
             const SizedBox(height: AutolabCustomer.spacingLg - 2),
             SizedBox(
-              width: 240,
-              height: 50,
+              height: 54,
               child: ElevatedButton(
                 onPressed: isLoading ? null : onSubmit,
                 style: AutolabCustomer.primaryButton,
@@ -267,21 +307,14 @@ class _ResetPasswordForm extends StatelessWidget {
                       )
                     : Text(
                         l10n.authResetPasswordSubmit,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                         style: AutolabCustomer.bodyLarge.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AutolabCustomer.white,
                         ),
                       ),
-              ),
-            ),
-            const SizedBox(height: AutolabCustomer.spacingSmd),
-            TextButton(
-              onPressed: isLoading ? null : () => context.go('/login'),
-              child: Text(
-                l10n.authPasswordResetBackToLogin,
-                style: AutolabCustomer.body.copyWith(
-                  color: AutolabCustomer.authHintColor(context),
-                ),
               ),
             ),
           ],

@@ -179,11 +179,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => context.push(DeliveryAddressesPage.routePath),
                 ),
                 _GarageMenuItem(
-                  icon: Icons.credit_card_rounded,
-                  label: l10n.garagePaymentMethods,
-                  enabled: false,
-                ),
-                _GarageMenuItem(
                   icon: Icons.notifications_none_rounded,
                   label: l10n.myAppointmentsNotificationsTooltip,
                   onTap: () => context.push(NotificationsPage.routePath),

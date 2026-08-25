@@ -1342,6 +1342,12 @@ abstract class AppLocalizations {
   /// **'Términos y condiciones'**
   String get settingsTerms;
 
+  /// No description provided for @settingsOpenLinkError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible abrir el enlace. Intenta nuevamente.'**
+  String get settingsOpenLinkError;
+
   /// No description provided for @settingsDeleteAccount.
   ///
   /// In es, this message translates to:

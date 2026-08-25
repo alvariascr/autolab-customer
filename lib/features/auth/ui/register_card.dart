@@ -1,5 +1,5 @@
-import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
@@ -41,6 +41,10 @@ class RegisterCard extends StatefulWidget {
 }
 
 class RegisterCardState extends State<RegisterCard> {
+  static final _termsUri = Uri.parse(
+    'https://www.autolab.lat/terminos-y-condiciones/',
+  );
+
   final _formKeyRegister = GlobalKey<FormState>();
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
@@ -86,6 +90,21 @@ class RegisterCardState extends State<RegisterCard> {
       phone: _phoneCtrl.text.trim(),
       password: _passCtrl.text.trim(),
     );
+  }
+
+  Future<void> _openTermsAndConditions() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final opened = await launchUrl(
+      _termsUri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.settingsOpenLinkError)),
+      );
+    }
   }
 
   void cleanRegistry() {
@@ -300,14 +319,7 @@ class RegisterCardState extends State<RegisterCard> {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const TermsPage(),
-                                ),
-                              );
-                            },
+                            onTap: _openTermsAndConditions,
                             child: Text(
                               l10n.authRegisterAcceptTermsLink,
                               style: AutolabCustomer.caption.copyWith(

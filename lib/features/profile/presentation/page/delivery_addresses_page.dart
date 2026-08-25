@@ -306,7 +306,7 @@ class _DeliveryAddressCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Material(
-      color: AutolabCustomer.customerElevatedSurfaceColor(context),
+      color: AutolabCustomer.customerSoftSurfaceColor(context),
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       clipBehavior: Clip.antiAlias,
       child: Ink(
@@ -411,8 +411,8 @@ class _DeliveryAddressCard extends StatelessWidget {
               children: [
                 TextButton(
                   style: AutolabCustomer.ghostButton.copyWith(
-                    foregroundColor: const WidgetStatePropertyAll(
-                      AutolabCustomer.white,
+                    foregroundColor: WidgetStatePropertyAll(
+                      AutolabCustomer.customerTextColor(context),
                     ),
                     minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
                   ),
@@ -420,7 +420,7 @@ class _DeliveryAddressCard extends StatelessWidget {
                   child: Text(
                     l10n.cartEditAddressAction,
                     style: AutolabCustomer.label.copyWith(
-                      color: AutolabCustomer.white,
+                      color: AutolabCustomer.customerTextColor(context),
                       fontWeight: FontWeight.w800,
                     ),
                   ),

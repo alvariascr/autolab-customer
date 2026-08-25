@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_theme_mode_cubit.dart';
 import '../../../../core/theme/autolab_customer.dart';
@@ -18,6 +19,25 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  static final _termsUri = Uri.parse(
+    'https://www.autolab.lat/terminos-y-condiciones/',
+  );
+
+  Future<void> _openTermsAndConditions() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final opened = await launchUrl(
+      _termsUri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.settingsOpenLinkError)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -72,28 +92,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       _SettingsActionTile(
                         icon: Icons.language_rounded,
                         title: l10n.settingsLanguage,
-                        trailingText: l10n.settingsLanguageSpanish,
-                        showDivider: false,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AutolabCustomer.spacingMd),
-                  _SettingsSection(
-                    title: l10n.settingsNotificationsTitle,
-                    children: [
-                      _SettingsActionTile(
-                        icon: Icons.event_available_outlined,
-                        title: l10n.settingsAppointmentNotifications,
-                        trailingText: l10n.settingsComingSoon,
-                      ),
-                      _SettingsActionTile(
-                        icon: Icons.shopping_cart_outlined,
-                        title: l10n.settingsPurchaseNotifications,
-                        trailingText: l10n.settingsComingSoon,
-                      ),
-                      _SettingsActionTile(
-                        icon: Icons.local_offer_outlined,
-                        title: l10n.settingsPromotionsNotifications,
                         trailingText: l10n.settingsComingSoon,
                         showDivider: false,
                       ),
@@ -111,7 +109,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       _SettingsActionTile(
                         icon: Icons.description_outlined,
                         title: l10n.settingsTerms,
-                        trailingText: l10n.settingsComingSoon,
+                        onTap: _openTermsAndConditions,
                       ),
                       _SettingsActionTile(
                         icon: Icons.delete_outline_rounded,
@@ -237,7 +235,6 @@ class _ThemeModeSettingsTile extends StatelessWidget {
           subtitle: isDark
               ? l10n.settingsThemeModeEnabled
               : l10n.settingsThemeModeDisabled,
-          showDivider: false,
           trailing: Switch(
             value: isDark,
             activeThumbColor: AutolabCustomer.primary,
@@ -267,6 +264,7 @@ class _SettingsActionTile extends StatelessWidget {
     this.trailingText,
     this.trailing,
     this.titleColor,
+    this.onTap,
     this.showDivider = true,
   });
 
@@ -276,6 +274,7 @@ class _SettingsActionTile extends StatelessWidget {
   final String? trailingText;
   final Widget? trailing;
   final Color? titleColor;
+  final VoidCallback? onTap;
   final bool showDivider;
 
   @override
@@ -288,6 +287,7 @@ class _SettingsActionTile extends StatelessWidget {
     return Material(
       color: AutolabCustomer.transparent,
       child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
         child: Column(
           children: [
@@ -337,6 +337,12 @@ class _SettingsActionTile extends StatelessWidget {
                         color: secondaryTextColor,
                         fontWeight: FontWeight.w700,
                       ),
+                    )
+                  else if (onTap != null)
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: secondaryTextColor,
+                      size: AutolabCustomer.iconSm,
                     )
                   else
                     const Icon(
