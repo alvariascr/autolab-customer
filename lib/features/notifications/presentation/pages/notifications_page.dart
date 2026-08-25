@@ -275,6 +275,7 @@ class _NotificationCard extends StatelessWidget {
     final secondary = AutolabCustomer.customerSecondaryTextColor(context);
     final localizations = MaterialLocalizations.of(context);
     final date = notification.createdAt.toLocal();
+    final typeVisuals = _visualsForType(context, notification.type);
     return Material(
       color: notification.isRead
           ? AutolabCustomer.customerSurfaceColor(context)
@@ -310,7 +311,7 @@ class _NotificationCard extends StatelessWidget {
                       ),
                     ),
                     child: Icon(
-                      _iconForType(notification.type),
+                      typeVisuals.icon,
                       color: Colors.white,
                       size: AutolabCustomer.iconSm,
                     ),
@@ -338,9 +339,7 @@ class _NotificationCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: AutolabCustomer.spacingSm),
-                            _NotificationTypeBadge(
-                              label: _labelForType(context, notification.type),
-                            ),
+                            _NotificationTypeBadge(label: typeVisuals.label),
                           ],
                         ),
                         const SizedBox(height: AutolabCustomer.spacingXs),
@@ -409,26 +408,32 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  IconData _iconForType(NotificationType type) {
-    return switch (type) {
-      NotificationType.appointment => Icons.calendar_month_rounded,
-      NotificationType.payment => Icons.receipt_long_rounded,
-      NotificationType.vehicle => Icons.directions_car_rounded,
-      NotificationType.promotion => Icons.local_offer_rounded,
-      NotificationType.message ||
-      NotificationType.unknown => Icons.notifications_rounded,
-    };
-  }
-
-  String _labelForType(BuildContext context, NotificationType type) {
+  ({IconData icon, String label}) _visualsForType(
+    BuildContext context,
+    NotificationType type,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     return switch (type) {
-      NotificationType.appointment => l10n.notificationsTypeAppointment,
-      NotificationType.payment => l10n.notificationsTypePayment,
-      NotificationType.vehicle => l10n.notificationsTypeVehicle,
-      NotificationType.promotion => l10n.notificationsTypePromotion,
-      NotificationType.message ||
-      NotificationType.unknown => l10n.notificationsTypeMessage,
+      NotificationType.appointment => (
+        icon: Icons.calendar_month_rounded,
+        label: l10n.notificationsTypeAppointment,
+      ),
+      NotificationType.payment => (
+        icon: Icons.receipt_long_rounded,
+        label: l10n.notificationsTypePayment,
+      ),
+      NotificationType.vehicle => (
+        icon: Icons.directions_car_rounded,
+        label: l10n.notificationsTypeVehicle,
+      ),
+      NotificationType.promotion => (
+        icon: Icons.local_offer_rounded,
+        label: l10n.notificationsTypePromotion,
+      ),
+      NotificationType.message || NotificationType.unknown => (
+        icon: Icons.notifications_rounded,
+        label: l10n.notificationsTypeMessage,
+      ),
     };
   }
 }
