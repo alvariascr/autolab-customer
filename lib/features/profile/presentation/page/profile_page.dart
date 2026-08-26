@@ -185,9 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   label: l10n.myAppointmentsNotificationsTooltip,
                   onTap: () => context.push(NotificationsPage.routePath),
                 ),
-                const _GarageThemeModeItem(
-                  showDivider: false,
-                ),
+                const _GarageThemeModeItem(showDivider: false),
               ],
             ),
             const SizedBox(height: AutolabCustomer.spacingLg),

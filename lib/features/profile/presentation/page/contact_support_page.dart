@@ -92,9 +92,7 @@ class ContactSupportPage extends StatelessWidget {
                     Uri(
                       scheme: 'mailto',
                       path: _supportEmail,
-                      queryParameters: {
-                        'subject': l10n.supportEmailSubject,
-                      },
+                      queryParameters: {'subject': l10n.supportEmailSubject},
                     ),
                   ),
                 ),
@@ -285,9 +283,7 @@ class _SupportIconBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AutolabCustomer.customerSurfaceColor(context),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: AutolabCustomer.customerBorderColor(context),
-        ),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
         boxShadow: [
           BoxShadow(
             color: AutolabCustomer.primary.withValues(alpha: 0.08),

@@ -179,9 +179,7 @@ class _AboutHeroCard extends StatelessWidget {
                 color: AutolabCustomer.customerBorderColor(context),
               ),
             ),
-            child: const Center(
-              child: AutolabLogoMark(width: 70, height: 28),
-            ),
+            child: const Center(child: AutolabLogoMark(width: 70, height: 28)),
           ),
           const SizedBox(width: AutolabCustomer.spacingLg),
           Expanded(
@@ -297,9 +295,7 @@ class _AboutIconBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AutolabCustomer.customerSurfaceColor(context),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: AutolabCustomer.customerBorderColor(context),
-        ),
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
       ),
       child: Icon(
         icon,
