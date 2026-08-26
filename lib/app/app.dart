@@ -45,6 +45,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   StreamSubscription<AuthState>? _authStateSubscription;
   StreamSubscription<AuthSessionState>? _notificationAuthSubscription;
+  Future<void> _notificationSyncOperation = Future.value();
   StreamSubscription<Uri>? _appLinkSubscription;
   final AppLinks _appLinks = AppLinks();
   late final AuthNavigationController _authNavigationController;
@@ -105,12 +106,22 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _syncNotifications(AuthSessionState state) {
-    final cubit = sl<NotificationsCubit>();
-    if (state.isAuthenticated) {
-      unawaited(cubit.startWatching());
-    } else {
-      cubit.clear();
-    }
+    final previousOperation = _notificationSyncOperation;
+    _notificationSyncOperation = () async {
+      await previousOperation;
+      final cubit = sl<NotificationsCubit>();
+      switch (state.status) {
+        case AuthSessionStatus.authenticated:
+          final userId = state.userId?.trim();
+          if (userId == null || userId.isEmpty) return;
+          await cubit.startWatching(userId: userId);
+        case AuthSessionStatus.unauthenticated:
+          await cubit.clear();
+        case AuthSessionStatus.initial:
+        case AuthSessionStatus.loading:
+          return;
+      }
+    }();
   }
 
   @override

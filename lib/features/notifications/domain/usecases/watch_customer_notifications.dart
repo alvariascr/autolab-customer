@@ -9,7 +9,9 @@ class WatchCustomerNotifications {
 
   final NotificationRepository repository;
 
-  Stream<Either<Failure, List<CustomerNotification>>> call() {
-    return repository.watchNotifications();
+  Stream<Either<Failure, List<CustomerNotification>>> call({
+    required String userId,
+  }) {
+    return repository.watchNotifications(userId: userId);
   }
 }

@@ -453,7 +453,7 @@ Widget _buildTestApp(
   final notificationsCubit = MockNotificationsCubit();
   when(
     () => notificationsCubit.state,
-  ).thenReturn(const NotificationsState(status: NotificationsStatus.success));
+  ).thenReturn(NotificationsState(status: NotificationsStatus.success));
 
   return MaterialApp(
     localizationsDelegates: const [

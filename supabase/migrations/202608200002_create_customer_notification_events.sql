@@ -1,4 +1,17 @@
 alter table public.notifications
+add column if not exists created_at timestamptz;
+
+update public.notifications
+set created_at = coalesce(updated_at, now())
+where created_at is null;
+
+alter table public.notifications
+alter column created_at set default now();
+
+alter table public.notifications
+alter column created_at set not null;
+
+alter table public.notifications
 add column if not exists event_key text;
 
 create unique index if not exists notifications_event_key_unique
@@ -59,6 +72,9 @@ begin
 end;
 $$;
 
+revoke all on function public.notify_customer_appointment_change()
+from public, anon, authenticated;
+
 drop trigger if exists notify_customer_appointment_change
 on public.appointments;
 
@@ -105,6 +121,9 @@ begin
 end;
 $$;
 
+revoke all on function public.notify_customer_payment_change()
+from public, anon, authenticated;
+
 drop trigger if exists notify_customer_payment_change
 on public.orders;
 
@@ -150,6 +169,9 @@ begin
 end;
 $$;
 
+revoke all on function public.notify_customer_vehicle_ready()
+from public, anon, authenticated;
+
 drop trigger if exists notify_customer_vehicle_ready
 on public.appointment_check_outs;
 
@@ -191,6 +213,9 @@ begin
   return new;
 end;
 $$;
+
+revoke all on function public.notify_message_recipient()
+from public, anon, authenticated;
 
 drop trigger if exists notify_message_recipient
 on public.messages;
@@ -270,7 +295,16 @@ begin
     'promotion:' || v_campaign_key || ':' || c.user_id::text
   from public.customers c
   where c.user_id is not null
-    and (p_workshop_id is null or c.workshop_id = p_workshop_id);
+    and (
+      p_workshop_id is null
+      or c.workshop_id = p_workshop_id
+      or exists (
+        select 1
+        from public.orders o
+        where o.customer_id = c.id
+          and o.workshop_id = p_workshop_id
+      )
+    );
 
   get diagnostics v_inserted = row_count;
   return v_inserted;

@@ -6,7 +6,9 @@ import '../entities/customer_notification.dart';
 abstract interface class NotificationRepository {
   Future<Either<Failure, List<CustomerNotification>>> loadNotifications();
 
-  Stream<Either<Failure, List<CustomerNotification>>> watchNotifications();
+  Stream<Either<Failure, List<CustomerNotification>>> watchNotifications({
+    required String userId,
+  });
 
   Future<Either<Failure, Unit>> markAsRead(String notificationId);
 }

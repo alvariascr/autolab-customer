@@ -50,7 +50,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
               },
             ),
             Expanded(
-              child: BlocBuilder<NotificationsCubit, NotificationsState>(
+              child: BlocConsumer<NotificationsCubit, NotificationsState>(
+                listenWhen: (previous, current) =>
+                    current.notifications.isNotEmpty &&
+                    current.message != null &&
+                    previous.message != current.message,
+                listener: (context, state) {
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text(state.message!),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                },
                 builder: (context, state) {
                   if (state.status == NotificationsStatus.loading &&
                       state.notifications.isEmpty) {
@@ -98,6 +113,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             MediaQuery.paddingOf(context).bottom,
                       ),
                       children: [
+                        if (!state.isRealtimeConnected) ...[
+                          _RealtimeWarning(
+                            message:
+                                state.message ?? l10n.notificationsLoadError,
+                          ),
+                          const SizedBox(height: AutolabCustomer.spacingMd),
+                        ],
                         _NotificationFilterBar(
                           selectedFilter: _selectedFilter,
                           notifications: state.notifications,
@@ -151,7 +173,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final groups = <String, List<CustomerNotification>>{};
 
     for (final notification in notifications) {
-      final label = _groupLabel(context, notification.updatedAt.toLocal());
+      final label = _groupLabel(context, notification.createdAt.toLocal());
       groups.putIfAbsent(label, () => []).add(notification);
     }
 
@@ -201,17 +223,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 
-  bool _isPromotion(String type) {
-    final normalized = type.trim().toLowerCase();
-    return normalized == 'promotion' || normalized == 'promocion';
+  bool _isPromotion(NotificationType type) {
+    return type == NotificationType.promotion;
   }
 }
 
 class _NotificationsHeader extends StatelessWidget {
-  const _NotificationsHeader({
-    required this.title,
-    required this.onBack,
-  });
+  const _NotificationsHeader({required this.title, required this.onBack});
 
   final String title;
   final VoidCallback onBack;
@@ -317,10 +335,9 @@ class _NotificationFilterBar extends StatelessWidget {
         filter: _NotificationFilter.promotions,
         icon: Icons.sell_rounded,
         label: l10n.notificationsPromotionsFilter,
-        count: notifications.where((item) {
-          final type = item.type.trim().toLowerCase();
-          return type == 'promotion' || type == 'promocion';
-        }).length,
+        count: notifications
+            .where((item) => item.type == NotificationType.promotion)
+            .length,
       ),
     ];
 
@@ -433,6 +450,39 @@ class _NotificationGroupTitle extends StatelessWidget {
       style: AutolabCustomer.body.copyWith(
         color: AutolabCustomer.customerSecondaryTextColor(context),
         fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _RealtimeWarning extends StatelessWidget {
+  const _RealtimeWarning({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+        border: Border.all(color: AutolabCustomer.primary),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AutolabCustomer.primary),
+          const SizedBox(width: AutolabCustomer.spacingSm),
+          Expanded(
+            child: Text(
+              message,
+              style: AutolabCustomer.caption.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -552,7 +602,7 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
-    final date = notification.updatedAt.toLocal();
+    final date = notification.createdAt.toLocal();
     final textColor = notification.isRead
         ? AutolabCustomer.customerSecondaryTextColor(context)
         : AutolabCustomer.customerTextColor(context);
@@ -641,13 +691,14 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  IconData _iconForType(String type) {
-    return switch (type.toLowerCase()) {
-      'appointment' || 'cita' => Icons.calendar_month_outlined,
-      'payment' || 'pago' => Icons.credit_card_outlined,
-      'vehicle' || 'vehiculo' => Icons.build_outlined,
-      'promotion' || 'promocion' => Icons.local_offer_outlined,
-      _ => Icons.notifications_none_rounded,
+  IconData _iconForType(NotificationType type) {
+    return switch (type) {
+      NotificationType.appointment => Icons.calendar_month_outlined,
+      NotificationType.payment => Icons.credit_card_outlined,
+      NotificationType.vehicle => Icons.build_outlined,
+      NotificationType.promotion => Icons.local_offer_outlined,
+      NotificationType.message ||
+      NotificationType.unknown => Icons.notifications_none_rounded,
     };
   }
 }

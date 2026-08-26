@@ -20,7 +20,7 @@ void main() {
     final cubit = _MockNotificationsCubit();
     when(
       () => cubit.state,
-    ).thenReturn(const NotificationsState(status: NotificationsStatus.success));
+    ).thenReturn(NotificationsState(status: NotificationsStatus.success));
     when(() => cubit.load()).thenAnswer((_) async {});
     final router = GoRouter(
       initialLocation: '/origin',

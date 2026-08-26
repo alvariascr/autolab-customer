@@ -15,9 +15,9 @@ class SupabaseNotificationRemoteDataSource
   }) async {
     final response = await client
         .from('notifications')
-        .select('id, workshop_id, title, body, type, is_read, updated_at')
+        .select('id, workshop_id, title, body, type, is_read, created_at')
         .eq('user_id', userId)
-        .order('updated_at', ascending: false)
+        .order('created_at', ascending: false)
         .limit(50);
 
     return response
@@ -34,7 +34,7 @@ class SupabaseNotificationRemoteDataSource
         .from('notifications')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
-        .order('updated_at', ascending: false)
+        .order('created_at', ascending: false)
         .limit(50)
         .map(
           (response) => response

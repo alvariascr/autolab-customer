@@ -162,7 +162,7 @@ GoRouter _buildRouter() {
   final notificationsCubit = _MockNotificationsCubit();
   when(
     () => notificationsCubit.state,
-  ).thenReturn(const NotificationsState(status: NotificationsStatus.success));
+  ).thenReturn(NotificationsState(status: NotificationsStatus.success));
   when(() => notificationsCubit.load()).thenAnswer((_) async {});
   return GoRouter(
     initialLocation: '/profile',

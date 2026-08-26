@@ -69,13 +69,33 @@ void main() {
       expect(redirect, isNull);
     });
 
-    test('no redirige mientras auth esta cargando', () {
+    test('mantiene rutas privadas en splash mientras auth esta cargando', () {
       final redirect = guard.redirectFor(
         authState: const AuthSessionState(status: AuthSessionStatus.loading),
         location: '/home',
       );
 
-      expect(redirect, isNull);
+      expect(redirect, '/startup-splash');
+    });
+
+    test('protege notificaciones mientras se restaura la sesion', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(status: AuthSessionStatus.initial),
+        location: '/notifications',
+      );
+
+      expect(redirect, '/startup-splash');
+    });
+
+    test('redirige notificaciones a login sin autenticacion', () {
+      final redirect = guard.redirectFor(
+        authState: const AuthSessionState(
+          status: AuthSessionStatus.unauthenticated,
+        ),
+        location: '/notifications',
+      );
+
+      expect(redirect, '/login');
     });
 
     test('permite mostrar la ruta splash inicial', () {

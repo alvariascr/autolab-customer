@@ -9,6 +9,18 @@ class MarkNotificationAsRead {
   final NotificationRepository repository;
 
   Future<Either<Failure, Unit>> call(String notificationId) {
-    return repository.markAsRead(notificationId);
+    final normalizedId = notificationId.trim();
+    if (normalizedId.isEmpty) {
+      return Future.value(
+        Left(
+          Failure(
+            'El identificador de la notificación es requerido.',
+            code: 'INVALID_NOTIFICATION_ID',
+          ),
+        ),
+      );
+    }
+
+    return repository.markAsRead(normalizedId);
   }
 }

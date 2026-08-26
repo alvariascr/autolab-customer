@@ -15,13 +15,14 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }) : _getCustomerNotifications = getCustomerNotifications,
        _markNotificationAsRead = markNotificationAsRead,
        _watchCustomerNotifications = watchCustomerNotifications,
-       super(const NotificationsState());
+       super(NotificationsState());
 
   final GetCustomerNotifications _getCustomerNotifications;
   final MarkNotificationAsRead _markNotificationAsRead;
   final WatchCustomerNotifications _watchCustomerNotifications;
   StreamSubscription? _notificationsSubscription;
   int _watchGeneration = 0;
+  String? _activeUserId;
 
   Future<void> load() async {
     if (state.status == NotificationsStatus.loading) return;
@@ -31,21 +32,32 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     final result = await _getCustomerNotifications();
     if (isClosed) return;
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: NotificationsStatus.failure,
-          message: failure.message,
-        ),
-      ),
-      (items) => emit(
-        state.copyWith(
-          status: NotificationsStatus.success,
-          notifications: items,
-          clearMessage: true,
-        ),
-      ),
+    final wasSuccessful = result.fold(
+      (failure) {
+        emit(
+          state.copyWith(
+            status: NotificationsStatus.failure,
+            message: failure.message,
+          ),
+        );
+        return false;
+      },
+      (items) {
+        emit(
+          state.copyWith(
+            status: NotificationsStatus.success,
+            notifications: items,
+            clearMessage: true,
+          ),
+        );
+        return true;
+      },
     );
+
+    if (wasSuccessful) {
+      final userId = _activeUserId;
+      if (userId != null) await startWatching(userId: userId);
+    }
   }
 
   Future<void> markAsRead(String notificationId) async {
@@ -71,7 +83,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }, (_) {});
   }
 
-  Future<void> startWatching() async {
+  Future<void> startWatching({required String userId}) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) return;
+    _activeUserId = normalizedUserId;
+
     final generation = ++_watchGeneration;
     final previousSubscription = _notificationsSubscription;
     _notificationsSubscription = null;
@@ -79,29 +95,39 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
     if (isClosed || generation != _watchGeneration) return;
 
-    _notificationsSubscription = _watchCustomerNotifications().listen((result) {
-      if (generation != _watchGeneration) return;
-      if (isClosed) return;
-      result.fold(
-        (failure) {
-          if (state.notifications.isEmpty) {
-            emit(
+    _notificationsSubscription =
+        _watchCustomerNotifications(userId: normalizedUserId).listen((result) {
+          if (generation != _watchGeneration) return;
+          if (isClosed) return;
+          result.fold(
+            (failure) {
+              if (state.notifications.isEmpty) {
+                emit(
+                  state.copyWith(
+                    status: NotificationsStatus.failure,
+                    message: failure.message,
+                    isRealtimeConnected: false,
+                  ),
+                );
+              } else {
+                emit(
+                  state.copyWith(
+                    message: failure.message,
+                    isRealtimeConnected: false,
+                  ),
+                );
+              }
+            },
+            (items) => emit(
               state.copyWith(
-                status: NotificationsStatus.failure,
-                message: failure.message,
+                status: NotificationsStatus.success,
+                notifications: items,
+                clearMessage: true,
+                isRealtimeConnected: true,
               ),
-            );
-          }
-        },
-        (items) => emit(
-          state.copyWith(
-            status: NotificationsStatus.success,
-            notifications: items,
-            clearMessage: true,
-          ),
-        ),
-      );
-    });
+            ),
+          );
+        });
   }
 
   Future<void> stopWatching() async {
@@ -111,9 +137,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     await subscription?.cancel();
   }
 
-  void clear() {
-    unawaited(stopWatching());
-    emit(const NotificationsState());
+  Future<void> clear() async {
+    await stopWatching();
+    _activeUserId = null;
+    if (isClosed) return;
+    emit(NotificationsState());
   }
 
   @override

@@ -24,7 +24,7 @@ class AppRedirectGuard {
 
     if (authState.status == AuthSessionStatus.loading ||
         authState.status == AuthSessionStatus.initial) {
-      return null;
+      return '/startup-splash';
     }
 
     if (!authState.isAuthenticated) {
