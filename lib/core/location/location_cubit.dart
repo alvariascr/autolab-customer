@@ -293,6 +293,41 @@ class LocationCubit extends Cubit<LocationState> {
     await loadCurrentLocation();
   }
 
+  void useSavedLocation({
+    required CurrentLocation location,
+    required String placeName,
+  }) {
+    if (!location.hasValidCoordinates) {
+      _emitStableState(
+        status: LocationFlowStatus.error,
+        failureCode: CustomerErrorCatalog.invalidCurrentLocation.code,
+        failureUiKey: CustomerErrorCatalog.invalidCurrentLocation.uiKey,
+        clearLocation: true,
+        clearPlaceName: true,
+      );
+      return;
+    }
+
+    _featureLogger?.info(
+      feature: 'location',
+      action: 'use_saved_location',
+      context: {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+        'hasPlaceName': placeName.trim().isNotEmpty,
+      },
+    );
+
+    _emitStableState(
+      status: LocationFlowStatus.success,
+      location: location,
+      placeName: placeName.trim().isEmpty ? null : placeName.trim(),
+      clearMessage: true,
+      clearFailureCode: true,
+      clearFailureUiKey: true,
+    );
+  }
+
   @override
   Future<void> close() async {
     await _positionSubscription?.cancel();

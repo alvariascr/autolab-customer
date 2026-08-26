@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
@@ -86,15 +87,22 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
 
   Future<void> _pickDateFilter() async {
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
+    final result = await showModalBottomSheet<_PurchaseDateFilterResult>(
       context: context,
-      firstDate: DateTime(now.year - 2),
-      lastDate: now,
-      initialDateRange: _dateFilter,
+      isScrollControlled: true,
+      backgroundColor: AutolabCustomer.transparent,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+      ),
+      builder: (_) => _PurchaseDateFilterSheet(
+        initialRange: _dateFilter,
+        firstDay: DateTime(now.year - 2, now.month, now.day),
+        lastDay: DateTime(now.year, now.month, now.day),
+      ),
     );
 
-    if (picked != null && mounted) {
-      setState(() => _dateFilter = picked);
+    if (result != null && mounted) {
+      setState(() => _dateFilter = result.range);
     }
   }
 
@@ -139,6 +147,15 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                 context.go('/home-customer?tab=profile');
               },
             ),
+            const SizedBox(height: AutolabCustomer.spacingLg),
+            Text(
+              l10n.myPurchasesSubtitle,
+              style: AutolabCustomer.body.copyWith(
+                color: AutolabCustomer.customerTextColor(context),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AutolabCustomer.spacingLg),
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
               child: Row(
@@ -280,31 +297,18 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
                       itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return Text(
-                            l10n.myPurchasesSubtitle,
-                            textAlign: TextAlign.center,
-                            style: AutolabCustomer.body.copyWith(
-                              color: AutolabCustomer.customerSecondaryTextColor(
-                                context,
-                              ),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          );
-                        }
-
                         return _PurchaseCard(
-                          purchase: visiblePurchases[index - 1],
+                          purchase: visiblePurchases[index],
                           onOpenLink: _openPurchaseLink,
                           onRefreshStatus: _refreshPurchaseStatus,
                           refreshing: _refreshingPurchaseIds.contains(
-                            visiblePurchases[index - 1].id,
+                            visiblePurchases[index].id,
                           ),
                         );
                       },
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 14),
-                      itemCount: visiblePurchases.length + 1,
+                      itemCount: visiblePurchases.length,
                     ),
                   );
                 },
@@ -456,6 +460,331 @@ class _MyPurchasesPageState extends State<MyPurchasesPage> {
   }
 }
 
+class _PurchaseDateFilterResult {
+  const _PurchaseDateFilterResult(this.range);
+
+  final DateTimeRange? range;
+}
+
+class _PurchaseDateFilterSheet extends StatefulWidget {
+  const _PurchaseDateFilterSheet({
+    required this.initialRange,
+    required this.firstDay,
+    required this.lastDay,
+  });
+
+  final DateTimeRange? initialRange;
+  final DateTime firstDay;
+  final DateTime lastDay;
+
+  @override
+  State<_PurchaseDateFilterSheet> createState() =>
+      _PurchaseDateFilterSheetState();
+}
+
+class _PurchaseDateFilterSheetState extends State<_PurchaseDateFilterSheet> {
+  late DateTime _focusedDay;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+
+  @override
+  void initState() {
+    super.initState();
+    _rangeStart = widget.initialRange?.start;
+    _rangeEnd = widget.initialRange?.end;
+    _focusedDay = _rangeStart ?? widget.lastDay;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          18,
+          10,
+          18,
+          18 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        decoration: BoxDecoration(
+          color: AutolabCustomer.customerSurfaceColor(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(
+            color: AutolabCustomer.customerBorderColor(context),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AutolabCustomer.customerSecondaryTextColor(
+                    context,
+                  ).withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.myPurchasesFilterByDateAction,
+                    style: AutolabCustomer.h3.copyWith(
+                      color: AutolabCustomer.customerTextColor(context),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AutolabCustomer.customerTextColor(context),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TableCalendar<void>(
+              locale: 'es',
+              firstDay: widget.firstDay,
+              lastDay: widget.lastDay,
+              focusedDay: _focusedDay,
+              calendarFormat: CalendarFormat.month,
+              rangeStartDay: _rangeStart,
+              rangeEndDay: _rangeEnd,
+              rangeSelectionMode: RangeSelectionMode.toggledOn,
+              availableCalendarFormats: const {CalendarFormat.month: 'Mes'},
+              enabledDayPredicate: (day) {
+                final date = _dateOnly(day);
+                return !date.isBefore(_dateOnly(widget.firstDay)) &&
+                    !date.isAfter(_dateOnly(widget.lastDay));
+              },
+              onRangeSelected: (start, end, focusedDay) {
+                setState(() {
+                  _rangeStart = start == null ? null : _dateOnly(start);
+                  _rangeEnd = end == null ? null : _dateOnly(end);
+                  _focusedDay = focusedDay;
+                });
+              },
+              onDaySelected: (selectedDay, focusedDay) {
+                setState(() {
+                  final date = _dateOnly(selectedDay);
+                  if (_rangeStart == null ||
+                      (_rangeStart != null && _rangeEnd != null)) {
+                    _rangeStart = date;
+                    _rangeEnd = null;
+                  } else if (date.isBefore(_rangeStart!)) {
+                    _rangeEnd = _rangeStart;
+                    _rangeStart = date;
+                  } else {
+                    _rangeEnd = date;
+                  }
+                  _focusedDay = focusedDay;
+                });
+              },
+              onPageChanged: (focusedDay) =>
+                  setState(() => _focusedDay = focusedDay),
+              headerStyle: HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextStyle: AutolabCustomer.body.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w900,
+                ),
+                leftChevronIcon: Icon(
+                  Icons.chevron_left_rounded,
+                  color: AutolabCustomer.customerTextColor(context),
+                ),
+                rightChevronIcon: Icon(
+                  Icons.chevron_right_rounded,
+                  color: AutolabCustomer.customerTextColor(context),
+                ),
+                titleTextFormatter: (date, locale) {
+                  final month = DateFormat.MMMM(locale).format(date);
+                  return l10n.appointmentMonthYearTitle(
+                    _capitalize(month),
+                    date.year,
+                  );
+                },
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: AutolabCustomer.caption.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+                weekendStyle: AutolabCustomer.caption.copyWith(
+                  color: AutolabCustomer.customerTextColor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              calendarStyle: const CalendarStyle(outsideDaysVisible: true),
+              calendarBuilders: CalendarBuilders<void>(
+                defaultBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day),
+                disabledBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, disabled: true),
+                outsideBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, outside: true),
+                todayBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, today: true),
+                selectedBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, selected: true),
+                rangeStartBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, selected: true),
+                rangeEndBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, selected: true),
+                withinRangeBuilder: (context, day, focusedDay) =>
+                    _PurchaseCalendarDay(day: day, inRange: true),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(
+                      context,
+                      const _PurchaseDateFilterResult(null),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AutolabCustomer.customerTextColor(
+                        context,
+                      ),
+                      side: BorderSide(
+                        color: AutolabCustomer.customerBorderColor(context),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AutolabCustomer.radiusSm,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      l10n.myPurchasesClearFilterAction,
+                      style: const TextStyle(
+                        fontFamily: AutolabCustomer.primaryFont,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _rangeStart == null
+                        ? null
+                        : () {
+                            final start = _rangeStart!;
+                            Navigator.pop(
+                              context,
+                              _PurchaseDateFilterResult(
+                                DateTimeRange(
+                                  start: start,
+                                  end: _rangeEnd ?? start,
+                                ),
+                              ),
+                            );
+                          },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AutolabCustomer.primary,
+                      foregroundColor: AutolabCustomer.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AutolabCustomer.radiusSm,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Aplicar filtro',
+                      style: TextStyle(
+                        fontFamily: AutolabCustomer.primaryFont,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PurchaseCalendarDay extends StatelessWidget {
+  const _PurchaseCalendarDay({
+    required this.day,
+    this.disabled = false,
+    this.outside = false,
+    this.selected = false,
+    this.today = false,
+    this.inRange = false,
+  });
+
+  final DateTime day;
+  final bool disabled;
+  final bool outside;
+  final bool selected;
+  final bool today;
+  final bool inRange;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected
+        ? AutolabCustomer.white
+        : disabled || outside
+        ? AutolabCustomer.customerSecondaryTextColor(
+            context,
+          ).withValues(alpha: 0.55)
+        : AutolabCustomer.customerTextColor(context);
+    final background = selected
+        ? AutolabCustomer.primary
+        : inRange || today
+        ? AutolabCustomer.primary.withValues(alpha: inRange ? 0.18 : 0.14)
+        : AutolabCustomer.transparent;
+
+    return Center(
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+        child: Center(
+          child: Text(
+            '${day.day}',
+            style: TextStyle(
+              fontFamily: AutolabCustomer.primaryFont,
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+
+String _capitalize(String value) {
+  if (value.isEmpty) {
+    return value;
+  }
+
+  return value[0].toUpperCase() + value.substring(1);
+}
+
 class _PurchaseCard extends StatefulWidget {
   const _PurchaseCard({
     required this.purchase,
@@ -482,116 +811,150 @@ class _PurchaseCardState extends State<_PurchaseCard> {
     final purchase = widget.purchase;
     final viewState = _PurchaseViewState.fromPurchase(purchase, l10n);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AutolabCustomer.customerSurfaceColor(context),
+    return Material(
+      color: AutolabCustomer.customerSurfaceColor(context),
+      borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      child: InkWell(
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
-        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _PurchaseStatusIcon(viewState: viewState),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        purchase.title(l10n),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textScaler: TextScaler.noScaling,
-                        style: AutolabCustomer.bodyLarge.copyWith(
-                          color: AutolabCustomer.customerTextColor(context),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        purchase.summaryLine(l10n),
-                        style: AutolabCustomer.caption.copyWith(
-                          color: AutolabCustomer.customerSecondaryTextColor(
-                            context,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _StatusBadge(viewState: viewState),
-              ],
+        onTap: () => setState(() => _expanded = !_expanded),
+        child: Container(
+          padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+            border: Border.all(
+              color: AutolabCustomer.customerBorderColor(context),
             ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 180),
-              alignment: Alignment.topLeft,
-              child: !_expanded
-                  ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      padding: const EdgeInsets.only(top: 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            viewState.message,
-                            style: AutolabCustomer.caption.copyWith(
-                              color: AutolabCustomer.customerSecondaryTextColor(
-                                context,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _PurchaseStatusIcon(viewState: viewState),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          purchase.title(l10n),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textScaler: TextScaler.noScaling,
+                          style: AutolabCustomer.bodyLarge.copyWith(
+                            color: AutolabCustomer.customerTextColor(context),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          purchase.summaryLine(l10n),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AutolabCustomer.body.copyWith(
+                            color: AutolabCustomer.customerSecondaryTextColor(
+                              context,
+                            ),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _StatusBadge(viewState: viewState),
+                ],
+              ),
+              const SizedBox(height: AutolabCustomer.spacingMd),
+              Divider(color: AutolabCustomer.customerBorderColor(context)),
+              const SizedBox(height: AutolabCustomer.spacingSm),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PurchaseMetaItem(
+                      icon: Icons.calendar_today_rounded,
+                      label: purchase.formattedCreatedAtShort(l10n),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 1,
+                    height: 18,
+                    color: AutolabCustomer.customerBorderColor(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PurchaseMetaItem(
+                      icon: Icons.payments_outlined,
+                      label: purchase.hasOrderAmounts
+                          ? purchase.formattedOrderTotalAmount
+                          : purchase.formattedPaidAmount,
+                    ),
+                  ),
+                ],
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 180),
+                alignment: Alignment.topLeft,
+                child: !_expanded
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              viewState.message,
+                              style: AutolabCustomer.caption.copyWith(
+                                color:
+                                    AutolabCustomer.customerSecondaryTextColor(
+                                      context,
+                                    ),
+                                height: 1.35,
                               ),
-                              height: 1.35,
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          _PurchaseDetailRow(
-                            icon: Icons.payments_outlined,
-                            label: purchase.hasOrderAmounts
-                                ? purchase.hasPaymentLink
-                                      ? l10n.myPurchasesPaidOnlineLabel
-                                      : l10n.myPurchasesPaidLabel
-                                : l10n.myPurchasesAmountLabel,
-                            value: purchase.formattedPaidAmount,
-                          ),
-                          if (purchase.hasOrderAmounts) ...[
+                            const SizedBox(height: 10),
                             _PurchaseDetailRow(
-                              icon: Icons.account_balance_wallet_outlined,
-                              label: l10n.myPurchasesPendingAtWorkshopLabel,
-                              value: purchase.formattedRemainingAmount,
-                              valueColor: purchase.hasOutstandingBalance
-                                  ? AutolabCustomer.warning
-                                  : null,
+                              icon: Icons.payments_outlined,
+                              label: purchase.hasOrderAmounts
+                                  ? purchase.hasPaymentLink
+                                        ? l10n.myPurchasesPaidOnlineLabel
+                                        : l10n.myPurchasesPaidLabel
+                                  : l10n.myPurchasesAmountLabel,
+                              value: purchase.formattedPaidAmount,
+                            ),
+                            if (purchase.hasOrderAmounts) ...[
+                              _PurchaseDetailRow(
+                                icon: Icons.account_balance_wallet_outlined,
+                                label: l10n.myPurchasesPendingAtWorkshopLabel,
+                                value: purchase.formattedRemainingAmount,
+                                valueColor: purchase.hasOutstandingBalance
+                                    ? AutolabCustomer.warning
+                                    : null,
+                              ),
+                              _PurchaseDetailRow(
+                                icon: Icons.receipt_long_outlined,
+                                label: l10n.myPurchasesOrderTotalLabel,
+                                value: purchase.formattedOrderTotalAmount,
+                              ),
+                            ],
+                            _PurchaseDetailRow(
+                              icon: Icons.calendar_month_outlined,
+                              label: l10n.myPurchasesDateLabel,
+                              value: purchase.formattedCreatedAt(l10n),
                             ),
                             _PurchaseDetailRow(
-                              icon: Icons.receipt_long_outlined,
-                              label: l10n.myPurchasesOrderTotalLabel,
-                              value: purchase.formattedOrderTotalAmount,
+                              icon: Icons.confirmation_number_outlined,
+                              label: l10n.myPurchasesReferenceLabel,
+                              value: purchase.reference,
                             ),
                           ],
-                          _PurchaseDetailRow(
-                            icon: Icons.calendar_month_outlined,
-                            label: l10n.myPurchasesDateLabel,
-                            value: purchase.formattedCreatedAt(l10n),
-                          ),
-                          _PurchaseDetailRow(
-                            icon: Icons.confirmation_number_outlined,
-                            label: l10n.myPurchasesReferenceLabel,
-                            value: purchase.reference,
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-            ),
-            const SizedBox(height: 10),
-            InkWell(
-              onTap: () => setState(() => _expanded = !_expanded),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -603,6 +966,7 @@ class _PurchaseCardState extends State<_PurchaseCard> {
                         color: AutolabCustomer.customerSecondaryTextColor(
                           context,
                         ),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     Icon(
@@ -617,41 +981,69 @@ class _PurchaseCardState extends State<_PurchaseCard> {
                   ],
                 ),
               ),
-            ),
-            if (purchase.canReopenLink || purchase.canRefreshStatus) ...[
-              const SizedBox(height: 8),
-              Divider(
-                height: 1,
-                color: AutolabCustomer.customerBorderColor(context),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  if (purchase.canReopenLink)
-                    Expanded(
-                      child: _PurchaseActionButton(
-                        onPressed: () => widget.onOpenLink(purchase),
-                        icon: Icons.open_in_new_rounded,
-                        label: l10n.myPurchasesOpenLinkAction,
+              if (purchase.canReopenLink || purchase.canRefreshStatus) ...[
+                const SizedBox(height: 8),
+                Divider(
+                  height: 1,
+                  color: AutolabCustomer.customerBorderColor(context),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    if (purchase.canReopenLink)
+                      Expanded(
+                        child: _PurchaseActionButton(
+                          onPressed: () => widget.onOpenLink(purchase),
+                          icon: Icons.open_in_new_rounded,
+                          label: l10n.myPurchasesOpenLinkAction,
+                        ),
                       ),
-                    ),
-                  if (purchase.canReopenLink && purchase.canRefreshStatus)
-                    const SizedBox(width: 8),
-                  if (purchase.canRefreshStatus)
-                    _PurchaseActionButton(
-                      onPressed: widget.refreshing
-                          ? null
-                          : () => widget.onRefreshStatus(purchase),
-                      tooltip: l10n.myPurchasesRefreshStatusAction,
-                      icon: Icons.sync_rounded,
-                      loading: widget.refreshing,
-                    ),
-                ],
-              ),
+                    if (purchase.canReopenLink && purchase.canRefreshStatus)
+                      const SizedBox(width: 8),
+                    if (purchase.canRefreshStatus)
+                      _PurchaseActionButton(
+                        onPressed: widget.refreshing
+                            ? null
+                            : () => widget.onRefreshStatus(purchase),
+                        tooltip: l10n.myPurchasesRefreshStatusAction,
+                        icon: Icons.sync_rounded,
+                        loading: widget.refreshing,
+                      ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _PurchaseMetaItem extends StatelessWidget {
+  const _PurchaseMetaItem({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: AutolabCustomer.primary, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.customerTextColor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -667,10 +1059,10 @@ class _PurchaseStatusIcon extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: viewState.color.withValues(alpha: 0.14),
+        color: AutolabCustomer.primary,
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
       ),
-      child: Icon(viewState.icon, color: viewState.color),
+      child: Icon(viewState.icon, color: AutolabCustomer.white, size: 24),
     );
   }
 }
@@ -682,19 +1074,19 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: viewState.color.withValues(alpha: 0.12),
+        color: AutolabCustomer.transparent,
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+        border: Border.all(color: AutolabCustomer.primary),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Text(
-          viewState.label,
-          style: AutolabCustomer.caption.copyWith(
-            color: viewState.color,
-            fontWeight: FontWeight.w800,
-          ),
+      child: Text(
+        viewState.label,
+        style: AutolabCustomer.caption.copyWith(
+          color: AutolabCustomer.primary,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );

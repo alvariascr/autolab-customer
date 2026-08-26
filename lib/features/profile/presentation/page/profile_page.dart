@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/theme/app_theme_mode_cubit.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/application/auth_session_cubit.dart';
@@ -21,9 +22,10 @@ import '../../application/garage_vehicle_controller.dart';
 import '../../domain/entities/garage_vehicle.dart';
 import '../../domain/usecases/get_default_garage_vehicle.dart';
 import '../helpers/garage_vehicle_display.dart';
+import 'about_us_page.dart';
+import 'contact_support_page.dart';
 import 'delivery_addresses_page.dart';
 import 'favorite_workshops_page.dart';
-import 'settings_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -183,10 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   label: l10n.myAppointmentsNotificationsTooltip,
                   onTap: () => context.push(NotificationsPage.routePath),
                 ),
-                _GarageMenuItem(
-                  icon: Icons.settings_outlined,
-                  label: l10n.garageSettings,
-                  onTap: () => context.push(SettingsPage.routePath),
+                const _GarageThemeModeItem(
                   showDivider: false,
                 ),
               ],
@@ -197,19 +196,14 @@ class _ProfilePageState extends State<ProfilePage> {
             _GarageMenuGroup(
               children: [
                 _GarageMenuItem(
-                  icon: Icons.favorite_border_rounded,
-                  label: l10n.garageHelpCenter,
-                  enabled: false,
-                ),
-                _GarageMenuItem(
                   icon: Icons.location_on_outlined,
                   label: l10n.garageContactSupport,
-                  enabled: false,
+                  onTap: () => context.push(ContactSupportPage.routePath),
                 ),
                 _GarageMenuItem(
                   icon: Icons.credit_card_rounded,
                   label: l10n.garageAboutUs,
-                  enabled: false,
+                  onTap: () => context.push(AboutUsPage.routePath),
                   showDivider: false,
                 ),
               ],
@@ -810,24 +804,70 @@ class _GarageMenuGroup extends StatelessWidget {
   }
 }
 
+class _GarageThemeModeItem extends StatelessWidget {
+  const _GarageThemeModeItem({this.showDivider = true});
+
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return BlocBuilder<AppThemeModeCubit, ThemeMode>(
+      builder: (context, mode) {
+        final isDark = switch (mode) {
+          ThemeMode.dark => true,
+          ThemeMode.light => false,
+          ThemeMode.system =>
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+        };
+
+        return _GarageMenuItem(
+          icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+          label: isDark
+              ? l10n.profileDarkModeTitle
+              : l10n.profileLightModeTitle,
+          trailing: Switch(
+            value: isDark,
+            activeThumbColor: AutolabCustomer.primary,
+            activeTrackColor: AutolabCustomer.primary.withValues(alpha: 0.35),
+            inactiveThumbColor: AutolabCustomer.customerDisabledTextColor(
+              context,
+            ),
+            inactiveTrackColor: AutolabCustomer.customerSoftSurfaceColor(
+              context,
+            ),
+            onChanged: (enabled) {
+              context.read<AppThemeModeCubit>().setThemeMode(
+                enabled ? ThemeMode.dark : ThemeMode.light,
+              );
+            },
+          ),
+          showDivider: showDivider,
+        );
+      },
+    );
+  }
+}
+
 class _GarageMenuItem extends StatelessWidget {
   const _GarageMenuItem({
     required this.icon,
     required this.label,
-    this.enabled = true,
+    this.trailing,
     this.onTap,
     this.showDivider = true,
   });
 
   final IconData icon;
   final String label;
-  final bool enabled;
+  final Widget? trailing;
   final VoidCallback? onTap;
   final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    final isInteractive = enabled && onTap != null;
+    final isInteractive = onTap != null || trailing != null;
     final color = isInteractive
         ? AutolabCustomer.customerTextColor(context)
         : AutolabCustomer.customerSecondaryTextColor(
@@ -857,7 +897,9 @@ class _GarageMenuItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (isInteractive)
+                if (trailing case final trailing?)
+                  trailing
+                else if (isInteractive)
                   Icon(
                     Icons.chevron_right_rounded,
                     color: color,

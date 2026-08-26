@@ -18,9 +18,6 @@ class LocationSheetUiModel {
     required this.currentLocationSubtitle,
     required this.writeAddressTitle,
     required this.writeAddressSubtitle,
-    required this.homeTitle,
-    required this.workTitle,
-    required this.savedAddressSubtitle,
   });
 
   final String title;
@@ -29,7 +26,4 @@ class LocationSheetUiModel {
   final String currentLocationSubtitle;
   final String writeAddressTitle;
   final String writeAddressSubtitle;
-  final String homeTitle;
-  final String workTitle;
-  final String savedAddressSubtitle;
 }

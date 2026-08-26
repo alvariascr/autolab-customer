@@ -952,6 +952,12 @@ abstract class AppLocalizations {
   /// **'Modo oscuro'**
   String get profileDarkModeTitle;
 
+  /// No description provided for @profileLightModeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Modo claro'**
+  String get profileLightModeTitle;
+
   /// No description provided for @profileDarkModeEnabled.
   ///
   /// In es, this message translates to:
@@ -1120,6 +1126,24 @@ abstract class AppLocalizations {
   /// **'No pudimos cargar tus favoritos'**
   String get favoritesLoadErrorTitle;
 
+  /// No description provided for @favoritesShowAllAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get favoritesShowAllAction;
+
+  /// No description provided for @favoritesSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar en favoritos'**
+  String get favoritesSearchHint;
+
+  /// No description provided for @favoritesCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Sin favoritos} =1{1 favorito} other{{count} favoritos}}'**
+  String favoritesCount(num count);
+
   /// No description provided for @workshopFavoriteAdded.
   ///
   /// In es, this message translates to:
@@ -1183,14 +1207,32 @@ abstract class AppLocalizations {
   /// No description provided for @garageAddressesEmptyTitle.
   ///
   /// In es, this message translates to:
-  /// **'No tienes direcciones guardadas'**
+  /// **'No tienes ubicaciones guardadas'**
   String get garageAddressesEmptyTitle;
 
   /// No description provided for @garageAddressesEmptyMessage.
   ///
   /// In es, this message translates to:
-  /// **'Agrega una dirección para usarla en tus compras con envío.'**
+  /// **'Agrega una ubicación para que la app muestre resultados desde esa zona.'**
   String get garageAddressesEmptyMessage;
+
+  /// No description provided for @garageAddressesManageSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestiona tus ubicaciones guardadas'**
+  String get garageAddressesManageSubtitle;
+
+  /// No description provided for @garageAddressesHeaderAddAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar'**
+  String get garageAddressesHeaderAddAction;
+
+  /// No description provided for @garageAddressesAddNewAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Agregar nueva ubicación'**
+  String get garageAddressesAddNewAction;
 
   /// No description provided for @garageAddressesAddAction.
   ///
@@ -1233,6 +1275,156 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Dirección predeterminada actualizada.'**
   String get garageAddressesDefaultSuccess;
+
+  /// No description provided for @garageLocationsNewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva ubicación'**
+  String get garageLocationsNewTitle;
+
+  /// No description provided for @garageLocationsEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar ubicación'**
+  String get garageLocationsEditTitle;
+
+  /// No description provided for @garageLocationsLabelField.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la ubicación'**
+  String get garageLocationsLabelField;
+
+  /// No description provided for @garageLocationsLabelHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Casa, Oficina, Tilarán'**
+  String get garageLocationsLabelHint;
+
+  /// No description provided for @garageLocationsCountryField.
+  ///
+  /// In es, this message translates to:
+  /// **'País'**
+  String get garageLocationsCountryField;
+
+  /// No description provided for @garageLocationsCountryHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Costa Rica'**
+  String get garageLocationsCountryHint;
+
+  /// No description provided for @garageLocationsProvinceField.
+  ///
+  /// In es, this message translates to:
+  /// **'Provincia'**
+  String get garageLocationsProvinceField;
+
+  /// No description provided for @garageLocationsProvinceHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Guanacaste'**
+  String get garageLocationsProvinceHint;
+
+  /// No description provided for @garageLocationsCantonField.
+  ///
+  /// In es, this message translates to:
+  /// **'Cantón'**
+  String get garageLocationsCantonField;
+
+  /// No description provided for @garageLocationsCantonHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Tilarán'**
+  String get garageLocationsCantonHint;
+
+  /// No description provided for @garageLocationsDistrictField.
+  ///
+  /// In es, this message translates to:
+  /// **'Distrito'**
+  String get garageLocationsDistrictField;
+
+  /// No description provided for @garageLocationsDistrictHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. Tilarán'**
+  String get garageLocationsDistrictHint;
+
+  /// No description provided for @garageLocationsExactAddressField.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección exacta (opcional)'**
+  String get garageLocationsExactAddressField;
+
+  /// No description provided for @garageLocationsExactAddressHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej. 400 metros sur de Mega Super'**
+  String get garageLocationsExactAddressHint;
+
+  /// No description provided for @garageLocationsGeocodeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Con estos datos ubicamos la app. La dirección exacta solo ayuda a precisar mejor el punto.'**
+  String get garageLocationsGeocodeHint;
+
+  /// No description provided for @garageLocationsLoadErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos cargar tus ubicaciones'**
+  String get garageLocationsLoadErrorTitle;
+
+  /// No description provided for @garageLocationsLoadErrorMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa la conexión o confirma que la tabla de ubicaciones esté creada.'**
+  String get garageLocationsLoadErrorMessage;
+
+  /// No description provided for @garageLocationsSaveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar ubicación'**
+  String get garageLocationsSaveAction;
+
+  /// No description provided for @garageLocationsSavingAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardando ubicación'**
+  String get garageLocationsSavingAction;
+
+  /// No description provided for @garageLocationsSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No fue posible guardar la ubicación. Revisa la dirección e intenta nuevamente.'**
+  String get garageLocationsSaveError;
+
+  /// No description provided for @garageLocationsUseSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación activa actualizada.'**
+  String get garageLocationsUseSuccess;
+
+  /// No description provided for @garageLocationsActiveLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa'**
+  String get garageLocationsActiveLabel;
+
+  /// No description provided for @garageLocationsDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar ubicación'**
+  String get garageLocationsDeleteTitle;
+
+  /// No description provided for @garageLocationsDeleteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta ubicación se eliminará de tus ubicaciones guardadas.'**
+  String get garageLocationsDeleteMessage;
+
+  /// No description provided for @garageLocationsDeleteSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación eliminada correctamente.'**
+  String get garageLocationsDeleteSuccess;
 
   /// No description provided for @garagePaymentMethods.
   ///
@@ -1407,6 +1599,174 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Quiénes somos'**
   String get garageAboutUs;
+
+  /// No description provided for @supportContactTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Contactar soporte'**
+  String get supportContactTitle;
+
+  /// No description provided for @supportContactHeading.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos para ayudarte'**
+  String get supportContactHeading;
+
+  /// No description provided for @supportContactSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige el canal que prefieras o envíanos tu consulta.\nNuestro equipo te responderá lo antes posible.'**
+  String get supportContactSubtitle;
+
+  /// No description provided for @supportWhatsappTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'WhatsApp'**
+  String get supportWhatsappTitle;
+
+  /// No description provided for @supportWhatsappSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Escríbenos por WhatsApp.'**
+  String get supportWhatsappSubtitle;
+
+  /// No description provided for @supportCallTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Llamada'**
+  String get supportCallTitle;
+
+  /// No description provided for @supportCallSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Llámanos y te atenderemos.'**
+  String get supportCallSubtitle;
+
+  /// No description provided for @supportEmailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Correo'**
+  String get supportEmailTitle;
+
+  /// No description provided for @supportEmailSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Envíanos un correo.'**
+  String get supportEmailSubtitle;
+
+  /// No description provided for @supportEmailSubject.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta de soporte'**
+  String get supportEmailSubject;
+
+  /// No description provided for @supportScheduleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Horario'**
+  String get supportScheduleTitle;
+
+  /// No description provided for @supportScheduleSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Lunes a viernes\n7:00 a. m. - 5:00 p. m.'**
+  String get supportScheduleSubtitle;
+
+  /// No description provided for @aboutAutolabTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Autolab'**
+  String get aboutAutolabTitle;
+
+  /// No description provided for @aboutAutolabDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Autolab conecta a los usuarios con talleres, productos y servicios automotrices en una sola app.'**
+  String get aboutAutolabDescription;
+
+  /// No description provided for @aboutSimpleManagementTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestión simple'**
+  String get aboutSimpleManagementTitle;
+
+  /// No description provided for @aboutSimpleManagementSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprende cómo funciona la app y administra tu experiencia.'**
+  String get aboutSimpleManagementSubtitle;
+
+  /// No description provided for @aboutTermsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta la información legal y las políticas de uso.'**
+  String get aboutTermsSubtitle;
+
+  /// No description provided for @simpleManagementIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Autolab te conecta con talleres, servicios y productos automotrices en una sola app. Aquí te mostramos de forma simple cómo aprovecharla.'**
+  String get simpleManagementIntro;
+
+  /// No description provided for @simpleManagementExploreTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'1. Explora'**
+  String get simpleManagementExploreTitle;
+
+  /// No description provided for @simpleManagementExploreDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca talleres cercanos, revisa servicios disponibles y encuentra productos para tu vehículo según tu necesidad.'**
+  String get simpleManagementExploreDescription;
+
+  /// No description provided for @simpleManagementScheduleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'2. Agenda o compra'**
+  String get simpleManagementScheduleTitle;
+
+  /// No description provided for @simpleManagementScheduleDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Reserva tu cita en el taller o agrega productos al carrito de forma rápida y ordenada desde la app.'**
+  String get simpleManagementScheduleDescription;
+
+  /// No description provided for @simpleManagementTrackTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'3. Da seguimiento'**
+  String get simpleManagementTrackTitle;
+
+  /// No description provided for @simpleManagementTrackDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta el estado de tus citas, órdenes y notificaciones para mantener el control de todo tu proceso.'**
+  String get simpleManagementTrackDescription;
+
+  /// No description provided for @simpleManagementAccountTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'4. Gestiona tu cuenta'**
+  String get simpleManagementAccountTitle;
+
+  /// No description provided for @simpleManagementAccountDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Administra tus vehículos, direcciones, favoritos y soporte desde la sección Mi Garaje.'**
+  String get simpleManagementAccountDescription;
+
+  /// No description provided for @simpleManagementTrustTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'5. Usa la app con confianza'**
+  String get simpleManagementTrustTitle;
+
+  /// No description provided for @simpleManagementTrustDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Autolab centraliza tu experiencia automotriz para que tengas una gestión más ágil, clara y confiable en un solo lugar.'**
+  String get simpleManagementTrustDescription;
 
   /// No description provided for @garageActiveVehicle.
   ///
@@ -2239,7 +2599,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationSheetTitle.
   ///
   /// In es, this message translates to:
-  /// **'Selecciona dónde entregar'**
+  /// **''**
   String get locationSheetTitle;
 
   /// No description provided for @locationSheetSubtitle.
@@ -2311,13 +2671,13 @@ abstract class AppLocalizations {
   /// No description provided for @locationSheetWriteAddressTitle.
   ///
   /// In es, this message translates to:
-  /// **'Escribir dirección'**
+  /// **'Ver direcciones'**
   String get locationSheetWriteAddressTitle;
 
   /// No description provided for @locationSheetWriteAddressSubtitle.
   ///
   /// In es, this message translates to:
-  /// **'Lo conectamos en el siguiente paso del home.'**
+  /// **'Elige una ubicación guardada o agrega una nueva.'**
   String get locationSheetWriteAddressSubtitle;
 
   /// No description provided for @locationSheetHomeTitle.
@@ -5050,6 +5410,18 @@ abstract class AppLocalizations {
   /// **'Te avisaremos cuando haya novedades sobre tus servicios y vehículos.'**
   String get notificationsEmptyMessage;
 
+  /// No description provided for @notificationsFilteredEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay notificaciones aquí'**
+  String get notificationsFilteredEmptyTitle;
+
+  /// No description provided for @notificationsFilteredEmptyMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambia el filtro para ver otras notificaciones.'**
+  String get notificationsFilteredEmptyMessage;
+
   /// No description provided for @notificationsLoadError.
   ///
   /// In es, this message translates to:
@@ -5061,6 +5433,48 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Reintentar'**
   String get notificationsRetry;
+
+  /// No description provided for @notificationsShowAllAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver todos'**
+  String get notificationsShowAllAction;
+
+  /// No description provided for @notificationsAllFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get notificationsAllFilter;
+
+  /// No description provided for @notificationsUnreadFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'No leídas'**
+  String get notificationsUnreadFilter;
+
+  /// No description provided for @notificationsPromotionsFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Promociones'**
+  String get notificationsPromotionsFilter;
+
+  /// No description provided for @notificationsGroupToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get notificationsGroupToday;
+
+  /// No description provided for @notificationsGroupYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get notificationsGroupYesterday;
+
+  /// No description provided for @notificationsGroupThisWeek.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta semana'**
+  String get notificationsGroupThisWeek;
 
   /// No description provided for @notificationsTypeAppointment.
   ///

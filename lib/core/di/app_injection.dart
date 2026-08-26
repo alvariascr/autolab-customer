@@ -66,7 +66,9 @@ import '../../features/products/domain/usecases/get_schedulable_services_by_work
 import '../../features/profile/application/garage_vehicle_controller.dart';
 import '../../features/profile/application/garage_vehicle_image_service.dart';
 import '../../features/profile/data/garage_vehicle_remote_data_source.dart';
+import '../../features/profile/data/repositories/customer_location_repository_impl.dart';
 import '../../features/profile/data/repositories/garage_vehicle_repository_impl.dart';
+import '../../features/profile/domain/repositories/customer_location_repository.dart';
 import '../../features/profile/domain/repositories/garage_vehicle_repository.dart';
 import '../../features/profile/domain/usecases/get_default_garage_vehicle.dart';
 import '../../features/profile/domain/usecases/get_garage_vehicles.dart';
@@ -193,6 +195,9 @@ void _registerFeatureDependencies() {
   );
   sl.registerLazySingleton<DeliveryAddressRepository>(
     () => DeliveryAddressRepositoryImpl(sl<ICartCheckoutRemoteDataSource>()),
+  );
+  sl.registerLazySingleton<CustomerLocationRepository>(
+    () => CustomerLocationRepositoryImpl(sl<SupabaseClient>()),
   );
   sl.registerLazySingleton<LoadDeliveryAddresses>(
     () => LoadDeliveryAddresses(sl<DeliveryAddressRepository>()),

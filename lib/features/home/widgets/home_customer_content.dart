@@ -699,6 +699,9 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
         itemBuilder: (context, index) {
           final item = items[index];
           final isSelected = widget.selectedServiceKey == item.serviceKey;
+          final effectiveIconSize = item.serviceKey == 'electrico'
+              ? iconSize * 1.18
+              : iconSize;
           final itemColor = isSelected
               ? AutolabCustomer.primary
               : AutolabCustomer.customerTextColor(context);
@@ -725,8 +728,8 @@ class _ServiceCategoriesState extends State<_ServiceCategories> {
                     child: SvgPicture.asset(
                       item.assetIcon,
                       key: ValueKey('${item.assetIcon}-$isSelected'),
-                      width: iconSize,
-                      height: iconSize,
+                      width: effectiveIconSize,
+                      height: effectiveIconSize,
                       fit: BoxFit.contain,
                       colorFilter: ColorFilter.mode(itemColor, BlendMode.srcIn),
                     ),

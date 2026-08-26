@@ -497,6 +497,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileDarkModeTitle => 'Modo oscuro';
 
   @override
+  String get profileLightModeTitle => 'Modo claro';
+
+  @override
   String get profileDarkModeEnabled => 'Activado';
 
   @override
@@ -587,6 +590,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get favoritesLoadErrorTitle => 'No pudimos cargar tus favoritos';
 
   @override
+  String get favoritesShowAllAction => 'Ver todos';
+
+  @override
+  String get favoritesSearchHint => 'Buscar en favoritos';
+
+  @override
+  String favoritesCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count favoritos',
+      one: '1 favorito',
+      zero: 'Sin favoritos',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get workshopFavoriteAdded => 'Taller agregado a favoritos.';
 
   @override
@@ -628,11 +649,21 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get garageAddressesEmptyTitle => 'No tienes direcciones guardadas';
+  String get garageAddressesEmptyTitle => 'No tienes ubicaciones guardadas';
 
   @override
   String get garageAddressesEmptyMessage =>
-      'Agrega una dirección para usarla en tus compras con envío.';
+      'Agrega una ubicación para que la app muestre resultados desde esa zona.';
+
+  @override
+  String get garageAddressesManageSubtitle =>
+      'Gestiona tus ubicaciones guardadas';
+
+  @override
+  String get garageAddressesHeaderAddAction => 'Agregar';
+
+  @override
+  String get garageAddressesAddNewAction => 'Agregar nueva ubicación';
 
   @override
   String get garageAddressesAddAction => 'Agregar dirección';
@@ -655,6 +686,88 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get garageAddressesDefaultSuccess =>
       'Dirección predeterminada actualizada.';
+
+  @override
+  String get garageLocationsNewTitle => 'Nueva ubicación';
+
+  @override
+  String get garageLocationsEditTitle => 'Editar ubicación';
+
+  @override
+  String get garageLocationsLabelField => 'Nombre de la ubicación';
+
+  @override
+  String get garageLocationsLabelHint => 'Ej. Casa, Oficina, Tilarán';
+
+  @override
+  String get garageLocationsCountryField => 'País';
+
+  @override
+  String get garageLocationsCountryHint => 'Ej. Costa Rica';
+
+  @override
+  String get garageLocationsProvinceField => 'Provincia';
+
+  @override
+  String get garageLocationsProvinceHint => 'Ej. Guanacaste';
+
+  @override
+  String get garageLocationsCantonField => 'Cantón';
+
+  @override
+  String get garageLocationsCantonHint => 'Ej. Tilarán';
+
+  @override
+  String get garageLocationsDistrictField => 'Distrito';
+
+  @override
+  String get garageLocationsDistrictHint => 'Ej. Tilarán';
+
+  @override
+  String get garageLocationsExactAddressField => 'Dirección exacta (opcional)';
+
+  @override
+  String get garageLocationsExactAddressHint =>
+      'Ej. 400 metros sur de Mega Super';
+
+  @override
+  String get garageLocationsGeocodeHint =>
+      'Con estos datos ubicamos la app. La dirección exacta solo ayuda a precisar mejor el punto.';
+
+  @override
+  String get garageLocationsLoadErrorTitle =>
+      'No pudimos cargar tus ubicaciones';
+
+  @override
+  String get garageLocationsLoadErrorMessage =>
+      'Revisa la conexión o confirma que la tabla de ubicaciones esté creada.';
+
+  @override
+  String get garageLocationsSaveAction => 'Guardar ubicación';
+
+  @override
+  String get garageLocationsSavingAction => 'Guardando ubicación';
+
+  @override
+  String get garageLocationsSaveError =>
+      'No fue posible guardar la ubicación. Revisa la dirección e intenta nuevamente.';
+
+  @override
+  String get garageLocationsUseSuccess => 'Ubicación activa actualizada.';
+
+  @override
+  String get garageLocationsActiveLabel => 'Activa';
+
+  @override
+  String get garageLocationsDeleteTitle => 'Eliminar ubicación';
+
+  @override
+  String get garageLocationsDeleteMessage =>
+      'Esta ubicación se eliminará de tus ubicaciones guardadas.';
+
+  @override
+  String get garageLocationsDeleteSuccess =>
+      'Ubicación eliminada correctamente.';
 
   @override
   String get garagePaymentMethods => 'Métodos de pago';
@@ -743,6 +856,101 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get garageAboutUs => 'Quiénes somos';
+
+  @override
+  String get supportContactTitle => 'Contactar soporte';
+
+  @override
+  String get supportContactHeading => 'Estamos para ayudarte';
+
+  @override
+  String get supportContactSubtitle =>
+      'Elige el canal que prefieras o envíanos tu consulta.\nNuestro equipo te responderá lo antes posible.';
+
+  @override
+  String get supportWhatsappTitle => 'WhatsApp';
+
+  @override
+  String get supportWhatsappSubtitle => 'Escríbenos por WhatsApp.';
+
+  @override
+  String get supportCallTitle => 'Llamada';
+
+  @override
+  String get supportCallSubtitle => 'Llámanos y te atenderemos.';
+
+  @override
+  String get supportEmailTitle => 'Correo';
+
+  @override
+  String get supportEmailSubtitle => 'Envíanos un correo.';
+
+  @override
+  String get supportEmailSubject => 'Consulta de soporte';
+
+  @override
+  String get supportScheduleTitle => 'Horario';
+
+  @override
+  String get supportScheduleSubtitle =>
+      'Lunes a viernes\n7:00 a. m. - 5:00 p. m.';
+
+  @override
+  String get aboutAutolabTitle => 'Autolab';
+
+  @override
+  String get aboutAutolabDescription =>
+      'Autolab conecta a los usuarios con talleres, productos y servicios automotrices en una sola app.';
+
+  @override
+  String get aboutSimpleManagementTitle => 'Gestión simple';
+
+  @override
+  String get aboutSimpleManagementSubtitle =>
+      'Aprende cómo funciona la app y administra tu experiencia.';
+
+  @override
+  String get aboutTermsSubtitle =>
+      'Consulta la información legal y las políticas de uso.';
+
+  @override
+  String get simpleManagementIntro =>
+      'Autolab te conecta con talleres, servicios y productos automotrices en una sola app. Aquí te mostramos de forma simple cómo aprovecharla.';
+
+  @override
+  String get simpleManagementExploreTitle => '1. Explora';
+
+  @override
+  String get simpleManagementExploreDescription =>
+      'Busca talleres cercanos, revisa servicios disponibles y encuentra productos para tu vehículo según tu necesidad.';
+
+  @override
+  String get simpleManagementScheduleTitle => '2. Agenda o compra';
+
+  @override
+  String get simpleManagementScheduleDescription =>
+      'Reserva tu cita en el taller o agrega productos al carrito de forma rápida y ordenada desde la app.';
+
+  @override
+  String get simpleManagementTrackTitle => '3. Da seguimiento';
+
+  @override
+  String get simpleManagementTrackDescription =>
+      'Consulta el estado de tus citas, órdenes y notificaciones para mantener el control de todo tu proceso.';
+
+  @override
+  String get simpleManagementAccountTitle => '4. Gestiona tu cuenta';
+
+  @override
+  String get simpleManagementAccountDescription =>
+      'Administra tus vehículos, direcciones, favoritos y soporte desde la sección Mi Garaje.';
+
+  @override
+  String get simpleManagementTrustTitle => '5. Usa la app con confianza';
+
+  @override
+  String get simpleManagementTrustDescription =>
+      'Autolab centraliza tu experiencia automotriz para que tengas una gestión más ágil, clara y confiable en un solo lugar.';
 
   @override
   String get garageActiveVehicle => 'Vehículo activo';
@@ -1199,7 +1407,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'La ubicación no está disponible en este momento. Intenta más tarde.';
 
   @override
-  String get locationSheetTitle => 'Selecciona dónde entregar';
+  String get locationSheetTitle => '';
 
   @override
   String get locationSheetSubtitle =>
@@ -1244,11 +1452,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Estamos esperando tu respuesta para acceder a la ubicación.';
 
   @override
-  String get locationSheetWriteAddressTitle => 'Escribir dirección';
+  String get locationSheetWriteAddressTitle => 'Ver direcciones';
 
   @override
   String get locationSheetWriteAddressSubtitle =>
-      'Lo conectamos en el siguiente paso del home.';
+      'Elige una ubicación guardada o agrega una nueva.';
 
   @override
   String get locationSheetHomeTitle => 'Casa';
@@ -2808,10 +3016,38 @@ class AppLocalizationsEs extends AppLocalizations {
       'Te avisaremos cuando haya novedades sobre tus servicios y vehículos.';
 
   @override
+  String get notificationsFilteredEmptyTitle => 'No hay notificaciones aquí';
+
+  @override
+  String get notificationsFilteredEmptyMessage =>
+      'Cambia el filtro para ver otras notificaciones.';
+
+  @override
   String get notificationsLoadError => 'No pudimos cargar tus notificaciones.';
 
   @override
   String get notificationsRetry => 'Reintentar';
+
+  @override
+  String get notificationsShowAllAction => 'Ver todos';
+
+  @override
+  String get notificationsAllFilter => 'Todas';
+
+  @override
+  String get notificationsUnreadFilter => 'No leídas';
+
+  @override
+  String get notificationsPromotionsFilter => 'Promociones';
+
+  @override
+  String get notificationsGroupToday => 'Hoy';
+
+  @override
+  String get notificationsGroupYesterday => 'Ayer';
+
+  @override
+  String get notificationsGroupThisWeek => 'Esta semana';
 
   @override
   String get notificationsTypeAppointment => 'Cita';

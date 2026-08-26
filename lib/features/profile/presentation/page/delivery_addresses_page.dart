@@ -1,52 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/app_injection.dart';
+import '../../../../core/location/current_location.dart';
+import '../../../../core/location/geocoding_client.dart';
+import '../../../../core/location/location_cubit.dart';
+import '../../../../core/location/location_state.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../cart/domain/entities/cart_checkout.dart';
-import '../../../cart/domain/usecases/delete_delivery_address.dart';
-import '../../../cart/domain/usecases/load_delivery_addresses.dart';
-import '../../../cart/domain/usecases/save_delivery_address.dart';
-import '../../../cart/domain/usecases/set_default_delivery_address.dart';
-import '../widgets/customer_page_header.dart';
+import '../../domain/entities/customer_location.dart';
+import '../../domain/repositories/customer_location_repository.dart';
 
 class DeliveryAddressesPage extends StatefulWidget {
-  const DeliveryAddressesPage({super.key});
+  const DeliveryAddressesPage({
+    super.key,
+    this.openFormOnStart = false,
+    this.closeAfterSave = false,
+  });
 
   static const routePath = '/addresses';
+
+  final bool openFormOnStart;
+  final bool closeAfterSave;
 
   @override
   State<DeliveryAddressesPage> createState() => _DeliveryAddressesPageState();
 }
 
 class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
-  late Future<List<CustomerDeliveryAddress>> _addressesFuture;
+  late Future<List<CustomerLocation>> _locationsFuture;
 
-  LoadDeliveryAddresses get _loadAddresses => sl<LoadDeliveryAddresses>();
+  CustomerLocationRepository get _locationsRepository =>
+      sl<CustomerLocationRepository>();
 
-  SaveDeliveryAddress get _saveAddress => sl<SaveDeliveryAddress>();
-
-  SetDefaultDeliveryAddress get _setDefaultAddress =>
-      sl<SetDefaultDeliveryAddress>();
-
-  DeleteDeliveryAddress get _deleteAddress => sl<DeleteDeliveryAddress>();
+  GeocodingClient get _geocodingClient => sl<GeocodingClient>();
 
   @override
   void initState() {
     super.initState();
-    _addressesFuture = _loadAddresses();
+    _locationsFuture = _locationsRepository.loadLocations();
+    if (widget.openFormOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _openAddressForm();
+        }
+      });
+    }
   }
 
   void _reload() {
     setState(() {
-      _addressesFuture = _loadAddresses();
+      _locationsFuture = _locationsRepository.loadLocations();
     });
   }
 
-  Future<void> _openAddressForm({CustomerDeliveryAddress? address}) async {
-    final wasSaved = await showModalBottomSheet<bool>(
+  Future<void> _openAddressForm({CustomerLocation? location}) async {
+    final savedLocation = await showModalBottomSheet<CustomerLocation>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AutolabCustomer.customerSurfaceColor(context),
@@ -56,15 +67,25 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
         ),
       ),
       builder: (context) {
-        return _DeliveryAddressFormSheet(
-          address: address,
-          onSave: (request) => _saveAddress(request, addressId: address?.id),
+        return _UserLocationFormSheet(
+          location: location,
+          onSave: (request) => _locationsRepository.saveLocation(
+            request,
+            locationId: location?.id,
+          ),
+          geocodingClient: _geocodingClient,
         );
       },
     );
 
-    if (wasSaved == true && mounted) {
+    if (savedLocation != null && mounted) {
+      if (widget.closeAfterSave) {
+        context.pop(savedLocation);
+        return;
+      }
+
       final l10n = AppLocalizations.of(context)!;
+      _activateLocation(savedLocation);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -74,32 +95,30 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
     }
   }
 
-  Future<void> _setDefault(CustomerDeliveryAddress address) async {
-    if (address.isDefault) {
+  void _selectLocation(CustomerLocation location) {
+    if (widget.closeAfterSave) {
+      context.pop(location);
       return;
     }
 
     final l10n = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
-
-    try {
-      await _setDefaultAddress(address.id);
-      if (!mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l10n.garageAddressesDefaultSuccess)),
-        );
-      _reload();
-    } catch (_) {
-      if (!mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.cartSaveAddressError)));
-    }
+    _activateLocation(location);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.garageLocationsUseSuccess)));
   }
 
-  Future<void> _confirmDelete(CustomerDeliveryAddress address) async {
+  void _activateLocation(CustomerLocation location) {
+    context.read<LocationCubit>().useSavedLocation(
+      location: CurrentLocation(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      ),
+      placeName: location.displayLabel,
+    );
+  }
+
+  Future<void> _confirmDelete(CustomerLocation location) async {
     final l10n = AppLocalizations.of(context)!;
     final shouldDelete = await showDialog<bool>(
       context: context,
@@ -113,14 +132,14 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
             ),
           ),
           title: Text(
-            l10n.cartDeleteAddressTitle,
+            l10n.garageLocationsDeleteTitle,
             style: AutolabCustomer.h3.copyWith(
               color: AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w800,
             ),
           ),
           content: Text(
-            l10n.cartDeleteAddressMessage,
+            l10n.garageLocationsDeleteMessage,
             style: AutolabCustomer.body.copyWith(
               color: AutolabCustomer.customerSecondaryTextColor(context),
             ),
@@ -148,17 +167,19 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
 
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await _deleteAddress(address.id);
+      await _locationsRepository.deleteLocation(location.id);
       if (!mounted) return;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.cartDeleteAddressSuccess)));
+        ..showSnackBar(
+          SnackBar(content: Text(l10n.garageLocationsDeleteSuccess)),
+        );
       _reload();
     } catch (_) {
       if (!mounted) return;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.cartDeleteAddressError)));
+        ..showSnackBar(SnackBar(content: Text(l10n.garageLocationsSaveError)));
     }
   }
 
@@ -171,8 +192,10 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
       body: SafeArea(
         child: Column(
           children: [
-            CustomerPageHeader(
+            _AddressesHeader(
               title: l10n.garageAddresses,
+              addLabel: l10n.garageAddressesHeaderAddAction,
+              onAdd: () => _openAddressForm(),
               onBack: () {
                 if (context.canPop()) {
                   context.pop();
@@ -183,8 +206,8 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
               },
             ),
             Expanded(
-              child: FutureBuilder<List<CustomerDeliveryAddress>>(
-                future: _addressesFuture,
+              child: FutureBuilder<List<CustomerLocation>>(
+                future: _locationsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -193,15 +216,14 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
                   if (snapshot.hasError) {
                     return _AddressesMessage(
                       icon: Icons.error_outline_rounded,
-                      title: l10n.favoritesLoadErrorTitle,
-                      message: l10n.myAppointmentsRetryMessage,
+                      title: l10n.garageLocationsLoadErrorTitle,
+                      message: l10n.garageLocationsLoadErrorMessage,
                       actionLabel: l10n.myAppointmentsRetryAction,
                       onAction: _reload,
                     );
                   }
 
-                  final addresses =
-                      snapshot.data ?? const <CustomerDeliveryAddress>[];
+                  final locations = snapshot.data ?? const <CustomerLocation>[];
 
                   return RefreshIndicator(
                     onRefresh: () async => _reload(),
@@ -215,31 +237,46 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
                             MediaQuery.paddingOf(context).bottom,
                       ),
                       children: [
-                        _AddressesSummary(
-                          count: addresses.length,
-                          onAdd: () => _openAddressForm(),
+                        Text(
+                          l10n.garageAddressesManageSubtitle,
+                          style: AutolabCustomer.body.copyWith(
+                            color: AutolabCustomer.customerSecondaryTextColor(
+                              context,
+                            ),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        const SizedBox(height: AutolabCustomer.spacingSmd),
-                        if (addresses.isEmpty)
+                        const SizedBox(height: AutolabCustomer.spacingMd),
+                        if (locations.isEmpty)
                           _AddressesMessage(
                             icon: Icons.location_on_outlined,
                             title: l10n.garageAddressesEmptyTitle,
                             message: l10n.garageAddressesEmptyMessage,
                           )
                         else
-                          for (final address in addresses)
+                          for (final location in locations)
                             Padding(
                               padding: const EdgeInsets.only(
                                 bottom: AutolabCustomer.spacingSmd,
                               ),
-                              child: _DeliveryAddressCard(
-                                address: address,
-                                onEdit: () =>
-                                    _openAddressForm(address: address),
-                                onDelete: () => _confirmDelete(address),
-                                onSetDefault: () => _setDefault(address),
+                              child: BlocBuilder<LocationCubit, LocationState>(
+                                builder: (context, locationState) {
+                                  return _DeliveryAddressCard(
+                                    location: location,
+                                    isActive: _isActiveLocation(
+                                      location,
+                                      locationState.location,
+                                    ),
+                                    onSelect: () => _selectLocation(location),
+                                    onEdit: () =>
+                                        _openAddressForm(location: location),
+                                    onDelete: () => _confirmDelete(location),
+                                  );
+                                },
                               ),
                             ),
+                        const SizedBox(height: AutolabCustomer.spacingXxl),
+                        _AddAddressButton(onPressed: () => _openAddressForm()),
                       ],
                     ),
                   );
@@ -253,53 +290,229 @@ class _DeliveryAddressesPageState extends State<DeliveryAddressesPage> {
   }
 }
 
-class _AddressesSummary extends StatelessWidget {
-  const _AddressesSummary({required this.count, required this.onAdd});
+bool _isActiveLocation(CustomerLocation saved, CurrentLocation? active) {
+  if (active == null) {
+    return false;
+  }
 
-  final int count;
+  const tolerance = 0.000001;
+  return (saved.latitude - active.latitude).abs() < tolerance &&
+      (saved.longitude - active.longitude).abs() < tolerance;
+}
+
+class _AddressesHeader extends StatelessWidget {
+  const _AddressesHeader({
+    required this.title,
+    required this.addLabel,
+    required this.onAdd,
+    required this.onBack,
+  });
+
+  final String title;
+  final String addLabel;
   final VoidCallback onAdd;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final horizontalPadding = AutolabCustomer.responsiveScreenMargin(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        AutolabCustomer.spacingSm,
+        horizontalPadding,
+        AutolabCustomer.spacingSm,
+      ),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _AddressesBackButton(onPressed: onBack),
+              ),
+              const AutolabLogoMark(width: 96, height: 36),
+            ],
+          ),
+          const SizedBox(height: AutolabCustomer.spacingLg),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: AutolabCustomer.h2.copyWith(
+                    color: AutolabCustomer.customerTextColor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onAdd,
+                style: TextButton.styleFrom(
+                  foregroundColor: AutolabCustomer.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AutolabCustomer.spacingSm,
+                  ),
+                  minimumSize: const Size(0, 40),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  addLabel,
+                  style: AutolabCustomer.body.copyWith(
+                    color: AutolabCustomer.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddressesBackButton extends StatelessWidget {
+  const _AddressesBackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AutolabCustomer.customerSoftSurfaceColor(context),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onPressed,
+        child: SizedBox.square(
+          dimension: 36,
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AutolabCustomer.customerSecondaryTextColor(context),
+            size: AutolabCustomer.iconSm,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddAddressButton extends StatelessWidget {
+  const _AddAddressButton({required this.onPressed});
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            l10n.garageAddressesCount(count),
-            style: AutolabCustomer.body.copyWith(
-              color: AutolabCustomer.customerSecondaryTextColor(context),
-              fontWeight: FontWeight.w600,
-            ),
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        style: AutolabCustomer.primaryButton,
+        icon: const Icon(Icons.add_circle_outline_rounded),
+        label: Text(
+          l10n.garageAddressesAddNewAction,
+          style: AutolabCustomer.bodyLarge.copyWith(
+            color: AutolabCustomer.white,
+            fontWeight: FontWeight.w900,
           ),
         ),
-        FilledButton.icon(
-          onPressed: onAdd,
-          style: FilledButton.styleFrom(
-            backgroundColor: AutolabCustomer.primary,
-            foregroundColor: AutolabCustomer.white,
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: Text(l10n.garageAddressesAddAction),
+      ),
+    );
+  }
+}
+
+class _AddressIconBadge extends StatelessWidget {
+  const _AddressIconBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        color: AutolabCustomer.primary.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: AutolabCustomer.primary.withValues(alpha: 0.45),
         ),
-      ],
+      ),
+      child: const Icon(
+        Icons.location_on_outlined,
+        color: AutolabCustomer.primary,
+        size: AutolabCustomer.iconMd,
+      ),
+    );
+  }
+}
+
+class _AddressCircleAction extends StatelessWidget {
+  const _AddressCircleAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = destructive
+        ? AutolabCustomer.primary
+        : AutolabCustomer.customerTextColor(context);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: destructive
+            ? AutolabCustomer.primary.withValues(alpha: 0.12)
+            : AutolabCustomer.customerSurfaceColor(context),
+        shape: CircleBorder(
+          side: BorderSide(
+            color: destructive
+                ? AutolabCustomer.primary.withValues(alpha: 0.45)
+                : AutolabCustomer.customerBorderColor(context),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: SizedBox.square(
+            dimension: 48,
+            child: Icon(icon, color: foreground, size: AutolabCustomer.iconSm),
+          ),
+        ),
+      ),
     );
   }
 }
 
 class _DeliveryAddressCard extends StatelessWidget {
   const _DeliveryAddressCard({
-    required this.address,
+    required this.location,
+    required this.isActive,
+    required this.onSelect,
     required this.onEdit,
     required this.onDelete,
-    required this.onSetDefault,
   });
 
-  final CustomerDeliveryAddress address;
+  final CustomerLocation location;
+  final bool isActive;
+  final VoidCallback onSelect;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final VoidCallback onSetDefault;
 
   @override
   Widget build(BuildContext context) {
@@ -309,141 +522,72 @@ class _DeliveryAddressCard extends StatelessWidget {
       color: AutolabCustomer.customerSoftSurfaceColor(context),
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
       clipBehavior: Clip.antiAlias,
-      child: Ink(
-        padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-          border: Border.all(
-            color: address.isDefault
-                ? AutolabCustomer.primary
-                : AutolabCustomer.customerBorderColor(context),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  color: AutolabCustomer.primary,
-                  size: AutolabCustomer.iconSm,
-                ),
-                const SizedBox(width: AutolabCustomer.spacingSm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              address.shortLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AutolabCustomer.bodyLarge.copyWith(
-                                color: AutolabCustomer.customerTextColor(
-                                  context,
-                                ),
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          if (address.isDefault)
-                            _DefaultBadge(
-                              label: l10n.garageAddressesDefaultLabel,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingXs),
-                      Text(
-                        address.summary,
-                        style: AutolabCustomer.caption.copyWith(
-                          color: AutolabCustomer.customerSecondaryTextColor(
-                            context,
-                          ),
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: AutolabCustomer.spacingXs),
-                      Text(
-                        address.phone,
-                        style: AutolabCustomer.caption.copyWith(
-                          color: AutolabCustomer.customerSecondaryTextColor(
-                            context,
-                          ),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      child: InkWell(
+        onTap: onSelect,
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+        child: Ink(
+          padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+            border: Border.all(
+              color: isActive
+                  ? AutolabCustomer.primary.withValues(alpha: 0.85)
+                  : AutolabCustomer.customerBorderColor(context),
             ),
-            const SizedBox(height: AutolabCustomer.spacingMd),
-            if (!address.isDefault) ...[
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton(
-                  style: AutolabCustomer.primaryButton.copyWith(
-                    minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
-                    textStyle: WidgetStatePropertyAll(
-                      AutolabCustomer.label.copyWith(
-                        fontWeight: FontWeight.w800,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const _AddressIconBadge(),
+              const SizedBox(width: AutolabCustomer.spacingMd),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      location.displayLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.customerTextColor(context),
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                  ),
-                  onPressed: onSetDefault,
-                  child: Text(
-                    l10n.garageAddressesSetDefaultAction,
-                    style: AutolabCustomer.label.copyWith(
-                      color: AutolabCustomer.white,
-                      fontWeight: FontWeight.w800,
+                    if (isActive) ...[
+                      const SizedBox(height: AutolabCustomer.spacingXs),
+                      _DefaultBadge(label: l10n.garageLocationsActiveLabel),
+                    ],
+                    const SizedBox(height: AutolabCustomer.spacingXs),
+                    Text(
+                      location.address,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: AutolabCustomer.body.copyWith(
+                        color: AutolabCustomer.customerSecondaryTextColor(
+                          context,
+                        ),
+                        height: 1.35,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AutolabCustomer.spacingXs),
+              const SizedBox(width: AutolabCustomer.spacingSmd),
+              _AddressCircleAction(
+                icon: Icons.edit_outlined,
+                tooltip: l10n.cartEditAddressAction,
+                onPressed: onEdit,
+              ),
+              const SizedBox(width: AutolabCustomer.spacingSm),
+              _AddressCircleAction(
+                icon: Icons.delete_outline_rounded,
+                tooltip: l10n.cartDeleteAddressConfirm,
+                onPressed: onDelete,
+                destructive: true,
+              ),
             ],
-            Row(
-              children: [
-                TextButton(
-                  style: AutolabCustomer.ghostButton.copyWith(
-                    foregroundColor: WidgetStatePropertyAll(
-                      AutolabCustomer.customerTextColor(context),
-                    ),
-                    minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
-                  ),
-                  onPressed: onEdit,
-                  child: Text(
-                    l10n.cartEditAddressAction,
-                    style: AutolabCustomer.label.copyWith(
-                      color: AutolabCustomer.customerTextColor(context),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  style: AutolabCustomer.ghostButton.copyWith(
-                    foregroundColor: const WidgetStatePropertyAll(
-                      AutolabCustomer.primary,
-                    ),
-                    minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
-                  ),
-                  onPressed: onDelete,
-                  child: Text(
-                    l10n.cartDeleteAddressConfirm,
-                    style: AutolabCustomer.label.copyWith(
-                      color: AutolabCustomer.primary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -477,49 +621,58 @@ class _DefaultBadge extends StatelessWidget {
   }
 }
 
-class _DeliveryAddressFormSheet extends StatefulWidget {
-  const _DeliveryAddressFormSheet({required this.onSave, this.address});
+class _UserLocationFormSheet extends StatefulWidget {
+  const _UserLocationFormSheet({
+    required this.onSave,
+    required this.geocodingClient,
+    this.location,
+  });
 
-  final CustomerDeliveryAddress? address;
-  final Future<CustomerDeliveryAddress> Function(
-    CustomerDeliveryAddressRequest request,
-  )
+  final CustomerLocation? location;
+  final Future<CustomerLocation> Function(CustomerLocationRequest request)
   onSave;
+  final GeocodingClient geocodingClient;
 
   @override
-  State<_DeliveryAddressFormSheet> createState() =>
-      _DeliveryAddressFormSheetState();
+  State<_UserLocationFormSheet> createState() => _UserLocationFormSheetState();
 }
 
-class _DeliveryAddressFormSheetState extends State<_DeliveryAddressFormSheet> {
+class _UserLocationFormSheetState extends State<_UserLocationFormSheet> {
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _labelController;
+  late final TextEditingController _countryController;
   late final TextEditingController _provinceController;
   late final TextEditingController _cantonController;
   late final TextEditingController _districtController;
   late final TextEditingController _exactAddressController;
-  late final TextEditingController _phoneController;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    final address = widget.address;
-    _provinceController = TextEditingController(text: address?.province ?? '');
-    _cantonController = TextEditingController(text: address?.canton ?? '');
-    _districtController = TextEditingController(text: address?.district ?? '');
-    _exactAddressController = TextEditingController(
-      text: address?.exactAddress ?? '',
+    final location = widget.location;
+    _labelController = TextEditingController(text: location?.label ?? '');
+    _countryController = TextEditingController(
+      text: location?.country.trim().isNotEmpty == true
+          ? location!.country
+          : 'Costa Rica',
     );
-    _phoneController = TextEditingController(text: address?.phone ?? '');
+    _provinceController = TextEditingController(text: location?.province ?? '');
+    _cantonController = TextEditingController(text: location?.canton ?? '');
+    _districtController = TextEditingController(text: location?.district ?? '');
+    _exactAddressController = TextEditingController(
+      text: location?.exactAddress ?? '',
+    );
   }
 
   @override
   void dispose() {
+    _labelController.dispose();
+    _countryController.dispose();
     _provinceController.dispose();
     _cantonController.dispose();
     _districtController.dispose();
     _exactAddressController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -555,9 +708,9 @@ class _DeliveryAddressFormSheetState extends State<_DeliveryAddressFormSheet> {
                   children: [
                     Expanded(
                       child: Text(
-                        widget.address == null
-                            ? l10n.garageAddressesNewTitle
-                            : l10n.garageAddressesEditTitle,
+                        widget.location == null
+                            ? l10n.garageLocationsNewTitle
+                            : l10n.garageLocationsEditTitle,
                         style: AutolabCustomer.h3.copyWith(
                           color: AutolabCustomer.customerTextColor(context),
                           fontWeight: FontWeight.w900,
@@ -568,7 +721,7 @@ class _DeliveryAddressFormSheetState extends State<_DeliveryAddressFormSheet> {
                       tooltip: MaterialLocalizations.of(
                         context,
                       ).closeButtonTooltip,
-                      onPressed: () => Navigator.pop(context, false),
+                      onPressed: () => Navigator.pop(context),
                       style: IconButton.styleFrom(
                         backgroundColor:
                             AutolabCustomer.customerBackgroundColor(context),
@@ -581,39 +734,45 @@ class _DeliveryAddressFormSheetState extends State<_DeliveryAddressFormSheet> {
                 ),
                 const SizedBox(height: AutolabCustomer.spacingSmd),
                 _AddressDetailsField(
+                  controller: _labelController,
+                  label: l10n.garageLocationsLabelField,
+                  hintText: l10n.garageLocationsLabelHint,
+                  requiredField: false,
+                ),
+                _AddressDetailsField(
+                  controller: _countryController,
+                  label: l10n.garageLocationsCountryField,
+                  hintText: l10n.garageLocationsCountryHint,
+                ),
+                _AddressDetailsField(
                   controller: _provinceController,
-                  label: l10n.cartProvinceLabel,
+                  label: l10n.garageLocationsProvinceField,
+                  hintText: l10n.garageLocationsProvinceHint,
                 ),
                 _AddressDetailsField(
                   controller: _cantonController,
-                  label: l10n.cartCantonLabel,
+                  label: l10n.garageLocationsCantonField,
+                  hintText: l10n.garageLocationsCantonHint,
                 ),
                 _AddressDetailsField(
                   controller: _districtController,
-                  label: l10n.cartDistrictLabel,
+                  label: l10n.garageLocationsDistrictField,
+                  hintText: l10n.garageLocationsDistrictHint,
                 ),
                 _AddressDetailsField(
                   controller: _exactAddressController,
-                  label: l10n.cartExactAddressLabel,
-                  maxLines: 3,
+                  label: l10n.garageLocationsExactAddressField,
+                  hintText: l10n.garageLocationsExactAddressHint,
+                  maxLines: 2,
+                  requiredField: false,
                 ),
-                _AddressDetailsField(
-                  controller: _phoneController,
-                  label: l10n.cartPhoneLabel,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s-]')),
-                  ],
-                  validator: (value) {
-                    final phone = value?.trim() ?? '';
-                    if (phone.isEmpty) {
-                      return l10n.cartFieldRequired;
-                    }
-                    if (!RegExp(r'^[0-9+\s-]{8,15}$').hasMatch(phone)) {
-                      return l10n.cartPhoneInvalid;
-                    }
-                    return null;
-                  },
+                const SizedBox(height: AutolabCustomer.spacingSm),
+                Text(
+                  l10n.garageLocationsGeocodeHint,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.customerSecondaryTextColor(context),
+                    height: 1.35,
+                  ),
                 ),
                 const SizedBox(height: AutolabCustomer.spacingMd),
                 SizedBox(
@@ -624,8 +783,8 @@ class _DeliveryAddressFormSheetState extends State<_DeliveryAddressFormSheet> {
                     onPressed: _isSaving ? null : _save,
                     child: Text(
                       _isSaving
-                          ? l10n.cartSavingAddressAction
-                          : l10n.cartSaveAddressAction,
+                          ? l10n.garageLocationsSavingAction
+                          : l10n.garageLocationsSaveAction,
                       style: AutolabCustomer.body.copyWith(
                         color: AutolabCustomer.white,
                         fontWeight: FontWeight.w900,
@@ -649,24 +808,50 @@ class _DeliveryAddressFormSheetState extends State<_DeliveryAddressFormSheet> {
     setState(() => _isSaving = true);
 
     try {
-      await widget.onSave(
-        CustomerDeliveryAddressRequest(
-          province: _provinceController.text,
-          canton: _cantonController.text,
-          district: _districtController.text,
-          exactAddress: _exactAddressController.text,
-          phone: _phoneController.text,
+      final country = _countryController.text.trim();
+      final province = _provinceController.text.trim();
+      final canton = _cantonController.text.trim();
+      final district = _districtController.text.trim();
+      final exactAddress = _exactAddressController.text.trim();
+      final address = [
+        exactAddress,
+        district,
+        canton,
+        province,
+        country,
+      ].where((part) => part.isNotEmpty).join(', ');
+      final locations = await widget.geocodingClient.locationFromAddress(
+        address,
+      );
+      if (locations.isEmpty) {
+        throw StateError('location_not_found');
+      }
+
+      final resolvedLocation = locations.first;
+      final savedLocation = await widget.onSave(
+        CustomerLocationRequest(
+          label: _labelController.text,
+          address: address,
+          country: country,
+          province: province,
+          canton: canton,
+          district: district,
+          exactAddress: exactAddress,
+          latitude: resolvedLocation.latitude,
+          longitude: resolvedLocation.longitude,
         ),
       );
       if (!mounted) return;
-      Navigator.pop(context, true);
+      Navigator.pop(context, savedLocation);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.cartSaveAddressError),
+            content: Text(
+              AppLocalizations.of(context)!.garageLocationsSaveError,
+            ),
           ),
         );
     } finally {
@@ -682,17 +867,15 @@ class _AddressDetailsField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.maxLines = 1,
-    this.keyboardType,
-    this.inputFormatters,
-    this.validator,
+    this.hintText,
+    this.requiredField = true,
   });
 
   final TextEditingController controller;
   final String label;
   final int maxLines;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final FormFieldValidator<String>? validator;
+  final String? hintText;
+  final bool requiredField;
 
   @override
   Widget build(BuildContext context) {
@@ -703,20 +886,20 @@ class _AddressDetailsField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
         style: AutolabCustomer.body.copyWith(
           color: AutolabCustomer.customerTextColor(context),
         ),
-        validator:
-            validator ??
-            (value) => value == null || value.trim().isEmpty
-                ? l10n.cartFieldRequired
-                : null,
+        validator: (value) => value == null || value.trim().isEmpty
+            ? (requiredField ? l10n.cartFieldRequired : null)
+            : null,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
           labelStyle: AutolabCustomer.body.copyWith(
             color: AutolabCustomer.customerSecondaryTextColor(context),
+          ),
+          hintStyle: AutolabCustomer.caption.copyWith(
+            color: AutolabCustomer.customerHintColor(context),
           ),
           filled: true,
           fillColor: AutolabCustomer.customerBackgroundColor(context),
