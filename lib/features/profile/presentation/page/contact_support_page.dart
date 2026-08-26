@@ -66,7 +66,7 @@ class ContactSupportPage extends StatelessWidget {
               childAspectRatio: 0.88,
               children: [
                 _SupportContactCard(
-                  icon: FontAwesomeIcons.whatsapp,
+                  icon: const FaIcon(FontAwesomeIcons.whatsapp),
                   title: l10n.supportWhatsappTitle,
                   subtitle: l10n.supportWhatsappSubtitle,
                   onTap: () => _launchSupportUri(
@@ -75,7 +75,7 @@ class ContactSupportPage extends StatelessWidget {
                   ),
                 ),
                 _SupportContactCard(
-                  icon: Icons.phone_outlined,
+                  icon: const Icon(Icons.phone_outlined),
                   title: l10n.supportCallTitle,
                   subtitle: l10n.supportCallSubtitle,
                   onTap: () => _launchSupportUri(
@@ -84,7 +84,7 @@ class ContactSupportPage extends StatelessWidget {
                   ),
                 ),
                 _SupportContactCard(
-                  icon: Icons.mail_outline_rounded,
+                  icon: const Icon(Icons.mail_outline_rounded),
                   title: l10n.supportEmailTitle,
                   subtitle: l10n.supportEmailSubtitle,
                   onTap: () => _launchSupportUri(
@@ -97,7 +97,7 @@ class ContactSupportPage extends StatelessWidget {
                   ),
                 ),
                 _SupportContactCard(
-                  icon: Icons.schedule_rounded,
+                  icon: const Icon(Icons.schedule_rounded),
                   title: l10n.supportScheduleTitle,
                   subtitle: l10n.supportScheduleSubtitle,
                   onTap: () {
@@ -201,7 +201,7 @@ class _SupportContactCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -273,7 +273,7 @@ class _SupportContactCard extends StatelessWidget {
 class _SupportIconBadge extends StatelessWidget {
   const _SupportIconBadge({required this.icon});
 
-  final IconData icon;
+  final Widget icon;
 
   @override
   Widget build(BuildContext context) {
@@ -292,10 +292,12 @@ class _SupportIconBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        icon,
-        color: AutolabCustomer.primary,
-        size: AutolabCustomer.iconMd,
+      child: IconTheme(
+        data: const IconThemeData(
+          color: AutolabCustomer.primary,
+          size: AutolabCustomer.iconMd,
+        ),
+        child: Center(child: icon),
       ),
     );
   }
