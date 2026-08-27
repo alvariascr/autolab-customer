@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/app_remote_settings.dart';
 import '../../../../core/theme/app_theme_mode_cubit.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -19,15 +20,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  static final _termsUri = Uri.parse(
-    'https://www.autolab.lat/terminos-y-condiciones/',
-  );
-
   Future<void> _openTermsAndConditions() async {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
+    final settings = await AppRemoteSettings.load();
     final opened = await launchUrl(
-      _termsUri,
+      settings.termsUri,
       mode: LaunchMode.externalApplication,
     );
 

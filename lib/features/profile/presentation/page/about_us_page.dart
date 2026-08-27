@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/app_remote_settings.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -11,9 +12,6 @@ class AboutUsPage extends StatelessWidget {
   const AboutUsPage({super.key});
 
   static const routePath = '/about-us';
-  static final _termsUri = Uri.parse(
-    'https://www.autolab.lat/terminos-y-condiciones/',
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +63,9 @@ class AboutUsPage extends StatelessWidget {
 
   Future<void> _openTerms(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
+    final settings = await AppRemoteSettings.load();
     final opened = await launchUrl(
-      _termsUri,
+      settings.termsUri,
       mode: LaunchMode.externalApplication,
     );
 

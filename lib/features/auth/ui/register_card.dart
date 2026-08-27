@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/app_remote_settings.dart';
 import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
@@ -41,10 +42,6 @@ class RegisterCard extends StatefulWidget {
 }
 
 class RegisterCardState extends State<RegisterCard> {
-  static final _termsUri = Uri.parse(
-    'https://www.autolab.lat/terminos-y-condiciones/',
-  );
-
   final _formKeyRegister = GlobalKey<FormState>();
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
@@ -95,8 +92,9 @@ class RegisterCardState extends State<RegisterCard> {
   Future<void> _openTermsAndConditions() async {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
+    final settings = await AppRemoteSettings.load();
     final opened = await launchUrl(
-      _termsUri,
+      settings.termsUri,
       mode: LaunchMode.externalApplication,
     );
 

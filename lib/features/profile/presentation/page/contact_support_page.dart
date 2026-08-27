@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/app_remote_settings.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -18,7 +18,7 @@ class ContactSupportPage extends StatefulWidget {
 }
 
 class _ContactSupportPageState extends State<ContactSupportPage> {
-  late final Future<_SupportContactInfo> _supportInfoFuture;
+  late final Future<AppRemoteSettings> _supportInfoFuture;
 
   @override
   void initState() {
@@ -26,25 +26,7 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
     _supportInfoFuture = _loadSupportInfo();
   }
 
-  Future<_SupportContactInfo> _loadSupportInfo() async {
-    try {
-      final response = await Supabase.instance.client
-          .from('support_contact_settings')
-          .select('whatsapp_phone, call_phone, email, schedule_text')
-          .eq('is_active', true)
-          .order('updated_at', ascending: false)
-          .limit(1)
-          .maybeSingle();
-
-      if (response == null) {
-        return _SupportContactInfo.fallback;
-      }
-
-      return _SupportContactInfo.fromMap(Map<String, dynamic>.from(response));
-    } catch (_) {
-      return _SupportContactInfo.fallback;
-    }
-  }
+  Future<AppRemoteSettings> _loadSupportInfo() => AppRemoteSettings.load();
 
   @override
   Widget build(BuildContext context) {
@@ -89,12 +71,11 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
               ),
             ),
             const SizedBox(height: AutolabCustomer.spacingLg),
-            FutureBuilder<_SupportContactInfo>(
+            FutureBuilder<AppRemoteSettings>(
               future: _supportInfoFuture,
-              initialData: _SupportContactInfo.fallback,
+              initialData: AppRemoteSettings.fallback,
               builder: (context, snapshot) {
-                final supportInfo =
-                    snapshot.data ?? _SupportContactInfo.fallback;
+                final supportInfo = snapshot.data ?? AppRemoteSettings.fallback;
 
                 return GridView.count(
                   crossAxisCount: 2,
@@ -171,43 +152,6 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
-  }
-}
-
-class _SupportContactInfo {
-  const _SupportContactInfo({
-    required this.whatsappPhone,
-    required this.callPhone,
-    required this.email,
-    required this.scheduleText,
-  });
-
-  static const fallback = _SupportContactInfo(
-    whatsappPhone: '89147371',
-    callPhone: '89147371',
-    email: 'info@autolab.lat',
-    scheduleText: 'Lunes a viernes\n7:00 a. m. - 5:00 p. m.',
-  );
-
-  final String whatsappPhone;
-  final String callPhone;
-  final String email;
-  final String scheduleText;
-
-  factory _SupportContactInfo.fromMap(Map<String, dynamic> map) {
-    final fallback = _SupportContactInfo.fallback;
-
-    String valueOrFallback(String key, String fallbackValue) {
-      final value = map[key]?.toString().trim() ?? '';
-      return value.isEmpty ? fallbackValue : value;
-    }
-
-    return _SupportContactInfo(
-      whatsappPhone: valueOrFallback('whatsapp_phone', fallback.whatsappPhone),
-      callPhone: valueOrFallback('call_phone', fallback.callPhone),
-      email: valueOrFallback('email', fallback.email),
-      scheduleText: valueOrFallback('schedule_text', fallback.scheduleText),
-    );
   }
 }
 
