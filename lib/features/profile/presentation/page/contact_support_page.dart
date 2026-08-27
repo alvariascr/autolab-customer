@@ -1,18 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class ContactSupportPage extends StatelessWidget {
+class ContactSupportPage extends StatefulWidget {
   const ContactSupportPage({super.key});
 
   static const routePath = '/contact-support';
-  static const _supportPhone = '89147371';
-  static const _supportEmail = 'info@autolab.lat';
+
+  @override
+  State<ContactSupportPage> createState() => _ContactSupportPageState();
+}
+
+class _ContactSupportPageState extends State<ContactSupportPage> {
+  late final Future<_SupportContactInfo> _supportInfoFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _supportInfoFuture = _loadSupportInfo();
+  }
+
+  Future<_SupportContactInfo> _loadSupportInfo() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('support_contact_settings')
+          .select('whatsapp_phone, call_phone, email, schedule_text')
+          .eq('is_active', true)
+          .order('updated_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (response == null) {
+        return _SupportContactInfo.fallback;
+      }
+
+      return _SupportContactInfo.fromMap(Map<String, dynamic>.from(response));
+    } catch (_) {
+      return _SupportContactInfo.fallback;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,58 +89,71 @@ class ContactSupportPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AutolabCustomer.spacingLg),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AutolabCustomer.spacingSmd,
-              mainAxisSpacing: AutolabCustomer.spacingSmd,
-              childAspectRatio: 0.88,
-              children: [
-                _SupportContactCard(
-                  icon: const FaIcon(FontAwesomeIcons.whatsapp),
-                  title: l10n.supportWhatsappTitle,
-                  subtitle: l10n.supportWhatsappSubtitle,
-                  onTap: () => _launchSupportUri(
-                    context,
-                    Uri.parse('https://wa.me/506$_supportPhone'),
-                  ),
-                ),
-                _SupportContactCard(
-                  icon: const Icon(Icons.phone_outlined),
-                  title: l10n.supportCallTitle,
-                  subtitle: l10n.supportCallSubtitle,
-                  onTap: () => _launchSupportUri(
-                    context,
-                    Uri(scheme: 'tel', path: _supportPhone),
-                  ),
-                ),
-                _SupportContactCard(
-                  icon: const Icon(Icons.mail_outline_rounded),
-                  title: l10n.supportEmailTitle,
-                  subtitle: l10n.supportEmailSubtitle,
-                  onTap: () => _launchSupportUri(
-                    context,
-                    Uri(
-                      scheme: 'mailto',
-                      path: _supportEmail,
-                      queryParameters: {'subject': l10n.supportEmailSubject},
+            FutureBuilder<_SupportContactInfo>(
+              future: _supportInfoFuture,
+              initialData: _SupportContactInfo.fallback,
+              builder: (context, snapshot) {
+                final supportInfo =
+                    snapshot.data ?? _SupportContactInfo.fallback;
+
+                return GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: AutolabCustomer.spacingSmd,
+                  mainAxisSpacing: AutolabCustomer.spacingSmd,
+                  childAspectRatio: 0.88,
+                  children: [
+                    _SupportContactCard(
+                      icon: const FaIcon(FontAwesomeIcons.whatsapp),
+                      title: l10n.supportWhatsappTitle,
+                      subtitle: l10n.supportWhatsappSubtitle,
+                      onTap: () => _launchSupportUri(
+                        context,
+                        Uri.parse(
+                          'https://wa.me/506${supportInfo.whatsappPhone}',
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                _SupportContactCard(
-                  icon: const Icon(Icons.schedule_rounded),
-                  title: l10n.supportScheduleTitle,
-                  subtitle: l10n.supportScheduleSubtitle,
-                  onTap: () {
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(content: Text(l10n.supportScheduleSubtitle)),
-                      );
-                  },
-                ),
-              ],
+                    _SupportContactCard(
+                      icon: const Icon(Icons.phone_outlined),
+                      title: l10n.supportCallTitle,
+                      subtitle: l10n.supportCallSubtitle,
+                      onTap: () => _launchSupportUri(
+                        context,
+                        Uri(scheme: 'tel', path: supportInfo.callPhone),
+                      ),
+                    ),
+                    _SupportContactCard(
+                      icon: const Icon(Icons.mail_outline_rounded),
+                      title: l10n.supportEmailTitle,
+                      subtitle: l10n.supportEmailSubtitle,
+                      onTap: () => _launchSupportUri(
+                        context,
+                        Uri(
+                          scheme: 'mailto',
+                          path: supportInfo.email,
+                          queryParameters: {
+                            'subject': l10n.supportEmailSubject,
+                          },
+                        ),
+                      ),
+                    ),
+                    _SupportContactCard(
+                      icon: const Icon(Icons.schedule_rounded),
+                      title: l10n.supportScheduleTitle,
+                      subtitle: supportInfo.scheduleText,
+                      onTap: () {
+                        ScaffoldMessenger.of(context)
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(content: Text(supportInfo.scheduleText)),
+                          );
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -126,6 +171,43 @@ class ContactSupportPage extends StatelessWidget {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
+  }
+}
+
+class _SupportContactInfo {
+  const _SupportContactInfo({
+    required this.whatsappPhone,
+    required this.callPhone,
+    required this.email,
+    required this.scheduleText,
+  });
+
+  static const fallback = _SupportContactInfo(
+    whatsappPhone: '89147371',
+    callPhone: '89147371',
+    email: 'info@autolab.lat',
+    scheduleText: 'Lunes a viernes\n7:00 a. m. - 5:00 p. m.',
+  );
+
+  final String whatsappPhone;
+  final String callPhone;
+  final String email;
+  final String scheduleText;
+
+  factory _SupportContactInfo.fromMap(Map<String, dynamic> map) {
+    final fallback = _SupportContactInfo.fallback;
+
+    String valueOrFallback(String key, String fallbackValue) {
+      final value = map[key]?.toString().trim() ?? '';
+      return value.isEmpty ? fallbackValue : value;
+    }
+
+    return _SupportContactInfo(
+      whatsappPhone: valueOrFallback('whatsapp_phone', fallback.whatsappPhone),
+      callPhone: valueOrFallback('call_phone', fallback.callPhone),
+      email: valueOrFallback('email', fallback.email),
+      scheduleText: valueOrFallback('schedule_text', fallback.scheduleText),
+    );
   }
 }
 
