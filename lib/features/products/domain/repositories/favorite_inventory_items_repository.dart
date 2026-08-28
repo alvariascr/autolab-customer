@@ -14,3 +14,14 @@ abstract interface class FavoriteInventoryItemsRepository {
 
   Future<void> removeFavoriteInventoryItem(String itemId);
 }
+
+class FavoriteInventoryItemsAuthException implements Exception {
+  const FavoriteInventoryItemsAuthException();
+}
+
+class FavoriteInventoryItemsStorageException implements Exception {
+  const FavoriteInventoryItemsStorageException(this.error, this.stackTrace);
+
+  final Object error;
+  final StackTrace stackTrace;
+}

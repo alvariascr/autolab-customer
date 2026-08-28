@@ -10,47 +10,66 @@ class FavoriteInventoryItemsRepositoryImpl
 
   @override
   Future<List<Product>> getFavoriteProducts() {
-    return _remoteDataSource.getFavoriteProducts();
+    return _mapDataSourceException(_remoteDataSource.getFavoriteProducts);
   }
 
   @override
   Future<List<Product>> getFavoriteServices() {
-    return _remoteDataSource.getFavoriteServices();
+    return _mapDataSourceException(_remoteDataSource.getFavoriteServices);
   }
 
   @override
-  Future<bool> isFavoriteInventoryItem(String itemId) {
+  Future<bool> isFavoriteInventoryItem(String itemId) async {
     final trimmedItemId = itemId.trim();
     if (trimmedItemId.isEmpty) {
-      return Future.value(false);
+      return false;
     }
 
-    return _remoteDataSource.isFavoriteInventoryItem(trimmedItemId);
+    return _mapDataSourceException(
+      () => _remoteDataSource.isFavoriteInventoryItem(trimmedItemId),
+    );
   }
 
   @override
   Future<bool> toggleFavoriteInventoryItem(
     String itemId, {
     required String itemType,
-  }) {
+  }) async {
     final trimmedItemId = itemId.trim();
     if (trimmedItemId.isEmpty) {
-      return Future.value(false);
+      return false;
     }
 
-    return _remoteDataSource.toggleFavoriteInventoryItem(
-      trimmedItemId,
-      itemType: itemType,
+    return _mapDataSourceException(
+      () => _remoteDataSource.toggleFavoriteInventoryItem(
+        trimmedItemId,
+        itemType: itemType,
+      ),
     );
   }
 
   @override
-  Future<void> removeFavoriteInventoryItem(String itemId) {
+  Future<void> removeFavoriteInventoryItem(String itemId) async {
     final trimmedItemId = itemId.trim();
     if (trimmedItemId.isEmpty) {
-      return Future.value();
+      return;
     }
 
-    return _remoteDataSource.removeFavoriteInventoryItem(trimmedItemId);
+    return _mapDataSourceException(
+      () => _remoteDataSource.removeFavoriteInventoryItem(trimmedItemId),
+    );
+  }
+
+  Future<T> _mapDataSourceException<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on FavoriteInventoryItemAuthRequiredException {
+      throw const FavoriteInventoryItemsAuthException();
+    } on FavoriteInventoryItemStorageException catch (error) {
+      throw FavoriteInventoryItemsStorageException(
+        error.error,
+        error.stackTrace,
+      );
+    }
   }
 }
