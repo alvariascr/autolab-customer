@@ -268,9 +268,11 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 
   Future<void> _openAddressesFromLocationSheet() async {
-    final savedLocation = await context.push<CustomerLocation>(
-      '${DeliveryAddressesPage.routePath}?closeAfterSave=true',
+    final uri = Uri(
+      path: DeliveryAddressesPage.routePath,
+      queryParameters: {'closeAfterSave': 'true'},
     );
+    final savedLocation = await context.push<CustomerLocation>(uri.toString());
 
     if (!mounted || savedLocation == null) {
       return;
