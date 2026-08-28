@@ -82,7 +82,6 @@ class FavoriteInventoryItemsRemoteDataSource {
         .eq('user_id', userId)
         .eq('favorite_type', itemType)
         .eq('inventory_items.status', 'active')
-        .eq('inventory_items.item_type', itemType)
         .order('created_at', ascending: false);
 
     return response
