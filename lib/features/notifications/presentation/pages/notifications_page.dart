@@ -84,22 +84,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     state.notifications,
                   );
 
-                  if (state.notifications.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: context.read<NotificationsCubit>().load,
-                      color: AutolabCustomer.primary,
-                      child: const CustomScrollView(
-                        physics: AlwaysScrollableScrollPhysics(),
-                        slivers: [
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: _NotificationsEmpty(),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
                   return RefreshIndicator(
                     onRefresh: context.read<NotificationsCubit>().load,
                     color: AutolabCustomer.primary,
@@ -250,22 +234,24 @@ class _NotificationsContentSliver extends StatelessWidget {
             child: SizedBox(height: AutolabCustomer.spacingMd),
           ),
         ],
-        SliverToBoxAdapter(
-          child: _NotificationFilterBar(
-            selectedFilter: selectedFilter,
-            notifications: notifications,
-            onChanged: onFilterChanged,
+        if (notifications.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: _NotificationFilterBar(
+              selectedFilter: selectedFilter,
+              notifications: notifications,
+              onChanged: onFilterChanged,
+            ),
           ),
-        ),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: AutolabCustomer.spacingLg),
-        ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AutolabCustomer.spacingLg),
+          ),
+        ],
         if (visibleNotifications.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: _NotificationsEmpty(
-              title: filteredEmptyTitle,
-              message: filteredEmptyMessage,
+              title: notifications.isEmpty ? null : filteredEmptyTitle,
+              message: notifications.isEmpty ? null : filteredEmptyMessage,
             ),
           )
         else
