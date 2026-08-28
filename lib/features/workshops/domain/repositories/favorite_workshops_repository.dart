@@ -9,3 +9,16 @@ abstract interface class FavoriteWorkshopsRepository {
 
   Future<void> removeFavoriteWorkshop(String workshopId);
 }
+
+class FavoriteWorkshopAuthException implements Exception {
+  const FavoriteWorkshopAuthException();
+}
+
+class FavoriteWorkshopStorageFailure implements Exception {
+  const FavoriteWorkshopStorageFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}

@@ -8,37 +8,61 @@ class FavoriteWorkshopsRepositoryImpl implements FavoriteWorkshopsRepository {
   final FavoriteWorkshopsRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<Workshop>> getFavoriteWorkshops() {
-    return _remoteDataSource.getFavoriteWorkshops();
+  Future<List<Workshop>> getFavoriteWorkshops() async {
+    try {
+      return await _remoteDataSource.getFavoriteWorkshops();
+    } on FavoriteWorkshopAuthRequiredException {
+      throw const FavoriteWorkshopAuthException();
+    } on FavoriteWorkshopStorageException catch (error) {
+      throw FavoriteWorkshopStorageFailure(error.message);
+    }
   }
 
   @override
-  Future<bool> isFavoriteWorkshop(String workshopId) {
+  Future<bool> isFavoriteWorkshop(String workshopId) async {
     final trimmedWorkshopId = workshopId.trim();
     if (trimmedWorkshopId.isEmpty) {
-      return Future.value(false);
+      return false;
     }
 
-    return _remoteDataSource.isFavoriteWorkshop(trimmedWorkshopId);
+    try {
+      return await _remoteDataSource.isFavoriteWorkshop(trimmedWorkshopId);
+    } on FavoriteWorkshopAuthRequiredException {
+      throw const FavoriteWorkshopAuthException();
+    } on FavoriteWorkshopStorageException catch (error) {
+      throw FavoriteWorkshopStorageFailure(error.message);
+    }
   }
 
   @override
-  Future<bool> toggleFavoriteWorkshop(String workshopId) {
+  Future<bool> toggleFavoriteWorkshop(String workshopId) async {
     final trimmedWorkshopId = workshopId.trim();
     if (trimmedWorkshopId.isEmpty) {
-      return Future.value(false);
+      return false;
     }
 
-    return _remoteDataSource.toggleFavoriteWorkshop(trimmedWorkshopId);
+    try {
+      return await _remoteDataSource.toggleFavoriteWorkshop(trimmedWorkshopId);
+    } on FavoriteWorkshopAuthRequiredException {
+      throw const FavoriteWorkshopAuthException();
+    } on FavoriteWorkshopStorageException catch (error) {
+      throw FavoriteWorkshopStorageFailure(error.message);
+    }
   }
 
   @override
-  Future<void> removeFavoriteWorkshop(String workshopId) {
+  Future<void> removeFavoriteWorkshop(String workshopId) async {
     final trimmedWorkshopId = workshopId.trim();
     if (trimmedWorkshopId.isEmpty) {
-      return Future.value();
+      return;
     }
 
-    return _remoteDataSource.removeFavoriteWorkshop(trimmedWorkshopId);
+    try {
+      await _remoteDataSource.removeFavoriteWorkshop(trimmedWorkshopId);
+    } on FavoriteWorkshopAuthRequiredException {
+      throw const FavoriteWorkshopAuthException();
+    } on FavoriteWorkshopStorageException catch (error) {
+      throw FavoriteWorkshopStorageFailure(error.message);
+    }
   }
 }
