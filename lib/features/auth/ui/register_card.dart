@@ -52,6 +52,7 @@ class RegisterCardState extends State<RegisterCard> {
   bool _isPasswordVisible = true;
   bool _isConfrimPasswordVisible = true;
   bool _acceptsTerms = false;
+  bool _isOpeningTerms = false;
   String? _localErrorMessage;
   bool _hideRemoteEmailError = false;
 
@@ -90,20 +91,37 @@ class RegisterCardState extends State<RegisterCard> {
   }
 
   Future<void> _openTermsAndConditions() async {
-    final l10n = AppLocalizations.of(context)!;
-    final settings = await AppRemoteSettings.load();
-    final opened = await launchUrl(
-      settings.termsUri,
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!mounted || opened) {
+    if (_isOpeningTerms) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
+    final l10n = AppLocalizations.of(context)!;
+
+    setState(() {
+      _isOpeningTerms = true;
+    });
+
+    try {
+      final settings = await AppRemoteSettings.load();
+      final opened = await launchUrl(
+        settings.termsUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!mounted || opened) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningTerms = false;
+        });
+      }
+    }
   }
 
   void cleanRegistry() {
@@ -318,7 +336,9 @@ class RegisterCardState extends State<RegisterCard> {
                             ),
                           ),
                           GestureDetector(
-                            onTap: _openTermsAndConditions,
+                            onTap: _isOpeningTerms
+                                ? null
+                                : _openTermsAndConditions,
                             child: Text(
                               l10n.authRegisterAcceptTermsLink,
                               style: AutolabCustomer.caption.copyWith(
@@ -329,6 +349,16 @@ class RegisterCardState extends State<RegisterCard> {
                               ),
                             ),
                           ),
+                          if (_isOpeningTerms) ...[
+                            const SizedBox(width: AutolabCustomer.spacingXs),
+                            const SizedBox.square(
+                              dimension: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AutolabCustomer.primary,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
