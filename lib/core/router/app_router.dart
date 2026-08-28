@@ -24,7 +24,6 @@ import '../../features/profile/presentation/page/delivery_addresses_page.dart';
 import '../../features/profile/presentation/page/favorite_workshops_page.dart';
 import '../../features/profile/presentation/page/loyalty_programs_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
-import '../../features/profile/presentation/page/settings_page.dart';
 import '../../features/profile/presentation/page/simple_management_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
 import '../../features/splash/startup_splash_page.dart';
@@ -148,10 +147,6 @@ class AppRouter {
             closeAfterSave: query['closeAfterSave'] == 'true',
           );
         },
-      ),
-      GoRoute(
-        path: SettingsPage.routePath,
-        builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
         path: ContactSupportPage.routePath,
