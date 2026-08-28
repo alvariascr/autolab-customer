@@ -25,9 +25,10 @@ class AppRemoteSettings {
 
   Uri get termsUri => Uri.parse(termsUrl);
 
-  static Future<AppRemoteSettings> load() async {
+  static Future<AppRemoteSettings> load({SupabaseClient? client}) async {
     try {
-      final response = await Supabase.instance.client
+      final supabaseClient = client ?? Supabase.instance.client;
+      final response = await supabaseClient
           .from('support_contact_settings')
           .select('whatsapp_phone, call_phone, email, schedule_text, terms_url')
           .eq('is_active', true)
