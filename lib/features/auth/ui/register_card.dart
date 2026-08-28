@@ -91,18 +91,19 @@ class RegisterCardState extends State<RegisterCard> {
 
   Future<void> _openTermsAndConditions() async {
     final l10n = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
     final settings = await AppRemoteSettings.load();
     final opened = await launchUrl(
       settings.termsUri,
       mode: LaunchMode.externalApplication,
     );
 
-    if (!opened && mounted) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.settingsOpenLinkError)),
-      );
+    if (!mounted || opened) {
+      return;
     }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
   }
 
   void cleanRegistry() {
