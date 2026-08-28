@@ -17,6 +17,17 @@ import '../../domain/usecases/get_laropay_purchases.dart';
 import '../../domain/usecases/refresh_laropay_purchase_status.dart';
 import '../widgets/laropay_payment_result_dialog.dart';
 
+final _colonesFormatter = NumberFormat.currency(
+  locale: 'es_CR',
+  symbol: '₡',
+  decimalDigits: 2,
+);
+final _usdFormatter = NumberFormat.currency(
+  locale: 'es_CR',
+  symbol: r'$',
+  decimalDigits: 2,
+);
+
 class MyPurchasesPage extends StatefulWidget {
   const MyPurchasesPage({
     super.key,
@@ -1382,11 +1393,9 @@ extension _LaropayPurchaseView on LaropayPurchase {
   }
 
   String _formatCurrency(double value, String code) {
-    final formatter = NumberFormat.currency(
-      locale: 'es_CR',
-      symbol: code.toUpperCase() == 'USD' ? r'$' : '₡',
-      decimalDigits: 2,
-    );
+    final formatter = code.toUpperCase() == 'USD'
+        ? _usdFormatter
+        : _colonesFormatter;
     return formatter.format(value);
   }
 
