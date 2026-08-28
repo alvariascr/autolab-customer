@@ -1,9 +1,13 @@
 part of 'workshop_profile_page.dart';
 
 class _ProfileHero extends StatefulWidget {
-  const _ProfileHero({required this.workshop});
+  const _ProfileHero({
+    required this.workshop,
+    required this.favoriteRepository,
+  });
 
   final Workshop workshop;
+  final FavoriteWorkshopsRepository favoriteRepository;
 
   @override
   State<_ProfileHero> createState() => _ProfileHeroState();
@@ -12,9 +16,6 @@ class _ProfileHero extends StatefulWidget {
 class _ProfileHeroState extends State<_ProfileHero> {
   bool _isFavorite = false;
   bool _isFavoriteLoading = false;
-
-  FavoriteWorkshopsRepository get _favoriteRepository =>
-      sl<FavoriteWorkshopsRepository>();
 
   @override
   void initState() {
@@ -32,7 +33,7 @@ class _ProfileHeroState extends State<_ProfileHero> {
 
   Future<void> _loadFavoriteStatus() async {
     try {
-      final isFavorite = await _favoriteRepository.isFavoriteWorkshop(
+      final isFavorite = await widget.favoriteRepository.isFavoriteWorkshop(
         widget.workshop.id,
       );
       if (!mounted) return;
@@ -57,7 +58,7 @@ class _ProfileHeroState extends State<_ProfileHero> {
     });
 
     try {
-      final nextValue = await _favoriteRepository.toggleFavoriteWorkshop(
+      final nextValue = await widget.favoriteRepository.toggleFavoriteWorkshop(
         widget.workshop.id,
       );
       if (!mounted) return;
@@ -76,6 +77,16 @@ class _ProfileHeroState extends State<_ProfileHero> {
             ),
           ),
         );
+    } on FavoriteWorkshopAuthException {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.authErrorSessionExpired)));
+      context.go('/login');
     } catch (_) {
       if (!mounted) return;
       setState(() {

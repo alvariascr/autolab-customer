@@ -129,6 +129,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
                   return _WorkshopProfileContent(
                     workshop: workshop,
                     initialCatalogSection: widget.initialCatalogSection,
+                    favoriteRepository: sl<FavoriteWorkshopsRepository>(),
                   );
                 },
               );

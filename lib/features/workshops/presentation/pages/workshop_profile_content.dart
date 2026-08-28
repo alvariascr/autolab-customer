@@ -3,10 +3,12 @@ part of 'workshop_profile_page.dart';
 class _WorkshopProfileContent extends StatelessWidget {
   const _WorkshopProfileContent({
     required this.workshop,
+    required this.favoriteRepository,
     this.initialCatalogSection,
   });
 
   final Workshop workshop;
+  final FavoriteWorkshopsRepository favoriteRepository;
   final String? initialCatalogSection;
 
   @override
@@ -16,7 +18,10 @@ class _WorkshopProfileContent extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _ProfileHero(workshop: workshop),
+          _ProfileHero(
+            workshop: workshop,
+            favoriteRepository: favoriteRepository,
+          ),
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 840),
