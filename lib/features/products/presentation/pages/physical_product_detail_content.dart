@@ -97,6 +97,16 @@ class _PhysicalProductDetailContentState
             ),
           ),
         );
+    } on FavoriteInventoryItemsAuthException {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.authErrorSessionExpired)));
+      context.go('/login');
     } catch (_) {
       if (!mounted) return;
       setState(() {

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockFavoriteInventoryItemsRepository extends Mock
@@ -50,6 +51,70 @@ void main() {
       () => favoriteRepository.isFavoriteInventoryItem('product-1'),
     ).called(1);
   });
+
+  testWidgets('redirects to login when favorite requires auth', (tester) async {
+    final favoriteRepository = _MockFavoriteInventoryItemsRepository();
+    final cartCubit = _MockCartCubit();
+
+    when(
+      () => favoriteRepository.isFavoriteInventoryItem('product-1'),
+    ).thenAnswer((_) async => false);
+    when(
+      () => favoriteRepository.toggleFavoriteInventoryItem(
+        'product-1',
+        itemType: 'product',
+      ),
+    ).thenThrow(const FavoriteInventoryItemsAuthException());
+    when(() => cartCubit.stream).thenAnswer((_) => const Stream.empty());
+    when(() => cartCubit.state).thenReturn(const CartState());
+
+    final router = GoRouter(
+      initialLocation: '/product',
+      routes: [
+        GoRoute(
+          path: '/product',
+          builder: (context, state) => BlocProvider<CartCubit>.value(
+            value: cartCubit,
+            child: PhysicalProductDetailContent(
+              product: _product(),
+              favoriteRepository: favoriteRepository,
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const Scaffold(body: Text('Login')),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_TestApp(router: router));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.favorite_border_rounded).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Login'), findsOneWidget);
+  });
+}
+
+class _TestApp extends StatelessWidget {
+  const _TestApp({required this.router});
+
+  final GoRouter router;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: router,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+    );
+  }
 }
 
 Product _product() {
