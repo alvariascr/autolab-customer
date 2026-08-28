@@ -1311,50 +1311,50 @@ class _PurchaseViewState {
     LaropayPurchase purchase,
     AppLocalizations l10n,
   ) {
-    return switch (purchase.state) {
-      _PurchaseState.partial => _PurchaseViewState(
+    return switch (purchase.purchaseState) {
+      LaropayPurchaseState.partial => _PurchaseViewState(
         label: l10n.myPurchasesPartialStatus,
         message: l10n.myPurchasesPartialMessage,
         color: AutolabCustomer.warning,
         icon: Icons.info_outline_rounded,
       ),
-      _PurchaseState.approved => _PurchaseViewState(
+      LaropayPurchaseState.approved => _PurchaseViewState(
         label: l10n.myPurchasesApprovedStatus,
         message: l10n.myPurchasesApprovedMessage,
         color: AutolabCustomer.success,
         icon: Icons.check_circle_outline_rounded,
       ),
-      _PurchaseState.cancelled => _PurchaseViewState(
+      LaropayPurchaseState.cancelled => _PurchaseViewState(
         label: l10n.myPurchasesCancelledStatus,
         message: l10n.myPurchasesCancelledMessage,
         color: AutolabCustomer.error,
         icon: Icons.block_outlined,
       ),
-      _PurchaseState.rejected => _PurchaseViewState(
+      LaropayPurchaseState.rejected => _PurchaseViewState(
         label: l10n.myPurchasesRejectedStatus,
         message: l10n.myPurchasesRejectedMessage,
         color: AutolabCustomer.error,
         icon: Icons.cancel_outlined,
       ),
-      _PurchaseState.expired => _PurchaseViewState(
+      LaropayPurchaseState.expired => _PurchaseViewState(
         label: l10n.myPurchasesExpiredStatus,
         message: l10n.myPurchasesExpiredMessage,
         color: AutolabCustomer.warning,
         icon: Icons.hourglass_disabled_outlined,
       ),
-      _PurchaseState.pending => _PurchaseViewState(
+      LaropayPurchaseState.pending => _PurchaseViewState(
         label: l10n.myPurchasesPendingStatus,
         message: l10n.myPurchasesPendingMessage,
         color: AutolabCustomer.warning,
         icon: Icons.hourglass_top_rounded,
       ),
-      _PurchaseState.workshopPayment => _PurchaseViewState(
+      LaropayPurchaseState.workshopPayment => _PurchaseViewState(
         label: l10n.myPurchasesWorkshopPaymentStatus,
         message: l10n.myPurchasesWorkshopPaymentMessage,
         color: AutolabCustomer.warning,
         icon: Icons.handshake_outlined,
       ),
-      _PurchaseState.unknown => _PurchaseViewState(
+      LaropayPurchaseState.unknown => _PurchaseViewState(
         label: l10n.myPurchasesUnknownStatus,
         message: l10n.myPurchasesUnknownMessage,
         color: AutolabCustomer.secondary,
@@ -1364,96 +1364,9 @@ class _PurchaseViewState {
   }
 }
 
-enum _PurchaseState {
-  pending,
-  partial,
-  approved,
-  cancelled,
-  rejected,
-  expired,
-  workshopPayment,
-  unknown,
-}
-
 extension _LaropayPurchaseView on LaropayPurchase {
   String title(AppLocalizations l10n) {
     return detail.isEmpty ? l10n.myPurchasesDefaultTitle : detail;
-  }
-
-  bool get canReopenLink {
-    return hasPaymentLink && linkUrl != null && state == _PurchaseState.pending;
-  }
-
-  bool get canRefreshStatus {
-    return hasPaymentLink && state == _PurchaseState.pending;
-  }
-
-  _PurchaseState get state {
-    if (hasPaymentLink && hasOutstandingBalance && isLaropayApproved) {
-      return _PurchaseState.partial;
-    }
-
-    if (!hasPaymentLink && hasOutstandingBalance) {
-      return _PurchaseState.workshopPayment;
-    }
-
-    final normalizedStatus = status.toLowerCase().trim();
-    final normalizedResponse = responseCode.toLowerCase().trim();
-    final normalizedDescription = responseDescription.toLowerCase().trim();
-
-    if (normalizedStatus == 'expired') {
-      return _PurchaseState.expired;
-    }
-
-    if (normalizedStatus == 'paid' ||
-        normalizedStatus == 'approved' ||
-        normalizedStatus == 'completed') {
-      return _PurchaseState.approved;
-    }
-
-    if (normalizedStatus == 'cancelled' || normalizedStatus == 'canceled') {
-      return _PurchaseState.cancelled;
-    }
-
-    if (normalizedStatus == 'rejected' ||
-        normalizedStatus == 'failed' ||
-        normalizedStatus == 'error') {
-      return _PurchaseState.rejected;
-    }
-
-    if (normalizedStatus == 'created' ||
-        normalizedStatus == 'pending' ||
-        normalizedStatus.isEmpty) {
-      if (expiresAt != null && expiresAt!.isBefore(DateTime.now().toUtc())) {
-        return _PurchaseState.expired;
-      }
-
-      return _PurchaseState.pending;
-    }
-
-    if ((normalizedResponse.isNotEmpty && normalizedResponse != '00') ||
-        normalizedDescription.contains('rechaz')) {
-      return _PurchaseState.rejected;
-    }
-
-    return _PurchaseState.unknown;
-  }
-
-  bool get isLaropayApproved {
-    final normalizedStatus = status.toLowerCase().trim();
-    return normalizedStatus == 'paid' ||
-        normalizedStatus == 'approved' ||
-        normalizedStatus == 'completed';
-  }
-
-  bool get hasOrderAmounts {
-    return orderTotalAmount != null ||
-        orderPaidAmount != null ||
-        orderRemainingAmount != null;
-  }
-
-  bool get hasOutstandingBalance {
-    return (orderRemainingAmount ?? 0) > 0;
   }
 
   String get formattedPaidAmount {
