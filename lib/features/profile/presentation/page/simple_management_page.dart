@@ -13,33 +13,7 @@ class SimpleManagementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final steps = [
-      _SimpleManagementStep(
-        icon: Icons.search_rounded,
-        title: l10n.simpleManagementExploreTitle,
-        description: l10n.simpleManagementExploreDescription,
-      ),
-      _SimpleManagementStep(
-        icon: Icons.calendar_month_outlined,
-        title: l10n.simpleManagementScheduleTitle,
-        description: l10n.simpleManagementScheduleDescription,
-      ),
-      _SimpleManagementStep(
-        icon: Icons.fact_check_outlined,
-        title: l10n.simpleManagementTrackTitle,
-        description: l10n.simpleManagementTrackDescription,
-      ),
-      _SimpleManagementStep(
-        icon: Icons.person_outline_rounded,
-        title: l10n.simpleManagementAccountTitle,
-        description: l10n.simpleManagementAccountDescription,
-      ),
-      _SimpleManagementStep(
-        icon: Icons.verified_user_outlined,
-        title: l10n.simpleManagementTrustTitle,
-        description: l10n.simpleManagementTrustDescription,
-      ),
-    ];
+    final steps = _steps(l10n);
 
     return Scaffold(
       backgroundColor: AutolabCustomer.customerBackgroundColor(context),
@@ -66,14 +40,41 @@ class SimpleManagementPage extends StatelessWidget {
             const SizedBox(height: AutolabCustomer.spacingXl),
             _SimpleManagementIntro(text: l10n.simpleManagementIntro),
             const SizedBox(height: AutolabCustomer.spacingMd),
-            for (final step in steps) ...[
-              _SimpleManagementStepCard(step: step),
-              const SizedBox(height: AutolabCustomer.spacingSmd),
-            ],
+            _SimpleManagementStepsList(steps: steps),
           ],
         ),
       ),
     );
+  }
+
+  List<_SimpleManagementStep> _steps(AppLocalizations l10n) {
+    return [
+      _SimpleManagementStep(
+        icon: Icons.search_rounded,
+        title: l10n.simpleManagementExploreTitle,
+        description: l10n.simpleManagementExploreDescription,
+      ),
+      _SimpleManagementStep(
+        icon: Icons.calendar_month_outlined,
+        title: l10n.simpleManagementScheduleTitle,
+        description: l10n.simpleManagementScheduleDescription,
+      ),
+      _SimpleManagementStep(
+        icon: Icons.fact_check_outlined,
+        title: l10n.simpleManagementTrackTitle,
+        description: l10n.simpleManagementTrackDescription,
+      ),
+      _SimpleManagementStep(
+        icon: Icons.person_outline_rounded,
+        title: l10n.simpleManagementAccountTitle,
+        description: l10n.simpleManagementAccountDescription,
+      ),
+      _SimpleManagementStep(
+        icon: Icons.verified_user_outlined,
+        title: l10n.simpleManagementTrustTitle,
+        description: l10n.simpleManagementTrustDescription,
+      ),
+    ];
   }
 }
 
@@ -221,6 +222,27 @@ class _SimpleManagementStepCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SimpleManagementStepsList extends StatelessWidget {
+  const _SimpleManagementStepsList({required this.steps});
+
+  final List<_SimpleManagementStep> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemBuilder: (context, index) {
+        return _SimpleManagementStepCard(step: steps[index]);
+      },
+      separatorBuilder: (context, index) {
+        return const SizedBox(height: AutolabCustomer.spacingSmd);
+      },
+      itemCount: steps.length,
     );
   }
 }
