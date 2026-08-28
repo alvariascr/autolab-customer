@@ -1,28 +1,21 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../domain/entities/customer_location.dart';
 import '../../domain/repositories/customer_location_repository.dart';
+import '../datasources/customer_location_remote_data_source.dart';
 
 class CustomerLocationRepositoryImpl implements CustomerLocationRepository {
-  const CustomerLocationRepositoryImpl(this._client);
+  const CustomerLocationRepositoryImpl(this._remoteDataSource);
 
-  final SupabaseClient _client;
+  final CustomerLocationRemoteDataSource _remoteDataSource;
 
   @override
   Future<List<CustomerLocation>> loadLocations() async {
     final userId = _requireUserId();
-    final response = await _client
-        .from('customer_locations')
-        .select()
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .order('is_default', ascending: false)
-        .order('updated_at', ascending: false);
-
-    return response
-        .whereType<Map<String, dynamic>>()
-        .map(_locationFromJson)
-        .toList(growable: false);
+    try {
+      final response = await _remoteDataSource.loadLocations(userId);
+      return response.map(_locationFromJson).toList(growable: false);
+    } on CustomerLocationStorageException catch (error) {
+      throw CustomerLocationException(error.message);
+    }
   }
 
   @override
@@ -42,15 +35,7 @@ class CustomerLocationRepositoryImpl implements CustomerLocationRepository {
       throw const CustomerLocationException('location_coordinates_invalid');
     }
 
-    final existingLocations = await loadLocations();
-    final shouldBeDefault = isCreating && existingLocations.isEmpty;
-
-    if (shouldBeDefault) {
-      await _clearDefaultLocation(userId);
-    }
-
     final payload = {
-      'user_id': userId,
       'label': request.label.trim(),
       'address': request.address.trim(),
       'country': request.country.trim(),
@@ -60,26 +45,18 @@ class CustomerLocationRepositoryImpl implements CustomerLocationRepository {
       'exact_address': request.exactAddress.trim(),
       'latitude': request.latitude,
       'longitude': request.longitude,
-      'is_default': shouldBeDefault,
-      'is_active': true,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
     };
 
-    final response = isCreating
-        ? await _client
-              .from('customer_locations')
-              .insert(payload)
-              .select()
-              .single()
-        : await _client
-              .from('customer_locations')
-              .update(payload)
-              .eq('user_id', userId)
-              .eq('id', trimmedLocationId)
-              .select()
-              .single();
-
-    return _locationFromJson(Map<String, dynamic>.from(response));
+    try {
+      final response = await _remoteDataSource.saveLocation(
+        userId: userId,
+        payload: payload,
+        locationId: isCreating ? null : trimmedLocationId,
+      );
+      return _locationFromJson(response);
+    } on CustomerLocationStorageException catch (error) {
+      throw CustomerLocationException(error.message);
+    }
   }
 
   @override
@@ -90,29 +67,15 @@ class CustomerLocationRepositoryImpl implements CustomerLocationRepository {
       throw const CustomerLocationException('location_id_required');
     }
 
-    await _client
-        .from('customer_locations')
-        .update({
-          'is_active': false,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('user_id', userId)
-        .eq('id', trimmedLocationId);
-  }
-
-  Future<void> _clearDefaultLocation(String userId) async {
-    await _client
-        .from('customer_locations')
-        .update({
-          'is_default': false,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('user_id', userId)
-        .eq('is_active', true);
+    try {
+      await _remoteDataSource.deleteLocation(userId, trimmedLocationId);
+    } on CustomerLocationStorageException catch (error) {
+      throw CustomerLocationException(error.message);
+    }
   }
 
   String _requireUserId() {
-    final userId = _client.auth.currentUser?.id;
+    final userId = _remoteDataSource.currentUserId;
     if (userId == null || userId.trim().isEmpty) {
       throw const CustomerLocationException('location_auth_required');
     }
