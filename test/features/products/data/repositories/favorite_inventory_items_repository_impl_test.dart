@@ -55,4 +55,26 @@ void main() {
       ),
     );
   });
+
+  test('trims item id and item type before delegating', () async {
+    when(
+      () => remoteDataSource.toggleFavoriteInventoryItem(
+        'item-1',
+        itemType: 'service',
+      ),
+    ).thenAnswer((_) async => true);
+
+    final result = await repository.toggleFavoriteInventoryItem(
+      ' item-1 ',
+      itemType: ' service ',
+    );
+
+    expect(result, isTrue);
+    verify(
+      () => remoteDataSource.toggleFavoriteInventoryItem(
+        'item-1',
+        itemType: 'service',
+      ),
+    ).called(1);
+  });
 }

@@ -36,6 +36,7 @@ class FavoriteInventoryItemsRepositoryImpl
     required String itemType,
   }) async {
     final trimmedItemId = itemId.trim();
+    final trimmedItemType = itemType.trim();
     if (trimmedItemId.isEmpty) {
       return false;
     }
@@ -43,7 +44,7 @@ class FavoriteInventoryItemsRepositoryImpl
     return _mapDataSourceException(
       () => _remoteDataSource.toggleFavoriteInventoryItem(
         trimmedItemId,
-        itemType: itemType,
+        itemType: trimmedItemType,
       ),
     );
   }
