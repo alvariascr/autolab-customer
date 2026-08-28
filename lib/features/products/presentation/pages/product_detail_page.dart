@@ -97,7 +97,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         }
 
         if (product.itemType.trim().toLowerCase() == 'service') {
-          return ServiceDetailContent(service: product);
+          return ServiceDetailContent(
+            service: product,
+            favoriteRepository:
+                widget.favoriteRepository ??
+                sl<FavoriteInventoryItemsRepository>(),
+          );
         }
 
         return PhysicalProductDetailContent(

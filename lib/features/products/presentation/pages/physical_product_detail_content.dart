@@ -9,6 +9,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../cart/application/cart_cubit.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/favorite_inventory_items_repository.dart';
+import '../controllers/inventory_favorite_controller.dart';
 import '../widgets/product_price_text.dart';
 import 'product_detail_hero.dart';
 
@@ -29,8 +30,7 @@ class PhysicalProductDetailContent extends StatefulWidget {
 
 class _PhysicalProductDetailContentState
     extends State<PhysicalProductDetailContent> {
-  bool _isFavorite = false;
-  bool _isFavoriteLoading = false;
+  late final InventoryFavoriteController _favoriteController;
   int _quantity = 1;
 
   int get _availableStock => widget.product.currentStock?.clamp(0, 9999) ?? 0;
@@ -38,7 +38,17 @@ class _PhysicalProductDetailContentState
   @override
   void initState() {
     super.initState();
+    _favoriteController = InventoryFavoriteController(widget.favoriteRepository)
+      ..addListener(_onFavoriteChanged);
     unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void dispose() {
+    _favoriteController
+      ..removeListener(_onFavoriteChanged)
+      ..dispose();
+    super.dispose();
   }
 
   @override
@@ -50,72 +60,53 @@ class _PhysicalProductDetailContentState
   }
 
   Future<void> _loadFavoriteStatus() async {
-    try {
-      final isFavorite = await widget.favoriteRepository
-          .isFavoriteInventoryItem(widget.product.id);
-      if (!mounted) return;
-      setState(() => _isFavorite = isFavorite);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isFavorite = false);
-    }
+    await _favoriteController.load(widget.product.id);
   }
 
   Future<void> _toggleFavorite() async {
-    if (_isFavoriteLoading) {
+    if (_favoriteController.isLoading) {
       return;
     }
 
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
-    final previousValue = _isFavorite;
+    final result = await _favoriteController.toggle(
+      itemId: widget.product.id,
+      itemType: widget.product.itemType,
+    );
+    if (!mounted) return;
 
-    setState(() {
-      _isFavorite = !previousValue;
-      _isFavoriteLoading = true;
-    });
-
-    try {
-      final nextValue = await widget.favoriteRepository
-          .toggleFavoriteInventoryItem(
-            widget.product.id,
-            itemType: widget.product.itemType,
-          );
-      if (!mounted) return;
-      setState(() {
-        _isFavorite = nextValue;
-        _isFavoriteLoading = false;
-      });
+    if (result.isSuccess) {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
             content: Text(
-              nextValue
+              result.isFavorite
                   ? l10n.productFavoriteAdded
                   : l10n.productFavoriteRemoved,
             ),
           ),
         );
-    } on FavoriteInventoryItemsAuthException {
-      if (!mounted) return;
-      setState(() {
-        _isFavorite = previousValue;
-        _isFavoriteLoading = false;
-      });
+      return;
+    }
+
+    if (result.failure == InventoryFavoriteFailure.authRequired) {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.authErrorSessionExpired)));
       context.go('/login');
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isFavorite = previousValue;
-        _isFavoriteLoading = false;
-      });
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.inventoryFavoriteError)));
+      return;
+    }
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.inventoryFavoriteError)));
+  }
+
+  void _onFavoriteChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -135,7 +126,7 @@ class _PhysicalProductDetailContentState
           SliverToBoxAdapter(
             child: ProductDetailHero(
               product: product,
-              isFavorite: _isFavorite,
+              isFavorite: _favoriteController.isFavorite,
               onFavoriteTap: () => unawaited(_toggleFavorite()),
             ),
           ),
