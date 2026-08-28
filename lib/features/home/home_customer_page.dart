@@ -268,6 +268,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
   }
 
   Future<void> _openAddressesFromLocationSheet() async {
+    final locationCubit = context.read<LocationCubit>();
     final uri = Uri(
       path: DeliveryAddressesPage.routePath,
       queryParameters: {'closeAfterSave': 'true'},
@@ -278,7 +279,7 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
       return;
     }
 
-    context.read<LocationCubit>().useSavedLocation(
+    locationCubit.useSavedLocation(
       location: CurrentLocation(
         latitude: savedLocation.latitude,
         longitude: savedLocation.longitude,
