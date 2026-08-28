@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../cart/application/cart_cubit.dart';
@@ -14,9 +13,14 @@ import '../widgets/product_price_text.dart';
 import 'product_detail_hero.dart';
 
 class PhysicalProductDetailContent extends StatefulWidget {
-  const PhysicalProductDetailContent({super.key, required this.product});
+  const PhysicalProductDetailContent({
+    super.key,
+    required this.product,
+    required this.favoriteRepository,
+  });
 
   final Product product;
+  final FavoriteInventoryItemsRepository favoriteRepository;
 
   @override
   State<PhysicalProductDetailContent> createState() =>
@@ -28,9 +32,6 @@ class _PhysicalProductDetailContentState
   bool _isFavorite = false;
   bool _isFavoriteLoading = false;
   int _quantity = 1;
-
-  FavoriteInventoryItemsRepository get _favoriteRepository =>
-      sl<FavoriteInventoryItemsRepository>();
 
   int get _availableStock => widget.product.currentStock?.clamp(0, 9999) ?? 0;
 
@@ -50,9 +51,8 @@ class _PhysicalProductDetailContentState
 
   Future<void> _loadFavoriteStatus() async {
     try {
-      final isFavorite = await _favoriteRepository.isFavoriteInventoryItem(
-        widget.product.id,
-      );
+      final isFavorite = await widget.favoriteRepository
+          .isFavoriteInventoryItem(widget.product.id);
       if (!mounted) return;
       setState(() => _isFavorite = isFavorite);
     } catch (_) {
@@ -76,10 +76,11 @@ class _PhysicalProductDetailContentState
     });
 
     try {
-      final nextValue = await _favoriteRepository.toggleFavoriteInventoryItem(
-        widget.product.id,
-        itemType: widget.product.itemType,
-      );
+      final nextValue = await widget.favoriteRepository
+          .toggleFavoriteInventoryItem(
+            widget.product.id,
+            itemType: widget.product.itemType,
+          );
       if (!mounted) return;
       setState(() {
         _isFavorite = nextValue;

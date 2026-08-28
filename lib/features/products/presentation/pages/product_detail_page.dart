@@ -6,25 +6,31 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../application/product_inventory_refresh_notifier.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/favorite_inventory_items_repository.dart';
 import '../../domain/repositories/product_repository.dart';
 import 'physical_product_detail_content.dart';
 import 'service_detail_content.dart';
 
 class ProductDetailPage extends StatefulWidget {
-  ProductDetailPage({super.key, required Product this.product})
-    : workshopId = product.workshopId,
-      productId = product.id;
+  ProductDetailPage({
+    super.key,
+    required Product this.product,
+    this.favoriteRepository,
+  }) : workshopId = product.workshopId,
+       productId = product.id;
 
   const ProductDetailPage.resolve({
     super.key,
     this.product,
     required this.workshopId,
     required this.productId,
+    this.favoriteRepository,
   });
 
   final Product? product;
   final String workshopId;
   final String productId;
+  final FavoriteInventoryItemsRepository? favoriteRepository;
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -94,7 +100,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           return ServiceDetailContent(service: product);
         }
 
-        return PhysicalProductDetailContent(product: product);
+        return PhysicalProductDetailContent(
+          product: product,
+          favoriteRepository:
+              widget.favoriteRepository ??
+              sl<FavoriteInventoryItemsRepository>(),
+        );
       },
     );
   }
