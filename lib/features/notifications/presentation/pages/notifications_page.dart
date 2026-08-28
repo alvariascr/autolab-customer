@@ -103,41 +103,33 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   return RefreshIndicator(
                     onRefresh: context.read<NotificationsCubit>().load,
                     color: AutolabCustomer.primary,
-                    child: ListView(
+                    child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        AutolabCustomer.responsiveScreenMargin(context),
-                        AutolabCustomer.spacingSmd,
-                        AutolabCustomer.responsiveScreenMargin(context),
-                        AutolabCustomer.spacingXl +
-                            MediaQuery.paddingOf(context).bottom,
-                      ),
-                      children: [
-                        if (!state.isRealtimeConnected) ...[
-                          _RealtimeWarning(
-                            message:
+                      slivers: [
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                            AutolabCustomer.responsiveScreenMargin(context),
+                            AutolabCustomer.spacingSmd,
+                            AutolabCustomer.responsiveScreenMargin(context),
+                            AutolabCustomer.spacingXl +
+                                MediaQuery.paddingOf(context).bottom,
+                          ),
+                          sliver: _NotificationsContentSliver(
+                            notifications: state.notifications,
+                            visibleNotifications: visibleNotifications,
+                            selectedFilter: _selectedFilter,
+                            isRealtimeConnected: state.isRealtimeConnected,
+                            realtimeMessage:
                                 state.message ?? l10n.notificationsLoadError,
+                            filteredEmptyTitle:
+                                l10n.notificationsFilteredEmptyTitle,
+                            filteredEmptyMessage:
+                                l10n.notificationsFilteredEmptyMessage,
+                            onFilterChanged: (filter) {
+                              setState(() => _selectedFilter = filter);
+                            },
                           ),
-                          const SizedBox(height: AutolabCustomer.spacingMd),
-                        ],
-                        _NotificationFilterBar(
-                          selectedFilter: _selectedFilter,
-                          notifications: state.notifications,
-                          onChanged: (filter) {
-                            setState(() => _selectedFilter = filter);
-                          },
                         ),
-                        const SizedBox(height: AutolabCustomer.spacingLg),
-                        if (visibleNotifications.isEmpty)
-                          _NotificationsEmpty(
-                            title: l10n.notificationsFilteredEmptyTitle,
-                            message: l10n.notificationsFilteredEmptyMessage,
-                          )
-                        else
-                          ..._groupedNotificationItems(
-                            context,
-                            visibleNotifications,
-                          ),
                       ],
                     ),
                   );
@@ -166,66 +158,156 @@ class _NotificationsPageState extends State<NotificationsPage> {
     };
   }
 
-  List<Widget> _groupedNotificationItems(
-    BuildContext context,
-    List<CustomerNotification> notifications,
-  ) {
-    final groups = <String, List<CustomerNotification>>{};
-
-    for (final notification in notifications) {
-      final label = _groupLabel(context, notification.createdAt.toLocal());
-      groups.putIfAbsent(label, () => []).add(notification);
-    }
-
-    final items = <Widget>[];
-    for (final entry in groups.entries) {
-      items
-        ..add(_NotificationGroupTitle(label: entry.key))
-        ..add(const SizedBox(height: AutolabCustomer.spacingSmd));
-
-      for (final notification in entry.value) {
-        items
-          ..add(
-            _NotificationCard(
-              notification: notification,
-              onTap: () => context.read<NotificationsCubit>().markAsRead(
-                notification.id,
-              ),
-            ),
-          )
-          ..add(const SizedBox(height: AutolabCustomer.spacingSmd));
-      }
-
-      items.add(const SizedBox(height: AutolabCustomer.spacingSm));
-    }
-
-    return items;
-  }
-
-  String _groupLabel(BuildContext context, DateTime date) {
-    final l10n = AppLocalizations.of(context)!;
-    final now = DateTime.now();
-    final today = DateUtils.dateOnly(now);
-    final notificationDay = DateUtils.dateOnly(date);
-
-    if (notificationDay == today) {
-      return l10n.notificationsGroupToday;
-    }
-
-    if (notificationDay == today.subtract(const Duration(days: 1))) {
-      return l10n.notificationsGroupYesterday;
-    }
-
-    if (notificationDay.isAfter(today.subtract(const Duration(days: 7)))) {
-      return l10n.notificationsGroupThisWeek;
-    }
-
-    return MaterialLocalizations.of(context).formatMediumDate(date);
-  }
-
   bool _isPromotion(NotificationType type) {
     return type == NotificationType.promotion;
   }
+}
+
+List<_NotificationListItem> _groupedNotificationItems(
+  BuildContext context,
+  List<CustomerNotification> notifications,
+) {
+  final groups = <String, List<CustomerNotification>>{};
+
+  for (final notification in notifications) {
+    final label = _groupLabel(context, notification.createdAt.toLocal());
+    groups.putIfAbsent(label, () => []).add(notification);
+  }
+
+  final items = <_NotificationListItem>[];
+  for (final entry in groups.entries) {
+    items.add(_NotificationListItem.groupTitle(entry.key));
+
+    for (final notification in entry.value) {
+      items.add(_NotificationListItem.notification(notification));
+    }
+  }
+
+  return items;
+}
+
+String _groupLabel(BuildContext context, DateTime date) {
+  final l10n = AppLocalizations.of(context)!;
+  final now = DateTime.now();
+  final today = DateUtils.dateOnly(now);
+  final notificationDay = DateUtils.dateOnly(date);
+
+  if (notificationDay == today) {
+    return l10n.notificationsGroupToday;
+  }
+
+  if (notificationDay == today.subtract(const Duration(days: 1))) {
+    return l10n.notificationsGroupYesterday;
+  }
+
+  if (notificationDay.isAfter(today.subtract(const Duration(days: 7)))) {
+    return l10n.notificationsGroupThisWeek;
+  }
+
+  return MaterialLocalizations.of(context).formatMediumDate(date);
+}
+
+class _NotificationsContentSliver extends StatelessWidget {
+  const _NotificationsContentSliver({
+    required this.notifications,
+    required this.visibleNotifications,
+    required this.selectedFilter,
+    required this.isRealtimeConnected,
+    required this.realtimeMessage,
+    required this.filteredEmptyTitle,
+    required this.filteredEmptyMessage,
+    required this.onFilterChanged,
+  });
+
+  final List<CustomerNotification> notifications;
+  final List<CustomerNotification> visibleNotifications;
+  final _NotificationFilter selectedFilter;
+  final bool isRealtimeConnected;
+  final String realtimeMessage;
+  final String filteredEmptyTitle;
+  final String filteredEmptyMessage;
+  final ValueChanged<_NotificationFilter> onFilterChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final notificationItems = _groupedNotificationItems(
+      context,
+      visibleNotifications,
+    );
+
+    return SliverMainAxisGroup(
+      slivers: [
+        if (!isRealtimeConnected) ...[
+          SliverToBoxAdapter(child: _RealtimeWarning(message: realtimeMessage)),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AutolabCustomer.spacingMd),
+          ),
+        ],
+        SliverToBoxAdapter(
+          child: _NotificationFilterBar(
+            selectedFilter: selectedFilter,
+            notifications: notifications,
+            onChanged: onFilterChanged,
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: AutolabCustomer.spacingLg),
+        ),
+        if (visibleNotifications.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _NotificationsEmpty(
+              title: filteredEmptyTitle,
+              message: filteredEmptyMessage,
+            ),
+          )
+        else
+          SliverList.separated(
+            itemCount: notificationItems.length,
+            itemBuilder: (context, index) {
+              final item = notificationItems[index];
+              final label = item.groupTitle;
+              if (label != null) {
+                return _NotificationGroupTitle(label: label);
+              }
+
+              final notification = item.notification!;
+              return _NotificationCard(
+                notification: notification,
+                onTap: () => context.read<NotificationsCubit>().markAsRead(
+                  notification.id,
+                ),
+              );
+            },
+            separatorBuilder: (context, index) {
+              final currentItem = notificationItems[index];
+              final nextItem = notificationItems[index + 1];
+              final gap = currentItem.isNotification && nextItem.isGroupTitle
+                  ? AutolabCustomer.spacingMd
+                  : AutolabCustomer.spacingSmd;
+
+              return SizedBox(height: gap);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _NotificationListItem {
+  const _NotificationListItem.groupTitle(String label)
+    : groupTitle = label,
+      notification = null;
+
+  const _NotificationListItem.notification(CustomerNotification item)
+    : groupTitle = null,
+      notification = item;
+
+  final String? groupTitle;
+  final CustomerNotification? notification;
+
+  bool get isGroupTitle => groupTitle != null;
+  bool get isNotification => notification != null;
 }
 
 class _NotificationsHeader extends StatelessWidget {
