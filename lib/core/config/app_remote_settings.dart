@@ -23,7 +23,14 @@ class AppRemoteSettings {
   final String scheduleText;
   final String termsUrl;
 
-  Uri get termsUri => Uri.parse(termsUrl);
+  Uri get termsUri {
+    final parsedUri = Uri.tryParse(termsUrl.trim());
+    if (parsedUri == null || !parsedUri.hasScheme) {
+      return Uri.parse(fallback.termsUrl);
+    }
+
+    return parsedUri;
+  }
 
   static Future<AppRemoteSettings> load({SupabaseClient? client}) async {
     try {
