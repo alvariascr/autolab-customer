@@ -63,7 +63,12 @@ class AboutUsPage extends StatelessWidget {
 
   Future<void> _openTerms(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
+    final errorMessage = l10n.settingsOpenLinkError;
     final settings = await AppRemoteSettings.load();
+    if (!context.mounted) {
+      return;
+    }
+
     final opened = await launchUrl(
       settings.termsUri,
       mode: LaunchMode.externalApplication,
@@ -75,7 +80,7 @@ class AboutUsPage extends StatelessWidget {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
+      ..showSnackBar(SnackBar(content: Text(errorMessage)));
   }
 }
 
@@ -123,19 +128,23 @@ class _AboutBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AutolabCustomer.customerSoftSurfaceColor(context),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: SizedBox.square(
-          dimension: 34,
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AutolabCustomer.customerSecondaryTextColor(context),
-            size: AutolabCustomer.iconSm,
+    return Semantics(
+      button: true,
+      label: MaterialLocalizations.of(context).backButtonTooltip,
+      child: Material(
+        color: AutolabCustomer.customerSoftSurfaceColor(context),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: SizedBox.square(
+            dimension: 34,
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+              size: AutolabCustomer.iconSm,
+            ),
           ),
         ),
       ),
@@ -145,6 +154,8 @@ class _AboutBackButton extends StatelessWidget {
 
 class _AboutHeroCard extends StatelessWidget {
   const _AboutHeroCard();
+
+  static const _logo = Center(child: AutolabLogoMark(width: 70, height: 28));
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +189,7 @@ class _AboutHeroCard extends StatelessWidget {
                 color: AutolabCustomer.customerBorderColor(context),
               ),
             ),
-            child: const Center(child: AutolabLogoMark(width: 70, height: 28)),
+            child: _logo,
           ),
           const SizedBox(width: AutolabCustomer.spacingLg),
           Expanded(
@@ -224,56 +235,57 @@ class _AboutActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AutolabCustomer.customerSoftSurfaceColor(context),
-      borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
+    return Container(
+      decoration: BoxDecoration(
+        color: AutolabCustomer.customerSoftSurfaceColor(context),
         borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-        child: Ink(
-          padding: const EdgeInsets.all(AutolabCustomer.spacingSmd),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-            border: Border.all(
-              color: AutolabCustomer.customerBorderColor(context),
-            ),
-          ),
-          child: Row(
-            children: [
-              _AboutIconBadge(icon: icon),
-              const SizedBox(width: AutolabCustomer.spacingMd),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AutolabCustomer.body.copyWith(
-                        color: AutolabCustomer.customerTextColor(context),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: AutolabCustomer.spacingXs),
-                    Text(
-                      subtitle,
-                      style: AutolabCustomer.caption.copyWith(
-                        color: AutolabCustomer.customerSecondaryTextColor(
-                          context,
+        border: Border.all(color: AutolabCustomer.customerBorderColor(context)),
+      ),
+      child: Material(
+        color: AutolabCustomer.transparent,
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.all(AutolabCustomer.spacingSmd),
+            child: Row(
+              children: [
+                _AboutIconBadge(icon: icon),
+                const SizedBox(width: AutolabCustomer.spacingMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AutolabCustomer.body.copyWith(
+                          color: AutolabCustomer.customerTextColor(context),
+                          fontWeight: FontWeight.w900,
                         ),
-                        height: 1.45,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AutolabCustomer.spacingXs),
+                      Text(
+                        subtitle,
+                        style: AutolabCustomer.caption.copyWith(
+                          color: AutolabCustomer.customerSecondaryTextColor(
+                            context,
+                          ),
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: AutolabCustomer.spacingSm),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AutolabCustomer.primary,
-                size: AutolabCustomer.iconMd,
-              ),
-            ],
+                const SizedBox(width: AutolabCustomer.spacingSm),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AutolabCustomer.primary,
+                  size: AutolabCustomer.iconMd,
+                ),
+              ],
+            ),
           ),
         ),
       ),
