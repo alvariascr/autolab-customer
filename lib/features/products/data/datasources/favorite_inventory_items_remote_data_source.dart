@@ -53,20 +53,16 @@ class FavoriteInventoryItemsRemoteDataSource {
     String itemId, {
     required String itemType,
   }) async {
-    final userId = _requireUserId();
-    final currentFavorite = await isFavoriteInventoryItem(itemId);
+    _requireUserId();
+    final response = await _client.rpc<bool>(
+      'toggle_customer_favorite_inventory_item',
+      params: {
+        'p_inventory_item_id': itemId,
+        'p_favorite_type': _favoriteTypeFor(itemType),
+      },
+    );
 
-    if (currentFavorite) {
-      await removeFavoriteInventoryItem(itemId);
-      return false;
-    }
-
-    await _client.from('customer_favorites').insert({
-      'user_id': userId,
-      'favorite_type': _favoriteTypeFor(itemType),
-      'inventory_item_id': itemId,
-    });
-    return true;
+    return response;
   }
 
   Future<void> removeFavoriteInventoryItem(String itemId) async {
