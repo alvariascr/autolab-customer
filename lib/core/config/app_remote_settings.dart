@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppRemoteSettings {
@@ -48,7 +50,13 @@ class AppRemoteSettings {
       }
 
       return AppRemoteSettings.fromMap(Map<String, dynamic>.from(response));
-    } catch (_) {
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to load remote app settings. Using fallback values.',
+        name: 'AppRemoteSettings',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return fallback;
     }
   }
