@@ -168,9 +168,14 @@ List<_NotificationListItem> _groupedNotificationItems(
   List<CustomerNotification> notifications,
 ) {
   final groups = <String, List<CustomerNotification>>{};
+  final today = DateUtils.dateOnly(DateTime.now());
 
   for (final notification in notifications) {
-    final label = _groupLabel(context, notification.createdAt.toLocal());
+    final label = _groupLabel(
+      context,
+      notification.createdAt.toLocal(),
+      today: today,
+    );
     groups.putIfAbsent(label, () => []).add(notification);
   }
 
@@ -186,10 +191,12 @@ List<_NotificationListItem> _groupedNotificationItems(
   return items;
 }
 
-String _groupLabel(BuildContext context, DateTime date) {
+String _groupLabel(
+  BuildContext context,
+  DateTime date, {
+  required DateTime today,
+}) {
   final l10n = AppLocalizations.of(context)!;
-  final now = DateTime.now();
-  final today = DateUtils.dateOnly(now);
   final notificationDay = DateUtils.dateOnly(date);
 
   if (notificationDay == today) {
