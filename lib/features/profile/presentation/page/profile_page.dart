@@ -810,40 +810,30 @@ class _GarageThemeModeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final mode = context.watch<AppThemeModeCubit>().state;
+    final isDark = switch (mode) {
+      ThemeMode.dark => true,
+      ThemeMode.light => false,
+      ThemeMode.system =>
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
 
-    return BlocBuilder<AppThemeModeCubit, ThemeMode>(
-      builder: (context, mode) {
-        final isDark = switch (mode) {
-          ThemeMode.dark => true,
-          ThemeMode.light => false,
-          ThemeMode.system =>
-            MediaQuery.platformBrightnessOf(context) == Brightness.dark,
-        };
-
-        return _GarageMenuItem(
-          icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-          label: isDark
-              ? l10n.profileDarkModeTitle
-              : l10n.profileLightModeTitle,
-          trailing: Switch(
-            value: isDark,
-            activeThumbColor: AutolabCustomer.primary,
-            activeTrackColor: AutolabCustomer.primary.withValues(alpha: 0.35),
-            inactiveThumbColor: AutolabCustomer.customerDisabledTextColor(
-              context,
-            ),
-            inactiveTrackColor: AutolabCustomer.customerSoftSurfaceColor(
-              context,
-            ),
-            onChanged: (enabled) {
-              context.read<AppThemeModeCubit>().setThemeMode(
-                enabled ? ThemeMode.dark : ThemeMode.light,
-              );
-            },
-          ),
-          showDivider: showDivider,
-        );
-      },
+    return _GarageMenuItem(
+      icon: isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+      label: isDark ? l10n.profileDarkModeTitle : l10n.profileLightModeTitle,
+      trailing: Switch(
+        value: isDark,
+        activeThumbColor: AutolabCustomer.primary,
+        activeTrackColor: AutolabCustomer.primary.withValues(alpha: 0.35),
+        inactiveThumbColor: AutolabCustomer.customerDisabledTextColor(context),
+        inactiveTrackColor: AutolabCustomer.customerSoftSurfaceColor(context),
+        onChanged: (enabled) {
+          context.read<AppThemeModeCubit>().setThemeMode(
+            enabled ? ThemeMode.dark : ThemeMode.light,
+          );
+        },
+      ),
+      showDivider: showDivider,
     );
   }
 }
