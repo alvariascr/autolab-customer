@@ -22,6 +22,7 @@ import '../../../products/domain/repositories/product_repository.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../../products/presentation/widgets/product_price_text.dart';
 import '../../domain/entities/workshop.dart';
+import '../../domain/repositories/favorite_workshops_repository.dart';
 import '../../domain/repositories/workshop_repository.dart';
 import '../../domain/services/workshop_today_business_hours_resolver.dart';
 import '../widgets/workshop_avatar.dart';
@@ -128,6 +129,7 @@ class _WorkshopProfilePageState extends State<WorkshopProfilePage> {
                   return _WorkshopProfileContent(
                     workshop: workshop,
                     initialCatalogSection: widget.initialCatalogSection,
+                    favoriteRepository: sl<FavoriteWorkshopsRepository>(),
                   );
                 },
               );

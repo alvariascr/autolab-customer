@@ -1,9 +1,13 @@
 part of 'workshop_profile_page.dart';
 
 class _ProfileHero extends StatefulWidget {
-  const _ProfileHero({required this.workshop});
+  const _ProfileHero({
+    required this.workshop,
+    required this.favoriteRepository,
+  });
 
   final Workshop workshop;
+  final FavoriteWorkshopsRepository favoriteRepository;
 
   @override
   State<_ProfileHero> createState() => _ProfileHeroState();
@@ -11,6 +15,89 @@ class _ProfileHero extends StatefulWidget {
 
 class _ProfileHeroState extends State<_ProfileHero> {
   bool _isFavorite = false;
+  bool _isFavoriteLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProfileHero oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workshop.id != widget.workshop.id) {
+      unawaited(_loadFavoriteStatus());
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final isFavorite = await widget.favoriteRepository.isFavoriteWorkshop(
+        widget.workshop.id,
+      );
+      if (!mounted) return;
+      setState(() => _isFavorite = isFavorite);
+    } catch (_) {
+      // Favorite status is optional for the hero; keep the screen usable.
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isFavoriteLoading) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final previousValue = _isFavorite;
+
+    setState(() {
+      _isFavorite = !previousValue;
+      _isFavoriteLoading = true;
+    });
+
+    try {
+      final nextValue = await widget.favoriteRepository.toggleFavoriteWorkshop(
+        widget.workshop.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = nextValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              nextValue
+                  ? l10n.workshopFavoriteAdded
+                  : l10n.workshopFavoriteRemoved,
+            ),
+          ),
+        );
+    } on FavoriteWorkshopAuthException {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.authErrorSessionExpired)));
+      context.go('/login');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isFavorite = previousValue;
+        _isFavoriteLoading = false;
+      });
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.workshopFavoriteError)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +155,7 @@ class _ProfileHeroState extends State<_ProfileHero> {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   iconColor: AutolabCustomer.primary,
-                  onTap: () {
-                    setState(() => _isFavorite = !_isFavorite);
-                  },
+                  onTap: () => unawaited(_toggleFavorite()),
                 ),
                 const SizedBox(width: AutolabCustomer.spacingSm),
                 _HeroIconButton(

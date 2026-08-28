@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/di/app_injection.dart';
+import '../../core/location/current_location.dart';
 import '../../core/location/location_cubit.dart';
 import '../../core/location/location_state.dart';
 import '../../core/theme/autolab_customer.dart';
@@ -17,8 +18,10 @@ import '../notifications/presentation/pages/notifications_page.dart';
 import '../products/domain/repositories/product_repository.dart';
 import '../profile/application/active_garage_vehicle_loader.dart';
 import '../profile/application/garage_vehicle_controller.dart';
+import '../profile/domain/entities/customer_location.dart';
 import '../profile/domain/entities/garage_vehicle.dart';
 import '../profile/domain/usecases/get_default_garage_vehicle.dart';
+import '../profile/presentation/page/delivery_addresses_page.dart';
 import '../workshops/application/workshop_discovery_query_store.dart';
 import '../workshops/domain/entities/workshop.dart';
 import '../workshops/domain/repositories/workshop_repository.dart';
@@ -264,6 +267,27 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
     }
   }
 
+  Future<void> _openAddressesFromLocationSheet() async {
+    final locationCubit = context.read<LocationCubit>();
+    final uri = Uri(
+      path: DeliveryAddressesPage.routePath,
+      queryParameters: {'closeAfterSave': 'true'},
+    );
+    final savedLocation = await context.push<CustomerLocation>(uri.toString());
+
+    if (!mounted || savedLocation == null) {
+      return;
+    }
+
+    locationCubit.useSavedLocation(
+      location: CurrentLocation(
+        latitude: savedLocation.latitude,
+        longitude: savedLocation.longitude,
+      ),
+      placeName: savedLocation.displayLabel,
+    );
+  }
+
   Future<void> _showLocationOptions(LocationState state) async {
     final l10n = AppLocalizations.of(context)!;
     final sheetCopy = LocationUiPresenter.sheet(state, l10n);
@@ -291,14 +315,16 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    sheetCopy.title,
-                    style: AutolabCustomer.bodyLarge.copyWith(
-                      color: AutolabCustomer.customerTextColor(context),
-                      fontWeight: FontWeight.w800,
+                  if (sheetCopy.title.trim().isNotEmpty) ...[
+                    Text(
+                      sheetCopy.title,
+                      style: AutolabCustomer.bodyLarge.copyWith(
+                        color: AutolabCustomer.customerTextColor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: AutolabCustomer.spacingSm - 2),
+                    const SizedBox(height: AutolabCustomer.spacingSm - 2),
+                  ],
                   Text(
                     sheetCopy.subtitle,
                     style: AutolabCustomer.caption.copyWith(
@@ -323,18 +349,10 @@ class _HomeCustomerPageState extends State<HomeCustomerPage>
                     icon: Icons.search_rounded,
                     title: sheetCopy.writeAddressTitle,
                     subtitle: sheetCopy.writeAddressSubtitle,
-                  ),
-                  const SizedBox(height: AutolabCustomer.spacingSm + 2),
-                  LocationOptionTile(
-                    icon: Icons.home_outlined,
-                    title: sheetCopy.homeTitle,
-                    subtitle: sheetCopy.savedAddressSubtitle,
-                  ),
-                  const SizedBox(height: AutolabCustomer.spacingSm + 2),
-                  LocationOptionTile(
-                    icon: Icons.work_outline_rounded,
-                    title: sheetCopy.workTitle,
-                    subtitle: sheetCopy.savedAddressSubtitle,
+                    onTap: () async {
+                      Navigator.of(sheetContext).pop();
+                      await _openAddressesFromLocationSheet();
+                    },
                   ),
                 ],
               ),

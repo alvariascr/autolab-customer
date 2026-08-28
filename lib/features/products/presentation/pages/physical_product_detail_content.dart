@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,13 +8,20 @@ import '../../../../core/theme/autolab_customer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../cart/application/cart_cubit.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/favorite_inventory_items_repository.dart';
+import '../controllers/inventory_favorite_controller.dart';
 import '../widgets/product_price_text.dart';
 import 'product_detail_hero.dart';
 
 class PhysicalProductDetailContent extends StatefulWidget {
-  const PhysicalProductDetailContent({super.key, required this.product});
+  const PhysicalProductDetailContent({
+    super.key,
+    required this.product,
+    required this.favoriteRepository,
+  });
 
   final Product product;
+  final FavoriteInventoryItemsRepository favoriteRepository;
 
   @override
   State<PhysicalProductDetailContent> createState() =>
@@ -21,10 +30,85 @@ class PhysicalProductDetailContent extends StatefulWidget {
 
 class _PhysicalProductDetailContentState
     extends State<PhysicalProductDetailContent> {
-  bool _isFavorite = false;
+  late final InventoryFavoriteController _favoriteController;
   int _quantity = 1;
 
   int get _availableStock => widget.product.currentStock?.clamp(0, 9999) ?? 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoriteController = InventoryFavoriteController(widget.favoriteRepository)
+      ..addListener(_onFavoriteChanged);
+    unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void dispose() {
+    _favoriteController
+      ..removeListener(_onFavoriteChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant PhysicalProductDetailContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product.id != widget.product.id) {
+      unawaited(_loadFavoriteStatus());
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    await _favoriteController.load(widget.product.id);
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteController.isLoading) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await _favoriteController.toggle(
+      itemId: widget.product.id,
+      itemType: widget.product.itemType,
+    );
+    if (!mounted) return;
+
+    if (result.isSuccess) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              result.isFavorite
+                  ? l10n.productFavoriteAdded
+                  : l10n.productFavoriteRemoved,
+            ),
+          ),
+        );
+      return;
+    }
+
+    if (result.failure == InventoryFavoriteFailure.authRequired) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.authErrorSessionExpired)));
+      context.go('/login');
+      return;
+    }
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.inventoryFavoriteError)));
+  }
+
+  void _onFavoriteChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +126,8 @@ class _PhysicalProductDetailContentState
           SliverToBoxAdapter(
             child: ProductDetailHero(
               product: product,
-              isFavorite: _isFavorite,
-              onFavoriteTap: () {
-                setState(() => _isFavorite = !_isFavorite);
-              },
+              isFavorite: _favoriteController.isFavorite,
+              onFavoriteTap: () => unawaited(_toggleFavorite()),
             ),
           ),
           SliverPadding(

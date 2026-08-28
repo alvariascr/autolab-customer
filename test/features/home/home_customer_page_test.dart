@@ -402,11 +402,16 @@ void main() {
       await tester.tap(find.text('Elegir dirección'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Selecciona dónde entregar'), findsOneWidget);
+      expect(
+        find.text(
+          'Puedes usar tu ubicación actual o elegir una dirección guardada más adelante.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Usar ubicación actual'), findsOneWidget);
-      expect(find.text('Escribir dirección'), findsOneWidget);
-      expect(find.text('Casa'), findsOneWidget);
-      expect(find.text('Trabajo'), findsOneWidget);
+      expect(find.text('Ver direcciones'), findsOneWidget);
+      expect(find.text('Casa'), findsNothing);
+      expect(find.text('Trabajo'), findsNothing);
     });
 
     testWidgets('puede iniciar con la búsqueda abierta', (tester) async {

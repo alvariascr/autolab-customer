@@ -5,6 +5,8 @@ abstract class GeocodingClient {
     double latitude,
     double longitude,
   );
+
+  Future<List<geocoding.Location>> locationFromAddress(String address);
 }
 
 class DefaultGeocodingClient implements GeocodingClient {
@@ -16,5 +18,10 @@ class DefaultGeocodingClient implements GeocodingClient {
     double longitude,
   ) async {
     return geocoding.placemarkFromCoordinates(latitude, longitude);
+  }
+
+  @override
+  Future<List<geocoding.Location>> locationFromAddress(String address) {
+    return geocoding.locationFromAddress(address);
   }
 }

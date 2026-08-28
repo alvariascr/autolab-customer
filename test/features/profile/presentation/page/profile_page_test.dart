@@ -150,7 +150,7 @@ void main() {
       expect(find.text('No tienes notificaciones'), findsOneWidget);
       expect(router.canPop(), true);
 
-      await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
       await tester.pumpAndSettle();
 
       expect(find.byType(ProfilePage), findsOneWidget);

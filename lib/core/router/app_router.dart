@@ -18,8 +18,13 @@ import '../../features/products/domain/entities/product.dart';
 import '../../features/products/presentation/pages/product_detail_page.dart';
 import '../../features/products/presentation/pages/workshop_search_products_page.dart';
 import '../../features/profile/application/garage_vehicle_controller.dart';
+import '../../features/profile/presentation/page/about_us_page.dart';
+import '../../features/profile/presentation/page/contact_support_page.dart';
+import '../../features/profile/presentation/page/delivery_addresses_page.dart';
+import '../../features/profile/presentation/page/favorite_workshops_page.dart';
 import '../../features/profile/presentation/page/loyalty_programs_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
+import '../../features/profile/presentation/page/simple_management_page.dart';
 import '../../features/profile/presentation/page/vehicles_page.dart';
 import '../../features/splash/startup_splash_page.dart';
 import '../../features/workshops/presentation/pages/workshop_appointment_page.dart';
@@ -128,6 +133,36 @@ class AppRouter {
       GoRoute(
         path: '/loyalty-programs',
         builder: (context, state) => const LoyaltyProgramsPage(),
+      ),
+      GoRoute(
+        path: FavoriteWorkshopsPage.routePath,
+        builder: (context, state) => const FavoriteWorkshopsPage(),
+      ),
+      GoRoute(
+        path: DeliveryAddressesPage.routePath,
+        builder: (context, state) {
+          final query = state.uri.queryParameters;
+          final openFormOnStart = query['add']?.toLowerCase() == 'true';
+          final closeAfterSave =
+              query['closeAfterSave']?.toLowerCase() == 'true';
+
+          return DeliveryAddressesPage(
+            openFormOnStart: openFormOnStart,
+            closeAfterSave: closeAfterSave,
+          );
+        },
+      ),
+      GoRoute(
+        path: ContactSupportPage.routePath,
+        builder: (context, state) => const ContactSupportPage(),
+      ),
+      GoRoute(
+        path: AboutUsPage.routePath,
+        builder: (context, state) => const AboutUsPage(),
+      ),
+      GoRoute(
+        path: SimpleManagementPage.routePath,
+        builder: (context, state) => const SimpleManagementPage(),
       ),
       GoRoute(
         path: '/workshops/:id',

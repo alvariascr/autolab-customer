@@ -179,9 +179,6 @@ class LocationUiPresenter {
       currentLocationSubtitle: currentLocationSubtitle,
       writeAddressTitle: l10n.locationSheetWriteAddressTitle,
       writeAddressSubtitle: l10n.locationSheetWriteAddressSubtitle,
-      homeTitle: l10n.locationSheetHomeTitle,
-      workTitle: l10n.locationSheetWorkTitle,
-      savedAddressSubtitle: l10n.locationSheetSavedAddressSubtitle,
     );
   }
 

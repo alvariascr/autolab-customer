@@ -54,16 +54,22 @@ import '../../features/payments/domain/usecases/get_laropay_payment_context.dart
 import '../../features/payments/domain/usecases/get_laropay_purchases.dart';
 import '../../features/payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../../features/products/application/product_inventory_refresh_notifier.dart';
+import '../../features/products/data/datasources/favorite_inventory_items_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source.dart';
 import '../../features/products/data/datasources/product_remote_data_source_impl.dart';
+import '../../features/products/data/repositories/favorite_inventory_items_repository_impl.dart';
 import '../../features/products/data/repositories/product_repository_impl.dart';
+import '../../features/products/domain/repositories/favorite_inventory_items_repository.dart';
 import '../../features/products/domain/repositories/product_repository.dart';
 import '../../features/products/domain/usecases/get_additional_products_by_workshop.dart';
 import '../../features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import '../../features/profile/application/garage_vehicle_controller.dart';
 import '../../features/profile/application/garage_vehicle_image_service.dart';
+import '../../features/profile/data/datasources/customer_location_remote_data_source.dart';
 import '../../features/profile/data/garage_vehicle_remote_data_source.dart';
+import '../../features/profile/data/repositories/customer_location_repository_impl.dart';
 import '../../features/profile/data/repositories/garage_vehicle_repository_impl.dart';
+import '../../features/profile/domain/repositories/customer_location_repository.dart';
 import '../../features/profile/domain/repositories/garage_vehicle_repository.dart';
 import '../../features/profile/domain/usecases/get_default_garage_vehicle.dart';
 import '../../features/profile/domain/usecases/get_garage_vehicles.dart';
@@ -71,11 +77,14 @@ import '../../features/profile/domain/usecases/set_default_garage_vehicle.dart';
 import '../../features/workshops/application/appointment_cubit.dart';
 import '../../features/workshops/application/workshop_discovery_query_store.dart';
 import '../../features/workshops/data/datasources/appointment_booking_remote_data_source.dart';
+import '../../features/workshops/data/datasources/favorite_workshops_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source.dart';
 import '../../features/workshops/data/datasources/workshop_remote_data_source_impl.dart';
 import '../../features/workshops/data/repositories/appointment_booking_repository_impl.dart';
+import '../../features/workshops/data/repositories/favorite_workshops_repository_impl.dart';
 import '../../features/workshops/data/repositories/workshop_repository_impl.dart';
 import '../../features/workshops/domain/repositories/appointment_booking_repository.dart';
+import '../../features/workshops/domain/repositories/favorite_workshops_repository.dart';
 import '../../features/workshops/domain/repositories/workshop_repository.dart';
 import '../../features/workshops/domain/usecases/book_service_appointment.dart';
 import '../../features/workshops/domain/usecases/get_booked_appointment_slots.dart';
@@ -188,6 +197,13 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<DeliveryAddressRepository>(
     () => DeliveryAddressRepositoryImpl(sl<ICartCheckoutRemoteDataSource>()),
   );
+  sl.registerLazySingleton<CustomerLocationRepository>(
+    () =>
+        CustomerLocationRepositoryImpl(sl<CustomerLocationRemoteDataSource>()),
+  );
+  sl.registerLazySingleton<CustomerLocationRemoteDataSource>(
+    () => CustomerLocationRemoteDataSource(sl<SupabaseClient>()),
+  );
   sl.registerLazySingleton<LoadDeliveryAddresses>(
     () => LoadDeliveryAddresses(sl<DeliveryAddressRepository>()),
   );
@@ -274,6 +290,9 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<WorkshopRemoteDataSource>(
     () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),
   );
+  sl.registerLazySingleton<FavoriteWorkshopsRemoteDataSource>(
+    () => FavoriteWorkshopsRemoteDataSource(sl<SupabaseClient>()),
+  );
   sl.registerLazySingleton<AppointmentBookingRemoteDataSource>(
     () => SupabaseAppointmentBookingRemoteDataSource(sl<SupabaseClient>()),
   );
@@ -289,8 +308,21 @@ void _registerFeatureDependencies() {
       featureLogger: sl<FeatureLogger>(),
     ),
   );
+  sl.registerLazySingleton<FavoriteWorkshopsRepository>(
+    () => FavoriteWorkshopsRepositoryImpl(
+      sl<FavoriteWorkshopsRemoteDataSource>(),
+    ),
+  );
   sl.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSourceImpl(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<FavoriteInventoryItemsRemoteDataSource>(
+    () => FavoriteInventoryItemsRemoteDataSource(sl<SupabaseClient>()),
+  );
+  sl.registerLazySingleton<FavoriteInventoryItemsRepository>(
+    () => FavoriteInventoryItemsRepositoryImpl(
+      sl<FavoriteInventoryItemsRemoteDataSource>(),
+    ),
   );
   sl.registerLazySingleton<ProductInventoryRefreshNotifier>(
     ProductInventoryRefreshNotifier.new,

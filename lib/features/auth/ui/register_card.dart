@@ -1,6 +1,7 @@
-import 'package:autolab_customer/features/auth/ui/terms_page.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/app_remote_settings.dart';
 import '../../../core/theme/autolab_customer.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
@@ -51,6 +52,7 @@ class RegisterCardState extends State<RegisterCard> {
   bool _isPasswordVisible = true;
   bool _isConfrimPasswordVisible = true;
   bool _acceptsTerms = false;
+  bool _isOpeningTerms = false;
   String? _localErrorMessage;
   bool _hideRemoteEmailError = false;
 
@@ -86,6 +88,40 @@ class RegisterCardState extends State<RegisterCard> {
       phone: _phoneCtrl.text.trim(),
       password: _passCtrl.text.trim(),
     );
+  }
+
+  Future<void> _openTermsAndConditions() async {
+    if (_isOpeningTerms) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+
+    setState(() {
+      _isOpeningTerms = true;
+    });
+
+    try {
+      final settings = await AppRemoteSettings.load();
+      final opened = await launchUrl(
+        settings.termsUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!mounted || opened) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningTerms = false;
+        });
+      }
+    }
   }
 
   void cleanRegistry() {
@@ -300,14 +336,9 @@ class RegisterCardState extends State<RegisterCard> {
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const TermsPage(),
-                                ),
-                              );
-                            },
+                            onTap: _isOpeningTerms
+                                ? null
+                                : _openTermsAndConditions,
                             child: Text(
                               l10n.authRegisterAcceptTermsLink,
                               style: AutolabCustomer.caption.copyWith(
@@ -318,6 +349,16 @@ class RegisterCardState extends State<RegisterCard> {
                               ),
                             ),
                           ),
+                          if (_isOpeningTerms) ...[
+                            const SizedBox(width: AutolabCustomer.spacingXs),
+                            const SizedBox.square(
+                              dimension: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AutolabCustomer.primary,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,16 +11,23 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../workshops/application/appointment_state.dart';
 import '../../../workshops/presentation/pages/workshop_appointment_page.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/favorite_inventory_items_repository.dart';
 import '../../domain/usecases/get_additional_products_by_workshop.dart';
+import '../controllers/inventory_favorite_controller.dart';
 import '../widgets/product_image.dart';
 import '../widgets/product_price_text.dart';
 import '../widgets/products_message.dart';
 import 'product_detail_hero.dart';
 
 class ServiceDetailContent extends StatefulWidget {
-  const ServiceDetailContent({super.key, required this.service});
+  const ServiceDetailContent({
+    super.key,
+    required this.service,
+    required this.favoriteRepository,
+  });
 
   final Product service;
+  final FavoriteInventoryItemsRepository favoriteRepository;
 
   @override
   State<ServiceDetailContent> createState() => _ServiceDetailContentState();
@@ -31,7 +40,82 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   final Map<String, int> _selectedQuantities = {};
   bool _includeProducts = false;
   bool _showProductsStep = false;
-  bool _isFavorite = false;
+  late final InventoryFavoriteController _favoriteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoriteController = InventoryFavoriteController(widget.favoriteRepository)
+      ..addListener(_onFavoriteChanged);
+    unawaited(_loadFavoriteStatus());
+  }
+
+  @override
+  void dispose() {
+    _favoriteController
+      ..removeListener(_onFavoriteChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant ServiceDetailContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service.id != widget.service.id) {
+      unawaited(_loadFavoriteStatus());
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    await _favoriteController.load(widget.service.id);
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_favoriteController.isLoading) {
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await _favoriteController.toggle(
+      itemId: widget.service.id,
+      itemType: widget.service.itemType,
+    );
+    if (!mounted) return;
+
+    if (result.isSuccess) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              result.isFavorite
+                  ? l10n.serviceFavoriteAdded
+                  : l10n.serviceFavoriteRemoved,
+            ),
+          ),
+        );
+      return;
+    }
+
+    if (result.failure == InventoryFavoriteFailure.authRequired) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.authErrorSessionExpired)));
+      context.go('/login');
+      return;
+    }
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.inventoryFavoriteError)));
+  }
+
+  void _onFavoriteChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   Future<List<Product>> _loadRelatedProducts() async {
     final result = await sl<GetAdditionalProductsByWorkshop>()(
@@ -113,10 +197,8 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
                   SliverToBoxAdapter(
                     child: ProductDetailHero(
                       product: service,
-                      isFavorite: _isFavorite,
-                      onFavoriteTap: () {
-                        setState(() => _isFavorite = !_isFavorite);
-                      },
+                      isFavorite: _favoriteController.isFavorite,
+                      onFavoriteTap: () => unawaited(_toggleFavorite()),
                     ),
                   ),
                 SliverPadding(
