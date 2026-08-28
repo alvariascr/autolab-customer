@@ -77,62 +77,70 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
               builder: (context, snapshot) {
                 final supportInfo = snapshot.data ?? AppRemoteSettings.fallback;
 
-                return GridView.count(
-                  crossAxisCount: 2,
+                final cards = [
+                  _SupportContactCard(
+                    icon: const FaIcon(FontAwesomeIcons.whatsapp),
+                    title: l10n.supportWhatsappTitle,
+                    subtitle: l10n.supportWhatsappSubtitle,
+                    onTap: () => _launchSupportUri(
+                      context,
+                      Uri.parse(
+                        'https://wa.me/506${supportInfo.whatsappPhone}',
+                      ),
+                    ),
+                  ),
+                  _SupportContactCard(
+                    icon: const Icon(Icons.phone_outlined),
+                    title: l10n.supportCallTitle,
+                    subtitle: l10n.supportCallSubtitle,
+                    onTap: () => _launchSupportUri(
+                      context,
+                      Uri(scheme: 'tel', path: supportInfo.callPhone),
+                    ),
+                  ),
+                  _SupportContactCard(
+                    icon: const Icon(Icons.mail_outline_rounded),
+                    title: l10n.supportEmailTitle,
+                    subtitle: l10n.supportEmailSubtitle,
+                    onTap: () => _launchSupportUri(
+                      context,
+                      Uri(
+                        scheme: 'mailto',
+                        path: supportInfo.email,
+                        queryParameters: {'subject': l10n.supportEmailSubject},
+                      ),
+                    ),
+                  ),
+                  _SupportContactCard(
+                    icon: const Icon(Icons.schedule_rounded),
+                    title: l10n.supportScheduleTitle,
+                    subtitle: supportInfo.scheduleText,
+                    onTap: () {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
+                          SnackBar(content: Text(supportInfo.scheduleText)),
+                        );
+                    },
+                  ),
+                ];
+
+                return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: AutolabCustomer.spacingSmd,
-                  mainAxisSpacing: AutolabCustomer.spacingSmd,
-                  childAspectRatio: 0.88,
-                  children: [
-                    _SupportContactCard(
-                      icon: const FaIcon(FontAwesomeIcons.whatsapp),
-                      title: l10n.supportWhatsappTitle,
-                      subtitle: l10n.supportWhatsappSubtitle,
-                      onTap: () => _launchSupportUri(
-                        context,
-                        Uri.parse(
-                          'https://wa.me/506${supportInfo.whatsappPhone}',
-                        ),
-                      ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: AutolabCustomer.spacingSmd,
+                    mainAxisSpacing: AutolabCustomer.spacingSmd,
+                    mainAxisExtent: AutolabCustomer.responsiveDouble(
+                      context,
+                      compact: 178,
+                      regular: 190,
+                      tablet: 210,
                     ),
-                    _SupportContactCard(
-                      icon: const Icon(Icons.phone_outlined),
-                      title: l10n.supportCallTitle,
-                      subtitle: l10n.supportCallSubtitle,
-                      onTap: () => _launchSupportUri(
-                        context,
-                        Uri(scheme: 'tel', path: supportInfo.callPhone),
-                      ),
-                    ),
-                    _SupportContactCard(
-                      icon: const Icon(Icons.mail_outline_rounded),
-                      title: l10n.supportEmailTitle,
-                      subtitle: l10n.supportEmailSubtitle,
-                      onTap: () => _launchSupportUri(
-                        context,
-                        Uri(
-                          scheme: 'mailto',
-                          path: supportInfo.email,
-                          queryParameters: {
-                            'subject': l10n.supportEmailSubject,
-                          },
-                        ),
-                      ),
-                    ),
-                    _SupportContactCard(
-                      icon: const Icon(Icons.schedule_rounded),
-                      title: l10n.supportScheduleTitle,
-                      subtitle: supportInfo.scheduleText,
-                      onTap: () {
-                        ScaffoldMessenger.of(context)
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(content: Text(supportInfo.scheduleText)),
-                          );
-                      },
-                    ),
-                  ],
+                  ),
+                  itemCount: cards.length,
+                  itemBuilder: (context, index) => cards[index],
                 );
               },
             ),
@@ -144,14 +152,16 @@ class _ContactSupportPageState extends State<ContactSupportPage> {
 
   Future<void> _launchSupportUri(BuildContext context, Uri uri) async {
     final l10n = AppLocalizations.of(context)!;
+    final errorMessage = l10n.settingsOpenLinkError;
+    final messenger = ScaffoldMessenger.of(context);
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (opened || !context.mounted) {
+    if (opened) {
       return;
     }
 
-    ScaffoldMessenger.of(context)
+    messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(l10n.settingsOpenLinkError)));
+      ..showSnackBar(SnackBar(content: Text(errorMessage)));
   }
 }
 
@@ -199,19 +209,23 @@ class _SupportBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AutolabCustomer.customerSoftSurfaceColor(context),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onPressed,
-        child: SizedBox.square(
-          dimension: 36,
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AutolabCustomer.customerSecondaryTextColor(context),
-            size: AutolabCustomer.iconSm,
+    return Semantics(
+      button: true,
+      label: MaterialLocalizations.of(context).backButtonTooltip,
+      child: Material(
+        color: AutolabCustomer.customerSoftSurfaceColor(context),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onPressed,
+          child: SizedBox.square(
+            dimension: 36,
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+              size: AutolabCustomer.iconSm,
+            ),
           ),
         ),
       ),
@@ -234,61 +248,68 @@ class _SupportContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AutolabCustomer.customerSoftSurfaceColor(context),
-      borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-        child: Ink(
-          padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
-            border: Border.all(
-              color: AutolabCustomer.customerBorderColor(context),
-            ),
+    return Semantics(
+      button: true,
+      label: '$title. $subtitle',
+      child: Container(
+        decoration: BoxDecoration(
+          color: AutolabCustomer.customerSoftSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+          border: Border.all(
+            color: AutolabCustomer.customerBorderColor(context),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SupportIconBadge(icon: icon),
-              const Spacer(),
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AutolabCustomer.bodyLarge.copyWith(
-                  color: AutolabCustomer.customerTextColor(context),
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: AutolabCustomer.spacingXs),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+        ),
+        child: Material(
+          color: AutolabCustomer.transparent,
+          borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AutolabCustomer.radiusCard),
+            child: Padding(
+              padding: const EdgeInsets.all(AutolabCustomer.spacingMd),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      subtitle,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: AutolabCustomer.caption.copyWith(
-                        color: AutolabCustomer.customerSecondaryTextColor(
-                          context,
-                        ),
-                        height: 1.35,
-                      ),
+                  _SupportIconBadge(icon: icon),
+                  const Spacer(),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AutolabCustomer.bodyLarge.copyWith(
+                      color: AutolabCustomer.customerTextColor(context),
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(width: AutolabCustomer.spacingSm),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AutolabCustomer.primary,
-                    size: AutolabCustomer.iconMd,
+                  const SizedBox(height: AutolabCustomer.spacingXs),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          subtitle,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: AutolabCustomer.caption.copyWith(
+                            color: AutolabCustomer.customerSecondaryTextColor(
+                              context,
+                            ),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AutolabCustomer.spacingSm),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AutolabCustomer.primary,
+                        size: AutolabCustomer.iconMd,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
