@@ -142,9 +142,13 @@ class AppRouter {
         path: DeliveryAddressesPage.routePath,
         builder: (context, state) {
           final query = state.uri.queryParameters;
+          final openFormOnStart = query['add']?.toLowerCase() == 'true';
+          final closeAfterSave =
+              query['closeAfterSave']?.toLowerCase() == 'true';
+
           return DeliveryAddressesPage(
-            openFormOnStart: query['add'] == 'true',
-            closeAfterSave: query['closeAfterSave'] == 'true',
+            openFormOnStart: openFormOnStart,
+            closeAfterSave: closeAfterSave,
           );
         },
       ),
