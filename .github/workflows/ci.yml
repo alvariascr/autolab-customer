@@ -23,7 +23,7 @@ jobs:
       - name: Checkout autolab_core
         uses: actions/checkout@v4
         with:
-          repository: BlueZoneCP/autolab-core
+          repository: AutoLabOfficial/autolab-core
           ref: develop
           path: autolab_core
           token: ${{ secrets.AUTOLAB_CORE_READ_TOKEN }}
