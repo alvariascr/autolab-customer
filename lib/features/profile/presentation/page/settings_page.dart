@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/config/app_remote_settings.dart';
@@ -20,6 +21,9 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  late final Future<PackageInfo> _packageInfoFuture =
+      PackageInfo.fromPlatform();
+
   Future<void> _openTermsAndConditions() async {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
@@ -135,7 +139,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       _SettingsActionTile(
                         icon: Icons.info_outline_rounded,
                         title: l10n.settingsVersion,
-                        trailingText: l10n.settingsComingSoon,
+                        trailing: _AppVersionText(
+                          packageInfoFuture: _packageInfoFuture,
+                        ),
                         showDivider: false,
                       ),
                     ],
@@ -168,6 +174,38 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AppVersionText extends StatelessWidget {
+  const _AppVersionText({required this.packageInfoFuture});
+
+  final Future<PackageInfo> packageInfoFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
+      context,
+    );
+
+    return FutureBuilder<PackageInfo>(
+      future: packageInfoFuture,
+      builder: (context, snapshot) {
+        final packageInfo = snapshot.data;
+        final versionText = packageInfo == null
+            ? '--'
+            : '${packageInfo.version}+${packageInfo.buildNumber}';
+
+        return Text(
+          versionText,
+          textAlign: TextAlign.right,
+          style: AutolabCustomer.caption.copyWith(
+            color: secondaryTextColor,
+            fontWeight: FontWeight.w700,
+          ),
+        );
+      },
     );
   }
 }

@@ -28,6 +28,7 @@ dependencies:
   # External links
   app_links: ^7.0.0
   http: ^1.2.2
+  package_info_plus: ^9.0.1
   url_launcher: ^6.3.0
 
   # Foundation package
