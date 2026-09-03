@@ -605,6 +605,8 @@ String _appointmentSubmitErrorMessage(
     AppointmentSubmitError.vehiclePlateRequiredForBooking =>
       l10n.appointmentVehiclePlateRequiredForBooking,
     AppointmentSubmitError.productsInvalid => l10n.appointmentProductsInvalid,
+    AppointmentSubmitError.productStockUnavailable =>
+      l10n.appointmentProductStockUnavailable,
     AppointmentSubmitError.bookingConfigurationFailed =>
       l10n.appointmentBookingConfigurationFailed,
     AppointmentSubmitError.bookingFailed => l10n.appointmentCreateFailed,

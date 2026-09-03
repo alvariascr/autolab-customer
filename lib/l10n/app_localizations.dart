@@ -3436,6 +3436,12 @@ abstract class AppLocalizations {
   /// **'Uno o más productos seleccionados ya no están disponibles. Actualiza la selección e intenta nuevamente.'**
   String get appointmentProductsInvalid;
 
+  /// No description provided for @appointmentProductStockUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay suficientes unidades disponibles de uno de los productos seleccionados.'**
+  String get appointmentProductStockUnavailable;
+
   /// No description provided for @weekdaySunday.
   ///
   /// In es, this message translates to:
