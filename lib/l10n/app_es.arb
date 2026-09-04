@@ -626,6 +626,7 @@
   "appointmentProductsOptionalMessage": "Puedes continuar sin agregar productos.",
   "appointmentProductsEmpty": "Este taller no tiene productos adicionales disponibles.",
   "appointmentProductsInvalid": "Uno o más productos seleccionados ya no están disponibles. Actualiza la selección e intenta nuevamente.",
+  "appointmentProductStockUnavailable": "No hay suficientes unidades disponibles de uno de los productos seleccionados.",
   "weekdaySunday": "Domingo",
   "weekdayMonday": "Lunes",
   "weekdayTuesday": "Martes",

@@ -29,6 +29,7 @@ enum AppointmentSubmitError {
   vehicleNotOwned,
   vehiclePlateRequiredForBooking,
   productsInvalid,
+  productStockUnavailable,
   bookingConfigurationFailed,
   bookingFailed,
 }

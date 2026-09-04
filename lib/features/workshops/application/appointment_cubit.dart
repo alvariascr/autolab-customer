@@ -899,6 +899,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
       return AppointmentSubmitError.productsInvalid;
     }
 
+    if (rawMessage.contains('appointment_product_stock_unavailable')) {
+      return AppointmentSubmitError.productStockUnavailable;
+    }
+
     if (rawMessage.contains('appointment_vehicle_plate_conflict')) {
       return AppointmentSubmitError.vehiclePlateConflict;
     }

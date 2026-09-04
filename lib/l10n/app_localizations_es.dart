@@ -1891,6 +1891,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Uno o más productos seleccionados ya no están disponibles. Actualiza la selección e intenta nuevamente.';
 
   @override
+  String get appointmentProductStockUnavailable =>
+      'No hay suficientes unidades disponibles de uno de los productos seleccionados.';
+
+  @override
   String get weekdaySunday => 'Domingo';
 
   @override

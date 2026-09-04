@@ -7,6 +7,7 @@ import '../../../../core/di/app_injection.dart';
 import '../../../../core/router/build_context_navigation.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
+import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../workshops/application/appointment_state.dart';
 import '../../../workshops/presentation/pages/workshop_appointment_page.dart';
@@ -435,10 +436,24 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   }
 
   void _changeQuantity(Product product, int delta) {
-    setState(() {
-      final currentQuantity = _selectedQuantities[product.id] ?? 0;
-      final nextQuantity = (currentQuantity + delta).clamp(0, 99);
+    final currentQuantity = _selectedQuantities[product.id] ?? 0;
+    final stock = product.currentStock;
+    // Mirrors the backend's coalesce(current_stock, 0) in
+    // book_service_appointment/create_cart_order: a missing stock value
+    // means "not purchasable", not "unlimited".
+    final maxQuantity = (stock != null && stock >= 0) ? stock : 0;
+    final nextQuantity = (currentQuantity + delta).clamp(0, maxQuantity);
 
+    if (delta > 0 && nextQuantity == currentQuantity) {
+      showAppSnackBar(
+        context,
+        message: AppLocalizations.of(context)!.cartStockLimitReached,
+        type: AppMessageType.warning,
+      );
+      return;
+    }
+
+    setState(() {
       if (nextQuantity == 0) {
         _selectedQuantities.remove(product.id);
       } else {

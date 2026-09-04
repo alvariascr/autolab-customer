@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -13,8 +15,10 @@ import '../../../navigation/navigation_handler.dart';
 import '../../../navigation/widgets/custom_bottom_navbar.dart';
 import '../../../notifications/presentation/pages/notifications_page.dart';
 import '../../../notifications/presentation/widgets/customer_notification_bell.dart';
+import '../../../products/domain/repositories/product_repository.dart';
 import '../../../workshops/domain/entities/booked_appointment_slot.dart';
 import '../../../workshops/domain/repositories/workshop_repository.dart';
+import '../../../workshops/domain/services/appointment_service_classifier.dart';
 import '../../../workshops/domain/services/workshop_availability_calculator.dart';
 import '../../../workshops/domain/usecases/get_booked_appointment_slots.dart';
 import '../../../workshops/domain/usecases/is_appointment_slot_available.dart';
@@ -1044,6 +1048,7 @@ class _RescheduleAppointmentSheetState
     extends State<_RescheduleAppointmentSheet> {
   final _availabilityCalculator = WorkshopAvailabilityCalculator();
   final _workshopRepository = sl<WorkshopRepository>();
+  final _productRepository = sl<ProductRepository>();
   final _getBookedAppointmentSlots = sl<GetBookedAppointmentSlots>();
   final _isAppointmentSlotAvailable = sl<IsAppointmentSlotAvailable>();
   int _availabilityRequestId = 0;
@@ -1057,6 +1062,15 @@ class _RescheduleAppointmentSheetState
   List<DateTime> _unavailableDates = const [];
   Map<DateTime, List<String>> _availableTimesByDate = const {};
 
+  // Appointment only carries serviceId/serviceName, not how long the
+  // service actually takes -- without this, the availability grid and the
+  // final confirm check both fall back to a guessed default duration, which
+  // can show (or accept) a time that doesn't actually have room for this
+  // specific service. Best-effort: if the lookup fails, everything below
+  // still falls back to that same guessed default, same as before this fix.
+  double? _serviceDurationHours;
+  bool _isInspectionService = false;
+
   @override
   void initState() {
     super.initState();
@@ -1065,7 +1079,41 @@ class _RescheduleAppointmentSheetState
       widget.appointment.scheduledAt.month,
     );
     _selectedDate = _dateOnly(widget.appointment.scheduledAt);
-    _loadAvailability(_focusedDate);
+    unawaited(_initializeAvailability());
+  }
+
+  Future<void> _initializeAvailability() async {
+    await _loadServiceDuration();
+    if (!mounted) {
+      return;
+    }
+    await _loadAvailability(_focusedDate);
+  }
+
+  Future<void> _loadServiceDuration() async {
+    // Bulk-fetches the workshop's full active catalog and filters by id
+    // client-side because ProductRepository has no single-item lookup
+    // (getActiveProducts/getActiveProductsByWorkshop only). Acceptable for
+    // now given catalog sizes in this app; revisit if a getById is added.
+    final result = await _productRepository.getActiveProductsByWorkshop(
+      widget.appointment.workshopId,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    result.fold((_) => null, (products) {
+      for (final product in products) {
+        if (product.id == widget.appointment.serviceId) {
+          setState(() {
+            _serviceDurationHours = product.estimatedDurationHours;
+            _isInspectionService =
+                AppointmentServiceClassifier.isInspectionService(product);
+          });
+          return;
+        }
+      }
+    });
   }
 
   Future<void> _loadAvailability(DateTime month) async {
@@ -1096,6 +1144,8 @@ class _RescheduleAppointmentSheetState
         workshop: workshop,
         month: monthStart,
         bookedSlots: _withoutCurrentAppointmentSlot(bookedSlots),
+        serviceDurationHours: _serviceDurationHours,
+        isInspectionService: _isInspectionService,
       );
 
       if (!mounted || requestId != _availabilityRequestId) {
@@ -1156,6 +1206,8 @@ class _RescheduleAppointmentSheetState
     final available = await _isAppointmentSlotAvailable(
       workshopId: widget.appointment.workshopId,
       scheduledDateTime: scheduledAt,
+      serviceDurationHours: _serviceDurationHours,
+      isInspectionService: _isInspectionService,
     );
     if (!mounted) {
       return;
