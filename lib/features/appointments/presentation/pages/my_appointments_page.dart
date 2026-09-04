@@ -1091,16 +1091,25 @@ class _RescheduleAppointmentSheetState
   }
 
   Future<void> _loadServiceDuration() async {
+    // Bulk-fetches the workshop's full active catalog and filters by id
+    // client-side because ProductRepository has no single-item lookup
+    // (getActiveProducts/getActiveProductsByWorkshop only). Acceptable for
+    // now given catalog sizes in this app; revisit if a getById is added.
     final result = await _productRepository.getActiveProductsByWorkshop(
       widget.appointment.workshopId,
     );
+    if (!mounted) {
+      return;
+    }
 
     result.fold((_) => null, (products) {
       for (final product in products) {
         if (product.id == widget.appointment.serviceId) {
-          _serviceDurationHours = product.estimatedDurationHours;
-          _isInspectionService =
-              AppointmentServiceClassifier.isInspectionService(product);
+          setState(() {
+            _serviceDurationHours = product.estimatedDurationHours;
+            _isInspectionService =
+                AppointmentServiceClassifier.isInspectionService(product);
+          });
           return;
         }
       }
