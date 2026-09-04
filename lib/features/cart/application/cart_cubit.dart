@@ -503,7 +503,12 @@ class CartCubit extends Cubit<CartState> {
         workshopId: resolvedWorkshopId,
       );
       _inventoryRefreshNotifier.notify();
-      emit(
+      // Persist immediately (not just emit): if the app is killed right
+      // after the order is created on the server -- e.g. backgrounded while
+      // Laropay's external browser has focus -- and the cart is never
+      // cleared, this guard must survive the relaunch so a retry reuses the
+      // existing order instead of creating a duplicate one.
+      _emitAndSave(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.initial,
           pendingCheckoutResult: result,

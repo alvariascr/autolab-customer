@@ -138,6 +138,36 @@ class CartCheckoutResult extends Equatable {
   final String orderNumber;
   final double totalAmount;
 
+  Map<String, dynamic> toJson() {
+    return {
+      'orderId': orderId,
+      'orderNumber': orderNumber,
+      'totalAmount': totalAmount,
+    };
+  }
+
+  static CartCheckoutResult? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    final orderId = json['orderId'] as String?;
+    final orderNumber = json['orderNumber'] as String?;
+    final totalAmount = json['totalAmount'];
+    if (orderId == null ||
+        orderId.isEmpty ||
+        orderNumber == null ||
+        totalAmount is! num) {
+      return null;
+    }
+
+    return CartCheckoutResult(
+      orderId: orderId,
+      orderNumber: orderNumber,
+      totalAmount: totalAmount.toDouble(),
+    );
+  }
+
   @override
   List<Object?> get props => [orderId, orderNumber, totalAmount];
 }
