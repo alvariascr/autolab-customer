@@ -55,6 +55,19 @@ begin
     raise exception using message = 'appointment_service_duration_required';
   end if;
 
+  -- book_service_appointment enforces this same 30-minute alignment on
+  -- p_scheduled_time before it ever reaches here; reschedule_customer_appointment
+  -- has no equivalent client-side picker constraint, so it must be
+  -- re-checked here to keep both entry points aligned to the same slot grid.
+  if extract(
+       minute from (p_scheduled_datetime at time zone 'America/Costa_Rica')
+     )::int not in (0, 30)
+     or extract(
+          second from (p_scheduled_datetime at time zone 'America/Costa_Rica')
+        )::int <> 0 then
+    raise exception using message = 'appointment_invalid_slot_interval';
+  end if;
+
   v_is_inspection_service := public.is_inspection_service_name(v_service_name);
 
   v_scheduled_end_datetime :=

@@ -438,7 +438,10 @@ class _ServiceDetailContentState extends State<ServiceDetailContent> {
   void _changeQuantity(Product product, int delta) {
     final currentQuantity = _selectedQuantities[product.id] ?? 0;
     final stock = product.currentStock;
-    final maxQuantity = (stock != null && stock >= 0) ? stock : 99;
+    // Mirrors the backend's coalesce(current_stock, 0) in
+    // book_service_appointment/create_cart_order: a missing stock value
+    // means "not purchasable", not "unlimited".
+    final maxQuantity = (stock != null && stock >= 0) ? stock : 0;
     final nextQuantity = (currentQuantity + delta).clamp(0, maxQuantity);
 
     if (delta > 0 && nextQuantity == currentQuantity) {

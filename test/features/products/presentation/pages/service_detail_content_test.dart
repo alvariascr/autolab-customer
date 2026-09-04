@@ -24,13 +24,18 @@ void main() {
     setUp(() {
       favoriteRepository = _MockFavoriteInventoryItemsRepository();
       getAdditionalProducts = _MockGetAdditionalProductsByWorkshop();
+      if (sl.isRegistered<GetAdditionalProductsByWorkshop>()) {
+        sl.unregister<GetAdditionalProductsByWorkshop>();
+      }
       sl.registerFactory<GetAdditionalProductsByWorkshop>(
         () => getAdditionalProducts,
       );
     });
 
     tearDown(() async {
-      await sl.unregister<GetAdditionalProductsByWorkshop>();
+      if (sl.isRegistered<GetAdditionalProductsByWorkshop>()) {
+        await sl.unregister<GetAdditionalProductsByWorkshop>();
+      }
     });
 
     Future<void> useTallViewport(WidgetTester tester) async {
@@ -82,6 +87,7 @@ void main() {
       // Tercer tap: ya no hay más stock, debe bloquear y avisar.
       await tester.tap(find.byIcon(Icons.add_rounded));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('2'), findsOneWidget);
       expect(
@@ -132,6 +138,45 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgets(
+      'bloquea el "+" de inmediato cuando el producto no tiene stock cargado (currentStock null)',
+      (tester) async {
+        await useTallViewport(tester);
+        final service = _service();
+        final relatedProduct = _relatedProduct(currentStock: null);
+
+        when(
+          () => favoriteRepository.isFavoriteInventoryItem(service.id),
+        ).thenAnswer((_) async => false);
+        when(
+          () => getAdditionalProducts(service.workshopId),
+        ).thenAnswer((_) async => Right([relatedProduct]));
+
+        await tester.pumpWidget(
+          _TestApp(
+            child: ServiceDetailContent(
+              service: service,
+              favoriteRepository: favoriteRepository,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        await tester.tap(find.text('SIGUIENTE'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text('1'), findsNothing);
+        expect(
+          find.text('No hay más unidades disponibles de este producto.'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }
 
@@ -178,7 +223,7 @@ Product _service() {
   );
 }
 
-Product _relatedProduct({required int currentStock}) {
+Product _relatedProduct({required int? currentStock}) {
   return Product(
     id: 'product-1',
     workshopId: 'workshop-1',
