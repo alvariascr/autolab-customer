@@ -40,100 +40,98 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
     }
 
-    testWidgets(
-      'bloquea el "+" al llegar al stock disponible del producto',
-      (tester) async {
-        await useTallViewport(tester);
-        final service = _service();
-        final relatedProduct = _relatedProduct(currentStock: 2);
+    testWidgets('bloquea el "+" al llegar al stock disponible del producto', (
+      tester,
+    ) async {
+      await useTallViewport(tester);
+      final service = _service();
+      final relatedProduct = _relatedProduct(currentStock: 2);
 
-        when(
-          () => favoriteRepository.isFavoriteInventoryItem(service.id),
-        ).thenAnswer((_) async => false);
-        when(() => getAdditionalProducts(service.workshopId)).thenAnswer(
-          (_) async => Right([relatedProduct]),
-        );
+      when(
+        () => favoriteRepository.isFavoriteInventoryItem(service.id),
+      ).thenAnswer((_) async => false);
+      when(
+        () => getAdditionalProducts(service.workshopId),
+      ).thenAnswer((_) async => Right([relatedProduct]));
 
-        await tester.pumpWidget(
-          _TestApp(
-            child: ServiceDetailContent(
-              service: service,
-              favoriteRepository: favoriteRepository,
-            ),
+      await tester.pumpWidget(
+        _TestApp(
+          child: ServiceDetailContent(
+            service: service,
+            favoriteRepository: favoriteRepository,
           ),
-        );
-        await tester.pump();
+        ),
+      );
+      await tester.pump();
 
-        await tester.tap(find.text('SIGUIENTE'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('SIGUIENTE'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Filtro de aceite'), findsOneWidget);
+      expect(find.text('Filtro de aceite'), findsOneWidget);
 
-        // Primer tap: 0 -> 1 unidad (aparece el control de cantidad).
-        await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
-        await tester.pump();
-        expect(find.text('1'), findsOneWidget);
+      // Primer tap: 0 -> 1 unidad (aparece el control de cantidad).
+      await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
+      await tester.pump();
+      expect(find.text('1'), findsOneWidget);
 
-        // Segundo tap: 1 -> 2 unidades (llega exacto al stock disponible).
-        await tester.tap(find.byIcon(Icons.add_rounded));
-        await tester.pump();
-        expect(find.text('2'), findsOneWidget);
+      // Segundo tap: 1 -> 2 unidades (llega exacto al stock disponible).
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pump();
+      expect(find.text('2'), findsOneWidget);
 
-        // Tercer tap: ya no hay más stock, debe bloquear y avisar.
-        await tester.tap(find.byIcon(Icons.add_rounded));
-        await tester.pump();
+      // Tercer tap: ya no hay más stock, debe bloquear y avisar.
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pump();
 
-        expect(find.text('2'), findsOneWidget);
-        expect(
-          find.text('No hay más unidades disponibles de este producto.'),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(find.text('2'), findsOneWidget);
+      expect(
+        find.text('No hay más unidades disponibles de este producto.'),
+        findsOneWidget,
+      );
+    });
 
-    testWidgets(
-      'permite reducir la cantidad sin activar el aviso de stock',
-      (tester) async {
-        await useTallViewport(tester);
-        final service = _service();
-        final relatedProduct = _relatedProduct(currentStock: 5);
+    testWidgets('permite reducir la cantidad sin activar el aviso de stock', (
+      tester,
+    ) async {
+      await useTallViewport(tester);
+      final service = _service();
+      final relatedProduct = _relatedProduct(currentStock: 5);
 
-        when(
-          () => favoriteRepository.isFavoriteInventoryItem(service.id),
-        ).thenAnswer((_) async => false);
-        when(() => getAdditionalProducts(service.workshopId)).thenAnswer(
-          (_) async => Right([relatedProduct]),
-        );
+      when(
+        () => favoriteRepository.isFavoriteInventoryItem(service.id),
+      ).thenAnswer((_) async => false);
+      when(
+        () => getAdditionalProducts(service.workshopId),
+      ).thenAnswer((_) async => Right([relatedProduct]));
 
-        await tester.pumpWidget(
-          _TestApp(
-            child: ServiceDetailContent(
-              service: service,
-              favoriteRepository: favoriteRepository,
-            ),
+      await tester.pumpWidget(
+        _TestApp(
+          child: ServiceDetailContent(
+            service: service,
+            favoriteRepository: favoriteRepository,
           ),
-        );
-        await tester.pump();
+        ),
+      );
+      await tester.pump();
 
-        await tester.tap(find.text('SIGUIENTE'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('SIGUIENTE'));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
-        await tester.pump();
-        await tester.tap(find.byIcon(Icons.add_rounded));
-        await tester.pump();
-        expect(find.text('2'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pump();
+      expect(find.text('2'), findsOneWidget);
 
-        await tester.tap(find.byIcon(Icons.remove_rounded));
-        await tester.pump();
+      await tester.tap(find.byIcon(Icons.remove_rounded));
+      await tester.pump();
 
-        expect(find.text('1'), findsOneWidget);
-        expect(
-          find.text('No hay más unidades disponibles de este producto.'),
-          findsNothing,
-        );
-      },
-    );
+      expect(find.text('1'), findsOneWidget);
+      expect(
+        find.text('No hay más unidades disponibles de este producto.'),
+        findsNothing,
+      );
+    });
   });
 }
 
