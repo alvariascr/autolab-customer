@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../products/application/product_inventory_refresh_notifier.dart';
@@ -58,6 +59,12 @@ class CartCubit extends Cubit<CartState> {
   final CartItemsService _itemsService;
   final CartPersistence _persistence;
   late final Future<void> _initialization;
+
+  /// Exposed for tests that need to wait deterministically for the initial
+  /// persisted-cart load instead of relying on a fixed delay.
+  @visibleForTesting
+  Future<void> get initialized => _initialization;
+
   late final StreamSubscription<CartState> _persistenceSubscription;
   var _sessionVersion = 0;
   var _cartMutationVersion = 0;
@@ -503,17 +510,19 @@ class CartCubit extends Cubit<CartState> {
         workshopId: resolvedWorkshopId,
       );
       _inventoryRefreshNotifier.notify();
-      // Persist immediately (not just emit): if the app is killed right
-      // after the order is created on the server -- e.g. backgrounded while
-      // Laropay's external browser has focus -- and the cart is never
-      // cleared, this guard must survive the relaunch so a retry reuses the
-      // existing order instead of creating a duplicate one.
-      _emitAndSave(
-        state.copyWith(
-          checkoutStatus: CartCheckoutStatus.initial,
-          pendingCheckoutResult: result,
-        ),
+      // Persist immediately and WAIT for the write (not _emitAndSave's
+      // fire-and-forget save): if the app is killed right after the order
+      // is created on the server -- e.g. backgrounded while Laropay's
+      // external browser has focus -- this guard must already be on disk
+      // before the caller can proceed to launch that browser, or the same
+      // duplicate-order race just reopens in the gap before the write lands.
+      final nextState = state.copyWith(
+        checkoutStatus: CartCheckoutStatus.initial,
+        pendingCheckoutResult: result,
       );
+      _cartMutationVersion++;
+      emit(nextState);
+      await _enqueueSave(nextState);
       return result;
     } catch (error) {
       emit(

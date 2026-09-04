@@ -69,7 +69,12 @@ begin
   limit 1;
 
   if found then
-    if v_existing.amount is distinct from p_amount then
+    -- Round to cents before comparing: p_amount arrives as an
+    -- unconstrained numeric (recomputed client/edge-side from live order
+    -- totals), while v_existing.amount is already numeric(12,2). Comparing
+    -- them raw would flag floating-point noise (e.g. 44999.999999997) as a
+    -- "changed" amount and expire/regenerate a link for no real reason.
+    if v_existing.amount is distinct from round(p_amount, 2) then
       -- The order's total changed since this link was generated (e.g. a
       -- product was added/removed while the link sat unpaid). It no longer
       -- reflects what the customer should pay, so it can't be reused.

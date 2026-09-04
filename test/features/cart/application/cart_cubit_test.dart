@@ -184,7 +184,7 @@ void main() {
         await firstCubit.close();
         await relaunchedCubit.close();
       });
-      await Future<void>.delayed(Duration.zero);
+      await relaunchedCubit.initialized;
 
       final retryResult = await relaunchedCubit.createOrder(
         workshopId: 'workshop-a',

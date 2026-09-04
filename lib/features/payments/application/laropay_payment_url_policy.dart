@@ -11,11 +11,23 @@ class LaropayPaymentUrlPolicy {
     'LAROPAY_GATEWAY_HOSTS',
   );
 
-  static final Set<String> _allowedHosts = _allowedHostsEnv
-      .split(',')
-      .map((host) => host.trim().toLowerCase())
-      .where((host) => host.isNotEmpty)
-      .toSet();
+  static final Set<String> _allowedHosts = _buildAllowedHosts();
+
+  static Set<String> _buildAllowedHosts() {
+    final hosts = _allowedHostsEnv
+        .split(',')
+        .map((host) => host.trim().toLowerCase())
+        .where((host) => host.isNotEmpty)
+        .toSet();
+
+    assert(
+      hosts.isNotEmpty,
+      'LAROPAY_GATEWAY_HOSTS no está configurado para este build; '
+      '"reabrir mi link de pago" fallará siempre hasta que se defina.',
+    );
+
+    return hosts;
+  }
 
   static bool isAllowed(Uri? uri) {
     if (uri == null || !uri.isScheme('https')) {

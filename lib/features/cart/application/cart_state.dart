@@ -245,7 +245,9 @@ class CartState extends Equatable {
       selectedDeliveryAddressId:
           json['selectedDeliveryAddressId'] as String? ?? '',
       pendingCheckoutResult: CartCheckoutResult.fromJson(
-        json['pendingCheckoutResult'] as Map<String, dynamic>?,
+        json['pendingCheckoutResult'] is Map<String, dynamic>
+            ? json['pendingCheckoutResult'] as Map<String, dynamic>
+            : null,
       ),
     );
   }
