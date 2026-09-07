@@ -720,9 +720,17 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     // clock days (see WorkshopAvailabilityCalculator). Comparing it against
     // the device's own local "today" mixes two different clocks -- use
     // Costa Rica's current day instead so both sides agree.
+    //
+    // Both sides are built with DateTime.utc (not the local constructor):
+    // nowInCostaRica()'s year/month/day already correctly represent Costa
+    // Rica's calendar day, but the local DateTime constructor would still
+    // reinterpret those bare fields using the DEVICE's own timezone offset
+    // to compute midnight -- using .utc pins that midnight to a fixed
+    // reference instead, so the day-level comparison never depends on the
+    // device's own timezone at all.
     final today = nowInCostaRica();
-    final todayDate = DateTime(today.year, today.month, today.day);
-    final selectedDate = DateTime(date.year, date.month, date.day);
+    final todayDate = DateTime.utc(today.year, today.month, today.day);
+    final selectedDate = DateTime.utc(date.year, date.month, date.day);
 
     return selectedDate.isBefore(todayDate);
   }

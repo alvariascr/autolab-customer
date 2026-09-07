@@ -1,3 +1,4 @@
+import 'package:autolab_customer/core/utils/costa_rica_time.dart';
 import 'package:autolab_customer/features/products/domain/entities/product.dart';
 import 'package:autolab_customer/features/products/domain/repositories/product_repository.dart';
 import 'package:autolab_customer/features/products/domain/usecases/get_additional_products_by_workshop.dart';
@@ -73,6 +74,16 @@ void main() {
     cubit.selectDate(DateTime(2099, 1, 1));
 
     expect(cubit.state.selectedDate, DateTime(2099, 1, 1));
+    expect(cubit.state.submitError, isNull);
+  });
+
+  test('selectDate acepta la fecha de hoy en Costa Rica', () {
+    final crToday = nowInCostaRica();
+    final todayDate = DateTime(crToday.year, crToday.month, crToday.day);
+
+    cubit.selectDate(todayDate);
+
+    expect(cubit.state.selectedDate, todayDate);
     expect(cubit.state.submitError, isNull);
   });
 
