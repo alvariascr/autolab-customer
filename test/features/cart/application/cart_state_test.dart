@@ -8,6 +8,9 @@ void main() {
     test('forWorkshop no hereda una tarifa global de otro taller', () {
       final state = CartState(
         currentWorkshopDeliveryFee: 2500,
+        // La tarifa cacheada pertenece a workshop-a (recién refrescada para
+        // ese taller); pedir la vista de workshop-b no debe heredarla.
+        currentWorkshopDeliveryFeeWorkshopId: 'workshop-a',
         items: [
           CartItem(
             product: _product(
@@ -34,6 +37,30 @@ void main() {
       expect(workshopState.items.single.product.workshopId, 'workshop-b');
       expect(workshopState.currentWorkshopDeliveryFee, isNull);
     });
+
+    test(
+      'forWorkshop sí conserva la tarifa cuando pertenece al taller pedido',
+      () {
+        final state = CartState(
+          currentWorkshopDeliveryFee: 2500,
+          currentWorkshopDeliveryFeeWorkshopId: 'workshop-a',
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        final workshopState = state.forWorkshop('workshop-a');
+
+        expect(workshopState.currentWorkshopDeliveryFee, 2500);
+      },
+    );
 
     test(
       'usa un producto con metadata válida como representante del taller',

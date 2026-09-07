@@ -197,6 +197,35 @@ void main() {
         reason: 'reintentar tras un reinicio no debe crear una segunda orden',
       );
     });
+
+    test('addProductAndPersist no pierde un producto si se llama dos veces en '
+        'paralelo (doble tap en "Comprar")', () async {
+      final cubit = _cartCubit(
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500},
+        ),
+      );
+      addTearDown(cubit.close);
+      await cubit.initialized;
+
+      // Ninguno de los dos await -- simula el doble tap real: ambas
+      // llamadas arrancan antes de que la primera termine de guardar.
+      final results = await Future.wait([
+        cubit.addProductAndPersist(
+          _product(id: 'product-a', workshopId: 'workshop-a'),
+        ),
+        cubit.addProductAndPersist(
+          _product(id: 'product-b', workshopId: 'workshop-a'),
+        ),
+      ]);
+
+      expect(results, everyElement(CartAddProductStatus.added));
+      expect(
+        cubit.state.items.map((item) => item.product.id).toSet(),
+        {'product-a', 'product-b'},
+        reason: 'ambos productos deben sobrevivir, ninguno se pisa',
+      );
+    });
   });
 }
 

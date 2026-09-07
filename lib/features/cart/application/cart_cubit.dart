@@ -92,26 +92,21 @@ class CartCubit extends Cubit<CartState> {
   }) async {
     await _initialization;
 
-    final baseState = await _persistence.load() ?? state;
-    final update = _itemsService.addProduct(
-      baseState,
-      product,
-      quantity: quantity,
-    );
-    if (!update.wasChanged) {
-      return update.status;
-    }
-
-    final nextState = baseState.copyWith(
-      items: update.items,
-      homeDelivery: update.startedNewCart ? false : null,
-      clearPendingCheckoutResult: true,
-    );
-    _cartMutationVersion++;
-    emit(nextState);
-    await _enqueueSave(nextState);
-
-    return update.status;
+    // Delegates to the synchronous addProduct instead of independently
+    // re-reading the cart from disk (the previous implementation's bug):
+    // CartCubit is a singleton (see app_injection.dart), so `state` is
+    // always at least as fresh as disk once _initialization has resolved
+    // -- every mutation writes through both. Because addProduct itself has
+    // no `await` before its own emit, Dart's single-threaded event loop
+    // guarantees two overlapping calls to this method can never interleave
+    // their read-modify-write of `state`, so no explicit locking is
+    // needed. (The old version's disk re-read broke that guarantee: two
+    // concurrent reads could both complete before either write landed, so
+    // whichever call's write landed last silently discarded the other's
+    // added product.)
+    final status = addProduct(product, quantity: quantity);
+    await _pendingSave;
+    return status;
   }
 
   bool increaseQuantity(String productId) {
@@ -403,7 +398,12 @@ class CartCubit extends Cubit<CartState> {
 
     try {
       final deliveryFee = await _getWorkshopDeliveryFee(targetWorkshopId);
-      _emitAndSave(state.copyWith(currentWorkshopDeliveryFee: deliveryFee));
+      _emitAndSave(
+        state.copyWith(
+          currentWorkshopDeliveryFee: deliveryFee,
+          currentWorkshopDeliveryFeeWorkshopId: targetWorkshopId,
+        ),
+      );
       return true;
     } catch (_) {
       // Keep the persisted item fee as a fallback; checkout RPC remains authoritative.

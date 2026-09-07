@@ -17,6 +17,7 @@ class CartState extends Equatable {
     this.selectedDeliveryAddressId = '',
     this.deliveryAddresses = const [],
     this.currentWorkshopDeliveryFee,
+    this.currentWorkshopDeliveryFeeWorkshopId,
     this.deliveryAddressesError,
     this.checkoutStatus = CartCheckoutStatus.initial,
     this.checkoutError,
@@ -36,6 +37,13 @@ class CartState extends Equatable {
   final String selectedDeliveryAddressId;
   final List<CustomerDeliveryAddress> deliveryAddresses;
   final double? currentWorkshopDeliveryFee;
+  // Which workshop currentWorkshopDeliveryFee was fetched for. Needed
+  // because refreshWorkshopDeliveryFee() is async: forWorkshop() can be
+  // called (via a rebuild) for a different workshop than the one whose fee
+  // is currently cached, in the brief window before that fetch resolves --
+  // without this, forWorkshop() would have no way to tell whether the
+  // cached fee actually belongs to the workshop being requested.
+  final String? currentWorkshopDeliveryFeeWorkshopId;
   final String? deliveryAddressesError;
   final CartCheckoutStatus checkoutStatus;
   final String? checkoutError;
@@ -113,6 +121,21 @@ class CartState extends Equatable {
       deliveryPhoneNumber: deliveryPhoneNumber,
       selectedDeliveryAddressId: selectedDeliveryAddressId,
       deliveryAddresses: deliveryAddresses,
+      // Only forward the cached fee if it actually belongs to this
+      // workshop -- otherwise the checkout summary could briefly show one
+      // workshop's fee mislabeled as another's (see the field's doc
+      // comment). Without this check at all, the summary previously always
+      // fell back to the stale per-item delivery fee captured when the
+      // product was added, silently ignoring whatever
+      // refreshWorkshopDeliveryFee() just fetched.
+      currentWorkshopDeliveryFee:
+          currentWorkshopDeliveryFeeWorkshopId == trimmedWorkshopId
+          ? currentWorkshopDeliveryFee
+          : null,
+      currentWorkshopDeliveryFeeWorkshopId:
+          currentWorkshopDeliveryFeeWorkshopId == trimmedWorkshopId
+          ? currentWorkshopDeliveryFeeWorkshopId
+          : null,
       deliveryAddressesError: deliveryAddressesError,
       checkoutStatus: checkoutStatus,
       checkoutError: checkoutError,
@@ -149,6 +172,7 @@ class CartState extends Equatable {
     String? selectedDeliveryAddressId,
     List<CustomerDeliveryAddress>? deliveryAddresses,
     double? currentWorkshopDeliveryFee,
+    String? currentWorkshopDeliveryFeeWorkshopId,
     String? deliveryAddressesError,
     CartCheckoutStatus? checkoutStatus,
     String? checkoutError,
@@ -187,6 +211,10 @@ class CartState extends Equatable {
       currentWorkshopDeliveryFee: clearCurrentWorkshopDeliveryFee
           ? null
           : currentWorkshopDeliveryFee ?? this.currentWorkshopDeliveryFee,
+      currentWorkshopDeliveryFeeWorkshopId: clearCurrentWorkshopDeliveryFee
+          ? null
+          : currentWorkshopDeliveryFeeWorkshopId ??
+                this.currentWorkshopDeliveryFeeWorkshopId,
       deliveryAddressesError: clearDeliveryAddressesError
           ? null
           : deliveryAddressesError ?? this.deliveryAddressesError,
@@ -265,6 +293,7 @@ class CartState extends Equatable {
     selectedDeliveryAddressId,
     deliveryAddresses,
     currentWorkshopDeliveryFee,
+    currentWorkshopDeliveryFeeWorkshopId,
     deliveryAddressesError,
     checkoutStatus,
     checkoutError,
