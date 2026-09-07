@@ -211,6 +211,13 @@ class CartState extends Equatable {
       'deliveryExactAddress': deliveryExactAddress,
       'deliveryPhoneNumber': deliveryPhoneNumber,
       'selectedDeliveryAddressId': selectedDeliveryAddressId,
+      // Persisted so a checkout that succeeded on the server but got
+      // interrupted before the cart could be cleared (app killed while
+      // Laropay's external browser has focus, etc.) is remembered across a
+      // relaunch -- otherwise a retry with the same untouched cart creates a
+      // second real order for the same products.
+      if (pendingCheckoutResult != null)
+        'pendingCheckoutResult': pendingCheckoutResult!.toJson(),
     };
   }
 
@@ -237,6 +244,11 @@ class CartState extends Equatable {
       deliveryPhoneNumber: json['deliveryPhoneNumber'] as String? ?? '',
       selectedDeliveryAddressId:
           json['selectedDeliveryAddressId'] as String? ?? '',
+      pendingCheckoutResult: CartCheckoutResult.fromJson(
+        json['pendingCheckoutResult'] is Map<String, dynamic>
+            ? json['pendingCheckoutResult'] as Map<String, dynamic>
+            : null,
+      ),
     );
   }
 

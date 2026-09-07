@@ -148,6 +148,55 @@ void main() {
         expect(cubit.state.checkoutStatus.isLoading, isFalse);
       },
     );
+
+    test('no crea una orden duplicada si la app reinicia justo después de '
+        'crear la orden pero antes de vaciar el carrito', () async {
+      final cartRepository = _FakeCartRepository();
+      final sharedPersistence = _MemoryCartPersistence();
+      final firstCubit = _cartCubit(
+        cartRepository: cartRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500},
+        ),
+        persistence: sharedPersistence,
+      );
+
+      firstCubit.addProduct(
+        _product(id: 'product-a', workshopId: 'workshop-a'),
+      );
+      final firstResult = await firstCubit.createOrder(
+        workshopId: 'workshop-a',
+      );
+      expect(firstResult, isNotNull);
+      expect(cartRepository.createOrderCallCount, 1);
+
+      // Simula que la app murió justo acá -- la orden ya se creó en el
+      // servidor, pero el carrito nunca llegó a vaciarse. Un cubit nuevo
+      // (el proceso relanzado) carga el mismo carrito persistido.
+      final relaunchedCubit = _cartCubit(
+        cartRepository: cartRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500},
+        ),
+        persistence: sharedPersistence,
+      );
+      addTearDown(() async {
+        await firstCubit.close();
+        await relaunchedCubit.close();
+      });
+      await relaunchedCubit.initialized;
+
+      final retryResult = await relaunchedCubit.createOrder(
+        workshopId: 'workshop-a',
+      );
+
+      expect(retryResult, firstResult);
+      expect(
+        cartRepository.createOrderCallCount,
+        1,
+        reason: 'reintentar tras un reinicio no debe crear una segunda orden',
+      );
+    });
   });
 }
 
@@ -155,6 +204,7 @@ CartCubit _cartCubit({
   CartRepository? cartRepository,
   ProductRepository? productRepository,
   required WorkshopRepository workshopRepository,
+  CartPersistence? persistence,
 }) {
   final deliveryAddressRepository = _FakeDeliveryAddressRepository();
 
@@ -169,7 +219,7 @@ CartCubit _cartCubit({
     createCartOrder: CreateCartOrder(cartRepository ?? _FakeCartRepository()),
     inventoryRefreshNotifier: ProductInventoryRefreshNotifier(),
     productRepository: productRepository ?? _FakeProductRepository(),
-    persistence: _MemoryCartPersistence(),
+    persistence: persistence ?? _MemoryCartPersistence(),
   );
 }
 
@@ -197,25 +247,33 @@ Product _product({required String id, required String workshopId}) {
   );
 }
 
+/// Round-trips every saved cart through toJson/fromJson (like the real
+/// SharedPreferences-backed persistence would), instead of just keeping the
+/// in-memory CartState object around -- otherwise a field that toJson forgets
+/// to serialize would still "survive" in these tests via object identity,
+/// hiding exactly the kind of bug this fake exists to catch.
 class _MemoryCartPersistence extends CartPersistence {
   final _controller = StreamController<CartState>.broadcast();
-  CartState? _cart;
+  Map<String, dynamic>? _cartJson;
 
   @override
   Stream<CartState> watch() => _controller.stream;
 
   @override
-  Future<CartState?> load() async => _cart;
+  Future<CartState?> load() async {
+    final cartJson = _cartJson;
+    return cartJson == null ? null : CartState.fromJson(cartJson);
+  }
 
   @override
   Future<void> save(CartState cart) async {
-    _cart = cart;
+    _cartJson = cart.toJson();
     _controller.add(cart);
   }
 
   @override
   Future<void> clear() async {
-    _cart = null;
+    _cartJson = null;
     _controller.add(const CartState());
   }
 }

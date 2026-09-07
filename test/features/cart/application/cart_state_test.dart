@@ -1,4 +1,5 @@
 import 'package:autolab_customer/features/cart/application/cart_state.dart';
+import 'package:autolab_customer/features/cart/domain/entities/cart_checkout.dart';
 import 'package:autolab_customer/features/products/domain/entities/product.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -88,6 +89,52 @@ void main() {
       expect(identical(firstRead, secondRead), isTrue);
       expect(firstRead, hasLength(1));
       expect(firstRead.single.workshopId, 'workshop-a');
+    });
+
+    test(
+      'preserva pendingCheckoutResult a través de un ciclo de toJson/fromJson',
+      () {
+        final state = CartState(
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+          ],
+          pendingCheckoutResult: const CartCheckoutResult(
+            orderId: 'order-id',
+            orderNumber: 'order-number',
+            totalAmount: 1500,
+          ),
+        );
+
+        final restored = CartState.fromJson(state.toJson());
+
+        expect(restored.pendingCheckoutResult, state.pendingCheckoutResult);
+      },
+    );
+
+    test('fromJson sin pendingCheckoutResult persistido queda en null', () {
+      final state = CartState(
+        items: [
+          CartItem(
+            product: _product(
+              id: 'product-a',
+              workshopId: 'workshop-a',
+              deliveryFee: 2500,
+            ),
+            quantity: 1,
+          ),
+        ],
+      );
+
+      final restored = CartState.fromJson(state.toJson());
+
+      expect(restored.pendingCheckoutResult, isNull);
     });
   });
 }
