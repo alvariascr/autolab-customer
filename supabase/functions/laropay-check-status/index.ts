@@ -599,6 +599,7 @@ function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {
     return null;
   }
 
+  let hasPaidAuthorization = false;
   let hasDeclinedAuthorization = false;
   for (const item of value) {
     if (item === null || typeof item !== "object") {
@@ -606,19 +607,11 @@ function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {
     }
 
     const authorization = item as Record<string, unknown>;
-    const code = stringValue(
-      authorization.autorizationResponseCode ??
-        authorization.authorizationResponseCode,
-    );
 
-    if (code === "00") {
-      return "paid";
-    }
-
-    // Checked unconditionally: the cancellation description is the
-    // authoritative signal regardless of whether Laropay also populated
-    // autorizationResponseCode for this authorization -- a cancellation
-    // with an empty code must still be detected, not silently ignored.
+    // Checked before the "00" success code, and for every entry rather than
+    // stopping at the first "00": a later authorization in the same array
+    // can report a reversal/cancellation of an earlier successful one, and
+    // that signal must win regardless of where it appears in the array.
     if (
       isExplicitCancellationDescription(
         authorization.autorizationResponseCodeDescription ??
@@ -628,9 +621,20 @@ function statusFromAuthorizations(value: unknown): LaropayStatusOutcome | null {
       return "cancelled";
     }
 
-    if (code !== "") {
+    const code = stringValue(
+      authorization.autorizationResponseCode ??
+        authorization.authorizationResponseCode,
+    );
+
+    if (code === "00") {
+      hasPaidAuthorization = true;
+    } else if (code !== "") {
       hasDeclinedAuthorization = true;
     }
+  }
+
+  if (hasPaidAuthorization) {
+    return "paid";
   }
 
   return hasDeclinedAuthorization ? "rejected" : null;
@@ -678,15 +682,18 @@ function resolveFinalStatus(input: {
   verifyOutcome: LaropayStatusOutcome;
   certifierOutcome: LaropayStatusOutcome | null;
 }): LaropayStatusOutcome {
-  if (input.certifierOutcome === "paid" || input.verifyOutcome === "paid") {
-    return "paid";
-  }
-
+  // An explicit cancellation is checked ahead of "paid": it's a stronger
+  // business signal than an authorization code, and should win even if a
+  // "paid" outcome was also present from the same or the other source.
   if (
     input.certifierOutcome === "cancelled" ||
     input.verifyOutcome === "cancelled"
   ) {
     return "cancelled";
+  }
+
+  if (input.certifierOutcome === "paid" || input.verifyOutcome === "paid") {
+    return "paid";
   }
 
   if (

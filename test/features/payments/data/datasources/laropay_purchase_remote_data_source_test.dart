@@ -14,6 +14,7 @@ void main() {
     final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
       client,
       currentUserIdProvider: () => 'user-1',
+      orderLookup: (_, _) async => null,
       statusInvoker: (paymentLinkId) async {
         invokedId = paymentLinkId;
         return FunctionResponse(
@@ -55,6 +56,7 @@ void main() {
       final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
         client,
         currentUserIdProvider: () => 'user-1',
+        orderLookup: (_, _) async => null,
         statusInvoker: (_) async => FunctionResponse(
           status: 200,
           data: {
@@ -88,11 +90,91 @@ void main() {
   );
 
   test(
+    'completa los campos order* con la orden asociada al payment link',
+    () async {
+      String? lookedUpPaymentLinkId;
+      String? lookedUpUserId;
+      final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+        client,
+        currentUserIdProvider: () => 'user-1',
+        orderLookup: (paymentLinkId, userId) async {
+          lookedUpPaymentLinkId = paymentLinkId;
+          lookedUpUserId = userId;
+          return {
+            'order_number': 'ORD-100',
+            'payment_status': 'partial',
+            'total_amount': 20000,
+            'paid_amount': 5000,
+            'remaining_amount': 15000,
+          };
+        },
+        statusInvoker: (_) async => FunctionResponse(
+          status: 200,
+          data: const {
+            'id': 'payment-1',
+            'amount': 12000,
+            'currency_code': 'CRC',
+            'link_id': r'$$ABC',
+            'link_url': 'https://pay.test/link',
+            'status': 'pending',
+            'response_code': '00',
+            'response_description': 'OK',
+            'reject_reason': '',
+          },
+        ),
+      );
+
+      final purchase = await dataSource.refreshPurchaseStatus('payment-1');
+
+      expect(lookedUpPaymentLinkId, 'payment-1');
+      expect(lookedUpUserId, 'user-1');
+      expect(purchase.orderNumber, 'ORD-100');
+      expect(purchase.orderPaymentStatus, 'partial');
+      expect(purchase.orderTotalAmount, 20000);
+      expect(purchase.orderPaidAmount, 5000);
+      expect(purchase.orderRemainingAmount, 15000);
+    },
+  );
+
+  test(
+    'no falla refreshPurchaseStatus si orderLookup retorna null o la orden no existe',
+    () async {
+      final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+        client,
+        currentUserIdProvider: () => 'user-1',
+        orderLookup: (_, _) async => null,
+        statusInvoker: (_) async => FunctionResponse(
+          status: 200,
+          data: const {
+            'id': 'payment-1',
+            'amount': 12000,
+            'currency_code': 'CRC',
+            'link_id': r'$$ABC',
+            'link_url': 'https://pay.test/link',
+            'status': 'pending',
+            'response_code': '00',
+            'response_description': 'OK',
+            'reject_reason': '',
+          },
+        ),
+      );
+
+      final purchase = await dataSource.refreshPurchaseStatus('payment-1');
+
+      expect(purchase.id, 'payment-1');
+      expect(purchase.orderNumber, isNull);
+      expect(purchase.orderPaymentStatus, isNull);
+      expect(purchase.orderTotalAmount, isNull);
+    },
+  );
+
+  test(
     'rejects active status responses with an invalid payment link',
     () async {
       final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
         client,
         currentUserIdProvider: () => 'user-1',
+        orderLookup: (_, _) async => null,
         statusInvoker: (_) async => FunctionResponse(
           status: 200,
           data: const {
