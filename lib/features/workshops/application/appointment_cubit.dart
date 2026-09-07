@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../core/utils/costa_rica_time.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/usecases/get_additional_products_by_workshop.dart';
 import '../../products/domain/usecases/get_schedulable_services_by_workshop.dart';
@@ -715,8 +716,16 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   }
 
   bool _isPastDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    // "date" comes from the calendar grid, built against Costa Rica wall-
+    // clock days (see WorkshopAvailabilityCalculator). Comparing it against
+    // the device's own local "today" mixes two different clocks -- convert
+    // DateTime.now() to Costa Rica time first so both sides agree.
+    final nowInCostaRica = utcToCostaRicaLocalTime(DateTime.now().toUtc());
+    final today = DateTime(
+      nowInCostaRica.year,
+      nowInCostaRica.month,
+      nowInCostaRica.day,
+    );
     final selectedDate = DateTime(date.year, date.month, date.day);
 
     return selectedDate.isBefore(today);

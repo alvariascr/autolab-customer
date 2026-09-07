@@ -1,3 +1,4 @@
+import '../../../../core/utils/costa_rica_time.dart';
 import '../entities/booked_appointment_slot.dart';
 import '../entities/workshop.dart';
 
@@ -150,7 +151,14 @@ class WorkshopAvailabilityCalculator {
       return const _DayAvailability();
     }
 
-    final currentTime = now ?? DateTime.now();
+    // Business hours (openTime/closeTime) and bookedSlots are wall-clock
+    // Costa Rica time (see appointment_booking_remote_data_source.dart's
+    // utcToCostaRicaLocalTime/costaRicaLocalTimeToUtc conversions). Plain
+    // DateTime.now() returns the DEVICE's local wall-clock time instead --
+    // comparing that directly against Costa Rica wall-clock values treats
+    // two different clocks as if they were the same one, so a device set to
+    // a different timezone sees the wrong slots as past/available.
+    final currentTime = now ?? utcToCostaRicaLocalTime(DateTime.now().toUtc());
     final slotInterval = Duration(minutes: slotIntervalMinutes);
     final serviceDuration = _serviceDuration(
       serviceDurationHours: serviceDurationHours,
