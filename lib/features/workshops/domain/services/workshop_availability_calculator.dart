@@ -1,3 +1,4 @@
+import '../../../../core/utils/costa_rica_time.dart';
 import '../entities/booked_appointment_slot.dart';
 import '../entities/workshop.dart';
 
@@ -38,6 +39,10 @@ class WorkshopAvailabilityCalculator {
   final int slotIntervalMinutes;
   final int defaultServiceDurationMinutes;
 
+  /// [now] must be Costa Rica wall-clock time (see [nowInCostaRica]) --
+  /// not UTC, not the device's own local time -- to match [workshop]'s
+  /// business hours and [bookedSlots], which are already in that same
+  /// convention. Omit it to default to the current moment in Costa Rica.
   WorkshopAvailabilityResult calculateMonth({
     required Workshop workshop,
     required DateTime month,
@@ -88,6 +93,7 @@ class WorkshopAvailabilityCalculator {
     );
   }
 
+  /// See [calculateMonth] for the [now] parameter's timezone contract.
   List<String> availableTimesForDate({
     required Workshop workshop,
     required DateTime date,
@@ -108,6 +114,7 @@ class WorkshopAvailabilityCalculator {
     ).availableTimes;
   }
 
+  /// See [calculateMonth] for the [now] parameter's timezone contract.
   Set<String> unavailableTimesForDate({
     required Workshop workshop,
     required DateTime date,
@@ -150,7 +157,7 @@ class WorkshopAvailabilityCalculator {
       return const _DayAvailability();
     }
 
-    final currentTime = now ?? DateTime.now();
+    final currentTime = now ?? nowInCostaRica();
     final slotInterval = Duration(minutes: slotIntervalMinutes);
     final serviceDuration = _serviceDuration(
       serviceDurationHours: serviceDurationHours,
