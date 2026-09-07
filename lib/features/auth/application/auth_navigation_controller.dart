@@ -8,7 +8,8 @@ class AuthNavigationController {
        _clearSession = clearSession;
 
   static const loginRoute = '/login';
-  static const emailConfirmedLoginRoute = '/login?emailConfirmed=true';
+  static const emailConfirmedLoginRoute =
+      '/login?emailConfirmed=true&mode=login';
   static const resetPasswordRoute = '/reset-password';
 
   static const _loginCallbackScheme = 'autolab';

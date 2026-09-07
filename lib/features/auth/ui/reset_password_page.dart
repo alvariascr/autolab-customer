@@ -65,7 +65,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
             Future<void>.delayed(const Duration(milliseconds: 1200), () {
               if (!context.mounted) return;
-              context.go('/login');
+              context.go('/login?mode=login');
             });
           },
           child: LayoutBuilder(
@@ -148,7 +148,7 @@ class _ResetPasswordBackButton extends StatelessWidget {
             return;
           }
 
-          context.go('/login');
+          context.go('/login?mode=login');
         },
       ),
     );
