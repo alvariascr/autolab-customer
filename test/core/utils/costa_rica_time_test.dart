@@ -49,5 +49,38 @@ void main() {
 
       expect(roundTripped, originalUtc);
     });
+
+    test('costaRicaLocalTimeToUtc rolls over to the next UTC day past 18:00 '
+        'Costa Rica time -- DateTime.utc normalizes an hour argument > 23 on '
+        'its own, no explicit .add() needed', () {
+      final costaRicaTime = DateTime(2026, 9, 7, 20, 0);
+
+      final utc = costaRicaLocalTimeToUtc(costaRicaTime);
+
+      expect(utc.day, 8);
+      expect(utc.hour, 2);
+    });
+
+    test(
+      'nowInCostaRica matches utcToCostaRicaLocalTime(DateTime.now().toUtc())',
+      () {
+        // Bracket nowInCostaRica() between two values built the exact same
+        // way, right before and right after calling it. Both sides go
+        // through the same local-DateTime-from-computed-fields conversion,
+        // so this stays correct regardless of the test machine's own
+        // timezone -- unlike comparing against a genuinely UTC-flagged
+        // DateTime.now().toUtc().subtract(...), which would only happen to
+        // pass on a machine whose real timezone is already UTC-6.
+        final before = utcToCostaRicaLocalTime(DateTime.now().toUtc());
+        final result = nowInCostaRica();
+        final after = utcToCostaRicaLocalTime(DateTime.now().toUtc());
+
+        expect(
+          result.isBefore(before.subtract(const Duration(seconds: 1))),
+          isFalse,
+        );
+        expect(result.isAfter(after.add(const Duration(seconds: 1))), isFalse);
+      },
+    );
   });
 }
