@@ -624,6 +624,9 @@ void main() {
         when(
           () => mockGlobalErrorHandler.handle(exception, any()),
         ).thenReturn(mappedFailure);
+        when(
+          () => mockSessionLocalDataSource.clearSession(),
+        ).thenAnswer((_) async {});
 
         final result = await repository.logout();
 
@@ -634,7 +637,36 @@ void main() {
         }, (_) => fail('Expected Left(Failure)'));
 
         verify(() => mockGlobalErrorHandler.handle(exception, any())).called(1);
-        verifyNever(() => mockSessionLocalDataSource.clearSession());
+        // The local session must still be cleared even when the remote
+        // signOut call fails (e.g. offline) -- otherwise the stale token
+        // survives on disk and the user can appear signed back in later.
+        verify(() => mockSessionLocalDataSource.clearSession()).called(1);
+      });
+
+      test('still returns Left(Failure) from signOut when clearing the local '
+          'session also fails', () async {
+        final exception = Exception('signout error');
+        final mappedFailure = UnknownFailure(
+          message: ErrorCatalog.unknownError.code,
+          code: ErrorCatalog.unknownError.code,
+          uiKey: ErrorCatalog.unknownError.uiKey,
+          cause: exception,
+        );
+
+        when(() => mockGoTrueClient.signOut()).thenThrow(exception);
+        when(
+          () => mockGlobalErrorHandler.handle(exception, any()),
+        ).thenReturn(mappedFailure);
+        when(
+          () => mockSessionLocalDataSource.clearSession(),
+        ).thenThrow(Exception('storage error'));
+
+        final result = await repository.logout();
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure, mappedFailure);
+        }, (_) => fail('Expected Left(Failure)'));
       });
     });
 

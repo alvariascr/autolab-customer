@@ -118,7 +118,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> logout() async {
     try {
       await client.auth.signOut();
-      await sessionStorageService.clearSession();
       featureLogger.info(
         feature: 'auth',
         action: 'repository_logout_succeeded',
@@ -132,6 +131,17 @@ class AuthRepositoryImpl implements AuthRepository {
         stackTrace: stackTrace,
       );
       return Left(globalErrorHandler.handle(error, stackTrace));
+    } finally {
+      // Always clear the local session, even if the remote signOut call
+      // failed (e.g. no connectivity): otherwise the stale local token
+      // survives on disk and the user can appear signed back in on the next
+      // launch, despite having explicitly asked to log out.
+      try {
+        await sessionStorageService.clearSession();
+      } catch (_) {
+        // Best-effort -- a local storage failure here shouldn't override
+        // the signOut result already being returned above.
+      }
     }
   }
 
