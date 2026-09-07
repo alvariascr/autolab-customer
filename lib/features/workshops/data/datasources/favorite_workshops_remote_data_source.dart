@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/errors/supabase_error_matchers.dart';
 import '../models/workshop_model.dart';
 
 class FavoriteWorkshopsRemoteDataSource {
@@ -97,6 +98,9 @@ class FavoriteWorkshopsRemoteDataSource {
     } on FavoriteWorkshopStorageException {
       rethrow;
     } on PostgrestException catch (error) {
+      if (isAuthRequiredError(error)) {
+        throw const FavoriteWorkshopAuthRequiredException();
+      }
       throw FavoriteWorkshopStorageException(error.message);
     } on SocketException catch (error) {
       throw FavoriteWorkshopStorageException(error.message);

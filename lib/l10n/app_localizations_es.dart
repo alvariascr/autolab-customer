@@ -634,6 +634,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'No fue posible actualizar favoritos. Intenta nuevamente.';
 
   @override
+  String get favoritesRemoveAction => 'Quitar de favoritos';
+
+  @override
   String get garageAddresses => 'Direcciones';
 
   @override
