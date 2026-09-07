@@ -220,11 +220,10 @@ void main() {
       ]);
 
       expect(results, everyElement(CartAddProductStatus.added));
-      expect(
-        cubit.state.items.map((item) => item.product.id).toSet(),
-        {'product-a', 'product-b'},
-        reason: 'ambos productos deben sobrevivir, ninguno se pisa',
-      );
+      expect(cubit.state.items.map((item) => item.product.id).toSet(), {
+        'product-a',
+        'product-b',
+      }, reason: 'ambos productos deben sobrevivir, ninguno se pisa');
     });
   });
 }
