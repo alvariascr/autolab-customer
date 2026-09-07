@@ -455,8 +455,11 @@ async function loadOrderPaymentData(
 
   // Laropay charges product lines plus the delivery fee (0 for pickup
   // orders, per create_cart_order). Workshop services are still settled
-  // directly with the workshop.
-  const amount = productsTotal + deliveryFee;
+  // directly with the workshop. Rounded to avoid floating point drift
+  // (e.g. 1000.1 + 500.2 producing 1500.3000000000002) leaking into the
+  // amount charged, which persist_laropay_status_check later compares
+  // against the order's total with >=.
+  const amount = Math.round((productsTotal + deliveryFee) * 100) / 100;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error("order_has_no_chargeable_products");

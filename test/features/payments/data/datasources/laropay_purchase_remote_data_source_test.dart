@@ -137,6 +137,38 @@ void main() {
   );
 
   test(
+    'no falla refreshPurchaseStatus si orderLookup retorna null o la orden no existe',
+    () async {
+      final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
+        client,
+        currentUserIdProvider: () => 'user-1',
+        orderLookup: (_, _) async => null,
+        statusInvoker: (_) async => FunctionResponse(
+          status: 200,
+          data: const {
+            'id': 'payment-1',
+            'amount': 12000,
+            'currency_code': 'CRC',
+            'link_id': r'$$ABC',
+            'link_url': 'https://pay.test/link',
+            'status': 'pending',
+            'response_code': '00',
+            'response_description': 'OK',
+            'reject_reason': '',
+          },
+        ),
+      );
+
+      final purchase = await dataSource.refreshPurchaseStatus('payment-1');
+
+      expect(purchase.id, 'payment-1');
+      expect(purchase.orderNumber, isNull);
+      expect(purchase.orderPaymentStatus, isNull);
+      expect(purchase.orderTotalAmount, isNull);
+    },
+  );
+
+  test(
     'rejects active status responses with an invalid payment link',
     () async {
       final dataSource = SupabaseLaropayPurchaseRemoteDataSource(
