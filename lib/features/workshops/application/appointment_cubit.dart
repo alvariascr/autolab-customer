@@ -28,6 +28,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     required IsAppointmentSlotAvailable isAppointmentSlotAvailable,
     required GetBookedAppointmentSlots getBookedAppointmentSlots,
     required BookServiceAppointment bookServiceAppointment,
+    DateTime Function() nowInCostaRicaProvider = nowInCostaRica,
   }) : _workshopRepository = workshopRepository,
        _getSchedulableServices = getSchedulableServices,
        _getAdditionalProducts = getAdditionalProducts,
@@ -36,6 +37,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
        _isAppointmentSlotAvailable = isAppointmentSlotAvailable,
        _getBookedAppointmentSlots = getBookedAppointmentSlots,
        _bookServiceAppointment = bookServiceAppointment,
+       _nowInCostaRica = nowInCostaRicaProvider,
        super(const AppointmentState());
 
   final WorkshopRepository _workshopRepository;
@@ -46,6 +48,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   final IsAppointmentSlotAvailable _isAppointmentSlotAvailable;
   final GetBookedAppointmentSlots _getBookedAppointmentSlots;
   final BookServiceAppointment _bookServiceAppointment;
+  // Overridable in tests to simulate the exact moment "now" is in Costa
+  // Rica -- e.g. to prove selectDate/_isPastDate depend only on Costa
+  // Rica's current day, never on the device's own timezone or clock.
+  final DateTime Function() _nowInCostaRica;
   static final _availabilityCalculator = WorkshopAvailabilityCalculator();
   int _availabilityRequestId = 0;
 
@@ -728,7 +734,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     // to compute midnight -- using .utc pins that midnight to a fixed
     // reference instead, so the day-level comparison never depends on the
     // device's own timezone at all.
-    final today = nowInCostaRica();
+    final today = _nowInCostaRica();
     final todayDate = DateTime.utc(today.year, today.month, today.day);
     final selectedDate = DateTime.utc(date.year, date.month, date.day);
 

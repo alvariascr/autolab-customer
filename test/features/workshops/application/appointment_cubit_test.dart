@@ -87,6 +87,29 @@ void main() {
     expect(cubit.state.submitError, isNull);
   });
 
+  test('selectDate acepta el día de hoy en CR aunque en el dispositivo ya sea '
+      'el día siguiente', () {
+    // Simula el momento exacto en que un dispositivo en Tokio (UTC+9) ya
+    // marca 8 de septiembre 02:00 AM, mientras en Costa Rica (UTC-6)
+    // todavía es 7 de septiembre 11:00 PM -- el escenario real que motivó
+    // este fix. No hace falta cambiar la zona horaria real de la máquina
+    // que corre el test: inyectamos directamente qué "ahora en Costa
+    // Rica" debe usar el cubit, probando que _isPastDate depende
+    // únicamente de ese valor, nunca del reloj/zona real del dispositivo.
+    final japanCubit = _createCubit(
+      workshopRepository: MockWorkshopRepository(),
+      productRepository: MockProductRepository(),
+      bookServiceAppointment: MockBookServiceAppointment(),
+      nowInCostaRicaProvider: () => DateTime.utc(2026, 9, 7, 23, 0),
+    );
+    addTearDown(japanCubit.close);
+
+    japanCubit.selectDate(DateTime(2026, 9, 7));
+
+    expect(japanCubit.state.selectedDate, DateTime(2026, 9, 7));
+    expect(japanCubit.state.submitError, isNull);
+  });
+
   test('selectService clears dependent product and schedule state', () {
     final service = _product(id: 'service-1', itemType: 'service');
     final product = _product(id: 'product-1', itemType: 'product');
@@ -409,6 +432,7 @@ AppointmentCubit _createCubit({
   required ProductRepository productRepository,
   required BookServiceAppointment bookServiceAppointment,
   GetCustomerVehicles? getCustomerVehicles,
+  DateTime Function()? nowInCostaRicaProvider,
 }) {
   return AppointmentCubit(
     workshopRepository: workshopRepository,
@@ -419,6 +443,7 @@ AppointmentCubit _createCubit({
     isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
     getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
     bookServiceAppointment: bookServiceAppointment,
+    nowInCostaRicaProvider: nowInCostaRicaProvider ?? nowInCostaRica,
   );
 }
 
