@@ -435,9 +435,28 @@ async function loadOrderPaymentData(
     throw new Error("order_has_no_chargeable_products");
   }
 
-  // Laropay only charges product lines. Workshop services and delivery fees are
-  // settled directly with the workshop according to the business rule.
-  const amount = productsTotal;
+  const { data: deliveryDetails, error: deliveryDetailsError } =
+    await adminSupabaseClient(env)
+      .from("order_delivery_details")
+      .select("delivery_fee")
+      .eq("order_id", stringValue(input.internalTransactionId))
+      .maybeSingle();
+
+  if (deliveryDetailsError !== null) {
+    throw new Error("invalid_order_delivery_details");
+  }
+
+  const deliveryFee = numberValue(
+    (deliveryDetails as Record<string, unknown> | null)?.delivery_fee ?? 0,
+  );
+  if (!Number.isFinite(deliveryFee) || deliveryFee < 0) {
+    throw new Error("invalid_order_delivery_details");
+  }
+
+  // Laropay charges product lines plus the delivery fee (0 for pickup
+  // orders, per create_cart_order). Workshop services are still settled
+  // directly with the workshop.
+  const amount = productsTotal + deliveryFee;
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error("order_has_no_chargeable_products");
