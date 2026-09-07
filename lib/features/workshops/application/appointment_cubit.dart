@@ -718,17 +718,13 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   bool _isPastDate(DateTime date) {
     // "date" comes from the calendar grid, built against Costa Rica wall-
     // clock days (see WorkshopAvailabilityCalculator). Comparing it against
-    // the device's own local "today" mixes two different clocks -- convert
-    // DateTime.now() to Costa Rica time first so both sides agree.
-    final nowInCostaRica = utcToCostaRicaLocalTime(DateTime.now().toUtc());
-    final today = DateTime(
-      nowInCostaRica.year,
-      nowInCostaRica.month,
-      nowInCostaRica.day,
-    );
+    // the device's own local "today" mixes two different clocks -- use
+    // Costa Rica's current day instead so both sides agree.
+    final today = nowInCostaRica();
+    final todayDate = DateTime(today.year, today.month, today.day);
     final selectedDate = DateTime(date.year, date.month, date.day);
 
-    return selectedDate.isBefore(today);
+    return selectedDate.isBefore(todayDate);
   }
 
   String _buildBookingNote() {

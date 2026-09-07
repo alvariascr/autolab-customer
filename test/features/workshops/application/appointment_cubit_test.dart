@@ -3,6 +3,7 @@ import 'package:autolab_customer/features/products/domain/repositories/product_r
 import 'package:autolab_customer/features/products/domain/usecases/get_additional_products_by_workshop.dart';
 import 'package:autolab_customer/features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import 'package:autolab_customer/features/workshops/application/appointment_cubit.dart';
+import 'package:autolab_customer/features/workshops/application/appointment_state.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/appointment_product_selection.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/appointment_vehicle.dart';
 import 'package:autolab_customer/features/workshops/domain/repositories/workshop_repository.dart';
@@ -59,6 +60,20 @@ void main() {
 
     cubit.goBack();
     expect(cubit.state.currentStep, 0);
+  });
+
+  test('selectDate rechaza una fecha claramente pasada', () {
+    cubit.selectDate(DateTime(2000, 1, 1));
+
+    expect(cubit.state.selectedDate, isNull);
+    expect(cubit.state.submitError, AppointmentSubmitError.dateUnavailable);
+  });
+
+  test('selectDate acepta una fecha claramente futura', () {
+    cubit.selectDate(DateTime(2099, 1, 1));
+
+    expect(cubit.state.selectedDate, DateTime(2099, 1, 1));
+    expect(cubit.state.submitError, isNull);
   });
 
   test('selectService clears dependent product and schedule state', () {

@@ -39,6 +39,10 @@ class WorkshopAvailabilityCalculator {
   final int slotIntervalMinutes;
   final int defaultServiceDurationMinutes;
 
+  /// [now] must be Costa Rica wall-clock time (see [nowInCostaRica]) --
+  /// not UTC, not the device's own local time -- to match [workshop]'s
+  /// business hours and [bookedSlots], which are already in that same
+  /// convention. Omit it to default to the current moment in Costa Rica.
   WorkshopAvailabilityResult calculateMonth({
     required Workshop workshop,
     required DateTime month,
@@ -89,6 +93,7 @@ class WorkshopAvailabilityCalculator {
     );
   }
 
+  /// See [calculateMonth] for the [now] parameter's timezone contract.
   List<String> availableTimesForDate({
     required Workshop workshop,
     required DateTime date,
@@ -109,6 +114,7 @@ class WorkshopAvailabilityCalculator {
     ).availableTimes;
   }
 
+  /// See [calculateMonth] for the [now] parameter's timezone contract.
   Set<String> unavailableTimesForDate({
     required Workshop workshop,
     required DateTime date,
@@ -151,14 +157,7 @@ class WorkshopAvailabilityCalculator {
       return const _DayAvailability();
     }
 
-    // Business hours (openTime/closeTime) and bookedSlots are wall-clock
-    // Costa Rica time (see appointment_booking_remote_data_source.dart's
-    // utcToCostaRicaLocalTime/costaRicaLocalTimeToUtc conversions). Plain
-    // DateTime.now() returns the DEVICE's local wall-clock time instead --
-    // comparing that directly against Costa Rica wall-clock values treats
-    // two different clocks as if they were the same one, so a device set to
-    // a different timezone sees the wrong slots as past/available.
-    final currentTime = now ?? utcToCostaRicaLocalTime(DateTime.now().toUtc());
+    final currentTime = now ?? nowInCostaRica();
     final slotInterval = Duration(minutes: slotIntervalMinutes);
     final serviceDuration = _serviceDuration(
       serviceDurationHours: serviceDurationHours,
