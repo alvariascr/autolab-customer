@@ -131,6 +131,9 @@ class _VehiclesPageState extends State<VehiclesPage> {
       }
       if (!mounted) return;
       await _loadVehicles();
+      if (_vehicles.isNotEmpty && !_vehicles.any((item) => item.isDefault)) {
+        await _activateVehicle(_vehicles.first);
+      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
