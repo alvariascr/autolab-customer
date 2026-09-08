@@ -96,6 +96,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     if (saved == true && mounted) {
       await _loadVehicles();
+      _garageVehicleController?.notifyVehiclesChanged();
     }
   }
 
