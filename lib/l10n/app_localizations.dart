@@ -2386,6 +2386,12 @@ abstract class AppLocalizations {
   /// **'Siguiente'**
   String get vehiclesNextAction;
 
+  /// No description provided for @vehiclesSetActiveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Usar como vehículo activo'**
+  String get vehiclesSetActiveAction;
+
   /// No description provided for @vehiclesSaveFailed.
   ///
   /// In es, this message translates to:
