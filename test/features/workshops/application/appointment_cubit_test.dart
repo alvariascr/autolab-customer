@@ -1,8 +1,10 @@
+import 'package:autolab_customer/core/utils/costa_rica_time.dart';
 import 'package:autolab_customer/features/products/domain/entities/product.dart';
 import 'package:autolab_customer/features/products/domain/repositories/product_repository.dart';
 import 'package:autolab_customer/features/products/domain/usecases/get_additional_products_by_workshop.dart';
 import 'package:autolab_customer/features/products/domain/usecases/get_schedulable_services_by_workshop.dart';
 import 'package:autolab_customer/features/workshops/application/appointment_cubit.dart';
+import 'package:autolab_customer/features/workshops/application/appointment_state.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/appointment_product_selection.dart';
 import 'package:autolab_customer/features/workshops/domain/entities/appointment_vehicle.dart';
 import 'package:autolab_customer/features/workshops/domain/repositories/workshop_repository.dart';
@@ -59,6 +61,53 @@ void main() {
 
     cubit.goBack();
     expect(cubit.state.currentStep, 0);
+  });
+
+  test('selectDate rechaza una fecha claramente pasada', () {
+    cubit.selectDate(DateTime(2000, 1, 1));
+
+    expect(cubit.state.selectedDate, isNull);
+    expect(cubit.state.submitError, AppointmentSubmitError.dateUnavailable);
+  });
+
+  test('selectDate acepta una fecha claramente futura', () {
+    cubit.selectDate(DateTime(2099, 1, 1));
+
+    expect(cubit.state.selectedDate, DateTime(2099, 1, 1));
+    expect(cubit.state.submitError, isNull);
+  });
+
+  test('selectDate acepta la fecha de hoy en Costa Rica', () {
+    final crToday = nowInCostaRica();
+    final todayDate = DateTime(crToday.year, crToday.month, crToday.day);
+
+    cubit.selectDate(todayDate);
+
+    expect(cubit.state.selectedDate, todayDate);
+    expect(cubit.state.submitError, isNull);
+  });
+
+  test('selectDate acepta el día de hoy en CR aunque en el dispositivo ya sea '
+      'el día siguiente', () {
+    // Simula el momento exacto en que un dispositivo en Tokio (UTC+9) ya
+    // marca 8 de septiembre 02:00 AM, mientras en Costa Rica (UTC-6)
+    // todavía es 7 de septiembre 11:00 PM -- el escenario real que motivó
+    // este fix. No hace falta cambiar la zona horaria real de la máquina
+    // que corre el test: inyectamos directamente qué "ahora en Costa
+    // Rica" debe usar el cubit, probando que _isPastDate depende
+    // únicamente de ese valor, nunca del reloj/zona real del dispositivo.
+    final japanCubit = _createCubit(
+      workshopRepository: MockWorkshopRepository(),
+      productRepository: MockProductRepository(),
+      bookServiceAppointment: MockBookServiceAppointment(),
+      nowInCostaRicaProvider: () => DateTime.utc(2026, 9, 7, 23, 0),
+    );
+    addTearDown(japanCubit.close);
+
+    japanCubit.selectDate(DateTime(2026, 9, 7));
+
+    expect(japanCubit.state.selectedDate, DateTime(2026, 9, 7));
+    expect(japanCubit.state.submitError, isNull);
   });
 
   test('selectService clears dependent product and schedule state', () {
@@ -383,6 +432,7 @@ AppointmentCubit _createCubit({
   required ProductRepository productRepository,
   required BookServiceAppointment bookServiceAppointment,
   GetCustomerVehicles? getCustomerVehicles,
+  DateTime Function()? nowInCostaRicaProvider,
 }) {
   return AppointmentCubit(
     workshopRepository: workshopRepository,
@@ -393,6 +443,7 @@ AppointmentCubit _createCubit({
     isAppointmentSlotAvailable: MockIsAppointmentSlotAvailable(),
     getBookedAppointmentSlots: MockGetBookedAppointmentSlots(),
     bookServiceAppointment: bookServiceAppointment,
+    nowInCostaRicaProvider: nowInCostaRicaProvider ?? nowInCostaRica,
   );
 }
 

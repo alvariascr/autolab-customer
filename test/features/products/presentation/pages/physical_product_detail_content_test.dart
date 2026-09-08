@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_customer/features/cart/application/cart_cubit.dart';
 import 'package:autolab_customer/features/products/domain/entities/product.dart';
 import 'package:autolab_customer/features/products/domain/repositories/favorite_inventory_items_repository.dart';
@@ -16,6 +18,10 @@ class _MockFavoriteInventoryItemsRepository extends Mock
 class _MockCartCubit extends Mock implements CartCubit {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_product());
+  });
+
   testWidgets('renders with injected favorite repository', (tester) async {
     final favoriteRepository = _MockFavoriteInventoryItemsRepository();
     final cartCubit = _MockCartCubit();
@@ -95,6 +101,92 @@ void main() {
 
     expect(find.text('Login'), findsOneWidget);
   });
+
+  testWidgets(
+    'deshabilita los botones de compra mientras la operación está en curso',
+    (tester) async {
+      // Los botones quedan al final de un CustomScrollView; sin esto no
+      // se construyen dentro del viewport chico por defecto del test.
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final favoriteRepository = _MockFavoriteInventoryItemsRepository();
+      final cartCubit = _MockCartCubit();
+      final addCompleter = Completer<CartAddProductStatus>();
+
+      when(
+        () => favoriteRepository.isFavoriteInventoryItem('product-1'),
+      ).thenAnswer((_) async => false);
+      when(() => cartCubit.stream).thenAnswer((_) => const Stream.empty());
+      when(() => cartCubit.state).thenReturn(const CartState());
+      when(
+        () => cartCubit.addProductAndPersist(
+          any(),
+          quantity: any(named: 'quantity'),
+        ),
+      ).thenAnswer((_) => addCompleter.future);
+
+      await tester.pumpWidget(
+        BlocProvider<CartCubit>.value(
+          value: cartCubit,
+          child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: PhysicalProductDetailContent(
+              product: _product(),
+              favoriteRepository: favoriteRepository,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // ElevatedButton.icon/OutlinedButton.icon build a private subtype, so
+      // find.widgetWithText's exact-type matching (like find.byType) never
+      // matches them -- match by predicate (which respects `is`) instead.
+      final buyButtonFinder = find.ancestor(
+        of: find.text('Comprar'),
+        matching: find.byWidgetPredicate((widget) => widget is ElevatedButton),
+      );
+      final addToCartButtonFinder = find.ancestor(
+        of: find.text('Agregar al carrito'),
+        matching: find.byWidgetPredicate((widget) => widget is OutlinedButton),
+      );
+
+      await tester.tap(buyButtonFinder);
+      await tester.pump();
+
+      // Mientras addProductAndPersist sigue pendiente, ambos botones deben
+      // quedar deshabilitados -- no solo el que se tocó, porque un tap en
+      // el otro botón mientras este sigue en vuelo es exactamente el
+      // escenario de doble-tap que CartCubit ya protege a nivel de datos,
+      // pero que además debería reflejarse visualmente.
+      expect(tester.widget<ElevatedButton>(buyButtonFinder).onPressed, isNull);
+      expect(
+        tester.widget<OutlinedButton>(addToCartButtonFinder).onPressed,
+        isNull,
+      );
+
+      // Se completa con un status que NO navega (a diferencia de `added`,
+      // que dispara context.go y requeriría un GoRouter real montado en
+      // este test) -- lo único que interesa acá es que los botones se
+      // vuelvan a habilitar una vez que la llamada termina.
+      addCompleter.complete(CartAddProductStatus.stockLimitReached);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<ElevatedButton>(buyButtonFinder).onPressed,
+        isNotNull,
+      );
+    },
+  );
 }
 
 class _TestApp extends StatelessWidget {

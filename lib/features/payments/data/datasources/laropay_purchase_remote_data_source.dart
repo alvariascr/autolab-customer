@@ -10,6 +10,8 @@ const _workshopPaymentStatus = 'workshop_payment';
 typedef LaropayStatusInvoker =
     Future<FunctionResponse> Function(String paymentLinkId);
 typedef CurrentUserIdProvider = String? Function();
+typedef LaropayOrderLookup =
+    Future<Map<String, dynamic>?> Function(String paymentLinkId, String userId);
 
 abstract interface class LaropayPurchaseRemoteDataSource {
   Future<List<LaropayPurchase>> getRecentPurchases();
@@ -45,12 +47,15 @@ class SupabaseLaropayPurchaseRemoteDataSource
     this._client, {
     LaropayStatusInvoker? statusInvoker,
     CurrentUserIdProvider? currentUserIdProvider,
+    LaropayOrderLookup? orderLookup,
   }) : _statusInvoker = statusInvoker,
-       _currentUserIdProvider = currentUserIdProvider;
+       _currentUserIdProvider = currentUserIdProvider,
+       _orderLookup = orderLookup;
 
   final SupabaseClient _client;
   final LaropayStatusInvoker? _statusInvoker;
   final CurrentUserIdProvider? _currentUserIdProvider;
+  final LaropayOrderLookup? _orderLookup;
 
   @override
   Future<List<LaropayPurchase>> getRecentPurchases() async {
@@ -117,7 +122,34 @@ class SupabaseLaropayPurchaseRemoteDataSource
       throw const LaropayPurchaseStatusException();
     }
 
-    return _purchaseFromStatusResponse(data);
+    final order = _orderLookup != null
+        ? await _orderLookup(normalizedId, userId)
+        : await _orderForPaymentLink(normalizedId, userId);
+    return _purchaseFromStatusResponse(data, order: order);
+  }
+
+  // Best-effort: the payment status refresh above already succeeded, so a
+  // failure enriching it with order data (network hiccup, RLS edge case)
+  // should not turn into a failed refresh -- it only feeds a UI fallback.
+  Future<Map<String, dynamic>?> _orderForPaymentLink(
+    String paymentLinkId,
+    String userId,
+  ) async {
+    try {
+      final response = await _client
+          .from('laropay_payment_links')
+          .select('''
+            orders(order_number, payment_status, total_amount, paid_amount, remaining_amount)
+          ''')
+          .eq('id', paymentLinkId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final order = response?['orders'];
+      return order is Map<String, dynamic> ? order : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<Map<String, Map<String, dynamic>>> _paymentLinksByOrderId(
@@ -258,7 +290,10 @@ class SupabaseLaropayPurchaseRemoteDataSource
     );
   }
 
-  LaropayPurchase _purchaseFromStatusResponse(Map<String, dynamic> map) {
+  LaropayPurchase _purchaseFromStatusResponse(
+    Map<String, dynamic> map, {
+    Map<String, dynamic>? order,
+  }) {
     final status = _stringValue(map['status']);
     final linkUrl = _secureUri(_firstValue(map, 'link_url', 'linkURL'));
     if (_requiresPaymentLink(status) && linkUrl == null) {
@@ -292,6 +327,11 @@ class SupabaseLaropayPurchaseRemoteDataSource
         _stringValue(_firstValue(map, 'expires_at', 'expiresAt')),
       ),
       hasPaymentLink: true,
+      orderNumber: _nullableStringValue(order?['order_number']),
+      orderPaymentStatus: _nullableStringValue(order?['payment_status']),
+      orderTotalAmount: _nullableNumberValue(order?['total_amount']),
+      orderPaidAmount: _nullableNumberValue(order?['paid_amount']),
+      orderRemainingAmount: _nullableNumberValue(order?['remaining_amount']),
     );
   }
 }

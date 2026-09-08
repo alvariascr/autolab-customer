@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../core/utils/costa_rica_time.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/usecases/get_additional_products_by_workshop.dart';
 import '../../products/domain/usecases/get_schedulable_services_by_workshop.dart';
@@ -27,6 +28,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
     required IsAppointmentSlotAvailable isAppointmentSlotAvailable,
     required GetBookedAppointmentSlots getBookedAppointmentSlots,
     required BookServiceAppointment bookServiceAppointment,
+    DateTime Function() nowInCostaRicaProvider = nowInCostaRica,
   }) : _workshopRepository = workshopRepository,
        _getSchedulableServices = getSchedulableServices,
        _getAdditionalProducts = getAdditionalProducts,
@@ -35,6 +37,7 @@ class AppointmentCubit extends Cubit<AppointmentState> {
        _isAppointmentSlotAvailable = isAppointmentSlotAvailable,
        _getBookedAppointmentSlots = getBookedAppointmentSlots,
        _bookServiceAppointment = bookServiceAppointment,
+       _nowInCostaRica = nowInCostaRicaProvider,
        super(const AppointmentState());
 
   final WorkshopRepository _workshopRepository;
@@ -45,6 +48,10 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   final IsAppointmentSlotAvailable _isAppointmentSlotAvailable;
   final GetBookedAppointmentSlots _getBookedAppointmentSlots;
   final BookServiceAppointment _bookServiceAppointment;
+  // Overridable in tests to simulate the exact moment "now" is in Costa
+  // Rica -- e.g. to prove selectDate/_isPastDate depend only on Costa
+  // Rica's current day, never on the device's own timezone or clock.
+  final DateTime Function() _nowInCostaRica;
   static final _availabilityCalculator = WorkshopAvailabilityCalculator();
   int _availabilityRequestId = 0;
 
@@ -715,11 +722,23 @@ class AppointmentCubit extends Cubit<AppointmentState> {
   }
 
   bool _isPastDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final selectedDate = DateTime(date.year, date.month, date.day);
+    // "date" comes from the calendar grid, built against Costa Rica wall-
+    // clock days (see WorkshopAvailabilityCalculator). Comparing it against
+    // the device's own local "today" mixes two different clocks -- use
+    // Costa Rica's current day instead so both sides agree.
+    //
+    // Both sides are built with DateTime.utc (not the local constructor):
+    // nowInCostaRica()'s year/month/day already correctly represent Costa
+    // Rica's calendar day, but the local DateTime constructor would still
+    // reinterpret those bare fields using the DEVICE's own timezone offset
+    // to compute midnight -- using .utc pins that midnight to a fixed
+    // reference instead, so the day-level comparison never depends on the
+    // device's own timezone at all.
+    final today = _nowInCostaRica();
+    final todayDate = DateTime.utc(today.year, today.month, today.day);
+    final selectedDate = DateTime.utc(date.year, date.month, date.day);
 
-    return selectedDate.isBefore(today);
+    return selectedDate.isBefore(todayDate);
   }
 
   String _buildBookingNote() {

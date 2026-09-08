@@ -32,6 +32,7 @@ class _PhysicalProductDetailContentState
     extends State<PhysicalProductDetailContent> {
   late final InventoryFavoriteController _favoriteController;
   int _quantity = 1;
+  var _isAddingToCart = false;
 
   int get _availableStock => widget.product.currentStock?.clamp(0, 9999) ?? 0;
 
@@ -206,14 +207,17 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.white,
                             ),
                           ),
-                          onPressed: hasStock
+                          onPressed: hasStock && !_isAddingToCart
                               ? () async {
+                                  setState(() => _isAddingToCart = true);
                                   final addStatus = await context
                                       .read<CartCubit>()
                                       .addProductAndPersist(
                                         product,
                                         quantity: _quantity,
                                       );
+                                  if (!mounted) return;
+                                  setState(() => _isAddingToCart = false);
                                   if (!context.mounted) return;
 
                                   if (!addStatus.wasAdded) {
@@ -238,7 +242,15 @@ class _PhysicalProductDetailContentState
                                   context.go('/home-customer?tab=cart');
                                 }
                               : null,
-                          icon: const Icon(Icons.shopping_cart_outlined),
+                          icon: _isAddingToCart
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AutolabCustomer.white,
+                                  ),
+                                )
+                              : const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailBuyAction,
                             style: AutolabCustomer.bodyLarge.copyWith(
@@ -263,15 +275,18 @@ class _PhysicalProductDetailContentState
                               AutolabCustomer.customerTextColor(context),
                             ),
                           ),
-                          onPressed: hasStock
+                          onPressed: hasStock && !_isAddingToCart
                               ? () async {
                                   final router = GoRouter.of(context);
+                                  setState(() => _isAddingToCart = true);
                                   final addStatus = await context
                                       .read<CartCubit>()
                                       .addProductAndPersist(
                                         product,
                                         quantity: _quantity,
                                       );
+                                  if (!mounted) return;
+                                  setState(() => _isAddingToCart = false);
                                   if (!context.mounted) return;
 
                                   if (!addStatus.wasAdded) {
@@ -301,7 +316,17 @@ class _PhysicalProductDetailContentState
                                   );
                                 }
                               : null,
-                          icon: const Icon(Icons.shopping_cart_outlined),
+                          icon: _isAddingToCart
+                              ? SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AutolabCustomer.customerTextColor(
+                                      context,
+                                    ),
+                                  ),
+                                )
+                              : const Icon(Icons.shopping_cart_outlined),
                           label: Text(
                             l10n.productDetailAddToCartAction,
                             style: AutolabCustomer.body.copyWith(
