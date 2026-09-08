@@ -206,6 +206,7 @@
   "serviceFavoriteAdded": "Servicio agregado a favoritos.",
   "serviceFavoriteRemoved": "Servicio eliminado de favoritos.",
   "inventoryFavoriteError": "No fue posible actualizar favoritos. Intenta nuevamente.",
+  "favoritesRemoveAction": "Quitar de favoritos",
   "garageAddresses": "Direcciones",
   "garageAddressesCount": "{count, plural, =0{Sin direcciones guardadas} =1{1 dirección guardada} other{{count} direcciones guardadas}}",
   "@garageAddressesCount": {

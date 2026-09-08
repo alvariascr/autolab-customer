@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/errors/supabase_error_matchers.dart';
 import '../models/workshop_model.dart';
 
 class FavoriteWorkshopsRemoteDataSource {
@@ -96,10 +97,21 @@ class FavoriteWorkshopsRemoteDataSource {
       rethrow;
     } on FavoriteWorkshopStorageException {
       rethrow;
-    } on PostgrestException catch (error) {
-      throw FavoriteWorkshopStorageException(error.message);
-    } on SocketException catch (error) {
-      throw FavoriteWorkshopStorageException(error.message);
+    } on AuthException catch (_) {
+      // Explicit failures from the Supabase Auth SDK itself (e.g. a
+      // stale JWT that failed to refresh before the request went out).
+      throw const FavoriteWorkshopAuthRequiredException();
+    } on PostgrestException catch (error, stackTrace) {
+      if (isAuthRequiredError(error)) {
+        throw const FavoriteWorkshopAuthRequiredException();
+      }
+      throw FavoriteWorkshopStorageException(error, stackTrace);
+    } on SocketException catch (error, stackTrace) {
+      throw FavoriteWorkshopStorageException(error, stackTrace);
+    } catch (error, stackTrace) {
+      // Fallback so no unexpected error (JSON parsing, TypeError, etc.)
+      // ever leaks past the datasource boundary unwrapped.
+      throw FavoriteWorkshopStorageException(error, stackTrace);
     }
   }
 }
@@ -109,10 +121,11 @@ class FavoriteWorkshopAuthRequiredException implements Exception {
 }
 
 class FavoriteWorkshopStorageException implements Exception {
-  const FavoriteWorkshopStorageException(this.message);
+  const FavoriteWorkshopStorageException(this.error, this.stackTrace);
 
-  final String message;
+  final Object error;
+  final StackTrace stackTrace;
 
   @override
-  String toString() => message;
+  String toString() => error.toString();
 }

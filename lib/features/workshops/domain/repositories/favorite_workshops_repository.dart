@@ -15,10 +15,11 @@ class FavoriteWorkshopAuthException implements Exception {
 }
 
 class FavoriteWorkshopStorageFailure implements Exception {
-  const FavoriteWorkshopStorageFailure(this.message);
+  const FavoriteWorkshopStorageFailure(this.error, this.stackTrace);
 
-  final String message;
+  final Object error;
+  final StackTrace stackTrace;
 
   @override
-  String toString() => message;
+  String toString() => error.toString();
 }
