@@ -1282,6 +1282,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vehiclesNextAction => 'Siguiente';
 
   @override
+  String get vehiclesSetActiveAction => 'Usar como vehículo activo';
+
+  @override
   String get vehiclesSaveFailed =>
       'No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.';
 

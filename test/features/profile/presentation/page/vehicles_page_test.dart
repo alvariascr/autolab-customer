@@ -171,7 +171,21 @@ void main() {
     });
 
     testWidgets(
-      'tapping a non-default vehicle notifies the shared garage controller',
+      'tapping a non-default vehicle only previews it, without activating',
+      (tester) async {
+        await tester.pumpWidget(const _TestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Honda Civic'));
+        await tester.pumpAndSettle();
+
+        verifyNever(() => setDefaultGarageVehicle(any()));
+        expect(find.text('Usar como vehículo activo'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping "Usar como vehículo activo" activates the previewed vehicle',
       (tester) async {
         var notifications = 0;
         garageVehicleController.addListener(() => notifications++);
@@ -182,13 +196,16 @@ void main() {
         await tester.tap(find.text('Honda Civic'));
         await tester.pumpAndSettle();
 
+        await tester.tap(find.text('Usar como vehículo activo'));
+        await tester.pumpAndSettle();
+
         verify(() => setDefaultGarageVehicle('vehicle-2')).called(1);
         expect(
           notifications,
           greaterThan(0),
           reason:
               'GarageVehicleController.setDefaultVehicle() already calls '
-              'notifyListeners() internally, so selecting a vehicle from '
+              'notifyListeners() internally, so activating a vehicle from '
               'Mi Garaje must already refresh Home.',
         );
       },
