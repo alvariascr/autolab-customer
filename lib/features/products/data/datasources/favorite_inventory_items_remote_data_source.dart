@@ -110,6 +110,8 @@ class FavoriteInventoryItemsRemoteDataSource {
         throw const FavoriteInventoryItemAuthRequiredException();
       }
       throw FavoriteInventoryItemStorageException(error, stackTrace);
+    } on AuthException catch (_) {
+      throw const FavoriteInventoryItemAuthRequiredException();
     } on SocketException catch (error, stackTrace) {
       throw FavoriteInventoryItemStorageException(error, stackTrace);
     } catch (error, stackTrace) {

@@ -102,6 +102,8 @@ class FavoriteWorkshopsRemoteDataSource {
         throw const FavoriteWorkshopAuthRequiredException();
       }
       throw FavoriteWorkshopStorageException(error, stackTrace);
+    } on AuthException catch (_) {
+      throw const FavoriteWorkshopAuthRequiredException();
     } on SocketException catch (error, stackTrace) {
       throw FavoriteWorkshopStorageException(error, stackTrace);
     } catch (error, stackTrace) {
