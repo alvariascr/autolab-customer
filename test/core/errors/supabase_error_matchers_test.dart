@@ -73,6 +73,15 @@ void main() {
       expect(isAuthRequiredError(error), isTrue);
     });
 
+    test(
+      'returns true for a native "JWT expired" message with no error code',
+      () {
+        const error = PostgrestException(message: 'JWT expired');
+
+        expect(isAuthRequiredError(error), isTrue);
+      },
+    );
+
     test('returns true when only the details field mentions a JWT expiry', () {
       const error = PostgrestException(
         message: 'Unexpected error',
