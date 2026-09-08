@@ -124,10 +124,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
     if (confirmed != true) return;
 
     try {
-      await _repository.deleteVehicle(vehicle.id);
+      if (_garageVehicleController != null) {
+        await _garageVehicleController!.deleteVehicle(vehicle.id);
+      } else {
+        await _repository.deleteVehicle(vehicle.id);
+      }
       if (!mounted) return;
       await _loadVehicles();
-      _garageVehicleController?.notifyVehiclesChanged();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -145,7 +148,17 @@ class _VehiclesPageState extends State<VehiclesPage> {
     _imageService.removeNewVehicleImage();
   }
 
-  Future<void> _selectVehicle(GarageVehicle vehicle) async {
+  /// Shows [vehicle]'s data in the preview/form below without changing
+  /// which vehicle is active app-wide. Tapping a card should only let the
+  /// customer look at (or edit) that vehicle's details.
+  void _viewVehicle(GarageVehicle vehicle) {
+    setState(() {
+      _selectedVehicle = vehicle;
+      _formVersion++;
+    });
+  }
+
+  Future<void> _activateVehicle(GarageVehicle vehicle) async {
     try {
       if (_garageVehicleController != null) {
         await _garageVehicleController!.setDefaultVehicle(vehicle.id);
@@ -203,7 +216,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
       final vehicle = _vehicles
           .where((item) => item.id == vehicleId)
           .firstOrNull;
-      if (vehicle != null) await _selectVehicle(vehicle);
+      if (vehicle != null) await _activateVehicle(vehicle);
     }
   }
 
@@ -314,6 +327,10 @@ class _VehiclesPageState extends State<VehiclesPage> {
                       _vehicleImagePaths[_vehicleImageKey(_selectedVehicle)],
                   imageUrl: _selectedVehicle?.imageUrl,
                   onChangeImage: _pickVehicleImage,
+                  onActivate: () {
+                    final vehicle = _selectedVehicle;
+                    if (vehicle != null) _activateVehicle(vehicle);
+                  },
                 ),
                 const SizedBox(height: AutolabCustomer.spacingMd),
                 _VehicleForm(
@@ -360,7 +377,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
         return _VehicleCompactCard(
           vehicle: vehicle,
           selected: vehicle.isDefault,
-          onTap: () => _selectVehicle(vehicle),
+          onTap: () => _viewVehicle(vehicle),
           onEdit: () => _openVehicleForm(vehicle: vehicle),
           onDelete: () => _deleteVehicle(vehicle),
         );
@@ -667,6 +684,7 @@ class _VehiclePreview extends StatelessWidget {
   const _VehiclePreview({
     required this.vehicle,
     required this.onChangeImage,
+    required this.onActivate,
     this.imagePath,
     this.imageUrl,
   });
@@ -675,12 +693,14 @@ class _VehiclePreview extends StatelessWidget {
   final String? imagePath;
   final String? imageUrl;
   final VoidCallback onChangeImage;
+  final VoidCallback onActivate;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final hasSelectedVehicle = vehicle != null;
     final title = hasSelectedVehicle ? garageVehicleTitle(vehicle!) : '';
+    final showActivateAction = vehicle != null && !vehicle!.isDefault;
 
     return Column(
       children: [
@@ -732,6 +752,33 @@ class _VehiclePreview extends StatelessWidget {
             ),
           ),
         ),
+        if (showActivateAction) ...[
+          const SizedBox(height: AutolabCustomer.spacingSm),
+          SizedBox(
+            height: 36,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AutolabCustomer.primary,
+                foregroundColor: AutolabCustomer.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+                ),
+              ),
+              onPressed: onActivate,
+              icon: const Icon(
+                Icons.check_circle_outline_rounded,
+                size: AutolabCustomer.iconSm,
+              ),
+              label: Text(
+                l10n.vehiclesSetActiveAction,
+                style: AutolabCustomer.caption.copyWith(
+                  color: AutolabCustomer.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

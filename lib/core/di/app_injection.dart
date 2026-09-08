@@ -71,6 +71,7 @@ import '../../features/profile/data/repositories/customer_location_repository_im
 import '../../features/profile/data/repositories/garage_vehicle_repository_impl.dart';
 import '../../features/profile/domain/repositories/customer_location_repository.dart';
 import '../../features/profile/domain/repositories/garage_vehicle_repository.dart';
+import '../../features/profile/domain/usecases/delete_garage_vehicle.dart';
 import '../../features/profile/domain/usecases/get_default_garage_vehicle.dart';
 import '../../features/profile/domain/usecases/get_garage_vehicles.dart';
 import '../../features/profile/domain/usecases/set_default_garage_vehicle.dart';
@@ -357,8 +358,14 @@ void _registerFeatureDependencies() {
   sl.registerLazySingleton<SetDefaultGarageVehicle>(
     () => SetDefaultGarageVehicle(sl<GarageVehicleRepository>()),
   );
+  sl.registerLazySingleton<DeleteGarageVehicle>(
+    () => DeleteGarageVehicle(sl<GarageVehicleRepository>()),
+  );
   sl.registerLazySingleton<GarageVehicleController>(
-    () => GarageVehicleController(sl<SetDefaultGarageVehicle>()),
+    () => GarageVehicleController(
+      sl<SetDefaultGarageVehicle>(),
+      sl<DeleteGarageVehicle>(),
+    ),
   );
   sl.registerLazySingleton<GarageVehicleImageService>(
     () => GarageVehicleImageService(

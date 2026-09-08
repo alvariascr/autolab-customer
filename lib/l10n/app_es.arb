@@ -412,6 +412,7 @@
   "vehiclesTransmissionAutomatic": "Automática",
   "vehiclesSaveAction": "Guardar vehículo",
   "vehiclesNextAction": "Siguiente",
+  "vehiclesSetActiveAction": "Usar como vehículo activo",
   "vehiclesSaveFailed": "No pudimos guardar el vehículo. Revisa la información e inténtalo de nuevo.",
   "vehiclesPlateAlreadyExists": "Esta placa ya está registrada en tus vehículos. Selecciona ese vehículo de la lista o elimina el registro anterior.",
   "vehiclesDeleteTitle": "Eliminar vehículo",
