@@ -3,6 +3,7 @@ import 'package:autolab_customer/features/profile/application/garage_vehicle_con
 import 'package:autolab_customer/features/profile/application/garage_vehicle_image_service.dart';
 import 'package:autolab_customer/features/profile/domain/entities/garage_vehicle.dart';
 import 'package:autolab_customer/features/profile/domain/repositories/garage_vehicle_repository.dart';
+import 'package:autolab_customer/features/profile/domain/usecases/delete_garage_vehicle.dart';
 import 'package:autolab_customer/features/profile/domain/usecases/get_garage_vehicles.dart';
 import 'package:autolab_customer/features/profile/domain/usecases/set_default_garage_vehicle.dart';
 import 'package:autolab_customer/features/profile/presentation/page/vehicles_page.dart';
@@ -23,6 +24,8 @@ class _MockGarageVehicleController extends Mock
 
 class _MockSetDefaultGarageVehicle extends Mock
     implements SetDefaultGarageVehicle {}
+
+class _MockDeleteGarageVehicle extends Mock implements DeleteGarageVehicle {}
 
 void main() {
   group('VehiclesPage editing via the "..." menu', () {
@@ -117,6 +120,7 @@ void main() {
     late _MockGarageVehicleRepository vehicleRepository;
     late _MockGarageVehicleImageService vehicleImageService;
     late _MockSetDefaultGarageVehicle setDefaultGarageVehicle;
+    late _MockDeleteGarageVehicle deleteGarageVehicle;
     late GarageVehicleController garageVehicleController;
 
     const activeVehicle = GarageVehicle(
@@ -137,11 +141,13 @@ void main() {
       vehicleRepository = _MockGarageVehicleRepository();
       vehicleImageService = _MockGarageVehicleImageService();
       setDefaultGarageVehicle = _MockSetDefaultGarageVehicle();
+      deleteGarageVehicle = _MockDeleteGarageVehicle();
       // Real controller (not mocked): this is the same class Home listens
       // to in production, so a passing test here proves the notification
       // actually reaches listeners, not just that a mock method was called.
       garageVehicleController = GarageVehicleController(
         setDefaultGarageVehicle,
+        deleteGarageVehicle,
       );
 
       when(
@@ -240,7 +246,7 @@ void main() {
         () => vehicleImageService.loadLocalImages(),
       ).thenAnswer((_) async => {});
       when(
-        () => vehicleRepository.deleteVehicle('vehicle-1'),
+        () => garageVehicleController.deleteVehicle('vehicle-1'),
       ).thenAnswer((_) async {});
 
       sl.registerSingleton<GarageVehicleRepository>(vehicleRepository);
@@ -258,44 +264,28 @@ void main() {
       await sl.unregister<GarageVehicleController>();
     });
 
-    testWidgets(
-      'notifies the shared garage controller only after the list reloads',
-      (tester) async {
-        final callOrder = <String>[];
-        when(() => vehicleRepository.getVehicles()).thenAnswer((_) async {
-          callOrder.add('loadVehicles');
-          return [vehicle];
-        });
-        when(
-          () => garageVehicleController.notifyVehiclesChanged(),
-        ).thenAnswer((_) => callOrder.add('notify'));
+    testWidgets('routes the deletion through the shared garage controller, not '
+        'the repository directly, and reloads the list afterwards', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
 
-        await tester.pumpWidget(const _TestApp());
-        await tester.pumpAndSettle();
-        callOrder.clear();
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.byIcon(Icons.more_horiz_rounded));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Eliminar'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Eliminar'));
-        await tester.pumpAndSettle();
-
-        verify(() => vehicleRepository.deleteVehicle('vehicle-1')).called(1);
-        verify(() => garageVehicleController.notifyVehiclesChanged()).called(1);
-        expect(
-          callOrder,
-          ['loadVehicles', 'notify'],
-          reason:
-              'The local vehicle list must be reloaded before notifying '
-              'Home, so any future "promote another vehicle to default" '
-              'logic added to _loadVehicles() is picked up before Home '
-              'refreshes.',
-        );
-      },
-    );
+      verify(
+        () => garageVehicleController.deleteVehicle('vehicle-1'),
+      ).called(1);
+      verifyNever(() => vehicleRepository.deleteVehicle(any()));
+      verify(() => vehicleRepository.getVehicles()).called(2);
+    });
   });
 }
 

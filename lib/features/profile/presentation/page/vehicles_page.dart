@@ -124,10 +124,13 @@ class _VehiclesPageState extends State<VehiclesPage> {
     if (confirmed != true) return;
 
     try {
-      await _repository.deleteVehicle(vehicle.id);
+      if (_garageVehicleController != null) {
+        await _garageVehicleController!.deleteVehicle(vehicle.id);
+      } else {
+        await _repository.deleteVehicle(vehicle.id);
+      }
       if (!mounted) return;
       await _loadVehicles();
-      _garageVehicleController?.notifyVehiclesChanged();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
