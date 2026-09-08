@@ -371,6 +371,9 @@ void main() {
 
         verify(() => deleteGarageVehicle('vehicle-1')).called(1);
         verify(() => setDefaultGarageVehicle('vehicle-2')).called(1);
+        // Once for the initial load, once for the final refresh after
+        // deleting and promoting — never a second reload in between.
+        verify(() => vehicleRepository.getVehicles()).called(2);
       },
     );
   });

@@ -123,6 +123,12 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     if (confirmed != true) return;
 
+    // Decide the replacement using the list we already have in memory —
+    // no need to reload just to find out whether one is needed.
+    final replacement = vehicle.isDefault
+        ? _vehicles.where((item) => item.id != vehicle.id).firstOrNull
+        : null;
+
     try {
       if (_garageVehicleController != null) {
         await _garageVehicleController!.deleteVehicle(vehicle.id);
@@ -130,11 +136,18 @@ class _VehiclesPageState extends State<VehiclesPage> {
         await _repository.deleteVehicle(vehicle.id);
       }
       if (!mounted) return;
-      await _loadVehicles();
-      if (!mounted) return;
-      if (_vehicles.isNotEmpty && !_vehicles.any((item) => item.isDefault)) {
-        await _activateVehicle(_vehicles.first);
+
+      if (replacement != null) {
+        await _setDefaultVehicleRemote(replacement.id);
+        if (!mounted) return;
+        setState(() {
+          _selectedVehicle = replacement;
+          _formVersion++;
+        });
       }
+
+      if (!mounted) return;
+      await _loadVehicles();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -162,13 +175,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
     });
   }
 
+  Future<void> _setDefaultVehicleRemote(String vehicleId) {
+    if (_garageVehicleController != null) {
+      return _garageVehicleController!.setDefaultVehicle(vehicleId);
+    }
+    return _repository.setDefaultVehicle(vehicleId);
+  }
+
   Future<void> _activateVehicle(GarageVehicle vehicle) async {
     try {
-      if (_garageVehicleController != null) {
-        await _garageVehicleController!.setDefaultVehicle(vehicle.id);
-      } else {
-        await _repository.setDefaultVehicle(vehicle.id);
-      }
+      await _setDefaultVehicleRemote(vehicle.id);
       if (!mounted) return;
       setState(() {
         _selectedVehicle = vehicle;
