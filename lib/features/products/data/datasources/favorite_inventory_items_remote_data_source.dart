@@ -105,16 +105,20 @@ class FavoriteInventoryItemsRemoteDataSource {
       return await action();
     } on FavoriteInventoryItemAuthRequiredException {
       rethrow;
+    } on AuthException catch (_) {
+      // Explicit failures from the Supabase Auth SDK itself (e.g. a
+      // stale JWT that failed to refresh before the request went out).
+      throw const FavoriteInventoryItemAuthRequiredException();
     } on PostgrestException catch (error, stackTrace) {
       if (isAuthRequiredError(error)) {
         throw const FavoriteInventoryItemAuthRequiredException();
       }
       throw FavoriteInventoryItemStorageException(error, stackTrace);
-    } on AuthException catch (_) {
-      throw const FavoriteInventoryItemAuthRequiredException();
     } on SocketException catch (error, stackTrace) {
       throw FavoriteInventoryItemStorageException(error, stackTrace);
     } catch (error, stackTrace) {
+      // Fallback so no unexpected error (JSON parsing, TypeError, etc.)
+      // ever leaks past the datasource boundary unwrapped.
       throw FavoriteInventoryItemStorageException(error, stackTrace);
     }
   }

@@ -97,16 +97,20 @@ class FavoriteWorkshopsRemoteDataSource {
       rethrow;
     } on FavoriteWorkshopStorageException {
       rethrow;
+    } on AuthException catch (_) {
+      // Explicit failures from the Supabase Auth SDK itself (e.g. a
+      // stale JWT that failed to refresh before the request went out).
+      throw const FavoriteWorkshopAuthRequiredException();
     } on PostgrestException catch (error, stackTrace) {
       if (isAuthRequiredError(error)) {
         throw const FavoriteWorkshopAuthRequiredException();
       }
       throw FavoriteWorkshopStorageException(error, stackTrace);
-    } on AuthException catch (_) {
-      throw const FavoriteWorkshopAuthRequiredException();
     } on SocketException catch (error, stackTrace) {
       throw FavoriteWorkshopStorageException(error, stackTrace);
     } catch (error, stackTrace) {
+      // Fallback so no unexpected error (JSON parsing, TypeError, etc.)
+      // ever leaks past the datasource boundary unwrapped.
       throw FavoriteWorkshopStorageException(error, stackTrace);
     }
   }
