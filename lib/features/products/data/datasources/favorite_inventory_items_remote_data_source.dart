@@ -112,6 +112,8 @@ class FavoriteInventoryItemsRemoteDataSource {
       throw FavoriteInventoryItemStorageException(error, stackTrace);
     } on SocketException catch (error, stackTrace) {
       throw FavoriteInventoryItemStorageException(error, stackTrace);
+    } catch (error, stackTrace) {
+      throw FavoriteInventoryItemStorageException(error, stackTrace);
     }
   }
 

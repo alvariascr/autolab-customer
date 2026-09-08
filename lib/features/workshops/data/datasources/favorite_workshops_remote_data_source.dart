@@ -104,6 +104,8 @@ class FavoriteWorkshopsRemoteDataSource {
       throw FavoriteWorkshopStorageException(error, stackTrace);
     } on SocketException catch (error, stackTrace) {
       throw FavoriteWorkshopStorageException(error, stackTrace);
+    } catch (error, stackTrace) {
+      throw FavoriteWorkshopStorageException(error, stackTrace);
     }
   }
 }
