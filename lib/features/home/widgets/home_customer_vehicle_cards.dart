@@ -88,7 +88,10 @@ class _HomeActiveVehicleCard extends StatelessWidget {
           SizedBox(
             width: 66,
             height: 42,
-            child: _HomeVehicleNetworkImage(imageUrl: vehicle.imageUrl),
+            child: _HomeVehicleNetworkImage(
+              imagePath: vehicle.imagePath,
+              imageUrl: vehicle.imageUrl,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -157,29 +160,29 @@ class _HomeActiveVehicleCard extends StatelessWidget {
 }
 
 class _HomeVehicleNetworkImage extends StatelessWidget {
-  const _HomeVehicleNetworkImage({this.imageUrl});
+  const _HomeVehicleNetworkImage({this.imagePath, this.imageUrl});
 
+  final String? imagePath;
   final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
+    const placeholder = Icon(
+      Icons.directions_car_filled_rounded,
+      color: AutolabCustomer.primary,
+      size: 36,
+    );
+
     final url = imageUrl;
     if (url == null || url.isEmpty) {
-      return const Icon(
-        Icons.directions_car_filled_rounded,
-        color: AutolabCustomer.primary,
-        size: 36,
-      );
+      return placeholder;
     }
 
-    return Image.network(
-      url,
+    return GarageVehicleNetworkImage(
+      imagePath: imagePath,
+      imageUrl: url,
       fit: BoxFit.contain,
-      errorBuilder: (_, _, _) => const Icon(
-        Icons.directions_car_filled_rounded,
-        color: AutolabCustomer.primary,
-        size: 36,
-      ),
+      errorBuilder: (context) => placeholder,
     );
   }
 }

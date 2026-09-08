@@ -40,4 +40,9 @@ abstract interface class GarageVehicleRepository {
     required String garageVehicleId,
     required String localFilePath,
   });
+
+  /// Re-signs a vehicle photo's storage path, for when a previously loaded
+  /// signed URL has expired. Returns null if the image is gone or the
+  /// request fails.
+  Future<String?> refreshVehicleImageUrl(String imagePath);
 }

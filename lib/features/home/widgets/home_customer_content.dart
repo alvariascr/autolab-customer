@@ -13,6 +13,7 @@ import '../../notifications/presentation/widgets/customer_notification_bell.dart
 import '../../products/domain/repositories/product_repository.dart';
 import '../../profile/domain/entities/garage_vehicle.dart';
 import '../../profile/presentation/helpers/garage_vehicle_display.dart';
+import '../../profile/presentation/widgets/garage_vehicle_network_image.dart';
 import '../../workshops/domain/entities/workshop.dart';
 import '../../workshops/domain/services/workshop_proximity_filter.dart';
 import '../../workshops/domain/services/workshop_search_location_resolver.dart';
