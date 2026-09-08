@@ -129,6 +129,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
         ? _vehicles.where((item) => item.id != vehicle.id).firstOrNull
         : null;
 
+    // Stop showing (and letting the user interact with) the vehicle we're
+    // about to delete for as long as the request is in flight.
+    final wasSelected = _selectedVehicle?.id == vehicle.id;
+    if (wasSelected) {
+      setState(() {
+        _selectedVehicle = replacement;
+        _formVersion++;
+      });
+    }
+
     try {
       if (_garageVehicleController != null) {
         await _garageVehicleController!.deleteVehicle(vehicle.id);
@@ -150,6 +160,12 @@ class _VehiclesPageState extends State<VehiclesPage> {
       await _loadVehicles();
     } catch (_) {
       if (!mounted) return;
+      if (wasSelected) {
+        setState(() {
+          _selectedVehicle = vehicle;
+          _formVersion++;
+        });
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.vehiclesDeleteFailed)));

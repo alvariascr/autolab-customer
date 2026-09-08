@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_customer/core/di/app_injection.dart';
 import 'package:autolab_customer/features/profile/application/garage_vehicle_controller.dart';
 import 'package:autolab_customer/features/profile/application/garage_vehicle_image_service.dart';
@@ -285,6 +287,63 @@ void main() {
       ).called(1);
       verifyNever(() => vehicleRepository.deleteVehicle(any()));
       verify(() => vehicleRepository.getVehicles()).called(2);
+    });
+
+    testWidgets('clears the previewed vehicle immediately, before the delete '
+        'request resolves', (tester) async {
+      final deleteCompleter = Completer<void>();
+      when(
+        () => garageVehicleController.deleteVehicle('vehicle-1'),
+      ).thenAnswer((_) => deleteCompleter.future);
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      // One in the compact card, one in the preview below it.
+      expect(find.text('Toyota Tacoma'), findsNWidgets(2));
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pump();
+
+      // The delete request is still pending (deleteCompleter unresolved),
+      // but the preview should have stopped showing the doomed vehicle
+      // already — only the compact card instance remains.
+      expect(find.text('Toyota Tacoma'), findsNWidgets(1));
+
+      deleteCompleter.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('restores the previewed vehicle if the delete request fails', (
+      tester,
+    ) async {
+      when(
+        () => garageVehicleController.deleteVehicle('vehicle-1'),
+      ).thenThrow(Exception('network error'));
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Toyota Tacoma'), findsNWidgets(2));
+      expect(
+        find.text('No pudimos eliminar el vehículo. Intenta nuevamente.'),
+        findsOneWidget,
+      );
     });
   });
 
