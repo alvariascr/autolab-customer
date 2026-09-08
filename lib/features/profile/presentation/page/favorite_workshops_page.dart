@@ -709,7 +709,7 @@ class _FavoriteWorkshopCard extends StatelessWidget {
       subtitle: address.isNotEmpty ? address : description,
       meta: description.isNotEmpty && address.isNotEmpty ? description : null,
       metaIcon: Icons.info_outline_rounded,
-      removeTooltip: l10n.workshopFavoriteRemoved,
+      removeTooltip: l10n.favoritesRemoveAction,
       onRemove: onRemove,
       subtitleIcon: Icons.location_on_outlined,
     );
@@ -746,9 +746,7 @@ class _FavoriteProductCard extends StatelessWidget {
       subtitle: product.effectiveDescription,
       meta: workshopName,
       metaIcon: Icons.garage_outlined,
-      removeTooltip: product.itemType.trim().toLowerCase() == 'service'
-          ? l10n.serviceFavoriteRemoved
-          : l10n.productFavoriteRemoved,
+      removeTooltip: l10n.favoritesRemoveAction,
       onRemove: onRemove,
       subtitleIcon: Icons.info_outline_rounded,
     );

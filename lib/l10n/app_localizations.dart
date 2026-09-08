@@ -1192,6 +1192,12 @@ abstract class AppLocalizations {
   /// **'No fue posible actualizar favoritos. Intenta nuevamente.'**
   String get inventoryFavoriteError;
 
+  /// No description provided for @favoritesRemoveAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de favoritos'**
+  String get favoritesRemoveAction;
+
   /// No description provided for @garageAddresses.
   ///
   /// In es, this message translates to:

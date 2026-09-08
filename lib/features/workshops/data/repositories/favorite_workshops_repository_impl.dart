@@ -14,7 +14,7 @@ class FavoriteWorkshopsRepositoryImpl implements FavoriteWorkshopsRepository {
     } on FavoriteWorkshopAuthRequiredException {
       throw const FavoriteWorkshopAuthException();
     } on FavoriteWorkshopStorageException catch (error) {
-      throw FavoriteWorkshopStorageFailure(error.message);
+      throw FavoriteWorkshopStorageFailure(error.error, error.stackTrace);
     }
   }
 
@@ -30,7 +30,7 @@ class FavoriteWorkshopsRepositoryImpl implements FavoriteWorkshopsRepository {
     } on FavoriteWorkshopAuthRequiredException {
       throw const FavoriteWorkshopAuthException();
     } on FavoriteWorkshopStorageException catch (error) {
-      throw FavoriteWorkshopStorageFailure(error.message);
+      throw FavoriteWorkshopStorageFailure(error.error, error.stackTrace);
     }
   }
 
@@ -46,7 +46,7 @@ class FavoriteWorkshopsRepositoryImpl implements FavoriteWorkshopsRepository {
     } on FavoriteWorkshopAuthRequiredException {
       throw const FavoriteWorkshopAuthException();
     } on FavoriteWorkshopStorageException catch (error) {
-      throw FavoriteWorkshopStorageFailure(error.message);
+      throw FavoriteWorkshopStorageFailure(error.error, error.stackTrace);
     }
   }
 
@@ -62,7 +62,7 @@ class FavoriteWorkshopsRepositoryImpl implements FavoriteWorkshopsRepository {
     } on FavoriteWorkshopAuthRequiredException {
       throw const FavoriteWorkshopAuthException();
     } on FavoriteWorkshopStorageException catch (error) {
-      throw FavoriteWorkshopStorageFailure(error.message);
+      throw FavoriteWorkshopStorageFailure(error.error, error.stackTrace);
     }
   }
 }
