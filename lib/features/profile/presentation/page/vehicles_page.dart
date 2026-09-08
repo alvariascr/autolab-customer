@@ -123,6 +123,22 @@ class _VehiclesPageState extends State<VehiclesPage> {
 
     if (confirmed != true) return;
 
+    // Decide the replacement using the list we already have in memory —
+    // no need to reload just to find out whether one is needed.
+    final replacement = vehicle.isDefault
+        ? _vehicles.where((item) => item.id != vehicle.id).firstOrNull
+        : null;
+
+    // Stop showing (and letting the user interact with) the vehicle we're
+    // about to delete for as long as the request is in flight.
+    final wasSelected = _selectedVehicle?.id == vehicle.id;
+    if (wasSelected) {
+      setState(() {
+        _selectedVehicle = replacement;
+        _formVersion++;
+      });
+    }
+
     try {
       if (_garageVehicleController != null) {
         await _garageVehicleController!.deleteVehicle(vehicle.id);
@@ -130,9 +146,26 @@ class _VehiclesPageState extends State<VehiclesPage> {
         await _repository.deleteVehicle(vehicle.id);
       }
       if (!mounted) return;
+
+      if (replacement != null) {
+        await _setDefaultVehicleRemote(replacement.id);
+        if (!mounted) return;
+        setState(() {
+          _selectedVehicle = replacement;
+          _formVersion++;
+        });
+      }
+
+      if (!mounted) return;
       await _loadVehicles();
     } catch (_) {
       if (!mounted) return;
+      if (wasSelected) {
+        setState(() {
+          _selectedVehicle = vehicle;
+          _formVersion++;
+        });
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.vehiclesDeleteFailed)));
@@ -158,13 +191,16 @@ class _VehiclesPageState extends State<VehiclesPage> {
     });
   }
 
+  Future<void> _setDefaultVehicleRemote(String vehicleId) {
+    if (_garageVehicleController != null) {
+      return _garageVehicleController!.setDefaultVehicle(vehicleId);
+    }
+    return _repository.setDefaultVehicle(vehicleId);
+  }
+
   Future<void> _activateVehicle(GarageVehicle vehicle) async {
     try {
-      if (_garageVehicleController != null) {
-        await _garageVehicleController!.setDefaultVehicle(vehicle.id);
-      } else {
-        await _repository.setDefaultVehicle(vehicle.id);
-      }
+      await _setDefaultVehicleRemote(vehicle.id);
       if (!mounted) return;
       setState(() {
         _selectedVehicle = vehicle;

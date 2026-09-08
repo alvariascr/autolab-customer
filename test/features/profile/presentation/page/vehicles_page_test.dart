@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:autolab_customer/core/di/app_injection.dart';
 import 'package:autolab_customer/features/profile/application/garage_vehicle_controller.dart';
 import 'package:autolab_customer/features/profile/application/garage_vehicle_image_service.dart';
@@ -286,6 +288,153 @@ void main() {
       verifyNever(() => vehicleRepository.deleteVehicle(any()));
       verify(() => vehicleRepository.getVehicles()).called(2);
     });
+
+    testWidgets('clears the previewed vehicle immediately, before the delete '
+        'request resolves', (tester) async {
+      final deleteCompleter = Completer<void>();
+      when(
+        () => garageVehicleController.deleteVehicle('vehicle-1'),
+      ).thenAnswer((_) => deleteCompleter.future);
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      // One in the compact card, one in the preview below it.
+      expect(find.text('Toyota Tacoma'), findsNWidgets(2));
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pump();
+
+      // The delete request is still pending (deleteCompleter unresolved),
+      // but the preview should have stopped showing the doomed vehicle
+      // already — only the compact card instance remains.
+      expect(find.text('Toyota Tacoma'), findsNWidgets(1));
+
+      deleteCompleter.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('restores the previewed vehicle if the delete request fails', (
+      tester,
+    ) async {
+      when(
+        () => garageVehicleController.deleteVehicle('vehicle-1'),
+      ).thenThrow(Exception('network error'));
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Eliminar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Toyota Tacoma'), findsNWidgets(2));
+      expect(
+        find.text('No pudimos eliminar el vehículo. Intenta nuevamente.'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('VehiclesPage deleting the active vehicle', () {
+    late _MockGarageVehicleRepository vehicleRepository;
+    late _MockGarageVehicleImageService vehicleImageService;
+    late _MockSetDefaultGarageVehicle setDefaultGarageVehicle;
+    late _MockDeleteGarageVehicle deleteGarageVehicle;
+    late GarageVehicleController garageVehicleController;
+    late List<GarageVehicle> currentVehicles;
+
+    const activeVehicle = GarageVehicle(
+      id: 'vehicle-1',
+      licensePlate: 'ABC-123',
+      brand: 'Toyota',
+      model: 'Tacoma',
+      isDefault: true,
+    );
+    const otherVehicle = GarageVehicle(
+      id: 'vehicle-2',
+      licensePlate: 'XYZ-789',
+      brand: 'Honda',
+      model: 'Civic',
+    );
+
+    setUp(() {
+      currentVehicles = [activeVehicle, otherVehicle];
+      vehicleRepository = _MockGarageVehicleRepository();
+      vehicleImageService = _MockGarageVehicleImageService();
+      setDefaultGarageVehicle = _MockSetDefaultGarageVehicle();
+      deleteGarageVehicle = _MockDeleteGarageVehicle();
+      // Real controller: proves setDefaultVehicle() is actually invoked on
+      // the promoted vehicle, not just that some mock method was called.
+      garageVehicleController = GarageVehicleController(
+        setDefaultGarageVehicle,
+        deleteGarageVehicle,
+      );
+
+      when(
+        () => vehicleRepository.getVehicles(),
+      ).thenAnswer((_) async => currentVehicles);
+      when(
+        () => vehicleImageService.uploadLegacyImages(any()),
+      ).thenAnswer((_) async => false);
+      when(
+        () => vehicleImageService.loadLocalImages(),
+      ).thenAnswer((_) async => {});
+      when(() => deleteGarageVehicle('vehicle-1')).thenAnswer((_) async {
+        currentVehicles = currentVehicles
+            .where((item) => item.id != 'vehicle-1')
+            .toList();
+      });
+      when(() => setDefaultGarageVehicle('vehicle-2')).thenAnswer((_) async {});
+
+      sl.registerSingleton<GarageVehicleRepository>(vehicleRepository);
+      sl.registerSingleton<GetGarageVehicles>(
+        GetGarageVehicles(vehicleRepository),
+      );
+      sl.registerSingleton<GarageVehicleImageService>(vehicleImageService);
+      sl.registerSingleton<GarageVehicleController>(garageVehicleController);
+    });
+
+    tearDown(() async {
+      await sl.unregister<GarageVehicleRepository>();
+      await sl.unregister<GetGarageVehicles>();
+      await sl.unregister<GarageVehicleImageService>();
+      await sl.unregister<GarageVehicleController>();
+    });
+
+    testWidgets(
+      'promotes the only remaining vehicle to default automatically',
+      (tester) async {
+        await tester.pumpWidget(const _TestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.more_horiz_rounded).first);
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Eliminar'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Eliminar'));
+        await tester.pumpAndSettle();
+
+        verify(() => deleteGarageVehicle('vehicle-1')).called(1);
+        verify(() => setDefaultGarageVehicle('vehicle-2')).called(1);
+        // Once for the initial load, once for the final refresh after
+        // deleting and promoting — never a second reload in between.
+        verify(() => vehicleRepository.getVehicles()).called(2);
+      },
+    );
   });
 }
 
