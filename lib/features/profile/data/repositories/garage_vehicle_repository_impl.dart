@@ -121,6 +121,11 @@ class GarageVehicleRepositoryImpl implements GarageVehicleRepository {
     );
   }
 
+  @override
+  Future<String?> refreshVehicleImageUrl(String imagePath) {
+    return _remoteDataSource.refreshVehicleImageUrl(imagePath);
+  }
+
   Future<T> _runDefaultVehicleMutation<T>(Future<T> Function() action) {
     _clearDefaultVehicleRequest();
     final request = action();
