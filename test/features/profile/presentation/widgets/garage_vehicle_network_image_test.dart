@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:autolab_customer/core/di/app_injection.dart';
@@ -89,6 +90,63 @@ void main() {
 
       verifyNever(() => repository.refreshVehicleImageUrl(any()));
       expect(find.text('placeholder'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'discards a stale refresh response that resolves after the widget '
+    'already moved on to a newer imageUrl',
+    (tester) async {
+      final responses = [Completer<String?>(), Completer<String?>()];
+      var callCount = 0;
+      when(
+        () => repository.refreshVehicleImageUrl('vehicles/car-1/photo.jpg'),
+      ).thenAnswer((_) => responses[callCount++].future);
+
+      HttpOverrides.global = _AlwaysFailingHttpOverrides();
+      addTearDown(() => HttpOverrides.global = null);
+
+      Widget buildWidget(String imageUrl) {
+        return MaterialApp(
+          home: GarageVehicleNetworkImage(
+            imagePath: 'vehicles/car-1/photo.jpg',
+            imageUrl: imageUrl,
+            errorBuilder: (context) => const Text('placeholder'),
+          ),
+        );
+      }
+
+      // First load fails and kicks off the first refresh (call #1), which
+      // we keep pending via responses[0].
+      await tester.pumpWidget(buildWidget('https://cdn.example.com/stale-1'));
+      await tester.pumpAndSettle();
+
+      // Before call #1 resolves, the parent rebuilds with a newer URL
+      // (e.g. the vehicle list reloaded elsewhere in the app). This also
+      // fails to load and kicks off a second refresh (call #2).
+      await tester.pumpWidget(buildWidget('https://cdn.example.com/stale-2'));
+      await tester.pumpAndSettle();
+
+      expect(callCount, 2);
+
+      // Call #1 (stale) resolves last-ish but for an outdated generation —
+      // it must be ignored rather than clobbering call #2's result.
+      responses[0].complete('https://cdn.example.com/fresh-from-call-1');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('https://cdn.example.com/fresh-from-call-1')),
+        findsNothing,
+      );
+
+      // Call #2 (current) resolves and should be the one actually applied.
+      responses[1].complete('https://cdn.example.com/fresh-from-call-2');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('https://cdn.example.com/fresh-from-call-2')),
+        findsOneWidget,
+      );
     },
   );
 }

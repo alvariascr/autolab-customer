@@ -35,6 +35,12 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
   String? _url;
   bool _hasRetried = false;
 
+  // Bumped whenever the widget's imageUrl prop changes, so a refresh
+  // started for a previous prop configuration can recognize it's no
+  // longer relevant and discard its result instead of clobbering
+  // whatever the widget has moved on to showing.
+  int _generation = 0;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +51,7 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
   void didUpdateWidget(covariant GarageVehicleNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageUrl != widget.imageUrl) {
+      _generation++;
       _url = widget.imageUrl;
       _hasRetried = false;
     }
@@ -54,11 +61,13 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
     final imagePath = widget.imagePath?.trim();
     if (_hasRetried || imagePath == null || imagePath.isEmpty) return;
     _hasRetried = true;
+    final requestGeneration = _generation;
 
     try {
       final freshUrl = await sl<GarageVehicleRepository>()
           .refreshVehicleImageUrl(imagePath);
-      if (!mounted || freshUrl == null || freshUrl.isEmpty) return;
+      if (!mounted || requestGeneration != _generation) return;
+      if (freshUrl == null || freshUrl.isEmpty) return;
 
       // Supabase signs each URL with a fresh token, so freshUrl is never
       // the same cache key as the expired one — but evict it anyway so
