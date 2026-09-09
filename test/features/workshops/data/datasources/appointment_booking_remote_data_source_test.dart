@@ -162,7 +162,16 @@ void main() {
         );
 
         expect(slots, hasLength(1));
-        expect(slots.single.start, DateTime(2026, 3, 10, 9));
+        // Comparado por componentes en vez de con DateTime(...) == DateTime(...):
+        // un DateTime "local" sin zona horaria explícita depende de la del
+        // sistema donde corra el test, así que esto evita que la aserción
+        // dependa de en qué zona horaria esté configurado el runner de CI.
+        final start = slots.single.start;
+        expect(start.year, 2026);
+        expect(start.month, 3);
+        expect(start.day, 10);
+        expect(start.hour, 9);
+        expect(start.minute, 0);
         expect(slots.single.durationMinutes, 60);
         expect(slots.single.isInspectionService, isFalse);
       },

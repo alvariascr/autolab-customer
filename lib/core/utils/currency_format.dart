@@ -6,4 +6,4 @@ final _colonesFormatter = NumberFormat.currency(
   decimalDigits: 0,
 );
 
-String formatColones(double amount) => _colonesFormatter.format(amount);
+String formatColones(num amount) => _colonesFormatter.format(amount);
