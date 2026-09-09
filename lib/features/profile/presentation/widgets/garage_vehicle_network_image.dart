@@ -69,17 +69,23 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
   Widget build(BuildContext context) {
     final url = _url;
     if (url == null || url.isEmpty) {
-      return widget.errorBuilder(context);
+      // Fills whatever space the caller gave us, so the fallback occupies
+      // the exact same box as the image would — regardless of how the
+      // caller happens to be constraining us — avoiding a layout shift
+      // between the loaded-image and fallback states.
+      return SizedBox.expand(child: widget.errorBuilder(context));
     }
 
-    return Image.network(
-      url,
-      fit: widget.fit,
-      loadingBuilder: widget.loadingBuilder,
-      errorBuilder: (context, error, stackTrace) {
-        SchedulerBinding.instance.addPostFrameCallback((_) => _refresh());
-        return widget.errorBuilder(context);
-      },
+    return SizedBox.expand(
+      child: Image.network(
+        url,
+        fit: widget.fit,
+        loadingBuilder: widget.loadingBuilder,
+        errorBuilder: (context, error, stackTrace) {
+          SchedulerBinding.instance.addPostFrameCallback((_) => _refresh());
+          return widget.errorBuilder(context);
+        },
+      ),
     );
   }
 }
