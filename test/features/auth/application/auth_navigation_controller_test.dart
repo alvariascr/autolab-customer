@@ -46,6 +46,13 @@ void main() {
         expect(navigations, [
           AuthNavigationController.emailConfirmedLoginRoute,
         ]);
+        // El login por defecto muestra el formulario de Registro; sin
+        // mode=login esta ruta caería ahí en vez de Login, y el mensaje de
+        // "correo confirmado" (que exige estar en modo Login) nunca se vería.
+        expect(
+          AuthNavigationController.emailConfirmedLoginRoute,
+          '/login?emailConfirmed=true&mode=login',
+        );
       },
     );
 
