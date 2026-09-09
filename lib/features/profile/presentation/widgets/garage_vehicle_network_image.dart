@@ -50,7 +50,14 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
   @override
   void didUpdateWidget(covariant GarageVehicleNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.imageUrl != widget.imageUrl) {
+    // Also check imagePath: this widget can end up reused for a different
+    // vehicle at the same list position (e.g. the horizontal vehicle
+    // selector rebuilds its cards by index, with no per-vehicle Key, and
+    // the list itself reorders whenever a vehicle is edited/activated).
+    // Relying on imageUrl alone would miss that swap whenever the two
+    // vehicles' URLs happen to coincide (both null/empty, for instance).
+    if (oldWidget.imageUrl != widget.imageUrl ||
+        oldWidget.imagePath != widget.imagePath) {
       _generation++;
       _url = widget.imageUrl;
       _hasRetried = false;

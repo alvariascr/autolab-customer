@@ -149,4 +149,49 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'resets its retry state when only imagePath changes, even if imageUrl '
+    'coincidentally stays the same (e.g. the widget got reused for a '
+    'different vehicle at the same list position)',
+    (tester) async {
+      const sharedUrl = 'https://cdn.example.com/shared-signed-url';
+
+      when(
+        () => repository.refreshVehicleImageUrl('path-A'),
+      ).thenAnswer((_) async => null);
+      when(
+        () => repository.refreshVehicleImageUrl('path-B'),
+      ).thenAnswer((_) async => null);
+
+      HttpOverrides.global = _AlwaysFailingHttpOverrides();
+      addTearDown(() => HttpOverrides.global = null);
+
+      Widget buildWidget(String imagePath) {
+        return MaterialApp(
+          home: GarageVehicleNetworkImage(
+            imagePath: imagePath,
+            imageUrl: sharedUrl,
+            errorBuilder: (context) => const Text('placeholder'),
+          ),
+        );
+      }
+
+      // Vehicle A's photo fails to load and already exhausts its one retry.
+      await tester.pumpWidget(buildWidget('path-A'));
+      await tester.pumpAndSettle();
+      verify(() => repository.refreshVehicleImageUrl('path-A')).called(1);
+
+      // The list reorders and this same widget position now renders
+      // vehicle B — a different imagePath, but its imageUrl happens to be
+      // the exact same string as vehicle A's (both unsigned/placeholder,
+      // for instance).
+      await tester.pumpWidget(buildWidget('path-B'));
+      await tester.pumpAndSettle();
+
+      // Vehicle B deserves its own retry attempt — it must not inherit
+      // vehicle A's already-used _hasRetried flag.
+      verify(() => repository.refreshVehicleImageUrl('path-B')).called(1);
+    },
+  );
 }
