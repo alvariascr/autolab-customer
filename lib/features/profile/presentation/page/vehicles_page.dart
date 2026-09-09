@@ -13,6 +13,7 @@ import '../../domain/entities/garage_vehicle.dart';
 import '../../domain/repositories/garage_vehicle_repository.dart';
 import '../../domain/usecases/get_garage_vehicles.dart';
 import '../helpers/garage_vehicle_display.dart';
+import '../widgets/garage_vehicle_network_image.dart';
 
 class VehiclesPage extends StatefulWidget {
   const VehiclesPage({super.key});
@@ -359,7 +360,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
               else ...[
                 _VehiclePreview(
                   vehicle: _selectedVehicle,
-                  imagePath:
+                  localImagePath:
                       _vehicleImagePaths[_vehicleImageKey(_selectedVehicle)],
                   imageUrl: _selectedVehicle?.imageUrl,
                   onChangeImage: _pickVehicleImage,
@@ -645,10 +646,11 @@ class _VehicleCompactImage extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
       child: SizedBox.expand(
-        child: Image.network(
-          imageUrl,
+        child: GarageVehicleNetworkImage(
+          imagePath: vehicle.imagePath,
+          imageUrl: imageUrl,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => placeholder,
+          errorBuilder: (context) => placeholder,
           loadingBuilder: (context, child, loadingProgress) =>
               loadingProgress == null ? child : placeholder,
         ),
@@ -721,12 +723,14 @@ class _VehiclePreview extends StatelessWidget {
     required this.vehicle,
     required this.onChangeImage,
     required this.onActivate,
-    this.imagePath,
+    this.localImagePath,
     this.imageUrl,
   });
 
   final GarageVehicle? vehicle;
-  final String? imagePath;
+
+  /// A locally-picked photo not yet uploaded, shown ahead of [imageUrl].
+  final String? localImagePath;
   final String? imageUrl;
   final VoidCallback onChangeImage;
   final VoidCallback onActivate;
@@ -747,7 +751,11 @@ class _VehiclePreview extends StatelessWidget {
             regular: 114,
             tablet: 136,
           ),
-          child: _VehiclePreviewImage(imagePath: imagePath, imageUrl: imageUrl),
+          child: _VehiclePreviewImage(
+            localImagePath: localImagePath,
+            remoteImagePath: vehicle?.imagePath,
+            imageUrl: imageUrl,
+          ),
         ),
         if (hasSelectedVehicle) ...[
           const SizedBox(height: AutolabCustomer.spacingXs),
@@ -821,14 +829,22 @@ class _VehiclePreview extends StatelessWidget {
 }
 
 class _VehiclePreviewImage extends StatelessWidget {
-  const _VehiclePreviewImage({this.imagePath, this.imageUrl});
+  const _VehiclePreviewImage({
+    this.localImagePath,
+    this.remoteImagePath,
+    this.imageUrl,
+  });
 
-  final String? imagePath;
+  /// A locally-picked photo not yet uploaded, shown ahead of [imageUrl].
+  final String? localImagePath;
+
+  /// The storage path used to re-sign [imageUrl] if it expires.
+  final String? remoteImagePath;
   final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
-    final path = imagePath;
+    final path = localImagePath;
 
     if (path != null && path.isNotEmpty) {
       return Image.file(
@@ -841,11 +857,11 @@ class _VehiclePreviewImage extends StatelessWidget {
 
     final url = imageUrl;
     if (url != null && url.isNotEmpty) {
-      return Image.network(
-        url,
+      return GarageVehicleNetworkImage(
+        imagePath: remoteImagePath,
+        imageUrl: url,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) =>
-            const _VehiclePreviewPlaceholder(),
+        errorBuilder: (context) => const _VehiclePreviewPlaceholder(),
       );
     }
 

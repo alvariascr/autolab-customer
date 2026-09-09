@@ -261,6 +261,28 @@ class GarageVehicleRemoteDataSource {
     }
   }
 
+  /// Re-signs [imagePath] so a photo whose previous signed URL expired
+  /// (they're only valid for an hour) can keep being shown without
+  /// reloading the whole vehicle list. Returns null if the image is gone
+  /// or the request fails.
+  Future<String?> refreshVehicleImageUrl(String imagePath) async {
+    final trimmedPath = imagePath.trim();
+    if (trimmedPath.isEmpty) return null;
+
+    try {
+      return await client.storage
+          .from(_vehicleImagesBucket)
+          .createSignedUrl(trimmedPath, 3600);
+    } on StorageException {
+      return null;
+    } catch (_) {
+      // Generic network failures (no connectivity, timeout, DNS) should
+      // fail the same way as a storage-specific error: the caller falls
+      // back to the placeholder instead of crashing.
+      return null;
+    }
+  }
+
   Future<List<GarageVehicleModel>> _vehiclesFromMaps(
     List<Map<String, dynamic>> maps,
   ) async {
