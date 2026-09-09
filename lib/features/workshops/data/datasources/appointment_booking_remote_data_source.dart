@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/utils/costa_rica_time.dart';
@@ -5,6 +6,14 @@ import '../../domain/entities/appointment_product_selection.dart';
 import '../../domain/entities/appointment_vehicle.dart';
 import '../../domain/entities/booked_appointment_slot.dart';
 import '../../domain/services/appointment_service_classifier.dart';
+
+typedef EmployeeCapacityProvider = Future<int> Function(String workshopId);
+typedef BookedAppointmentsQuery =
+    Future<List<Map<String, dynamic>>> Function(
+      String workshopId,
+      DateTime startDate,
+      DateTime endDate,
+    );
 
 abstract class AppointmentBookingRemoteDataSource {
   Future<List<AppointmentVehicleRecord>> getCustomerVehicles({
@@ -59,9 +68,16 @@ class AppointmentBookingException implements Exception {
 
 class SupabaseAppointmentBookingRemoteDataSource
     implements AppointmentBookingRemoteDataSource {
-  const SupabaseAppointmentBookingRemoteDataSource(this.client);
+  const SupabaseAppointmentBookingRemoteDataSource(
+    this.client, {
+    EmployeeCapacityProvider? employeeCapacityProvider,
+    BookedAppointmentsQuery? bookedAppointmentsQuery,
+  }) : _employeeCapacityProvider = employeeCapacityProvider,
+       _bookedAppointmentsQuery = bookedAppointmentsQuery;
 
   final SupabaseClient client;
+  final EmployeeCapacityProvider? _employeeCapacityProvider;
+  final BookedAppointmentsQuery? _bookedAppointmentsQuery;
 
   static const _vehicleSelect = '''
     id,
@@ -141,23 +157,13 @@ class SupabaseAppointmentBookingRemoteDataSource
       scheduledDateTime.day,
     );
     final endDate = startDate.add(const Duration(days: 1));
-    final response = await client
-        .from('appointments')
-        .select(
-          'scheduled_datetime, order_services!inner(inventory_items!inner(name, estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
-        )
-        .gte(
-          'scheduled_datetime',
-          costaRicaLocalTimeToUtc(startDate).toIso8601String(),
-        )
-        .lt(
-          'scheduled_datetime',
-          costaRicaLocalTimeToUtc(endDate).toIso8601String(),
-        )
-        .eq('order_services.orders.workshop_id', workshopId)
-        .not('appointment_status', 'in', '(cancelled,no_show)');
+    final rawAppointments = await _queryAppointments(
+      workshopId,
+      startDate,
+      endDate,
+    );
 
-    final bookedSlots = response
+    final bookedSlots = rawAppointments
         .where(_isBlockingAppointment)
         .map(_bookedAppointmentSlotFromMap)
         .whereType<BookedAppointmentSlot>()
@@ -178,23 +184,13 @@ class SupabaseAppointmentBookingRemoteDataSource
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    final response = await client
-        .from('appointments')
-        .select(
-          'scheduled_datetime, order_services!inner(inventory_items!inner(name, estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
-        )
-        .gte(
-          'scheduled_datetime',
-          costaRicaLocalTimeToUtc(startDate).toIso8601String(),
-        )
-        .lt(
-          'scheduled_datetime',
-          costaRicaLocalTimeToUtc(endDate).toIso8601String(),
-        )
-        .eq('order_services.orders.workshop_id', workshopId)
-        .not('appointment_status', 'in', '(cancelled,no_show)');
+    final rawAppointments = await _queryAppointments(
+      workshopId,
+      startDate,
+      endDate,
+    );
 
-    return response
+    return rawAppointments
         .where(_isBlockingAppointment)
         .map(_bookedAppointmentSlotFromMap)
         .whereType<BookedAppointmentSlot>()
@@ -295,17 +291,18 @@ class SupabaseAppointmentBookingRemoteDataSource
   }
 
   String _formatDate(DateTime dateTime) {
-    return '${dateTime.year.toString().padLeft(4, '0')}-'
-        '${dateTime.month.toString().padLeft(2, '0')}-'
-        '${dateTime.day.toString().padLeft(2, '0')}';
+    return DateFormat('yyyy-MM-dd').format(dateTime);
   }
 
   String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}:00';
+    return DateFormat('HH:mm:ss').format(dateTime);
   }
 
   Future<int> _activeEmployeeCapacityFor(String workshopId) async {
+    if (_employeeCapacityProvider != null) {
+      return _employeeCapacityProvider(workshopId);
+    }
+
     final response = await client.rpc(
       'get_workshop_active_employee_count',
       params: {'p_workshop_id': workshopId},
@@ -316,6 +313,34 @@ class SupabaseAppointmentBookingRemoteDataSource
     }
 
     return int.tryParse(response?.toString() ?? '') ?? 0;
+  }
+
+  Future<List<Map<String, dynamic>>> _queryAppointments(
+    String workshopId,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    if (_bookedAppointmentsQuery != null) {
+      return _bookedAppointmentsQuery(workshopId, startDate, endDate);
+    }
+
+    final response = await client
+        .from('appointments')
+        .select(
+          'scheduled_datetime, order_services!inner(inventory_items!inner(name, estimated_duration_hours), orders!inner(workshop_id, payment_status, payment_expires_at))',
+        )
+        .gte(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(startDate).toIso8601String(),
+        )
+        .lt(
+          'scheduled_datetime',
+          costaRicaLocalTimeToUtc(endDate).toIso8601String(),
+        )
+        .eq('order_services.orders.workshop_id', workshopId)
+        .not('appointment_status', 'in', '(cancelled,no_show)');
+
+    return response;
   }
 
   Duration _serviceDuration(double? serviceDurationHours) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/utils/currency_format.dart';
 
 class ProductPriceText extends StatelessWidget {
   const ProductPriceText({super.key, required this.price, this.style});
@@ -27,5 +28,5 @@ String formatProductPrice(double? price) {
     return 'Consultar precio';
   }
 
-  return '\u20A1${price.toStringAsFixed(0)}';
+  return formatColones(price);
 }

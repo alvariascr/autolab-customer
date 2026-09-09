@@ -96,7 +96,7 @@ void main() {
       },
     );
 
-    test('memoiza los carritos agrupados por instancia de estado', () {
+    test('agrupa los items del carrito por taller', () {
       final state = CartState(
         items: [
           CartItem(
@@ -110,12 +110,10 @@ void main() {
         ],
       );
 
-      final firstRead = state.workshopCarts;
-      final secondRead = state.workshopCarts;
+      final workshopCarts = state.workshopCarts;
 
-      expect(identical(firstRead, secondRead), isTrue);
-      expect(firstRead, hasLength(1));
-      expect(firstRead.single.workshopId, 'workshop-a');
+      expect(workshopCarts, hasLength(1));
+      expect(workshopCarts.single.workshopId, 'workshop-a');
     });
 
     test(

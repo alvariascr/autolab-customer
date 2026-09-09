@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../../../core/utils/costa_rica_time.dart';
 import '../entities/booked_appointment_slot.dart';
 import '../entities/workshop.dart';
@@ -288,8 +290,7 @@ class WorkshopAvailabilityCalculator {
   }
 
   String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}';
+    return DateFormat('HH:mm').format(dateTime);
   }
 
   Duration _serviceDuration({double? serviceDurationHours}) {
