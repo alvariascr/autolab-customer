@@ -1,4 +1,7 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createClient,
+  type SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2";
 
 const appScheme = "autolab";
 const appHost = "laropay-callback";
@@ -79,7 +82,7 @@ function isUuid(value: string) {
 }
 
 async function hasAppointmentForOrder(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   orderId: string,
 ) {
   const { data: services, error: servicesError } = await supabase
