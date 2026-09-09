@@ -82,6 +82,49 @@ void main() {
   );
 
   testWidgets(
+    'resets _hasRetried when an ancestor updates the widget with a new '
+    'imageUrl, allowing a fresh retry for that new URL',
+    (tester) async {
+      when(
+        () => repository.refreshVehicleImageUrl('vehicles/car-1/photo.jpg'),
+      ).thenAnswer((_) async => null);
+
+      HttpOverrides.global = _AlwaysFailingHttpOverrides();
+      addTearDown(() => HttpOverrides.global = null);
+
+      Widget buildWidget(String imageUrl) {
+        return MaterialApp(
+          home: GarageVehicleNetworkImage(
+            imagePath: 'vehicles/car-1/photo.jpg',
+            imageUrl: imageUrl,
+            errorBuilder: (context) => const Text('placeholder'),
+          ),
+        );
+      }
+
+      // First URL fails to load and exhausts its one retry attempt.
+      await tester.pumpWidget(buildWidget('https://cdn.example.com/url-1'));
+      await tester.pumpAndSettle();
+      verify(
+        () => repository.refreshVehicleImageUrl('vehicles/car-1/photo.jpg'),
+      ).called(1);
+
+      // An ancestor rebuilds this widget with a genuinely different
+      // imageUrl (e.g. it fetched its own fresh data independently). That
+      // new URL also fails to load here.
+      await tester.pumpWidget(buildWidget('https://cdn.example.com/url-2'));
+      await tester.pumpAndSettle();
+
+      // _hasRetried must have reset for the new imageUrl, so this new
+      // failure gets its own retry attempt instead of being silently
+      // ignored because of the previous URL's already-used flag.
+      verify(
+        () => repository.refreshVehicleImageUrl('vehicles/car-1/photo.jpg'),
+      ).called(1);
+    },
+  );
+
+  testWidgets(
     'never calls refreshVehicleImageUrl when no imagePath is available',
     (tester) async {
       HttpOverrides.global = _AlwaysFailingHttpOverrides();
