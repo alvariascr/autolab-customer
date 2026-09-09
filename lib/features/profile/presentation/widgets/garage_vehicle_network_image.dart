@@ -82,7 +82,13 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
         fit: widget.fit,
         loadingBuilder: widget.loadingBuilder,
         errorBuilder: (context, error, stackTrace) {
-          SchedulerBinding.instance.addPostFrameCallback((_) => _refresh());
+          // Guard here (not just inside _refresh()) so a widget stuck in
+          // the error state doesn't keep queueing a callback on every
+          // rebuild it happens to go through (scrolls, animations, an
+          // ancestor's setState, ...) once a retry has already run.
+          if (!_hasRetried) {
+            SchedulerBinding.instance.addPostFrameCallback((_) => _refresh());
+          }
           return widget.errorBuilder(context);
         },
       ),
