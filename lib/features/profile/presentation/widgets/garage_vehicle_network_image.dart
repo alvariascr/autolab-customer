@@ -59,6 +59,15 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
       final freshUrl = await sl<GarageVehicleRepository>()
           .refreshVehicleImageUrl(imagePath);
       if (!mounted || freshUrl == null || freshUrl.isEmpty) return;
+
+      // Supabase signs each URL with a fresh token, so freshUrl is never
+      // the same cache key as the expired one — but evict it anyway so
+      // the failed entry doesn't linger in Flutter's image cache.
+      final staleUrl = _url;
+      if (staleUrl != null && staleUrl.isNotEmpty) {
+        PaintingBinding.instance.imageCache.evict(NetworkImage(staleUrl));
+      }
+
       setState(() => _url = freshUrl);
     } catch (_) {
       // Keep showing the fallback if the refresh itself fails.
@@ -79,6 +88,11 @@ class _GarageVehicleNetworkImageState extends State<GarageVehicleNetworkImage> {
     return SizedBox.expand(
       child: Image.network(
         url,
+        // Ties the image element to this exact URL, so switching to a
+        // freshly-signed one is guaranteed to start a new image load
+        // instead of Flutter potentially reusing internal state tied to
+        // the previous (expired) request.
+        key: ValueKey(url),
         fit: widget.fit,
         loadingBuilder: widget.loadingBuilder,
         errorBuilder: (context, error, stackTrace) {
