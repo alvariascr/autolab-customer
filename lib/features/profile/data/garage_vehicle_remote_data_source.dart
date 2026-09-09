@@ -275,6 +275,11 @@ class GarageVehicleRemoteDataSource {
           .createSignedUrl(trimmedPath, 3600);
     } on StorageException {
       return null;
+    } catch (_) {
+      // Generic network failures (no connectivity, timeout, DNS) should
+      // fail the same way as a storage-specific error: the caller falls
+      // back to the placeholder instead of crashing.
+      return null;
     }
   }
 
