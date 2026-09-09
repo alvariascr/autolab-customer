@@ -41,8 +41,11 @@ void main() {
 
   testWidgets(
     'refreshes the signed URL exactly once after the current one fails to '
-    'load, and does not retry again for the same failure',
+    'load, and does not retry again even when the fresh URL also fails',
     (tester) async {
+      // _AlwaysFailingHttpOverrides fails every request, so the fresh URL
+      // returned here is guaranteed to also fail to load once applied —
+      // that's the scenario this test is specifically about.
       when(
         () => repository.refreshVehicleImageUrl('vehicles/car-1/photo.jpg'),
       ).thenAnswer((_) async => 'https://cdn.example.com/fresh-signed-url');
@@ -60,13 +63,21 @@ void main() {
         ),
       );
 
-      // Let the failed network image settle, its errorBuilder run, and the
-      // post-frame callback trigger the refresh.
+      // Let the failed network image settle, its errorBuilder run, the
+      // post-frame callback trigger the refresh, and then the fresh URL
+      // itself fail to load too — all within this single settle.
       await tester.pumpAndSettle();
 
       verify(
         () => repository.refreshVehicleImageUrl('vehicles/car-1/photo.jpg'),
       ).called(1);
+
+      // The fresh URL failing again must not trigger a second refresh
+      // attempt — _hasRetried should still be blocking it, leaving the
+      // widget settled on the fallback rather than stuck retrying.
+      expect(find.text('placeholder'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      verifyNoMoreInteractions(repository);
     },
   );
 
