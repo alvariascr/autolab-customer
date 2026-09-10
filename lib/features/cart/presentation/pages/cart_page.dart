@@ -32,6 +32,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   static const _paymentReturnFallbackDelay = Duration(seconds: 3);
 
   bool _showCheckout = false;
+  bool _isPreparingCheckout = false;
   String? _selectedWorkshopId;
   _CartCheckoutLoadingPhase? _checkoutLoadingPhase;
   Completer<void>? _externalCheckoutTransitionCompleter;
@@ -155,6 +156,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         final canCheckout =
             activeCart.items.isNotEmpty &&
             !showPaymentLoading &&
+            !_isPreparingCheckout &&
             !isShowingCartList &&
             (!showCheckout || !activeCart.homeDelivery || hasDeliveryAddress);
         final showBackButton =
@@ -245,10 +247,14 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                             : l10n.cartFinishPurchase
                                       : l10n.cartContinueToCheckout,
                                   enabled: canCheckout,
+                                  loading: _isPreparingCheckout,
                                   onPressed: !canCheckout
                                       ? null
                                       : () async {
                                           if (!showCheckout) {
+                                            setState(
+                                              () => _isPreparingCheckout = true,
+                                            );
                                             final cartCubit = context
                                                 .read<CartCubit>();
                                             await Future.wait([
@@ -262,9 +268,10 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                               ),
                                             ]);
                                             if (!mounted) return;
-                                            setState(
-                                              () => _showCheckout = true,
-                                            );
+                                            setState(() {
+                                              _isPreparingCheckout = false;
+                                              _showCheckout = true;
+                                            });
                                             return;
                                           }
 
@@ -2018,11 +2025,18 @@ class _CartPrimaryButton extends StatelessWidget {
     required this.label,
     required this.enabled,
     required this.onPressed,
+    this.loading = false,
   });
 
   final String label;
   final bool enabled;
   final VoidCallback? onPressed;
+
+  /// Shows a spinner instead of [label] and forces the button disabled --
+  /// for network work (like refreshing prices before checkout) that isn't
+  /// tracked by CartCubit's own checkoutStatus, so without this the button
+  /// would look idle while a slow connection makes the tap seem ignored.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -2036,14 +2050,22 @@ class _CartPrimaryButton extends StatelessWidget {
       ),
       child: ElevatedButton(
         style: AutolabCustomer.primaryButton,
-        onPressed: enabled ? onPressed : null,
-        child: Text(
-          label,
-          style: AutolabCustomer.bodyLarge.copyWith(
-            color: AutolabCustomer.white,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
+        onPressed: enabled && !loading ? onPressed : null,
+        child: loading
+            ? const SizedBox.square(
+                dimension: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AutolabCustomer.white,
+                ),
+              )
+            : Text(
+                label,
+                style: AutolabCustomer.bodyLarge.copyWith(
+                  color: AutolabCustomer.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
       ),
     );
   }
