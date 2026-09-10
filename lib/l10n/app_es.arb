@@ -960,6 +960,7 @@
   },
   "cartShipping": "Envío",
   "cartFreeShipping": "Gratis",
+  "cartShippingCalculating": "Calculando...",
   "cartTaxes": "IVA incluido",
   "cartTotal": "Total",
   "cartFinishPurchase": "Finalizar compra",

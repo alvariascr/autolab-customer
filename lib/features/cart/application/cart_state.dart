@@ -59,7 +59,7 @@ class CartState extends Equatable {
 
   double get taxes => CartPricing.includedTaxes(productsTotal);
 
-  double get shippingCost {
+  double? get _rawShippingCost {
     return CartPricing.shippingCost(
       hasItems: items.isNotEmpty,
       homeDelivery: homeDelivery,
@@ -67,6 +67,16 @@ class CartState extends Equatable {
       itemDeliveryFees: items.map((item) => item.product.workshopDeliveryFee),
     );
   }
+
+  double get shippingCost => _rawShippingCost ?? 0;
+
+  /// Whether [shippingCost] reflects an actually-known fee (the workshop's
+  /// live delivery fee, or one captured on a cart item) rather than the
+  /// same 0 used as a placeholder while neither is available yet. UI that
+  /// shows a "free shipping" badge must check this first -- otherwise it
+  /// can't tell a workshop that genuinely charges nothing apart from a fee
+  /// that just hasn't loaded.
+  bool get isShippingCostConfirmed => _rawShippingCost != null;
 
   double get total => productsTotal + shippingCost;
 

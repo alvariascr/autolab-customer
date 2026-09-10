@@ -19,7 +19,14 @@ class CartPricing {
     return _roundCurrency(total - netSubtotal(total));
   }
 
-  static double shippingCost({
+  /// Returns null when the shipping cost isn't actually known yet -- home
+  /// delivery is selected, the workshop's live delivery fee hasn't been
+  /// fetched, and no cart item has a captured fee to fall back on either.
+  /// Callers must not treat that as "confirmed free": a bare 0 here would
+  /// be indistinguishable from a workshop that genuinely charges nothing,
+  /// which is exactly what caused "Envío gratis" to flash briefly while
+  /// the real fee was still loading.
+  static double? shippingCost({
     required bool hasItems,
     required bool homeDelivery,
     required double? currentWorkshopDeliveryFee,
@@ -33,7 +40,11 @@ class CartPricing {
       return currentWorkshopDeliveryFee;
     }
 
-    return itemDeliveryFees.firstWhere((fee) => fee > 0, orElse: () => 0);
+    for (final fee in itemDeliveryFees) {
+      if (fee > 0) return fee;
+    }
+
+    return null;
   }
 
   static double _roundCurrency(double value) {

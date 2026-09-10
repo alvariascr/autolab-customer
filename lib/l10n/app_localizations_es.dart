@@ -2776,6 +2776,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartFreeShipping => 'Gratis';
 
   @override
+  String get cartShippingCalculating => 'Calculando...';
+
+  @override
   String get cartTaxes => 'IVA incluido';
 
   @override

@@ -1948,6 +1948,10 @@ class _CartSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // Computed once per build (not inline in the row below) so
+    // isShippingCostConfirmed/shippingCost -- each of which walks every
+    // cart item -- aren't recomputed several times over for the same row.
+    final shippingSummary = _shippingSummary(cart, l10n);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -1974,10 +1978,8 @@ class _CartSummaryCard extends StatelessWidget {
             if (includeShipping)
               _SummaryRow(
                 label: l10n.cartShipping,
-                value: cart.homeDelivery && cart.shippingCost == 0
-                    ? l10n.cartFreeShipping
-                    : formatColones(cart.shippingCost),
-                highlight: cart.homeDelivery && cart.shippingCost == 0,
+                value: shippingSummary.text,
+                highlight: shippingSummary.isFree,
               ),
             _SummaryRow(
               label: l10n.cartTaxes,
@@ -1994,6 +1996,28 @@ class _CartSummaryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The shipping row's label and whether it's the "free shipping" state --
+/// kept as one explicit lookup instead of a nested ternary at the call
+/// site, so "calculating" / "confirmed free" / "confirmed with a cost"
+/// read as three distinct states rather than a chain of conditions (the
+/// kind of chain that let "Envío gratis" flash before the real fee ever
+/// loaded in the first place).
+({String text, bool isFree}) _shippingSummary(
+  CartState cart,
+  AppLocalizations l10n,
+) {
+  if (!cart.isShippingCostConfirmed) {
+    return (text: l10n.cartShippingCalculating, isFree: false);
+  }
+
+  final shippingCost = cart.shippingCost;
+  final isFree = cart.homeDelivery && shippingCost == 0;
+  return (
+    text: isFree ? l10n.cartFreeShipping : formatColones(shippingCost),
+    isFree: isFree,
+  );
 }
 
 class _SummaryRow extends StatelessWidget {
