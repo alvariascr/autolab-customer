@@ -10,6 +10,7 @@ import 'package:autolab_customer/features/profile/domain/usecases/get_garage_veh
 import 'package:autolab_customer/features/profile/domain/usecases/set_default_garage_vehicle.dart';
 import 'package:autolab_customer/features/profile/presentation/page/vehicles_page.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
+import 'package:autolab_customer/l10n/app_localizations_es.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -116,6 +117,50 @@ void main() {
       ).called(1);
       verify(() => garageVehicleController.notifyVehiclesChanged()).called(1);
     });
+
+    testWidgets(
+      'shows a validation error and blocks saving when the year is not a '
+      'number',
+      (tester) async {
+        await tester.pumpWidget(const _TestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Editar vehículo'));
+        await tester.pumpAndSettle();
+
+        // Scoped to the BottomSheet so it doesn't collide with the
+        // embedded form's own year field (same Key) underneath.
+        final yearField = find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byKey(const Key('vehicle-year-field')),
+        );
+
+        await tester.enterText(yearField, 'abcd');
+        await tester.tap(find.text('Guardar vehículo').last);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(AppLocalizationsEs().vehiclesYearInvalid),
+          findsOneWidget,
+        );
+        verifyNever(
+          () => vehicleRepository.updateVehicle(
+            id: any(named: 'id'),
+            licensePlate: any(named: 'licensePlate'),
+            vehicleType: any(named: 'vehicleType'),
+            brand: any(named: 'brand'),
+            model: any(named: 'model'),
+            year: any(named: 'year'),
+            color: any(named: 'color'),
+            fuelType: any(named: 'fuelType'),
+            transmissionType: any(named: 'transmissionType'),
+          ),
+        );
+      },
+    );
   });
 
   group('VehiclesPage selecting a different vehicle', () {
