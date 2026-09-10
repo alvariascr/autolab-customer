@@ -2,6 +2,7 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/costa_rica_time.dart';
 import '../domain/repositories/garage_vehicle_repository.dart';
 import 'models/garage_vehicle_model.dart';
 
@@ -156,6 +157,7 @@ class GarageVehicleRemoteDataSource {
             'color': _trimOrNull(color),
             'fuel_type': fuelType,
             'transmission_type': transmissionType,
+            'updated_at': _nowIso8601(),
           })
           .eq('id', id)
           .eq('user_id', userId)
@@ -229,10 +231,7 @@ class GarageVehicleRemoteDataSource {
 
     final updatedVehicle = await client
         .from('garage_vehicles')
-        .update({
-          'image_path': objectPath,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
+        .update({'image_path': objectPath, 'updated_at': _nowIso8601()})
         .eq('id', garageVehicleId)
         .eq('user_id', userId)
         .eq('is_active', true)
@@ -348,3 +347,6 @@ String _normalizeLicensePlate(String value) {
 
   return normalized;
 }
+
+String _nowIso8601() =>
+    costaRicaLocalTimeToUtc(nowInCostaRica()).toIso8601String();
