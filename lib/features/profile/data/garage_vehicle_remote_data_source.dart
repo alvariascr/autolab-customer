@@ -156,6 +156,7 @@ class GarageVehicleRemoteDataSource {
             'color': _trimOrNull(color),
             'fuel_type': fuelType,
             'transmission_type': transmissionType,
+            'updated_at': _nowIso8601(),
           })
           .eq('id', id)
           .eq('user_id', userId)
@@ -229,10 +230,7 @@ class GarageVehicleRemoteDataSource {
 
     final updatedVehicle = await client
         .from('garage_vehicles')
-        .update({
-          'image_path': objectPath,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
+        .update({'image_path': objectPath, 'updated_at': _nowIso8601()})
         .eq('id', garageVehicleId)
         .eq('user_id', userId)
         .eq('is_active', true)
@@ -348,3 +346,5 @@ String _normalizeLicensePlate(String value) {
 
   return normalized;
 }
+
+String _nowIso8601() => DateTime.now().toUtc().toIso8601String();
