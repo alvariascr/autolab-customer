@@ -964,6 +964,7 @@
   "cartTotal": "Total",
   "cartFinishPurchase": "Finalizar compra",
   "cartContinueToCheckout": "Continuar",
+  "cartPriceRefreshFailed": "No pudimos confirmar los precios más recientes. Revisa tu conexión antes de continuar.",
   "cartViewCartAction": "Ver carrito",
   "cartViewWorkshopAction": "Ver taller",
   "cartPurchaseComingSoon": "La compra estará disponible próximamente.",
