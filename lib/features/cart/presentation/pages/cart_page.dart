@@ -249,12 +249,18 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                       ? null
                                       : () async {
                                           if (!showCheckout) {
-                                            await context
-                                                .read<CartCubit>()
-                                                .refreshWorkshopDeliveryFee(
-                                                  workshopId:
-                                                      selectedWorkshopId,
-                                                );
+                                            final cartCubit = context
+                                                .read<CartCubit>();
+                                            await Future.wait([
+                                              cartCubit
+                                                  .refreshWorkshopDeliveryFee(
+                                                    workshopId:
+                                                        selectedWorkshopId,
+                                                  ),
+                                              cartCubit.refreshProductPrices(
+                                                workshopId: selectedWorkshopId,
+                                              ),
+                                            ]);
                                             if (!mounted) return;
                                             setState(
                                               () => _showCheckout = true,
@@ -315,9 +321,11 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       _selectedWorkshopId = workshopId;
       _showCheckout = false;
     });
-    await context.read<CartCubit>().refreshWorkshopDeliveryFee(
-      workshopId: workshopId,
-    );
+    final cartCubit = context.read<CartCubit>();
+    await Future.wait([
+      cartCubit.refreshWorkshopDeliveryFee(workshopId: workshopId),
+      cartCubit.refreshProductPrices(workshopId: workshopId),
+    ]);
   }
 
   void _openWorkshop(String workshopId) {

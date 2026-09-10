@@ -411,6 +411,71 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
+  /// Refreshes cart items' prices against the workshop's current catalog so
+  /// the displayed total keeps matching what checkout will actually charge
+  /// -- a product's price is otherwise frozen at whatever it was when the
+  /// item was added, even if it changes while the item stays in the cart.
+  Future<bool> refreshProductPrices({String? workshopId}) async {
+    final targetWorkshopId = workshopId?.trim() ?? state.singleWorkshopId;
+    if (targetWorkshopId == null || targetWorkshopId.isEmpty) {
+      return false;
+    }
+
+    final products = await _fetchWorkshopProducts(targetWorkshopId);
+    if (products == null) {
+      return false;
+    }
+
+    final productsById = {for (final product in products) product.id: product};
+
+    var wasChanged = false;
+    final refreshedItems = state.items
+        .map((item) {
+          if (item.product.workshopId.trim() != targetWorkshopId) {
+            return item;
+          }
+
+          final freshProduct = productsById[item.product.id];
+          // Product has no == override, so comparing whole objects would
+          // always report a change (a freshly-fetched instance is never
+          // identical to the one already in the cart) and trigger a save +
+          // rebuild on every refresh even when nothing actually changed.
+          // Comparing the field this refresh exists to correct avoids that.
+          if (freshProduct == null ||
+              freshProduct.sellingPrice == item.product.sellingPrice) {
+            return item;
+          }
+
+          wasChanged = true;
+          return item.copyWith(product: freshProduct);
+        })
+        .toList(growable: false);
+
+    if (wasChanged) {
+      _emitAndSave(state.copyWith(items: refreshedItems));
+    }
+    return true;
+  }
+
+  /// Fetches [workshopId]'s current catalog, bypassing the repository's own
+  /// cache (only invalidated after a successful checkout) so this always
+  /// reflects the live price instead of the same stale value this refresh
+  /// exists to correct. Returns null on any failure -- the caller falls
+  /// back to whatever prices are already in the cart, since checkout only
+  /// ever charges by inventoryItemId and the server remains authoritative
+  /// regardless.
+  Future<List<Product>?> _fetchWorkshopProducts(String workshopId) async {
+    try {
+      _productRepository.invalidateActiveProductsCache(workshopId: workshopId);
+      final result = await _productRepository.getActiveProductsByWorkshop(
+        workshopId,
+      );
+      return result.fold((_) => null, (products) => products);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<CartCheckoutResult?> createOrder({String? workshopId}) async {
     if (state.items.isEmpty || state.checkoutStatus.isLoading) {
       return null;
@@ -483,6 +548,7 @@ class CartCubit extends Cubit<CartState> {
       }
 
       await refreshWorkshopDeliveryFee(workshopId: resolvedWorkshopId);
+      await refreshProductPrices(workshopId: resolvedWorkshopId);
       final result = await _createCartOrder(
         CartCheckoutRequest(
           products: checkoutItems

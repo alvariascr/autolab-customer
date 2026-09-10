@@ -198,6 +198,144 @@ void main() {
       );
     });
 
+    test('actualiza el precio de un item si cambió mientras seguía en el '
+        'carrito', () async {
+      final productRepository = _FakeProductRepository();
+      final cubit = _cartCubit(
+        productRepository: productRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit.addProduct(
+        _product(id: 'product-a', workshopId: 'workshop-a', price: 1000),
+      );
+      expect(cubit.state.total, 1000);
+
+      // El precio del producto sube en el catálogo del taller mientras
+      // el item sigue en el carrito -- el total mostrado no debe seguir
+      // congelado en el precio con el que se agregó.
+      productRepository.activeProductsByWorkshop['workshop-a'] = [
+        _product(id: 'product-a', workshopId: 'workshop-a', price: 1500),
+      ];
+
+      final wasRefreshed = await cubit.refreshProductPrices(
+        workshopId: 'workshop-a',
+      );
+
+      expect(wasRefreshed, isTrue);
+      expect(cubit.state.items.single.product.sellingPrice, 1500);
+      expect(cubit.state.total, 1500);
+    });
+
+    test(
+      'conserva el precio guardado si no puede refrescar el catálogo',
+      () async {
+        final cubit = _cartCubit(
+          productRepository: _FakeProductRepository(),
+          workshopRepository: _FakeWorkshopRepository(
+            feesByWorkshopId: const {'workshop-a': 2500},
+          ),
+        );
+        addTearDown(cubit.close);
+
+        cubit.addProduct(
+          _product(id: 'product-a', workshopId: 'workshop-a', price: 1000),
+        );
+
+        // _FakeProductRepository no tiene nada cargado para este taller,
+        // asi que getActiveProductsByWorkshop lanza -- el refresh debe
+        // fallar sin corromper el item ya guardado.
+        final wasRefreshed = await cubit.refreshProductPrices(
+          workshopId: 'workshop-a',
+        );
+
+        expect(wasRefreshed, isFalse);
+        expect(cubit.state.items.single.product.sellingPrice, 1000);
+        expect(cubit.state.total, 1000);
+      },
+    );
+
+    test('no reemite el estado si el precio del catálogo no cambió', () async {
+      final productRepository = _FakeProductRepository();
+      final cubit = _cartCubit(
+        productRepository: productRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit.addProduct(
+        _product(id: 'product-a', workshopId: 'workshop-a', price: 1000),
+      );
+      // Misma placa de precio (1000), pero una instancia de Product
+      // distinta a la que ya está en el carrito -- Product no tiene ==
+      // propio, así que comparar los objetos completos siempre marcaría
+      // esto como "cambiado" aunque el precio sea idéntico.
+      productRepository.activeProductsByWorkshop['workshop-a'] = [
+        _product(id: 'product-a', workshopId: 'workshop-a', price: 1000),
+      ];
+      final itemsBeforeRefresh = cubit.state.items;
+
+      final wasRefreshed = await cubit.refreshProductPrices(
+        workshopId: 'workshop-a',
+      );
+
+      expect(wasRefreshed, isTrue);
+      expect(
+        identical(itemsBeforeRefresh, cubit.state.items),
+        isTrue,
+        reason:
+            'sin cambio real de precio no debería emitirse (ni guardarse) '
+            'un nuevo estado',
+      );
+    });
+
+    test('solo actualiza los precios del taller pedido, no los de otro '
+        'taller en el mismo carrito', () async {
+      final productRepository = _FakeProductRepository();
+      final cubit = _cartCubit(
+        productRepository: productRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(
+          _product(id: 'product-a', workshopId: 'workshop-a', price: 1000),
+        )
+        ..addProduct(
+          _product(id: 'product-b', workshopId: 'workshop-b', price: 2000),
+        );
+
+      productRepository.activeProductsByWorkshop['workshop-a'] = [
+        _product(id: 'product-a', workshopId: 'workshop-a', price: 1500),
+      ];
+
+      await cubit.refreshProductPrices(workshopId: 'workshop-a');
+
+      final itemA = cubit.state.items.singleWhere(
+        (item) => item.product.id == 'product-a',
+      );
+      final itemB = cubit.state.items.singleWhere(
+        (item) => item.product.id == 'product-b',
+      );
+      expect(itemA.product.sellingPrice, 1500);
+      expect(
+        itemB.product.sellingPrice,
+        2000,
+        reason:
+            'el item de workshop-b no se pidio refrescar y no deberia '
+            'cambiar aunque el repositorio no tenga nada configurado para '
+            'workshop-b',
+      );
+    });
+
     test('no pierde productos si se agregan en paralelo', () async {
       final cubit = _cartCubit(
         workshopRepository: _FakeWorkshopRepository(
@@ -220,10 +358,11 @@ void main() {
       ]);
 
       expect(results, everyElement(CartAddProductStatus.added));
-      expect(cubit.state.items.map((item) => item.product.id).toSet(), {
-        'product-a',
-        'product-b',
-      }, reason: 'ambos productos deben sobrevivir, ninguno se pisa');
+      expect(
+        cubit.state.items.map((item) => item.product.id).toSet(),
+        {'product-a', 'product-b'},
+        reason: 'ambos productos deben sobrevivir, ninguno se pisa',
+      );
     });
   });
 }
@@ -251,14 +390,18 @@ CartCubit _cartCubit({
   );
 }
 
-Product _product({required String id, required String workshopId}) {
+Product _product({
+  required String id,
+  required String workshopId,
+  double price = 1000,
+}) {
   return Product(
     id: id,
     workshopId: workshopId,
     name: 'Producto $id',
     description: 'Descripción',
     primaryImageUrl: '',
-    sellingPrice: 1000,
+    sellingPrice: price,
     currentStock: 10,
     minimumStockAlert: 1,
     itemType: 'product',
@@ -399,6 +542,11 @@ class _FakeWorkshopRepository implements WorkshopRepository {
 class _FakeProductRepository implements ProductRepository {
   String? invalidatedWorkshopId;
 
+  /// Products refreshProductPrices() should see as "the current catalog"
+  /// for a given workshop. A workshop with nothing configured here behaves
+  /// like a repository call that fails, matching a real network error.
+  final activeProductsByWorkshop = <String, List<Product>>{};
+
   @override
   Future<Either<Failure, List<Product>>> getActiveProducts() {
     throw UnimplementedError();
@@ -407,8 +555,12 @@ class _FakeProductRepository implements ProductRepository {
   @override
   Future<Either<Failure, List<Product>>> getActiveProductsByWorkshop(
     String workshopId,
-  ) {
-    throw UnimplementedError();
+  ) async {
+    final products = activeProductsByWorkshop[workshopId];
+    if (products == null) {
+      throw StateError('No products configured for workshop $workshopId');
+    }
+    return right(products);
   }
 
   @override
