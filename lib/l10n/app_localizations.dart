@@ -2320,6 +2320,12 @@ abstract class AppLocalizations {
   /// **'Año'**
   String get vehiclesYearLabel;
 
+  /// No description provided for @vehiclesYearInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa un año válido (solo números).'**
+  String get vehiclesYearInvalid;
+
   /// No description provided for @vehiclesColorLabel.
   ///
   /// In es, this message translates to:

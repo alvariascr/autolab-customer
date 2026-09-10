@@ -1249,6 +1249,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vehiclesYearLabel => 'Año';
 
   @override
+  String get vehiclesYearInvalid => 'Ingresa un año válido (solo números).';
+
+  @override
   String get vehiclesColorLabel => 'Color';
 
   @override

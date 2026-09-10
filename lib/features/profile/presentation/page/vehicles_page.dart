@@ -1080,10 +1080,18 @@ class _VehicleFormState extends State<_VehicleForm> {
           ),
           const SizedBox(height: AutolabCustomer.spacingSm),
           _VehicleTextField(
+            key: const Key('vehicle-year-field'),
             controller: _yearController,
             hintText: l10n.vehiclesYearLabel,
             keyboardType: TextInputType.number,
             suffixIcon: Icons.chevron_right_rounded,
+            validator: (value) {
+              final text = value?.trim() ?? '';
+              if (text.isEmpty) return null;
+              return int.tryParse(text) == null
+                  ? l10n.vehiclesYearInvalid
+                  : null;
+            },
           ),
           const SizedBox(height: AutolabCustomer.spacingSm),
           _VehicleTextField(
@@ -1316,6 +1324,7 @@ class _VehicleDropdownField extends StatelessWidget {
 
 class _VehicleTextField extends StatelessWidget {
   const _VehicleTextField({
+    super.key,
     required this.controller,
     required this.hintText,
     this.keyboardType,

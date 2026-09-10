@@ -401,6 +401,7 @@
   "vehiclesBrandLabel": "Marca",
   "vehiclesModelLabel": "Modelo",
   "vehiclesYearLabel": "Año",
+  "vehiclesYearInvalid": "Ingresa un año válido (solo números).",
   "vehiclesColorLabel": "Color",
   "vehiclesFuelLabel": "Combustible",
   "vehiclesFuelGasoline": "Gasolina",
