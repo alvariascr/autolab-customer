@@ -1051,6 +1051,7 @@ class _VehicleFormState extends State<_VehicleForm> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _VehicleTextField(
+            key: const Key('vehicle-plate-field'),
             controller: _plateController,
             hintText: l10n.vehiclesPlateLabel,
             textCapitalization: TextCapitalization.characters,

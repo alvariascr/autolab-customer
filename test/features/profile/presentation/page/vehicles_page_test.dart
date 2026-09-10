@@ -14,7 +14,9 @@ import 'package:autolab_customer/l10n/app_localizations_es.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class _MockGarageVehicleRepository extends Mock
     implements GarageVehicleRepository {}
@@ -481,6 +483,333 @@ void main() {
       },
     );
   });
+
+  group('VehiclesPage adding a new vehicle', () {
+    late _MockGarageVehicleRepository vehicleRepository;
+    late _MockGarageVehicleImageService vehicleImageService;
+    late _MockGarageVehicleController garageVehicleController;
+    late List<GarageVehicle> currentVehicles;
+
+    const newVehicle = GarageVehicle(
+      id: 'vehicle-new',
+      licensePlate: 'NEW-001',
+    );
+
+    setUp(() {
+      currentVehicles = [];
+      vehicleRepository = _MockGarageVehicleRepository();
+      vehicleImageService = _MockGarageVehicleImageService();
+      garageVehicleController = _MockGarageVehicleController();
+
+      when(
+        () => vehicleRepository.getVehicles(),
+      ).thenAnswer((_) async => currentVehicles);
+      when(
+        () => vehicleImageService.uploadLegacyImages(any()),
+      ).thenAnswer((_) async => false);
+      when(
+        () => vehicleImageService.loadLocalImages(),
+      ).thenAnswer((_) async => {});
+      when(
+        () => vehicleImageService.moveAndUploadNewVehicleImage(any()),
+      ).thenAnswer((_) async => null);
+      when(
+        () => vehicleImageService.removeNewVehicleImage(),
+      ).thenAnswer((_) async {});
+      when(
+        () => garageVehicleController.setDefaultVehicle('vehicle-new'),
+      ).thenAnswer((_) async {});
+
+      sl.registerSingleton<GarageVehicleRepository>(vehicleRepository);
+      sl.registerSingleton<GetGarageVehicles>(
+        GetGarageVehicles(vehicleRepository),
+      );
+      sl.registerSingleton<GarageVehicleImageService>(vehicleImageService);
+      sl.registerSingleton<GarageVehicleController>(garageVehicleController);
+    });
+
+    tearDown(() async {
+      await sl.unregister<GarageVehicleRepository>();
+      await sl.unregister<GetGarageVehicles>();
+      await sl.unregister<GarageVehicleImageService>();
+      await sl.unregister<GarageVehicleController>();
+    });
+
+    testWidgets('creates a vehicle from the embedded form and activates it '
+        'automatically since the garage had none', (tester) async {
+      when(
+        () => vehicleRepository.createVehicle(
+          licensePlate: any(named: 'licensePlate'),
+          vehicleType: any(named: 'vehicleType'),
+          brand: any(named: 'brand'),
+          model: any(named: 'model'),
+          year: any(named: 'year'),
+          color: any(named: 'color'),
+          fuelType: any(named: 'fuelType'),
+          transmissionType: any(named: 'transmissionType'),
+        ),
+      ).thenAnswer((_) async {
+        currentVehicles = [newVehicle];
+        return newVehicle.id;
+      });
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      // No vehicle yet, so the embedded form below the empty state is
+      // already a blank "create" form -- no "+" tap needed.
+      await tester.enterText(
+        find.byKey(const Key('vehicle-plate-field')),
+        newVehicle.licensePlate,
+      );
+      // The embedded form sits below the vehicle selector and preview, so
+      // it doesn't fit the test viewport -- scroll the save button into
+      // view before tapping it (unlike the modal form used for editing,
+      // which is short enough to not need this).
+      await tester.ensureVisible(find.text('Guardar vehículo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Guardar vehículo'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => vehicleRepository.createVehicle(
+          licensePlate: newVehicle.licensePlate,
+          vehicleType: any(named: 'vehicleType'),
+          brand: any(named: 'brand'),
+          model: any(named: 'model'),
+          year: any(named: 'year'),
+          color: any(named: 'color'),
+          fuelType: any(named: 'fuelType'),
+          transmissionType: any(named: 'transmissionType'),
+        ),
+      ).called(1);
+      verify(() => garageVehicleController.notifyVehiclesChanged()).called(1);
+      verify(
+        () => garageVehicleController.setDefaultVehicle('vehicle-new'),
+      ).called(1);
+    });
+
+    testWidgets(
+      'shows a validation error and blocks creating when the plate is empty',
+      (tester) async {
+        await tester.pumpWidget(const _TestApp());
+        await tester.pumpAndSettle();
+
+        await tester.ensureVisible(find.text('Guardar vehículo'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Guardar vehículo'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(AppLocalizationsEs().vehiclesPlateRequired),
+          findsOneWidget,
+        );
+        verifyNever(
+          () => vehicleRepository.createVehicle(
+            licensePlate: any(named: 'licensePlate'),
+            vehicleType: any(named: 'vehicleType'),
+            brand: any(named: 'brand'),
+            model: any(named: 'model'),
+            year: any(named: 'year'),
+            color: any(named: 'color'),
+            fuelType: any(named: 'fuelType'),
+            transmissionType: any(named: 'transmissionType'),
+          ),
+        );
+      },
+    );
+
+    testWidgets('shows an error when the plate is already registered', (
+      tester,
+    ) async {
+      when(
+        () => vehicleRepository.createVehicle(
+          licensePlate: any(named: 'licensePlate'),
+          vehicleType: any(named: 'vehicleType'),
+          brand: any(named: 'brand'),
+          model: any(named: 'model'),
+          year: any(named: 'year'),
+          color: any(named: 'color'),
+          fuelType: any(named: 'fuelType'),
+          transmissionType: any(named: 'transmissionType'),
+        ),
+      ).thenThrow(const GarageVehicleAlreadyExistsException());
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('vehicle-plate-field')),
+        newVehicle.licensePlate,
+      );
+      // The embedded form sits below the vehicle selector and preview, so
+      // it doesn't fit the test viewport -- scroll the save button into
+      // view before tapping it (unlike the modal form used for editing,
+      // which is short enough to not need this).
+      await tester.ensureVisible(find.text('Guardar vehículo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Guardar vehículo'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(AppLocalizationsEs().vehiclesPlateAlreadyExists),
+        findsOneWidget,
+      );
+      verifyNever(() => garageVehicleController.notifyVehiclesChanged());
+    });
+  });
+
+  group('VehiclesPage uploading a vehicle photo', () {
+    late _MockGarageVehicleRepository vehicleRepository;
+    late _MockGarageVehicleImageService vehicleImageService;
+    late _MockGarageVehicleController garageVehicleController;
+    late ImagePickerPlatform originalImagePickerPlatform;
+
+    const vehicle = GarageVehicle(
+      id: 'vehicle-1',
+      licensePlate: 'ABC-123',
+      brand: 'Toyota',
+      model: 'Tacoma',
+      isDefault: true,
+    );
+    final pickedImage = XFile('/tmp/fake-vehicle-photo.jpg');
+
+    setUp(() {
+      originalImagePickerPlatform = ImagePickerPlatform.instance;
+      ImagePickerPlatform.instance = _FakeImagePickerPlatform(pickedImage);
+
+      vehicleRepository = _MockGarageVehicleRepository();
+      vehicleImageService = _MockGarageVehicleImageService();
+      garageVehicleController = _MockGarageVehicleController();
+
+      when(
+        () => vehicleRepository.getVehicles(),
+      ).thenAnswer((_) async => [vehicle]);
+      when(
+        () => vehicleImageService.uploadLegacyImages(any()),
+      ).thenAnswer((_) async => false);
+      when(
+        () => vehicleImageService.loadLocalImages(),
+      ).thenAnswer((_) async => {});
+      when(
+        () => vehicleImageService.persistImage(
+          sourcePath: any(named: 'sourcePath'),
+          preferenceKey: any(named: 'preferenceKey'),
+        ),
+      ).thenAnswer((_) async => '/local/persisted-vehicle-1.jpg');
+
+      sl.registerSingleton<GarageVehicleRepository>(vehicleRepository);
+      sl.registerSingleton<GetGarageVehicles>(
+        GetGarageVehicles(vehicleRepository),
+      );
+      sl.registerSingleton<GarageVehicleImageService>(vehicleImageService);
+      sl.registerSingleton<GarageVehicleController>(garageVehicleController);
+    });
+
+    tearDown(() async {
+      ImagePickerPlatform.instance = originalImagePickerPlatform;
+      await sl.unregister<GarageVehicleRepository>();
+      await sl.unregister<GetGarageVehicles>();
+      await sl.unregister<GarageVehicleImageService>();
+      await sl.unregister<GarageVehicleController>();
+    });
+
+    testWidgets(
+      'uploads the picked photo for the active vehicle and refreshes the '
+      'garage',
+      (tester) async {
+        when(
+          () => vehicleImageService.uploadPersistedImage(
+            vehicleId: 'vehicle-1',
+            localPath: '/local/persisted-vehicle-1.jpg',
+            preferenceKey: 'garage_vehicle_image_vehicle-1',
+          ),
+        ).thenAnswer((_) async {});
+
+        await tester.pumpWidget(const _TestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.text(AppLocalizationsEs().vehiclesChangeImageAction),
+        );
+        await tester.pumpAndSettle();
+
+        verify(
+          () => vehicleImageService.persistImage(
+            sourcePath: pickedImage.path,
+            preferenceKey: 'garage_vehicle_image_vehicle-1',
+          ),
+        ).called(1);
+        verify(
+          () => vehicleImageService.uploadPersistedImage(
+            vehicleId: 'vehicle-1',
+            localPath: '/local/persisted-vehicle-1.jpg',
+            preferenceKey: 'garage_vehicle_image_vehicle-1',
+          ),
+        ).called(1);
+        verify(() => garageVehicleController.notifyVehiclesChanged()).called(1);
+      },
+    );
+
+    testWidgets('shows an error when the photo upload fails', (tester) async {
+      when(
+        () => vehicleImageService.uploadPersistedImage(
+          vehicleId: 'vehicle-1',
+          localPath: '/local/persisted-vehicle-1.jpg',
+          preferenceKey: 'garage_vehicle_image_vehicle-1',
+        ),
+      ).thenThrow(Exception('network error'));
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.text(AppLocalizationsEs().vehiclesChangeImageAction),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(AppLocalizationsEs().vehiclesSaveFailed),
+        findsOneWidget,
+      );
+      verifyNever(() => garageVehicleController.notifyVehiclesChanged());
+    });
+
+    testWidgets('does nothing when the user cancels the image picker', (
+      tester,
+    ) async {
+      ImagePickerPlatform.instance = _FakeImagePickerPlatform(null);
+
+      await tester.pumpWidget(const _TestApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.text(AppLocalizationsEs().vehiclesChangeImageAction),
+      );
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        () => vehicleImageService.persistImage(
+          sourcePath: any(named: 'sourcePath'),
+          preferenceKey: any(named: 'preferenceKey'),
+        ),
+      );
+      verifyNever(() => garageVehicleController.notifyVehiclesChanged());
+    });
+  });
+}
+
+class _FakeImagePickerPlatform extends ImagePickerPlatform
+    with MockPlatformInterfaceMixin {
+  _FakeImagePickerPlatform(this._imageToReturn);
+
+  final XFile? _imageToReturn;
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => _imageToReturn;
 }
 
 class _TestApp extends StatelessWidget {

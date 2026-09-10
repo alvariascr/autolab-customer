@@ -66,6 +66,7 @@ dev_dependencies:
   mocktail: ^1.0.4
   flutter_secure_storage: ^9.2.2
   bloc_test: ^10.0.0
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   generate: true
