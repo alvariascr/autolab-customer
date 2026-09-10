@@ -21,7 +21,12 @@ export function numberValue(value: unknown) {
   }
 
   if (typeof value === "string") {
-    return Number(value);
+    // Number("") and Number("   ") are 0, not NaN -- without this guard an
+    // empty/blank string would silently coerce to a "valid" 0 and slip past
+    // the Number.isFinite() checks callers use to reject malformed data
+    // (e.g. loadOrderPaymentData's quantity/unitPrice validation).
+    const trimmed = value.trim();
+    return trimmed === "" ? Number.NaN : Number(trimmed);
   }
 
   return Number.NaN;

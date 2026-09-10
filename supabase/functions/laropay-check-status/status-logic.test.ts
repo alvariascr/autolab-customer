@@ -68,6 +68,20 @@ Deno.test("statusFromAuthorizations retorna rejected cuando hay codigos declinad
   assertEquals(result, "rejected");
 });
 
+Deno.test("statusFromAuthorizations tambien reconoce autorizationResponseCode bien escrito", () => {
+  const result = statusFromAuthorizations([
+    { authorizationResponseCode: "00" },
+  ]);
+  assertEquals(result, "paid");
+});
+
+Deno.test("statusFromAuthorizations ignora espacios accidentales en el codigo de respuesta", () => {
+  const result = statusFromAuthorizations([
+    { autorizationResponseCode: "00 " },
+  ]);
+  assertEquals(result, "paid");
+});
+
 Deno.test("statusFromAuthorizations retorna null cuando ninguna entrada trae codigo ni descripcion", () => {
   const result = statusFromAuthorizations([{}]);
   assertEquals(result, null);
