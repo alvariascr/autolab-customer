@@ -12,6 +12,7 @@ import '../../../../core/theme/autolab_logo.dart';
 import '../../../../core/theme/autolab_theme_extension.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../cart/application/cart_pricing.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../payments/application/laropay_return_navigation_controller.dart';
 import '../../../products/domain/entities/product.dart';
@@ -1970,8 +1971,8 @@ class _BookingReviewStep extends StatelessWidget {
     final servicePrice = service?.sellingPrice;
     final total = (servicePrice ?? 0) + productsTotal;
     final hasPriceToConfirm = servicePrice == null || hasPricelessItems;
-    final iva = total * 13 / 113;
-    final subtotal = total - iva;
+    final iva = CartPricing.includedTaxes(total);
+    final subtotal = CartPricing.netSubtotal(total);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

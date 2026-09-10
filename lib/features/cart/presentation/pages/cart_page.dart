@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
 import '../../../../core/theme/autolab_logo.dart';
+import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
@@ -642,7 +642,7 @@ class _CartPaymentReviewDialog extends StatelessWidget {
                       const SizedBox(height: AutolabCustomer.spacingSm),
                       _CartSuccessRow(
                         label: l10n.cartTotal,
-                        value: _formatCurrency(result.totalAmount),
+                        value: formatColones(result.totalAmount),
                       ),
                     ],
                   ),
@@ -861,7 +861,7 @@ class _CartWorkshopCartCard extends StatelessWidget {
                       const SizedBox(height: AutolabCustomer.spacingXs),
                       Text(
                         '${l10n.cartProductCount(cart.totalQuantity)} - '
-                        '${_formatCurrency(cart.productsTotal)}',
+                        '${formatColones(cart.productsTotal)}',
                         style: AutolabCustomer.body.copyWith(
                           color: AutolabCustomer.customerSecondaryTextColor(
                             context,
@@ -1014,7 +1014,7 @@ class _CartReviewItemCard extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '${_formatCurrency(item.unitPrice)} x ${item.quantity}',
+              '${formatColones(item.unitPrice)} x ${item.quantity}',
               style: AutolabCustomer.caption.copyWith(
                 color: AutolabCustomer.customerSecondaryTextColor(context),
                 fontWeight: FontWeight.w700,
@@ -1022,7 +1022,7 @@ class _CartReviewItemCard extends StatelessWidget {
             ),
           ),
           Text(
-            _formatCurrency(item.lineSubtotal),
+            formatColones(item.lineSubtotal),
             style: AutolabCustomer.body.copyWith(
               color: AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w900,
@@ -1810,7 +1810,7 @@ class _CartItemCard extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              _formatCurrency(item.unitPrice),
+              formatColones(item.unitPrice),
               style: AutolabCustomer.body.copyWith(
                 color: AutolabCustomer.customerSecondaryTextColor(context),
                 fontWeight: FontWeight.w800,
@@ -1933,24 +1933,24 @@ class _CartSummaryCard extends StatelessWidget {
             const SizedBox(height: AutolabCustomer.spacingSm),
             _SummaryRow(
               label: l10n.cartSubtotal(cart.totalQuantity),
-              value: _formatCurrency(cart.subtotal),
+              value: formatColones(cart.subtotal),
             ),
             if (includeShipping)
               _SummaryRow(
                 label: l10n.cartShipping,
                 value: cart.homeDelivery && cart.shippingCost == 0
                     ? l10n.cartFreeShipping
-                    : _formatCurrency(cart.shippingCost),
+                    : formatColones(cart.shippingCost),
                 highlight: cart.homeDelivery && cart.shippingCost == 0,
               ),
             _SummaryRow(
               label: l10n.cartTaxes,
-              value: _formatCurrency(cart.taxes),
+              value: formatColones(cart.taxes),
             ),
             Divider(color: AutolabCustomer.customerDividerColor(context)),
             _SummaryRow(
               label: l10n.cartTotal,
-              value: _formatCurrency(cart.total),
+              value: formatColones(cart.total),
               emphasize: true,
             ),
           ],
@@ -2105,14 +2105,6 @@ class _CartCircleButton extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatCurrency(double value) {
-  return NumberFormat.currency(
-    locale: 'es_CR',
-    symbol: '₡',
-    decimalDigits: 0,
-  ).format(value);
 }
 
 OutlineInputBorder _cartInputBorder(
