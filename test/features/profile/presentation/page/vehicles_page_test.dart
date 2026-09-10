@@ -10,6 +10,7 @@ import 'package:autolab_customer/features/profile/domain/usecases/get_garage_veh
 import 'package:autolab_customer/features/profile/domain/usecases/set_default_garage_vehicle.dart';
 import 'package:autolab_customer/features/profile/presentation/page/vehicles_page.dart';
 import 'package:autolab_customer/l10n/app_localizations.dart';
+import 'package:autolab_customer/l10n/app_localizations_es.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,7 +143,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('Ingresa un año válido (solo números).'),
+          find.text(AppLocalizationsEs().vehiclesYearInvalid),
           findsOneWidget,
         );
         verifyNever(
