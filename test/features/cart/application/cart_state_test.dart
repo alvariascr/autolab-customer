@@ -96,7 +96,7 @@ void main() {
       },
     );
 
-    test('memoiza los carritos agrupados por instancia de estado', () {
+    test('agrupa los items del carrito por taller', () {
       final state = CartState(
         items: [
           CartItem(
@@ -107,15 +107,47 @@ void main() {
             ),
             quantity: 1,
           ),
+          // Segundo item del mismo taller: debe caer en el mismo grupo que
+          // product-a, no crear uno nuevo.
+          CartItem(
+            product: _product(
+              id: 'product-a2',
+              workshopId: 'workshop-a',
+              deliveryFee: 2500,
+            ),
+            quantity: 2,
+          ),
+          // Item de un taller distinto: debe quedar en su propio grupo,
+          // separado de los dos anteriores.
+          CartItem(
+            product: _product(
+              id: 'product-b',
+              workshopId: 'workshop-b',
+              deliveryFee: 1000,
+            ),
+            quantity: 1,
+          ),
         ],
       );
 
-      final firstRead = state.workshopCarts;
-      final secondRead = state.workshopCarts;
+      final workshopCarts = state.workshopCarts;
 
-      expect(identical(firstRead, secondRead), isTrue);
-      expect(firstRead, hasLength(1));
-      expect(firstRead.single.workshopId, 'workshop-a');
+      expect(workshopCarts, hasLength(2));
+
+      final workshopACart = workshopCarts.firstWhere(
+        (cart) => cart.workshopId == 'workshop-a',
+      );
+      expect(workshopACart.items, hasLength(2));
+      expect(
+        workshopACart.items.map((item) => item.product.id),
+        containsAll(['product-a', 'product-a2']),
+      );
+
+      final workshopBCart = workshopCarts.firstWhere(
+        (cart) => cart.workshopId == 'workshop-b',
+      );
+      expect(workshopBCart.items, hasLength(1));
+      expect(workshopBCart.items.single.product.id, 'product-b');
     });
 
     test(
