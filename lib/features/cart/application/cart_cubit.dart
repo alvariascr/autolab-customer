@@ -470,7 +470,7 @@ class CartCubit extends Cubit<CartState> {
       final result = await _productRepository.getActiveProductsByWorkshop(
         workshopId,
       );
-      return result.fold((_) => null, (products) => products);
+      return result.fold<List<Product>?>((_) => null, (products) => products);
     } catch (_) {
       return null;
     }
