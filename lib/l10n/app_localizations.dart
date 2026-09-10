@@ -4978,6 +4978,12 @@ abstract class AppLocalizations {
   /// **'Gratis'**
   String get cartFreeShipping;
 
+  /// No description provided for @cartShippingCalculating.
+  ///
+  /// In es, this message translates to:
+  /// **'Calculando...'**
+  String get cartShippingCalculating;
+
   /// No description provided for @cartTaxes.
   ///
   /// In es, this message translates to:
