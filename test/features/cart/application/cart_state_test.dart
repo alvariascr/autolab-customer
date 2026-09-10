@@ -295,6 +295,52 @@ void main() {
       expect(state.isShippingCostConfirmed, isTrue);
     });
 
+    test(
+      'confirma el envío sin cargar tarifa cuando el carrito está vacío',
+      () {
+        final state = CartState(homeDelivery: true, items: const []);
+
+        expect(state.shippingCost, 0);
+        expect(state.isShippingCostConfirmed, isTrue);
+      },
+    );
+
+    test('usa la primera tarifa capturada distinta de cero cuando hay varios '
+        'items con tarifas distintas y aún no llega la tarifa del taller', () {
+      final state = CartState(
+        homeDelivery: true,
+        items: [
+          CartItem(
+            product: _product(
+              id: 'product-a',
+              workshopId: 'workshop-a',
+              deliveryFee: 1000,
+            ),
+            quantity: 1,
+          ),
+          CartItem(
+            product: _product(
+              id: 'product-b',
+              workshopId: 'workshop-a',
+              deliveryFee: 2000,
+            ),
+            quantity: 1,
+          ),
+        ],
+      );
+
+      expect(
+        state.shippingCost,
+        1000,
+        reason:
+            'en la práctica todos los items de un mismo taller comparten '
+            'la misma tarifa capturada -- este test documenta que, si '
+            'llegaran a diferir, se usa la primera tarifa distinta de '
+            'cero encontrada',
+      );
+      expect(state.isShippingCostConfirmed, isTrue);
+    });
+
     test('fromJson sin pendingCheckoutResult persistido queda en null', () {
       final state = CartState(
         items: [

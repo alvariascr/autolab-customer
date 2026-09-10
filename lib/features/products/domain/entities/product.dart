@@ -43,6 +43,20 @@ class Product {
   final String providerName;
   final String workshopName;
   final String workshopAvatarUrl;
+
+  /// The workshop's delivery fee, captured on the product at the moment it
+  /// was fetched. This is a workshop-level attribute, not a per-product
+  /// one -- there's no concept of an individual product having its own
+  /// free-shipping fee here.
+  ///
+  /// A value of 0 is ambiguous by construction (see ProductModel.fromMap,
+  /// which defaults to 0 whenever the workshop's own delivery_fee wasn't
+  /// available in the query): it can mean either "this workshop's
+  /// delivery is genuinely free" or "the real fee just wasn't loaded".
+  /// CartPricing.shippingCost() treats a captured 0 as unconfirmed for
+  /// exactly this reason -- callers that need to tell the two apart must
+  /// go through CartState.isShippingCostConfirmed rather than comparing
+  /// this field to 0 directly.
   final double workshopDeliveryFee;
 
   String get effectiveDescription {
