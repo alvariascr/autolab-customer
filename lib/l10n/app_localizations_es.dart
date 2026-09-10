@@ -2788,6 +2788,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cartContinueToCheckout => 'Continuar';
 
   @override
+  String get cartPriceRefreshFailed =>
+      'No pudimos confirmar los precios más recientes. Revisa tu conexión antes de continuar.';
+
+  @override
   String get cartViewCartAction => 'Ver carrito';
 
   @override

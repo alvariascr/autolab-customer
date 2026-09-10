@@ -257,17 +257,37 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                                             );
                                             final cartCubit = context
                                                 .read<CartCubit>();
-                                            await Future.wait([
-                                              cartCubit
-                                                  .refreshWorkshopDeliveryFee(
-                                                    workshopId:
-                                                        selectedWorkshopId,
-                                                  ),
-                                              cartCubit.refreshProductPrices(
-                                                workshopId: selectedWorkshopId,
-                                              ),
-                                            ]);
-                                            if (!mounted) return;
+                                            final refreshResults =
+                                                await Future.wait([
+                                                  cartCubit
+                                                      .refreshWorkshopDeliveryFee(
+                                                        workshopId:
+                                                            selectedWorkshopId,
+                                                      ),
+                                                  cartCubit
+                                                      .refreshProductPrices(
+                                                        workshopId:
+                                                            selectedWorkshopId,
+                                                      ),
+                                                ]);
+                                            if (!context.mounted) return;
+                                            // Both refreshes fall back to
+                                            // the last known price/fee on
+                                            // failure, so checkout still
+                                            // charges the correct amount --
+                                            // but the customer should know
+                                            // the total they're about to
+                                            // confirm might not be current.
+                                            if (refreshResults.contains(
+                                              false,
+                                            )) {
+                                              showAppSnackBar(
+                                                context,
+                                                message:
+                                                    l10n.cartPriceRefreshFailed,
+                                                type: AppMessageType.warning,
+                                              );
+                                            }
                                             setState(() {
                                               _isPreparingCheckout = false;
                                               _showCheckout = true;

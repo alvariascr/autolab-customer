@@ -5002,6 +5002,12 @@ abstract class AppLocalizations {
   /// **'Continuar'**
   String get cartContinueToCheckout;
 
+  /// No description provided for @cartPriceRefreshFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos confirmar los precios más recientes. Revisa tu conexión antes de continuar.'**
+  String get cartPriceRefreshFailed;
+
   /// No description provided for @cartViewCartAction.
   ///
   /// In es, this message translates to:
