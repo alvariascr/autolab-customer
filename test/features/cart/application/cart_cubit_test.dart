@@ -258,6 +258,36 @@ void main() {
       },
     );
 
+    test('conserva el ítem sin modificar si el catálogo devuelto ya no '
+        'incluye el producto', () async {
+      final productRepository = _FakeProductRepository();
+      final cubit = _cartCubit(
+        productRepository: productRepository,
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit.addProduct(
+        _product(id: 'product-a', workshopId: 'workshop-a', price: 1000),
+      );
+
+      // El taller respondió con éxito, pero 'product-a' ya no está en su
+      // catálogo activo (se desactivó/eliminó) -- a diferencia de una
+      // falla de red, esto sí cuenta como refresh exitoso, pero el item
+      // debe conservarse tal cual estaba, no desaparecer del carrito.
+      productRepository.activeProductsByWorkshop['workshop-a'] = [];
+
+      final wasRefreshed = await cubit.refreshProductPrices(
+        workshopId: 'workshop-a',
+      );
+
+      expect(wasRefreshed, isTrue);
+      expect(cubit.state.items.single.product.sellingPrice, 1000);
+      expect(cubit.state.total, 1000);
+    });
+
     test('no reemite el estado si el precio del catálogo no cambió', () async {
       final productRepository = _FakeProductRepository();
       final cubit = _cartCubit(
