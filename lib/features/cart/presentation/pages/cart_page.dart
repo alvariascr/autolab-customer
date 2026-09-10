@@ -333,6 +333,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       cartCubit.refreshWorkshopDeliveryFee(workshopId: workshopId),
       cartCubit.refreshProductPrices(workshopId: workshopId),
     ]);
+    if (!mounted) return;
   }
 
   void _openWorkshop(String workshopId) {
