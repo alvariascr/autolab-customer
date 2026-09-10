@@ -2,6 +2,7 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/costa_rica_time.dart';
 import '../domain/repositories/garage_vehicle_repository.dart';
 import 'models/garage_vehicle_model.dart';
 
@@ -347,4 +348,5 @@ String _normalizeLicensePlate(String value) {
   return normalized;
 }
 
-String _nowIso8601() => DateTime.now().toUtc().toIso8601String();
+String _nowIso8601() =>
+    costaRicaLocalTimeToUtc(nowInCostaRica()).toIso8601String();
