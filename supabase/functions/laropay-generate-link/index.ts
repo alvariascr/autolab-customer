@@ -9,21 +9,17 @@ import {
   laropayEventTypeFromResponse,
   recordLaropayPaymentEvent,
 } from "../_shared/laropay-audit.ts";
-
-type LaropayLinkRequest = {
-  internalTransactionId?: string;
-  amount?: number;
-  document?: string;
-  detail?: string;
-  customerFirstName?: string;
-  customerLastName?: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  customerLocation?: string;
-  expirationType?: string;
-  expirationValue?: number;
-  securityCode?: string;
-};
+import {
+  corsHeaders,
+  numberValue,
+  stringValue,
+} from "../_shared/laropay-common.ts";
+import {
+  type LaropayLinkRequest,
+  normalizedExpirationType,
+  normalizedExpirationValue,
+  validate,
+} from "./validation.ts";
 
 type ExistingLaropayLink = {
   id: string;
@@ -46,13 +42,6 @@ type OrderPaymentData = {
 type AuthenticatedRequestUser = {
   id: string;
   authorization: string;
-};
-
-const corsHeaders = {
-  "access-control-allow-origin": "*",
-  "access-control-allow-headers":
-    "authorization, x-client-info, apikey, content-type",
-  "access-control-allow-methods": "POST, OPTIONS",
 };
 
 Deno.serve(async (request) => {
@@ -620,44 +609,6 @@ async function reservePendingLink(
   throw new Error("invalid_reservation_response");
 }
 
-function validate(input: LaropayLinkRequest): string | null {
-  if (stringValue(input.internalTransactionId) === "") {
-    return "internal_transaction_required";
-  }
-
-  if (
-    typeof input.amount !== "number" ||
-    !Number.isFinite(input.amount) ||
-    input.amount <= 0
-  ) {
-    return "amount_invalid";
-  }
-
-  if (stringValue(input.customerFirstName) === "") {
-    return "customer_first_name_required";
-  }
-
-  if (stringValue(input.customerLastName) === "") {
-    return "customer_last_name_required";
-  }
-
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(stringValue(input.customerEmail))) {
-    return "customer_email_invalid";
-  }
-
-  const expirationType = normalizedExpirationType(input);
-  if (!["D", "H", "M"].includes(expirationType)) {
-    return "expiration_type_invalid";
-  }
-
-  const expirationValue = normalizedExpirationValue(input);
-  if (!Number.isInteger(expirationValue) || expirationValue <= 0) {
-    return "expiration_value_invalid";
-  }
-
-  return null;
-}
-
 function buildLaropayPayload(
   input: LaropayLinkRequest,
   env: Env,
@@ -870,22 +821,6 @@ function tokenRefreshFailurePayload() {
   };
 }
 
-function stringValue(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function numberValue(value: unknown) {
-  if (typeof value === "number") {
-    return value;
-  }
-
-  if (typeof value === "string") {
-    return Number(value);
-  }
-
-  return Number.NaN;
-}
-
 function isExpiredAt(value: unknown) {
   const text = stringValue(value);
   if (text === "") {
@@ -905,14 +840,6 @@ function isExpiredAt(value: unknown) {
 function trimOrNull(value: unknown) {
   const text = stringValue(value);
   return text === "" ? null : text;
-}
-
-function normalizedExpirationType(input: LaropayLinkRequest) {
-  return stringValue(input.expirationType || "D").toUpperCase();
-}
-
-function normalizedExpirationValue(input: LaropayLinkRequest) {
-  return input.expirationValue ?? 1;
 }
 
 function isBadRequestError(message: string) {

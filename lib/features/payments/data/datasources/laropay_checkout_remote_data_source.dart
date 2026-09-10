@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/laropay_payment_context.dart';
+import 'laropay_json_coercion.dart';
 
 abstract interface class LaropayCheckoutRemoteDataSource {
   Future<LaropayPaymentContext> getPaymentContext(String appointmentId);
@@ -54,23 +55,23 @@ class SupabaseLaropayCheckoutRemoteDataSource
     final orderService = _firstMapValue(response['order_services']);
     final order = _mapValue(orderService['orders']);
     final customer = _mapValue(order['customers']);
-    if (_stringValue(customer['user_id']) != user.id) {
+    if (stringValue(customer['user_id']) != user.id) {
       throw const LaropayCheckoutContextException();
     }
 
-    final orderId = _stringValue(orderService['order_id']).isNotEmpty
-        ? _stringValue(orderService['order_id'])
-        : _stringValue(order['id']);
+    final orderId = stringValue(orderService['order_id']).isNotEmpty
+        ? stringValue(orderService['order_id'])
+        : stringValue(order['id']);
     final profile = _userProfile(user);
 
     if (orderId.isEmpty ||
-        _stringValue(order['payment_status']).toLowerCase() != 'unpaid') {
+        stringValue(order['payment_status']).toLowerCase() != 'unpaid') {
       throw const LaropayCheckoutContextException();
     }
 
     return LaropayPaymentContext(
       orderId: orderId,
-      orderNumber: _nullableString(order['order_number']),
+      orderNumber: nullableStringValue(order['order_number']),
       amount: 0,
       customerFirstName: profile.firstName,
       customerLastName: profile.lastName,
@@ -112,16 +113,16 @@ class SupabaseLaropayCheckoutRemoteDataSource
     }
 
     final customer = _mapValue(response['customers']);
-    if (_stringValue(customer['user_id']) != user.id) {
+    if (stringValue(customer['user_id']) != user.id) {
       throw const LaropayCheckoutContextException();
     }
 
-    if (_stringValue(response['payment_status']).toLowerCase() != 'unpaid') {
+    if (stringValue(response['payment_status']).toLowerCase() != 'unpaid') {
       throw const LaropayCheckoutContextException();
     }
 
-    final amount = _numberValue(response['total_amount']);
-    if (!amount.isFinite || amount <= 0) {
+    final amount = numberValueOrNull(response['total_amount']);
+    if (amount == null || amount <= 0) {
       throw const LaropayCheckoutContextException();
     }
 
@@ -129,14 +130,14 @@ class SupabaseLaropayCheckoutRemoteDataSource
     final workshop = _mapValue(response['workshops']);
 
     return LaropayPaymentContext(
-      orderId: _stringValue(response['id']),
-      orderNumber: _nullableString(response['order_number']),
+      orderId: stringValue(response['id']),
+      orderNumber: nullableStringValue(response['order_number']),
       amount: amount,
       customerFirstName: profile.firstName,
       customerLastName: profile.lastName,
       customerEmail: profile.email,
       customerPhone: profile.phone,
-      workshopName: _nullableString(workshop['name']),
+      workshopName: nullableStringValue(workshop['name']),
     );
   }
 
@@ -144,9 +145,9 @@ class SupabaseLaropayCheckoutRemoteDataSource
     final metadata = user.userMetadata ?? const <String, dynamic>{};
     final email = user.email?.trim().isNotEmpty == true
         ? user.email!.trim()
-        : _stringValue(metadata['email']);
-    final fullName = _stringValue(metadata['name']).isNotEmpty
-        ? _stringValue(metadata['name'])
+        : stringValue(metadata['email']);
+    final fullName = stringValue(metadata['name']).isNotEmpty
+        ? stringValue(metadata['name'])
         : email.split('@').first;
     final names = fullName
         .split(RegExp(r'\s+'))
@@ -157,7 +158,7 @@ class SupabaseLaropayCheckoutRemoteDataSource
       firstName: names.isEmpty ? 'Cliente' : names.first,
       lastName: names.length <= 1 ? 'Autolab' : names.skip(1).join(' '),
       email: email,
-      phone: _nullableString(metadata['phone']),
+      phone: nullableStringValue(metadata['phone']),
     );
   }
 
@@ -166,11 +167,11 @@ class SupabaseLaropayCheckoutRemoteDataSource
     User user,
   ) {
     final fallback = _userProfile(user);
-    final email = _stringValue(customer['email']).isNotEmpty
-        ? _stringValue(customer['email'])
+    final email = stringValue(customer['email']).isNotEmpty
+        ? stringValue(customer['email'])
         : fallback.email;
-    final fullName = _stringValue(customer['name']).isNotEmpty
-        ? _stringValue(customer['name'])
+    final fullName = stringValue(customer['name']).isNotEmpty
+        ? stringValue(customer['name'])
         : '${fallback.firstName} ${fallback.lastName}'.trim();
     final names = fullName
         .split(RegExp(r'\s+'))
@@ -181,7 +182,7 @@ class SupabaseLaropayCheckoutRemoteDataSource
       firstName: names.isEmpty ? fallback.firstName : names.first,
       lastName: names.length <= 1 ? fallback.lastName : names.skip(1).join(' '),
       email: email,
-      phone: _nullableString(customer['phone']) ?? fallback.phone,
+      phone: nullableStringValue(customer['phone']) ?? fallback.phone,
     );
   }
 }
@@ -218,25 +219,4 @@ Map<String, dynamic> _firstMapValue(Object? value) {
   }
 
   return _mapValue(value);
-}
-
-String _stringValue(Object? value) {
-  return value?.toString().trim() ?? '';
-}
-
-String? _nullableString(Object? value) {
-  final text = _stringValue(value);
-  return text.isEmpty ? null : text;
-}
-
-double _numberValue(Object? value) {
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  if (value is String) {
-    return double.tryParse(value.trim()) ?? double.nan;
-  }
-
-  return double.nan;
 }

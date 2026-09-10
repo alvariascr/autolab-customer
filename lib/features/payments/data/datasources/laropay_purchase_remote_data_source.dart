@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/utils/uuid_validator.dart';
 import '../../domain/entities/laropay_purchase.dart';
+import 'laropay_json_coercion.dart';
 
 const _ordersPageSize = 100;
 const _paymentLinkBatchSize = 100;
@@ -66,7 +67,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
 
     final orders = await _ordersForUser(user.id);
     final orderIds = orders
-        .map((item) => _stringValue(item['id']))
+        .map((item) => stringValue(item['id']))
         .where(isValidUuid)
         .toSet()
         .toList(growable: false);
@@ -77,7 +78,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
 
     return orders
         .map((item) {
-          final orderId = _stringValue(item['id']);
+          final orderId = stringValue(item['id']);
           return _purchaseFromOrder(
             item,
             paymentLink: paymentLinksByOrderId[orderId],
@@ -183,7 +184,7 @@ class SupabaseLaropayPurchaseRemoteDataSource
 
       for (final item in response) {
         final map = Map<String, dynamic>.from(item);
-        final orderId = _stringValue(map['internal_transaction_id']);
+        final orderId = stringValue(map['internal_transaction_id']);
         linksByOrderId.putIfAbsent(orderId, () => map);
       }
     }
@@ -240,8 +241,8 @@ class SupabaseLaropayPurchaseRemoteDataSource
     }
 
     return LaropayPurchase(
-      id: _stringValue(order['id']),
-      amount: _nullableNumberValue(order['paid_amount']) ?? 0,
+      id: stringValue(order['id']),
+      amount: numberValueOrNull(order['paid_amount']) ?? 0,
       currencyCode: 'CRC',
       detail: _orderTitle(order),
       linkId: '',
@@ -249,14 +250,14 @@ class SupabaseLaropayPurchaseRemoteDataSource
       responseCode: '',
       responseDescription: '',
       rejectReason: '',
-      createdAt: DateTime.tryParse(_stringValue(order['created_at'])),
+      createdAt: DateTime.tryParse(stringValue(order['created_at'])),
       expiresAt: null,
       hasPaymentLink: false,
-      orderNumber: _nullableStringValue(order['order_number']),
-      orderPaymentStatus: _nullableStringValue(order['payment_status']),
-      orderTotalAmount: _nullableNumberValue(order['total_amount']),
-      orderPaidAmount: _nullableNumberValue(order['paid_amount']),
-      orderRemainingAmount: _nullableNumberValue(order['remaining_amount']),
+      orderNumber: nullableStringValue(order['order_number']),
+      orderPaymentStatus: nullableStringValue(order['payment_status']),
+      orderTotalAmount: numberValueOrNull(order['total_amount']),
+      orderPaidAmount: numberValueOrNull(order['paid_amount']),
+      orderRemainingAmount: numberValueOrNull(order['remaining_amount']),
     );
   }
 
@@ -265,28 +266,28 @@ class SupabaseLaropayPurchaseRemoteDataSource
     Map<String, dynamic>? order,
     String? fallbackDetail,
   }) {
-    final detail = _stringValue(map['detail']);
+    final detail = stringValue(map['detail']);
     return LaropayPurchase(
-      id: _stringValue(map['id']),
-      amount: _numberValue(map['amount']),
-      currencyCode: _stringValue(map['currency_code']).isEmpty
+      id: stringValue(map['id']),
+      amount: numberValueOrNull(map['amount']) ?? 0,
+      currencyCode: stringValue(map['currency_code']).isEmpty
           ? 'CRC'
-          : _stringValue(map['currency_code']),
-      detail: detail.isEmpty ? _stringValue(fallbackDetail) : detail,
-      linkId: _stringValue(map['link_id']),
+          : stringValue(map['currency_code']),
+      detail: detail.isEmpty ? stringValue(fallbackDetail) : detail,
+      linkId: stringValue(map['link_id']),
       linkUrl: _secureUri(map['link_url']),
-      status: _stringValue(map['status']),
-      responseCode: _stringValue(map['response_code']),
-      responseDescription: _stringValue(map['response_description']),
-      rejectReason: _stringValue(map['reject_reason']),
-      createdAt: DateTime.tryParse(_stringValue(map['created_at'])),
-      expiresAt: DateTime.tryParse(_stringValue(map['expires_at'])),
+      status: stringValue(map['status']),
+      responseCode: stringValue(map['response_code']),
+      responseDescription: stringValue(map['response_description']),
+      rejectReason: stringValue(map['reject_reason']),
+      createdAt: DateTime.tryParse(stringValue(map['created_at'])),
+      expiresAt: DateTime.tryParse(stringValue(map['expires_at'])),
       hasPaymentLink: true,
-      orderNumber: _nullableStringValue(order?['order_number']),
-      orderPaymentStatus: _nullableStringValue(order?['payment_status']),
-      orderTotalAmount: _nullableNumberValue(order?['total_amount']),
-      orderPaidAmount: _nullableNumberValue(order?['paid_amount']),
-      orderRemainingAmount: _nullableNumberValue(order?['remaining_amount']),
+      orderNumber: nullableStringValue(order?['order_number']),
+      orderPaymentStatus: nullableStringValue(order?['payment_status']),
+      orderTotalAmount: numberValueOrNull(order?['total_amount']),
+      orderPaidAmount: numberValueOrNull(order?['paid_amount']),
+      orderRemainingAmount: numberValueOrNull(order?['remaining_amount']),
     );
   }
 
@@ -294,44 +295,42 @@ class SupabaseLaropayPurchaseRemoteDataSource
     Map<String, dynamic> map, {
     Map<String, dynamic>? order,
   }) {
-    final status = _stringValue(map['status']);
+    final status = stringValue(map['status']);
     final linkUrl = _secureUri(_firstValue(map, 'link_url', 'linkURL'));
     if (_requiresPaymentLink(status) && linkUrl == null) {
       throw const LaropayPurchaseStatusException();
     }
 
     return LaropayPurchase(
-      id: _stringValue(map['id']),
-      amount: _numberValue(map['amount']),
+      id: stringValue(map['id']),
+      amount: numberValueOrNull(map['amount']) ?? 0,
       currencyCode:
-          _stringValue(
-            _firstValue(map, 'currency_code', 'currencyCode'),
-          ).isEmpty
+          stringValue(_firstValue(map, 'currency_code', 'currencyCode')).isEmpty
           ? 'CRC'
-          : _stringValue(_firstValue(map, 'currency_code', 'currencyCode')),
-      detail: _stringValue(map['detail']),
-      linkId: _stringValue(_firstValue(map, 'link_id', 'linkID')),
+          : stringValue(_firstValue(map, 'currency_code', 'currencyCode')),
+      detail: stringValue(map['detail']),
+      linkId: stringValue(_firstValue(map, 'link_id', 'linkID')),
       linkUrl: linkUrl,
       status: status,
-      responseCode: _stringValue(_firstValue(map, 'response_code', 'response')),
-      responseDescription: _stringValue(
+      responseCode: stringValue(_firstValue(map, 'response_code', 'response')),
+      responseDescription: stringValue(
         _firstValue(map, 'response_description', 'responseDescription'),
       ),
-      rejectReason: _stringValue(
+      rejectReason: stringValue(
         _firstValue(map, 'reject_reason', 'rejectReason'),
       ),
       createdAt: DateTime.tryParse(
-        _stringValue(_firstValue(map, 'created_at', 'createdAt')),
+        stringValue(_firstValue(map, 'created_at', 'createdAt')),
       ),
       expiresAt: DateTime.tryParse(
-        _stringValue(_firstValue(map, 'expires_at', 'expiresAt')),
+        stringValue(_firstValue(map, 'expires_at', 'expiresAt')),
       ),
       hasPaymentLink: true,
-      orderNumber: _nullableStringValue(order?['order_number']),
-      orderPaymentStatus: _nullableStringValue(order?['payment_status']),
-      orderTotalAmount: _nullableNumberValue(order?['total_amount']),
-      orderPaidAmount: _nullableNumberValue(order?['paid_amount']),
-      orderRemainingAmount: _nullableNumberValue(order?['remaining_amount']),
+      orderNumber: nullableStringValue(order?['order_number']),
+      orderPaymentStatus: nullableStringValue(order?['payment_status']),
+      orderTotalAmount: numberValueOrNull(order?['total_amount']),
+      orderPaidAmount: numberValueOrNull(order?['paid_amount']),
+      orderRemainingAmount: numberValueOrNull(order?['remaining_amount']),
     );
   }
 }
@@ -341,12 +340,12 @@ Object? _firstValue(Map<String, dynamic> map, String primary, String fallback) {
 }
 
 String _orderTitle(Map<String, dynamic> order) {
-  final workshopName = _stringValue(_nestedValue(order['workshops'], 'name'));
+  final workshopName = stringValue(_nestedValue(order['workshops'], 'name'));
   if (workshopName.isNotEmpty) {
     return workshopName;
   }
 
-  final orderNumber = _stringValue(order['order_number']);
+  final orderNumber = stringValue(order['order_number']);
   return orderNumber.isEmpty ? 'Orden' : orderNumber;
 }
 
@@ -358,33 +357,6 @@ Object? _nestedValue(Object? value, String key) {
   return null;
 }
 
-String _stringValue(Object? value) => value?.toString().trim() ?? '';
-
-String? _nullableStringValue(Object? value) {
-  final normalized = _stringValue(value);
-  return normalized.isEmpty ? null : normalized;
-}
-
-double _numberValue(Object? value) {
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  return double.tryParse(_stringValue(value)) ?? 0;
-}
-
-double? _nullableNumberValue(Object? value) {
-  if (value == null) {
-    return null;
-  }
-
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  return double.tryParse(_stringValue(value));
-}
-
 Iterable<List<T>> _chunks<T>(List<T> values, int size) sync* {
   for (var start = 0; start < values.length; start += size) {
     final end = start + size > values.length ? values.length : start + size;
@@ -393,7 +365,7 @@ Iterable<List<T>> _chunks<T>(List<T> values, int size) sync* {
 }
 
 Uri? _secureUri(Object? value) {
-  final uri = Uri.tryParse(_stringValue(value));
+  final uri = Uri.tryParse(stringValue(value));
   if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
     return null;
   }

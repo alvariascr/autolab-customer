@@ -597,10 +597,11 @@ extension _LaropayPurchaseView on LaropayPurchase {
   }
 
   String _formatCurrency(double value, String code) {
-    final formatter = code.toUpperCase() == 'USD'
-        ? _usdFormatter
-        : _colonesFormatter;
-    return formatter.format(value);
+    if (code.toUpperCase() == 'USD') {
+      return _usdFormatter.format(value);
+    }
+
+    return formatColones(value);
   }
 
   String formattedCreatedAt(AppLocalizations l10n) {

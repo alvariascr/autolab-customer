@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/di/app_injection.dart';
 import '../../../../core/theme/autolab_customer.dart';
+import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/uuid_validator.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../navigation/navigation_handler.dart';
@@ -21,11 +22,6 @@ import '../widgets/laropay_payment_result_dialog.dart';
 part 'my_purchases_date_filter.dart';
 part 'my_purchases_widgets.dart';
 
-final _colonesFormatter = NumberFormat.currency(
-  locale: 'es_CR',
-  symbol: '₡',
-  decimalDigits: 2,
-);
 final _usdFormatter = NumberFormat.currency(
   locale: 'es_CR',
   symbol: r'$',
