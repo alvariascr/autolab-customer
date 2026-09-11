@@ -38,9 +38,14 @@ class WorkshopTodayBusinessHoursResolver {
       return const WorkshopClosed();
     }
 
+    final openTime = _timeOnDate(currentTime, todayHours.openTime);
     final closeTime = _timeOnDate(currentTime, todayHours.closeTime);
-    if (closeTime == null) {
+    if (openTime == null || closeTime == null) {
       return const WorkshopUnknown();
+    }
+
+    if (currentTime.isBefore(openTime)) {
+      return const WorkshopClosed();
     }
 
     if (!currentTime.isBefore(closeTime)) {

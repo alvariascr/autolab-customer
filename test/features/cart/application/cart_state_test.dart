@@ -305,7 +305,7 @@ void main() {
             product: _product(
               id: 'product-a',
               workshopId: 'workshop-a',
-              deliveryFee: 0,
+              deliveryFee: null,
             ),
             quantity: 1,
           ),
@@ -474,13 +474,29 @@ void main() {
 
       expect(restored.pendingCheckoutResult, isNull);
     });
+
+    test('fromJson mantiene nula una tarifa de envio desconocida', () {
+      final item = CartItem.fromJson(const {
+        'product': {'id': 'product-a', 'workshopId': 'workshop-a'},
+        'quantity': 1,
+      });
+
+      expect(item.product.workshopDeliveryFee, isNull);
+    });
+
+    test('fromJson tolera un product corrupto o faltante', () {
+      final item = CartItem.fromJson(const {'quantity': 1});
+
+      expect(item.product.id, isEmpty);
+      expect(item.product.workshopDeliveryFee, isNull);
+    });
   });
 }
 
 Product _product({
   required String id,
   required String workshopId,
-  required double deliveryFee,
+  required double? deliveryFee,
   String? workshopName,
   String workshopAvatarUrl = '',
 }) {

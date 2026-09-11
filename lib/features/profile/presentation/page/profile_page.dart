@@ -983,9 +983,13 @@ class _AppVersionFooter extends StatelessWidget {
     return FutureBuilder<PackageInfo>(
       future: packageInfoFuture,
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const SizedBox.shrink();
+        }
+
         final packageInfo = snapshot.data;
         final versionText = packageInfo == null
-            ? '--'
+            ? '...'
             : '${packageInfo.version}+${packageInfo.buildNumber}';
 
         return Center(

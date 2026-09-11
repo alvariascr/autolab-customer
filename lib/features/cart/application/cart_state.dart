@@ -393,8 +393,12 @@ class CartItem extends Equatable {
   }
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    final rawProduct = json['product'];
+
     return CartItem(
-      product: _productFromCartJson(json['product'] as Map<String, dynamic>),
+      product: _productFromCartJson(
+        rawProduct is Map<String, dynamic> ? rawProduct : const {},
+      ),
       quantity: json['quantity'] as int? ?? 1,
     );
   }
@@ -489,6 +493,6 @@ Product _productFromCartJson(Map<String, dynamic> json) {
     providerName: json['providerName'] as String? ?? '',
     workshopName: json['workshopName'] as String? ?? '',
     workshopAvatarUrl: json['workshopAvatarUrl'] as String? ?? '',
-    workshopDeliveryFee: (json['workshopDeliveryFee'] as num?)?.toDouble() ?? 0,
+    workshopDeliveryFee: (json['workshopDeliveryFee'] as num?)?.toDouble(),
   );
 }

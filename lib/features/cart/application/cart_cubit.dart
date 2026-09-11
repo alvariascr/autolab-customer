@@ -675,6 +675,15 @@ class CartCubit extends Cubit<CartState> {
   }
 
   CartState _stateWithItems(List<CartItem> items) {
+    final remainingWorkshopIds = items
+        .map((item) => item.product.workshopId.trim())
+        .where((workshopId) => workshopId.isNotEmpty)
+        .toSet();
+    final homeDeliveryByWorkshop =
+        Map<String, bool>.from(state.homeDeliveryByWorkshop)..removeWhere(
+          (workshopId, _) => !remainingWorkshopIds.contains(workshopId),
+        );
+
     if (items.isEmpty) {
       return state.copyWith(
         items: items,
@@ -685,7 +694,12 @@ class CartCubit extends Cubit<CartState> {
       );
     }
 
-    return state.copyWith(items: items, clearPendingCheckoutResult: true);
+    return state.copyWith(
+      items: items,
+      homeDelivery: homeDeliveryByWorkshop.values.any((value) => value),
+      homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+      clearPendingCheckoutResult: true,
+    );
   }
 
   Future<void> _loadSavedCart({

@@ -64,6 +64,17 @@ void main() {
       expect((status as WorkshopOpen).formattedCloseTime, '17:00');
     });
 
+    test('cerrado cuando aun no llega la hora de apertura', () {
+      const resolver = WorkshopTodayBusinessHoursResolver();
+
+      final status = resolver.statusNow(
+        hours,
+        now: DateTime(2026, 5, 16, 6, 30),
+      );
+
+      expect(status, isA<WorkshopClosed>());
+    });
+
     test('cerrado cuando ya pasó la hora de cierre configurada, aunque el día '
         'no esté marcado como cerrado', () {
       const resolver = WorkshopTodayBusinessHoursResolver();
@@ -134,5 +145,23 @@ void main() {
 
       expect(status, isA<WorkshopUnknown>());
     });
+
+    test(
+      'desconocido cuando la hora de apertura tiene un formato inválido',
+      () {
+        const resolver = WorkshopTodayBusinessHoursResolver();
+
+        final status = resolver.statusNow(const [
+          WorkshopBusinessHour(
+            dayOfWeek: DateTime.saturday,
+            openTime: 'sin-hora',
+            closeTime: '17:00:00',
+            isClosed: false,
+          ),
+        ], now: DateTime(2026, 5, 16, 10, 0));
+
+        expect(status, isA<WorkshopUnknown>());
+      },
+    );
   });
 }
