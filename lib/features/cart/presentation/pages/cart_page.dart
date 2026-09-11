@@ -1252,7 +1252,16 @@ class _CartDeliverySection extends StatelessWidget {
                   value: cart.homeDelivery,
                   activeThumbColor: AutolabCustomer.white,
                   activeTrackColor: AutolabCustomer.primary,
-                  onChanged: context.read<CartCubit>().setHomeDelivery,
+                  onChanged: (value) {
+                    final workshopId = cart.singleWorkshopId;
+                    if (workshopId == null) {
+                      return;
+                    }
+                    context.read<CartCubit>().setHomeDelivery(
+                      workshopId,
+                      value,
+                    );
+                  },
                 ),
               ],
             ),

@@ -63,6 +63,65 @@ void main() {
     );
 
     test(
+      'forWorkshop no hereda el switch de envío a domicilio de otro taller',
+      () {
+        final state = CartState(
+          homeDelivery: true,
+          // Activado mientras se veía workshop-a; pedir la vista de
+          // workshop-b no debe mostrarlo ya activado.
+          homeDeliveryWorkshopId: 'workshop-a',
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+            CartItem(
+              product: _product(
+                id: 'product-b',
+                workshopId: 'workshop-b',
+                deliveryFee: 1000,
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        final workshopState = state.forWorkshop('workshop-b');
+
+        expect(workshopState.homeDelivery, isFalse);
+      },
+    );
+
+    test(
+      'forWorkshop sí conserva el switch de envío cuando pertenece al '
+      'taller pedido',
+      () {
+        final state = CartState(
+          homeDelivery: true,
+          homeDeliveryWorkshopId: 'workshop-a',
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        final workshopState = state.forWorkshop('workshop-a');
+
+        expect(workshopState.homeDelivery, isTrue);
+      },
+    );
+
+    test(
       'usa un producto con metadata válida como representante del taller',
       () {
         final cart = CartWorkshopCart(

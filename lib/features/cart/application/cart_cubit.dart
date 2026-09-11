@@ -180,9 +180,18 @@ class CartCubit extends Cubit<CartState> {
     return super.close();
   }
 
-  void setHomeDelivery(bool value) {
+  void setHomeDelivery(String workshopId, bool value) {
+    final trimmedWorkshopId = workshopId.trim();
+    if (trimmedWorkshopId.isEmpty) {
+      return;
+    }
+
     _emitAndSave(
-      state.copyWith(homeDelivery: value, clearPendingCheckoutResult: true),
+      state.copyWith(
+        homeDelivery: value,
+        homeDeliveryWorkshopId: trimmedWorkshopId,
+        clearPendingCheckoutResult: true,
+      ),
     );
     if (value) {
       unawaited(loadDeliveryAddresses(applyDefault: true));
@@ -506,7 +515,8 @@ class CartCubit extends Cubit<CartState> {
       return null;
     }
 
-    if (state.homeDelivery && !state.hasCompleteDeliveryDetails) {
+    if (state.homeDeliveryFor(resolvedWorkshopId) &&
+        !state.hasCompleteDeliveryDetails) {
       emit(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
@@ -559,8 +569,8 @@ class CartCubit extends Cubit<CartState> {
                 ),
               )
               .toList(growable: false),
-          homeDelivery: state.homeDelivery,
-          deliveryDetails: state.homeDelivery
+          homeDelivery: state.homeDeliveryFor(resolvedWorkshopId),
+          deliveryDetails: state.homeDeliveryFor(resolvedWorkshopId)
               ? CartCheckoutDeliveryDetails(
                   province: state.deliveryProvince,
                   canton: state.deliveryCanton,

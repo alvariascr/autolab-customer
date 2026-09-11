@@ -8,6 +8,7 @@ class CartState extends Equatable {
   const CartState({
     this.items = const [],
     this.homeDelivery = false,
+    this.homeDeliveryWorkshopId,
     this.deliveryAddress = '',
     this.deliveryProvince = '',
     this.deliveryCanton = '',
@@ -26,6 +27,12 @@ class CartState extends Equatable {
 
   final List<CartItem> items;
   final bool homeDelivery;
+  // Which workshop homeDelivery was toggled for. The cart can hold items
+  // from several workshops at once (see workshopCarts), each checked out
+  // separately -- without this, turning delivery on while looking at one
+  // workshop's items left it silently on for every other workshop's view
+  // too, since homeDelivery was a single flag shared by the whole cart.
+  final String? homeDeliveryWorkshopId;
   final String deliveryAddress;
   final String deliveryProvince;
   final String deliveryCanton;
@@ -80,6 +87,13 @@ class CartState extends Equatable {
 
   double get total => productsTotal + shippingCost;
 
+  /// Whether home delivery is turned on for [workshopId] specifically,
+  /// rather than for whichever workshop [homeDeliveryWorkshopId] last
+  /// pointed at.
+  bool homeDeliveryFor(String workshopId) {
+    return homeDelivery && homeDeliveryWorkshopId == workshopId.trim();
+  }
+
   String? get singleWorkshopId {
     final workshopIds = items
         .map((item) => item.product.workshopId.trim())
@@ -118,7 +132,14 @@ class CartState extends Equatable {
       items: items
           .where((item) => item.product.workshopId.trim() == trimmedWorkshopId)
           .toList(growable: false),
-      homeDelivery: homeDelivery,
+      // Same reasoning as currentWorkshopDeliveryFee below: only forward
+      // the toggle if it was actually set for this workshop, otherwise a
+      // customer who turned delivery on while viewing one workshop's cart
+      // would see it already on for a different workshop's cart too.
+      homeDelivery: homeDeliveryFor(trimmedWorkshopId),
+      homeDeliveryWorkshopId: homeDeliveryWorkshopId == trimmedWorkshopId
+          ? homeDeliveryWorkshopId
+          : null,
       deliveryAddress: deliveryAddress,
       deliveryProvince: deliveryProvince,
       deliveryCanton: deliveryCanton,
@@ -169,6 +190,7 @@ class CartState extends Equatable {
   CartState copyWith({
     List<CartItem>? items,
     bool? homeDelivery,
+    String? homeDeliveryWorkshopId,
     String? deliveryAddress,
     String? deliveryProvince,
     String? deliveryCanton,
@@ -192,6 +214,8 @@ class CartState extends Equatable {
     return CartState(
       items: items ?? this.items,
       homeDelivery: homeDelivery ?? this.homeDelivery,
+      homeDeliveryWorkshopId:
+          homeDeliveryWorkshopId ?? this.homeDeliveryWorkshopId,
       deliveryAddress: clearDeliveryDetails
           ? ''
           : deliveryAddress ?? this.deliveryAddress,
@@ -238,6 +262,8 @@ class CartState extends Equatable {
     return {
       'items': items.map((item) => item.toJson()).toList(growable: false),
       'homeDelivery': homeDelivery,
+      if (homeDeliveryWorkshopId != null)
+        'homeDeliveryWorkshopId': homeDeliveryWorkshopId,
       'deliveryAddress': deliveryAddress,
       'deliveryProvince': deliveryProvince,
       'deliveryCanton': deliveryCanton,
@@ -267,6 +293,7 @@ class CartState extends Equatable {
                 .toList(growable: false)
           : const [],
       homeDelivery: json['homeDelivery'] as bool? ?? false,
+      homeDeliveryWorkshopId: json['homeDeliveryWorkshopId'] as String?,
       deliveryAddress: json['deliveryAddress'] as String? ?? '',
       deliveryProvince: json['deliveryProvince'] as String? ?? '',
       deliveryCanton: json['deliveryCanton'] as String? ?? '',
@@ -290,6 +317,7 @@ class CartState extends Equatable {
   List<Object?> get props => [
     items,
     homeDelivery,
+    homeDeliveryWorkshopId,
     deliveryAddress,
     deliveryProvince,
     deliveryCanton,
