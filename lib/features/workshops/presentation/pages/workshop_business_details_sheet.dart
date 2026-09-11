@@ -138,26 +138,15 @@ class _BusinessDetailsSheet extends StatelessWidget {
 
   String _hoursSummary(BuildContext context, List<WorkshopBusinessHour> hours) {
     final l10n = AppLocalizations.of(context)!;
+    final status = _todayBusinessHoursResolver.statusNow(hours);
 
-    if (hours.isEmpty) {
-      return l10n.workshopProfileBusinessHoursEmpty;
-    }
-
-    final todayHours = _todayBusinessHoursResolver.resolve(hours);
-
-    if (todayHours == null || todayHours.isClosed) {
-      return l10n.workshopProfileClosed;
-    }
-
-    if (todayHours.closeTime.isEmpty) {
-      return l10n.workshopProfileBusinessHoursEmpty;
-    }
-
-    return l10n.workshopProfileOpenUntil(_trimTime(todayHours.closeTime));
-  }
-
-  String _trimTime(String value) {
-    return value.length >= 5 ? value.substring(0, 5) : value;
+    return switch (status) {
+      WorkshopOpen(:final formattedCloseTime) => l10n.workshopProfileOpenUntil(
+        formattedCloseTime,
+      ),
+      WorkshopClosed() => l10n.workshopProfileClosed,
+      WorkshopUnknown() => l10n.workshopProfileBusinessHoursEmpty,
+    };
   }
 }
 
