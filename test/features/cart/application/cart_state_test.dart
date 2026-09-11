@@ -96,6 +96,40 @@ void main() {
       },
     );
 
+    test(
+      'forWorkshop conserva selecciones de envío independientes por taller',
+      () {
+        final state = CartState(
+          homeDelivery: true,
+          homeDeliveryByWorkshop: const {
+            'workshop-a': true,
+            'workshop-b': true,
+          },
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+            CartItem(
+              product: _product(
+                id: 'product-b',
+                workshopId: 'workshop-b',
+                deliveryFee: 1000,
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        expect(state.forWorkshop('workshop-a').homeDelivery, isTrue);
+        expect(state.forWorkshop('workshop-b').homeDelivery, isTrue);
+      },
+    );
+
     test('forWorkshop sí conserva el switch de envío cuando pertenece al '
         'taller pedido', () {
       final state = CartState(
@@ -230,6 +264,31 @@ void main() {
         final restored = CartState.fromJson(state.toJson());
 
         expect(restored.pendingCheckoutResult, state.pendingCheckoutResult);
+      },
+    );
+
+    test('preserva selecciones de envío por taller en toJson/fromJson', () {
+      const state = CartState(
+        homeDelivery: true,
+        homeDeliveryByWorkshop: {'workshop-a': true, 'workshop-b': true},
+      );
+
+      final restored = CartState.fromJson(state.toJson());
+
+      expect(restored.homeDeliveryFor('workshop-a'), isTrue);
+      expect(restored.homeDeliveryFor('workshop-b'), isTrue);
+    });
+
+    test(
+      'migra el formato anterior de envío a domicilio al mapa por taller',
+      () {
+        final restored = CartState.fromJson(const {
+          'homeDelivery': true,
+          'homeDeliveryWorkshopId': 'workshop-a',
+        });
+
+        expect(restored.homeDeliveryByWorkshop, {'workshop-a': true});
+        expect(restored.homeDeliveryFor('workshop-a'), isTrue);
       },
     );
 

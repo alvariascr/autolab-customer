@@ -8,6 +8,7 @@ class CartState extends Equatable {
   const CartState({
     this.items = const [],
     this.homeDelivery = false,
+    this.homeDeliveryByWorkshop = const {},
     this.homeDeliveryWorkshopId,
     this.deliveryAddress = '',
     this.deliveryProvince = '',
@@ -27,11 +28,10 @@ class CartState extends Equatable {
 
   final List<CartItem> items;
   final bool homeDelivery;
-  // Which workshop homeDelivery was toggled for. The cart can hold items
-  // from several workshops at once (see workshopCarts), each checked out
-  // separately -- without this, turning delivery on while looking at one
-  // workshop's items left it silently on for every other workshop's view
-  // too, since homeDelivery was a single flag shared by the whole cart.
+  final Map<String, bool> homeDeliveryByWorkshop;
+
+  // Legacy field kept only to restore carts persisted before
+  // homeDeliveryByWorkshop existed.
   final String? homeDeliveryWorkshopId;
   final String deliveryAddress;
   final String deliveryProvince;
@@ -88,10 +88,14 @@ class CartState extends Equatable {
   double get total => productsTotal + shippingCost;
 
   /// Whether home delivery is turned on for [workshopId] specifically,
-  /// rather than for whichever workshop [homeDeliveryWorkshopId] last
-  /// pointed at.
+  /// preserving independent selections for multi-workshop carts.
   bool homeDeliveryFor(String workshopId) {
-    return homeDelivery && homeDeliveryWorkshopId == workshopId.trim();
+    final trimmedWorkshopId = workshopId.trim();
+    if (homeDeliveryByWorkshop.isNotEmpty) {
+      return homeDeliveryByWorkshop[trimmedWorkshopId] ?? false;
+    }
+
+    return homeDelivery && homeDeliveryWorkshopId == trimmedWorkshopId;
   }
 
   String? get singleWorkshopId {
@@ -137,9 +141,9 @@ class CartState extends Equatable {
       // customer who turned delivery on while viewing one workshop's cart
       // would see it already on for a different workshop's cart too.
       homeDelivery: homeDeliveryFor(trimmedWorkshopId),
-      homeDeliveryWorkshopId: homeDeliveryWorkshopId == trimmedWorkshopId
-          ? homeDeliveryWorkshopId
-          : null,
+      homeDeliveryByWorkshop: {
+        if (homeDeliveryFor(trimmedWorkshopId)) trimmedWorkshopId: true,
+      },
       deliveryAddress: deliveryAddress,
       deliveryProvince: deliveryProvince,
       deliveryCanton: deliveryCanton,
@@ -190,6 +194,7 @@ class CartState extends Equatable {
   CartState copyWith({
     List<CartItem>? items,
     bool? homeDelivery,
+    Map<String, bool>? homeDeliveryByWorkshop,
     String? homeDeliveryWorkshopId,
     String? deliveryAddress,
     String? deliveryProvince,
@@ -214,6 +219,8 @@ class CartState extends Equatable {
     return CartState(
       items: items ?? this.items,
       homeDelivery: homeDelivery ?? this.homeDelivery,
+      homeDeliveryByWorkshop:
+          homeDeliveryByWorkshop ?? this.homeDeliveryByWorkshop,
       homeDeliveryWorkshopId:
           homeDeliveryWorkshopId ?? this.homeDeliveryWorkshopId,
       deliveryAddress: clearDeliveryDetails
@@ -262,8 +269,8 @@ class CartState extends Equatable {
     return {
       'items': items.map((item) => item.toJson()).toList(growable: false),
       'homeDelivery': homeDelivery,
-      if (homeDeliveryWorkshopId != null)
-        'homeDeliveryWorkshopId': homeDeliveryWorkshopId,
+      if (homeDeliveryByWorkshop.isNotEmpty)
+        'homeDeliveryByWorkshop': homeDeliveryByWorkshop,
       'deliveryAddress': deliveryAddress,
       'deliveryProvince': deliveryProvince,
       'deliveryCanton': deliveryCanton,
@@ -283,6 +290,23 @@ class CartState extends Equatable {
 
   factory CartState.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
+    final rawHomeDeliveryByWorkshop = json['homeDeliveryByWorkshop'];
+    final legacyHomeDelivery = json['homeDelivery'] as bool? ?? false;
+    final legacyHomeDeliveryWorkshopId =
+        json['homeDeliveryWorkshopId'] as String?;
+    final homeDeliveryByWorkshop = <String, bool>{};
+    if (rawHomeDeliveryByWorkshop is Map) {
+      for (final entry in rawHomeDeliveryByWorkshop.entries) {
+        final workshopId = entry.key.toString().trim();
+        if (workshopId.isNotEmpty && entry.value == true) {
+          homeDeliveryByWorkshop[workshopId] = true;
+        }
+      }
+    } else if (legacyHomeDelivery &&
+        legacyHomeDeliveryWorkshopId != null &&
+        legacyHomeDeliveryWorkshopId.trim().isNotEmpty) {
+      homeDeliveryByWorkshop[legacyHomeDeliveryWorkshopId.trim()] = true;
+    }
 
     return CartState(
       items: rawItems is List
@@ -292,8 +316,11 @@ class CartState extends Equatable {
                 .where((item) => item.quantity > 0)
                 .toList(growable: false)
           : const [],
-      homeDelivery: json['homeDelivery'] as bool? ?? false,
-      homeDeliveryWorkshopId: json['homeDeliveryWorkshopId'] as String?,
+      homeDelivery:
+          legacyHomeDelivery ||
+          homeDeliveryByWorkshop.values.any((value) => value),
+      homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+      homeDeliveryWorkshopId: legacyHomeDeliveryWorkshopId,
       deliveryAddress: json['deliveryAddress'] as String? ?? '',
       deliveryProvince: json['deliveryProvince'] as String? ?? '',
       deliveryCanton: json['deliveryCanton'] as String? ?? '',
@@ -317,6 +344,7 @@ class CartState extends Equatable {
   List<Object?> get props => [
     items,
     homeDelivery,
+    homeDeliveryByWorkshop,
     homeDeliveryWorkshopId,
     deliveryAddress,
     deliveryProvince,

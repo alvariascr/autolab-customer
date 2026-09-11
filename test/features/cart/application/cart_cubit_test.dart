@@ -47,6 +47,46 @@ void main() {
       },
     );
 
+    test('conserva selecciones de envío independientes por taller', () async {
+      final cubit = _cartCubit(
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'));
+
+      cubit
+        ..setHomeDelivery('workshop-a', true)
+        ..setHomeDelivery('workshop-b', true);
+
+      expect(cubit.state.homeDeliveryFor('workshop-a'), isTrue);
+      expect(cubit.state.homeDeliveryFor('workshop-b'), isTrue);
+    });
+
+    test('limpia solo el envío del taller eliminado', () async {
+      final cubit = _cartCubit(
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'))
+        ..setHomeDelivery('workshop-a', true)
+        ..setHomeDelivery('workshop-b', true);
+
+      cubit.clearWorkshop('workshop-a');
+
+      expect(cubit.state.homeDeliveryFor('workshop-a'), isFalse);
+      expect(cubit.state.homeDeliveryFor('workshop-b'), isTrue);
+    });
+
     test(
       'limpia la tarifa si no puede resolver el taller para refrescar envío',
       () async {
@@ -388,10 +428,11 @@ void main() {
       ]);
 
       expect(results, everyElement(CartAddProductStatus.added));
-      expect(cubit.state.items.map((item) => item.product.id).toSet(), {
-        'product-a',
-        'product-b',
-      }, reason: 'ambos productos deben sobrevivir, ninguno se pisa');
+      expect(
+        cubit.state.items.map((item) => item.product.id).toSet(),
+        {'product-a', 'product-b'},
+        reason: 'ambos productos deben sobrevivir, ninguno se pisa',
+      );
     });
   });
 }

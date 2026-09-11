@@ -80,6 +80,7 @@ class CartCubit extends Cubit<CartState> {
       state.copyWith(
         items: update.items,
         homeDelivery: update.startedNewCart ? false : null,
+        homeDeliveryByWorkshop: update.startedNewCart ? const {} : null,
         clearPendingCheckoutResult: true,
       ),
     );
@@ -128,6 +129,7 @@ class CartCubit extends Cubit<CartState> {
       state.copyWith(
         items: const [],
         homeDelivery: false,
+        homeDeliveryByWorkshop: const {},
         clearDeliveryDetails: true,
         checkoutStatus: CartCheckoutStatus.initial,
         clearCheckoutError: true,
@@ -145,11 +147,16 @@ class CartCubit extends Cubit<CartState> {
     final remainingItems = state.items
         .where((item) => item.product.workshopId.trim() != trimmedWorkshopId)
         .toList(growable: false);
+    final homeDeliveryByWorkshop = Map<String, bool>.from(
+      state.homeDeliveryByWorkshop,
+    )..remove(trimmedWorkshopId);
 
     _emitAndSave(
-      _stateWithItems(
-        remainingItems,
-      ).copyWith(clearCurrentWorkshopDeliveryFee: true),
+      _stateWithItems(remainingItems).copyWith(
+        homeDelivery: homeDeliveryByWorkshop.values.any((value) => value),
+        homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+        clearCurrentWorkshopDeliveryFee: true,
+      ),
     );
   }
 
@@ -185,11 +192,19 @@ class CartCubit extends Cubit<CartState> {
     if (trimmedWorkshopId.isEmpty) {
       return;
     }
+    final homeDeliveryByWorkshop = Map<String, bool>.from(
+      state.homeDeliveryByWorkshop,
+    );
+    if (value) {
+      homeDeliveryByWorkshop[trimmedWorkshopId] = true;
+    } else {
+      homeDeliveryByWorkshop.remove(trimmedWorkshopId);
+    }
 
     _emitAndSave(
       state.copyWith(
-        homeDelivery: value,
-        homeDeliveryWorkshopId: trimmedWorkshopId,
+        homeDelivery: homeDeliveryByWorkshop.values.any((value) => value),
+        homeDeliveryByWorkshop: homeDeliveryByWorkshop,
         clearPendingCheckoutResult: true,
       ),
     );
@@ -664,6 +679,7 @@ class CartCubit extends Cubit<CartState> {
       return state.copyWith(
         items: items,
         homeDelivery: false,
+        homeDeliveryByWorkshop: const {},
         clearCurrentWorkshopDeliveryFee: true,
         clearPendingCheckoutResult: true,
       );
