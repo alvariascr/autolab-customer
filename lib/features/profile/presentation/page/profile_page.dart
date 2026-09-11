@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -47,6 +48,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _profilePhotoPath;
   GarageVehicle? _activeVehicle;
   int _activeVehicleLoadGeneration = 0;
+  late final Future<PackageInfo> _packageInfoFuture =
+      PackageInfo.fromPlatform();
 
   @override
   void initState() {
@@ -208,6 +211,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: AutolabCustomer.spacingLg),
             const _LogoutCard(),
+            const SizedBox(height: AutolabCustomer.spacingMd),
+            _AppVersionFooter(packageInfoFuture: _packageInfoFuture),
           ],
         ),
       ),
@@ -962,6 +967,36 @@ class _LogoutCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AppVersionFooter extends StatelessWidget {
+  const _AppVersionFooter({required this.packageInfoFuture});
+
+  final Future<PackageInfo> packageInfoFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return FutureBuilder<PackageInfo>(
+      future: packageInfoFuture,
+      builder: (context, snapshot) {
+        final packageInfo = snapshot.data;
+        final versionText = packageInfo == null
+            ? '--'
+            : '${packageInfo.version}+${packageInfo.buildNumber}';
+
+        return Center(
+          child: Text(
+            '${l10n.settingsVersion} $versionText',
+            style: AutolabCustomer.caption.copyWith(
+              color: AutolabCustomer.customerSecondaryTextColor(context),
+            ),
+          ),
+        );
+      },
     );
   }
 }
