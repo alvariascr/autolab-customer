@@ -1668,8 +1668,14 @@ class _TableCalendarDay extends StatelessWidget {
     return Center(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        width: selected || disabled ? 30 : double.infinity,
-        height: selected || disabled ? 30 : double.infinity,
+        // Both branches must stay finite -- AnimatedContainer tweens width
+        // and height independently of the parent's real constraints, and
+        // BoxConstraints.lerp can't interpolate a finite size against
+        // double.infinity (that combination crashed every time the
+        // selected day changed, since one cell animates in while another
+        // animates out).
+        width: 30,
+        height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: backgroundColor,
