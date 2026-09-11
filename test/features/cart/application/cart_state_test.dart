@@ -96,30 +96,27 @@ void main() {
       },
     );
 
-    test(
-      'forWorkshop sí conserva el switch de envío cuando pertenece al '
-      'taller pedido',
-      () {
-        final state = CartState(
-          homeDelivery: true,
-          homeDeliveryWorkshopId: 'workshop-a',
-          items: [
-            CartItem(
-              product: _product(
-                id: 'product-a',
-                workshopId: 'workshop-a',
-                deliveryFee: 2500,
-              ),
-              quantity: 1,
+    test('forWorkshop sí conserva el switch de envío cuando pertenece al '
+        'taller pedido', () {
+      final state = CartState(
+        homeDelivery: true,
+        homeDeliveryWorkshopId: 'workshop-a',
+        items: [
+          CartItem(
+            product: _product(
+              id: 'product-a',
+              workshopId: 'workshop-a',
+              deliveryFee: 2500,
             ),
-          ],
-        );
+            quantity: 1,
+          ),
+        ],
+      );
 
-        final workshopState = state.forWorkshop('workshop-a');
+      final workshopState = state.forWorkshop('workshop-a');
 
-        expect(workshopState.homeDelivery, isTrue);
-      },
-    );
+      expect(workshopState.homeDelivery, isTrue);
+    });
 
     test(
       'usa un producto con metadata válida como representante del taller',
