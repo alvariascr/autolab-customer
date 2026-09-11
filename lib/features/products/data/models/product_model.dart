@@ -47,11 +47,9 @@ class ProductModel extends Product {
       providerName: _relationName(map['product_providers']),
       workshopName: _relationName(map['workshops']),
       workshopAvatarUrl: _relationValue(map['workshops'], 'avatar_url'),
-      workshopDeliveryFee:
-          _nullableDouble(
-            _relationRawValue(map['workshops'], 'delivery_fee'),
-          ) ??
-          0,
+      workshopDeliveryFee: _nullableDouble(
+        _relationRawValue(map['workshops'], 'delivery_fee'),
+      ),
     );
   }
 

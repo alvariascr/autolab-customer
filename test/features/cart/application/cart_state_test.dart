@@ -63,6 +63,96 @@ void main() {
     );
 
     test(
+      'forWorkshop no hereda el switch de envío a domicilio de otro taller',
+      () {
+        final state = CartState(
+          homeDelivery: true,
+          // Activado mientras se veía workshop-a; pedir la vista de
+          // workshop-b no debe mostrarlo ya activado.
+          homeDeliveryWorkshopId: 'workshop-a',
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+            CartItem(
+              product: _product(
+                id: 'product-b',
+                workshopId: 'workshop-b',
+                deliveryFee: 1000,
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        final workshopState = state.forWorkshop('workshop-b');
+
+        expect(workshopState.homeDelivery, isFalse);
+      },
+    );
+
+    test(
+      'forWorkshop conserva selecciones de envío independientes por taller',
+      () {
+        final state = CartState(
+          homeDelivery: true,
+          homeDeliveryByWorkshop: const {
+            'workshop-a': true,
+            'workshop-b': true,
+          },
+          items: [
+            CartItem(
+              product: _product(
+                id: 'product-a',
+                workshopId: 'workshop-a',
+                deliveryFee: 2500,
+              ),
+              quantity: 1,
+            ),
+            CartItem(
+              product: _product(
+                id: 'product-b',
+                workshopId: 'workshop-b',
+                deliveryFee: 1000,
+              ),
+              quantity: 1,
+            ),
+          ],
+        );
+
+        expect(state.forWorkshop('workshop-a').homeDelivery, isTrue);
+        expect(state.forWorkshop('workshop-b').homeDelivery, isTrue);
+      },
+    );
+
+    test('forWorkshop sí conserva el switch de envío cuando pertenece al '
+        'taller pedido', () {
+      final state = CartState(
+        homeDelivery: true,
+        homeDeliveryWorkshopId: 'workshop-a',
+        items: [
+          CartItem(
+            product: _product(
+              id: 'product-a',
+              workshopId: 'workshop-a',
+              deliveryFee: 2500,
+            ),
+            quantity: 1,
+          ),
+        ],
+      );
+
+      final workshopState = state.forWorkshop('workshop-a');
+
+      expect(workshopState.homeDelivery, isTrue);
+    });
+
+    test(
       'usa un producto con metadata válida como representante del taller',
       () {
         final cart = CartWorkshopCart(
@@ -177,6 +267,31 @@ void main() {
       },
     );
 
+    test('preserva selecciones de envío por taller en toJson/fromJson', () {
+      const state = CartState(
+        homeDelivery: true,
+        homeDeliveryByWorkshop: {'workshop-a': true, 'workshop-b': true},
+      );
+
+      final restored = CartState.fromJson(state.toJson());
+
+      expect(restored.homeDeliveryFor('workshop-a'), isTrue);
+      expect(restored.homeDeliveryFor('workshop-b'), isTrue);
+    });
+
+    test(
+      'migra el formato anterior de envío a domicilio al mapa por taller',
+      () {
+        final restored = CartState.fromJson(const {
+          'homeDelivery': true,
+          'homeDeliveryWorkshopId': 'workshop-a',
+        });
+
+        expect(restored.homeDeliveryByWorkshop, {'workshop-a': true});
+        expect(restored.homeDeliveryFor('workshop-a'), isTrue);
+      },
+    );
+
     test('no confirma el envío como gratis mientras no se conoce la tarifa '
         'real', () {
       // Envío a domicilio, sin tarifa del taller aún cargada y sin
@@ -190,7 +305,7 @@ void main() {
             product: _product(
               id: 'product-a',
               workshopId: 'workshop-a',
-              deliveryFee: 0,
+              deliveryFee: null,
             ),
             quantity: 1,
           ),
@@ -359,13 +474,29 @@ void main() {
 
       expect(restored.pendingCheckoutResult, isNull);
     });
+
+    test('fromJson mantiene nula una tarifa de envio desconocida', () {
+      final item = CartItem.fromJson(const {
+        'product': {'id': 'product-a', 'workshopId': 'workshop-a'},
+        'quantity': 1,
+      });
+
+      expect(item.product.workshopDeliveryFee, isNull);
+    });
+
+    test('fromJson tolera un product corrupto o faltante', () {
+      final item = CartItem.fromJson(const {'quantity': 1});
+
+      expect(item.product.id, isEmpty);
+      expect(item.product.workshopDeliveryFee, isNull);
+    });
   });
 }
 
 Product _product({
   required String id,
   required String workshopId,
-  required double deliveryFee,
+  required double? deliveryFee,
   String? workshopName,
   String workshopAvatarUrl = '',
 }) {

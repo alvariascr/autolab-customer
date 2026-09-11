@@ -47,6 +47,67 @@ void main() {
       },
     );
 
+    test('conserva selecciones de envío independientes por taller', () async {
+      final cubit = _cartCubit(
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'));
+
+      cubit
+        ..setHomeDelivery('workshop-a', true)
+        ..setHomeDelivery('workshop-b', true);
+
+      expect(cubit.state.homeDeliveryFor('workshop-a'), isTrue);
+      expect(cubit.state.homeDeliveryFor('workshop-b'), isTrue);
+    });
+
+    test('limpia solo el envío del taller eliminado', () async {
+      final cubit = _cartCubit(
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'))
+        ..setHomeDelivery('workshop-a', true)
+        ..setHomeDelivery('workshop-b', true);
+
+      cubit.clearWorkshop('workshop-a');
+
+      expect(cubit.state.homeDeliveryFor('workshop-a'), isFalse);
+      expect(cubit.state.homeDeliveryFor('workshop-b'), isTrue);
+    });
+
+    test('limpia el envío de un taller vaciado producto por producto', () {
+      final cubit = _cartCubit(
+        workshopRepository: _FakeWorkshopRepository(
+          feesByWorkshopId: const {'workshop-a': 2500, 'workshop-b': 1000},
+        ),
+      );
+      addTearDown(cubit.close);
+
+      cubit
+        ..addProduct(_product(id: 'product-a', workshopId: 'workshop-a'))
+        ..addProduct(_product(id: 'product-b', workshopId: 'workshop-b'))
+        ..setHomeDelivery('workshop-a', true)
+        ..setHomeDelivery('workshop-b', true);
+
+      cubit.removeProduct('product-a');
+
+      expect(cubit.state.homeDeliveryFor('workshop-a'), isFalse);
+      expect(cubit.state.homeDeliveryFor('workshop-b'), isTrue);
+      expect(cubit.state.homeDeliveryByWorkshop, {'workshop-b': true});
+    });
+
     test(
       'limpia la tarifa si no puede resolver el taller para refrescar envío',
       () async {

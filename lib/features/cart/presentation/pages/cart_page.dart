@@ -147,6 +147,8 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         final activeCart = selectedWorkshopId == null
             ? cart
             : cart.forWorkshop(selectedWorkshopId);
+        final activeWorkshopId =
+            selectedWorkshopId ?? activeCart.singleWorkshopId;
         final showCheckout =
             _showCheckout && !isShowingCartList && activeCart.items.isNotEmpty;
         final hasDeliveryAddress = activeCart.hasCompleteDeliveryDetails;
@@ -228,7 +230,10 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
                               if (!showCheckout &&
                                   !isShowingCartList &&
                                   activeCart.items.isNotEmpty) ...[
-                                _CartDeliverySection(cart: activeCart),
+                                _CartDeliverySection(
+                                  cart: activeCart,
+                                  workshopId: activeWorkshopId,
+                                ),
                                 const SizedBox(
                                   height: AutolabCustomer.spacingSmd,
                                 ),
@@ -1200,9 +1205,10 @@ class _CartReviewInfoCard extends StatelessWidget {
 }
 
 class _CartDeliverySection extends StatelessWidget {
-  const _CartDeliverySection({required this.cart});
+  const _CartDeliverySection({required this.cart, required this.workshopId});
 
   final CartState cart;
+  final String? workshopId;
 
   @override
   Widget build(BuildContext context) {
@@ -1252,7 +1258,16 @@ class _CartDeliverySection extends StatelessWidget {
                   value: cart.homeDelivery,
                   activeThumbColor: AutolabCustomer.white,
                   activeTrackColor: AutolabCustomer.primary,
-                  onChanged: context.read<CartCubit>().setHomeDelivery,
+                  onChanged: (value) {
+                    final targetWorkshopId = workshopId;
+                    if (targetWorkshopId == null) {
+                      return;
+                    }
+                    context.read<CartCubit>().setHomeDelivery(
+                      targetWorkshopId,
+                      value,
+                    );
+                  },
                 ),
               ],
             ),

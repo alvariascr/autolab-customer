@@ -30,7 +30,7 @@ class CartPricing {
     required bool hasItems,
     required bool homeDelivery,
     required double? currentWorkshopDeliveryFee,
-    required Iterable<double> itemDeliveryFees,
+    required Iterable<double?> itemDeliveryFees,
   }) {
     if (!homeDelivery || !hasItems) {
       return 0;
@@ -41,7 +41,7 @@ class CartPricing {
     }
 
     for (final fee in itemDeliveryFees) {
-      if (fee > 0) return fee;
+      if (fee != null) return fee;
     }
 
     return null;

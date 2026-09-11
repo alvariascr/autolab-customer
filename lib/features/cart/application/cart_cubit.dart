@@ -80,6 +80,7 @@ class CartCubit extends Cubit<CartState> {
       state.copyWith(
         items: update.items,
         homeDelivery: update.startedNewCart ? false : null,
+        homeDeliveryByWorkshop: update.startedNewCart ? const {} : null,
         clearPendingCheckoutResult: true,
       ),
     );
@@ -128,6 +129,7 @@ class CartCubit extends Cubit<CartState> {
       state.copyWith(
         items: const [],
         homeDelivery: false,
+        homeDeliveryByWorkshop: const {},
         clearDeliveryDetails: true,
         checkoutStatus: CartCheckoutStatus.initial,
         clearCheckoutError: true,
@@ -145,11 +147,16 @@ class CartCubit extends Cubit<CartState> {
     final remainingItems = state.items
         .where((item) => item.product.workshopId.trim() != trimmedWorkshopId)
         .toList(growable: false);
+    final homeDeliveryByWorkshop = Map<String, bool>.from(
+      state.homeDeliveryByWorkshop,
+    )..remove(trimmedWorkshopId);
 
     _emitAndSave(
-      _stateWithItems(
-        remainingItems,
-      ).copyWith(clearCurrentWorkshopDeliveryFee: true),
+      _stateWithItems(remainingItems).copyWith(
+        homeDelivery: homeDeliveryByWorkshop.values.any((value) => value),
+        homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+        clearCurrentWorkshopDeliveryFee: true,
+      ),
     );
   }
 
@@ -180,9 +187,26 @@ class CartCubit extends Cubit<CartState> {
     return super.close();
   }
 
-  void setHomeDelivery(bool value) {
+  void setHomeDelivery(String workshopId, bool value) {
+    final trimmedWorkshopId = workshopId.trim();
+    if (trimmedWorkshopId.isEmpty) {
+      return;
+    }
+    final homeDeliveryByWorkshop = Map<String, bool>.from(
+      state.homeDeliveryByWorkshop,
+    );
+    if (value) {
+      homeDeliveryByWorkshop[trimmedWorkshopId] = true;
+    } else {
+      homeDeliveryByWorkshop.remove(trimmedWorkshopId);
+    }
+
     _emitAndSave(
-      state.copyWith(homeDelivery: value, clearPendingCheckoutResult: true),
+      state.copyWith(
+        homeDelivery: homeDeliveryByWorkshop.values.any((value) => value),
+        homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+        clearPendingCheckoutResult: true,
+      ),
     );
     if (value) {
       unawaited(loadDeliveryAddresses(applyDefault: true));
@@ -506,7 +530,8 @@ class CartCubit extends Cubit<CartState> {
       return null;
     }
 
-    if (state.homeDelivery && !state.hasCompleteDeliveryDetails) {
+    if (state.homeDeliveryFor(resolvedWorkshopId) &&
+        !state.hasCompleteDeliveryDetails) {
       emit(
         state.copyWith(
           checkoutStatus: CartCheckoutStatus.failure,
@@ -559,8 +584,8 @@ class CartCubit extends Cubit<CartState> {
                 ),
               )
               .toList(growable: false),
-          homeDelivery: state.homeDelivery,
-          deliveryDetails: state.homeDelivery
+          homeDelivery: state.homeDeliveryFor(resolvedWorkshopId),
+          deliveryDetails: state.homeDeliveryFor(resolvedWorkshopId)
               ? CartCheckoutDeliveryDetails(
                   province: state.deliveryProvince,
                   canton: state.deliveryCanton,
@@ -650,16 +675,31 @@ class CartCubit extends Cubit<CartState> {
   }
 
   CartState _stateWithItems(List<CartItem> items) {
+    final remainingWorkshopIds = items
+        .map((item) => item.product.workshopId.trim())
+        .where((workshopId) => workshopId.isNotEmpty)
+        .toSet();
+    final homeDeliveryByWorkshop =
+        Map<String, bool>.from(state.homeDeliveryByWorkshop)..removeWhere(
+          (workshopId, _) => !remainingWorkshopIds.contains(workshopId),
+        );
+
     if (items.isEmpty) {
       return state.copyWith(
         items: items,
         homeDelivery: false,
+        homeDeliveryByWorkshop: const {},
         clearCurrentWorkshopDeliveryFee: true,
         clearPendingCheckoutResult: true,
       );
     }
 
-    return state.copyWith(items: items, clearPendingCheckoutResult: true);
+    return state.copyWith(
+      items: items,
+      homeDelivery: homeDeliveryByWorkshop.values.any((value) => value),
+      homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+      clearPendingCheckoutResult: true,
+    );
   }
 
   Future<void> _loadSavedCart({

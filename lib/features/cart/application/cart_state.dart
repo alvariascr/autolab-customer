@@ -8,6 +8,8 @@ class CartState extends Equatable {
   const CartState({
     this.items = const [],
     this.homeDelivery = false,
+    this.homeDeliveryByWorkshop = const {},
+    this.homeDeliveryWorkshopId,
     this.deliveryAddress = '',
     this.deliveryProvince = '',
     this.deliveryCanton = '',
@@ -26,6 +28,11 @@ class CartState extends Equatable {
 
   final List<CartItem> items;
   final bool homeDelivery;
+  final Map<String, bool> homeDeliveryByWorkshop;
+
+  // Legacy field kept only to restore carts persisted before
+  // homeDeliveryByWorkshop existed.
+  final String? homeDeliveryWorkshopId;
   final String deliveryAddress;
   final String deliveryProvince;
   final String deliveryCanton;
@@ -80,6 +87,17 @@ class CartState extends Equatable {
 
   double get total => productsTotal + shippingCost;
 
+  /// Whether home delivery is turned on for [workshopId] specifically,
+  /// preserving independent selections for multi-workshop carts.
+  bool homeDeliveryFor(String workshopId) {
+    final trimmedWorkshopId = workshopId.trim();
+    if (homeDeliveryByWorkshop.isNotEmpty) {
+      return homeDeliveryByWorkshop[trimmedWorkshopId] ?? false;
+    }
+
+    return homeDelivery && homeDeliveryWorkshopId == trimmedWorkshopId;
+  }
+
   String? get singleWorkshopId {
     final workshopIds = items
         .map((item) => item.product.workshopId.trim())
@@ -118,7 +136,14 @@ class CartState extends Equatable {
       items: items
           .where((item) => item.product.workshopId.trim() == trimmedWorkshopId)
           .toList(growable: false),
-      homeDelivery: homeDelivery,
+      // Same reasoning as currentWorkshopDeliveryFee below: only forward
+      // the toggle if it was actually set for this workshop, otherwise a
+      // customer who turned delivery on while viewing one workshop's cart
+      // would see it already on for a different workshop's cart too.
+      homeDelivery: homeDeliveryFor(trimmedWorkshopId),
+      homeDeliveryByWorkshop: {
+        if (homeDeliveryFor(trimmedWorkshopId)) trimmedWorkshopId: true,
+      },
       deliveryAddress: deliveryAddress,
       deliveryProvince: deliveryProvince,
       deliveryCanton: deliveryCanton,
@@ -169,6 +194,8 @@ class CartState extends Equatable {
   CartState copyWith({
     List<CartItem>? items,
     bool? homeDelivery,
+    Map<String, bool>? homeDeliveryByWorkshop,
+    String? homeDeliveryWorkshopId,
     String? deliveryAddress,
     String? deliveryProvince,
     String? deliveryCanton,
@@ -192,6 +219,10 @@ class CartState extends Equatable {
     return CartState(
       items: items ?? this.items,
       homeDelivery: homeDelivery ?? this.homeDelivery,
+      homeDeliveryByWorkshop:
+          homeDeliveryByWorkshop ?? this.homeDeliveryByWorkshop,
+      homeDeliveryWorkshopId:
+          homeDeliveryWorkshopId ?? this.homeDeliveryWorkshopId,
       deliveryAddress: clearDeliveryDetails
           ? ''
           : deliveryAddress ?? this.deliveryAddress,
@@ -238,6 +269,8 @@ class CartState extends Equatable {
     return {
       'items': items.map((item) => item.toJson()).toList(growable: false),
       'homeDelivery': homeDelivery,
+      if (homeDeliveryByWorkshop.isNotEmpty)
+        'homeDeliveryByWorkshop': homeDeliveryByWorkshop,
       'deliveryAddress': deliveryAddress,
       'deliveryProvince': deliveryProvince,
       'deliveryCanton': deliveryCanton,
@@ -257,6 +290,23 @@ class CartState extends Equatable {
 
   factory CartState.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
+    final rawHomeDeliveryByWorkshop = json['homeDeliveryByWorkshop'];
+    final legacyHomeDelivery = json['homeDelivery'] as bool? ?? false;
+    final legacyHomeDeliveryWorkshopId =
+        json['homeDeliveryWorkshopId'] as String?;
+    final homeDeliveryByWorkshop = <String, bool>{};
+    if (rawHomeDeliveryByWorkshop is Map) {
+      for (final entry in rawHomeDeliveryByWorkshop.entries) {
+        final workshopId = entry.key.toString().trim();
+        if (workshopId.isNotEmpty && entry.value == true) {
+          homeDeliveryByWorkshop[workshopId] = true;
+        }
+      }
+    } else if (legacyHomeDelivery &&
+        legacyHomeDeliveryWorkshopId != null &&
+        legacyHomeDeliveryWorkshopId.trim().isNotEmpty) {
+      homeDeliveryByWorkshop[legacyHomeDeliveryWorkshopId.trim()] = true;
+    }
 
     return CartState(
       items: rawItems is List
@@ -266,7 +316,11 @@ class CartState extends Equatable {
                 .where((item) => item.quantity > 0)
                 .toList(growable: false)
           : const [],
-      homeDelivery: json['homeDelivery'] as bool? ?? false,
+      homeDelivery:
+          legacyHomeDelivery ||
+          homeDeliveryByWorkshop.values.any((value) => value),
+      homeDeliveryByWorkshop: homeDeliveryByWorkshop,
+      homeDeliveryWorkshopId: legacyHomeDeliveryWorkshopId,
       deliveryAddress: json['deliveryAddress'] as String? ?? '',
       deliveryProvince: json['deliveryProvince'] as String? ?? '',
       deliveryCanton: json['deliveryCanton'] as String? ?? '',
@@ -290,6 +344,8 @@ class CartState extends Equatable {
   List<Object?> get props => [
     items,
     homeDelivery,
+    homeDeliveryByWorkshop,
+    homeDeliveryWorkshopId,
     deliveryAddress,
     deliveryProvince,
     deliveryCanton,
@@ -337,8 +393,12 @@ class CartItem extends Equatable {
   }
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    final rawProduct = json['product'];
+
     return CartItem(
-      product: _productFromCartJson(json['product'] as Map<String, dynamic>),
+      product: _productFromCartJson(
+        rawProduct is Map<String, dynamic> ? rawProduct : const {},
+      ),
       quantity: json['quantity'] as int? ?? 1,
     );
   }
@@ -433,6 +493,6 @@ Product _productFromCartJson(Map<String, dynamic> json) {
     providerName: json['providerName'] as String? ?? '',
     workshopName: json['workshopName'] as String? ?? '',
     workshopAvatarUrl: json['workshopAvatarUrl'] as String? ?? '',
-    workshopDeliveryFee: (json['workshopDeliveryFee'] as num?)?.toDouble() ?? 0,
+    workshopDeliveryFee: (json['workshopDeliveryFee'] as num?)?.toDouble(),
   );
 }

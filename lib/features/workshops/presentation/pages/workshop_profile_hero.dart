@@ -346,11 +346,32 @@ class _HeroIconButton extends StatelessWidget {
 class _HeaderSummary extends StatelessWidget {
   const _HeaderSummary({required this.workshop});
 
+  static const _todayBusinessHoursResolver =
+      WorkshopTodayBusinessHoursResolver();
+
   final Workshop workshop;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final openStatus = _todayBusinessHoursResolver.statusNow(
+      workshop.businessHours,
+    );
+    final businessHoursChip = switch (openStatus) {
+      WorkshopOpen(:final formattedCloseTime) => _ProfileMetaChip(
+        icon: Icons.schedule_rounded,
+        label: l10n.workshopProfileOpenUntil(formattedCloseTime),
+        iconColor: AutolabCustomer.successText,
+        textColor: AutolabCustomer.successText,
+      ),
+      WorkshopClosed() => _ProfileMetaChip(
+        icon: Icons.schedule_outlined,
+        label: l10n.workshopProfileClosed,
+        iconColor: AutolabCustomer.error,
+        textColor: AutolabCustomer.error,
+      ),
+      WorkshopUnknown() => null,
+    };
     final titleSize = AutolabCustomer.responsiveDouble(
       context,
       compact: 24,
@@ -377,6 +398,7 @@ class _HeaderSummary extends StatelessWidget {
             spacing: AutolabCustomer.spacingSm,
             runSpacing: AutolabCustomer.spacingSm,
             children: [
+              ?businessHoursChip,
               _ProfileMetaChip(
                 icon: Icons.near_me_rounded,
                 label: workshop.offersHomeService
@@ -432,10 +454,17 @@ class _HeaderSummary extends StatelessWidget {
 }
 
 class _ProfileMetaChip extends StatelessWidget {
-  const _ProfileMetaChip({required this.icon, required this.label});
+  const _ProfileMetaChip({
+    required this.icon,
+    required this.label,
+    this.iconColor,
+    this.textColor,
+  });
 
   final IconData icon;
   final String label;
+  final Color? iconColor;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -453,14 +482,14 @@ class _ProfileMetaChip extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: AutolabCustomer.primary,
+            color: iconColor ?? AutolabCustomer.primary,
             size: AutolabCustomer.iconSm,
           ),
           const SizedBox(width: AutolabCustomer.spacingSm),
           Text(
             label,
             style: AutolabCustomer.body.copyWith(
-              color: AutolabCustomer.customerTextColor(context),
+              color: textColor ?? AutolabCustomer.customerTextColor(context),
               fontWeight: FontWeight.w600,
               fontSize: AutolabCustomer.responsiveDouble(
                 context,

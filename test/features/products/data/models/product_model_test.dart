@@ -54,5 +54,11 @@ void main() {
 
       expect(model.workshopId, 'workshop-1');
     });
+
+    test('mantiene nula la tarifa de envio cuando no viene cargada', () {
+      final model = ProductModel.fromMap({'workshop_id': 'workshop-1'});
+
+      expect(model.workshopDeliveryFee, isNull);
+    });
   });
 }
