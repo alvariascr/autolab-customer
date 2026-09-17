@@ -2,6 +2,7 @@ import '../../domain/entities/laropay_link.dart';
 
 class LaropayLinkModel extends LaropayLink {
   const LaropayLinkModel({
+    required super.paymentLinkId,
     required super.linkId,
     required super.linkUrl,
     required super.response,
@@ -12,6 +13,7 @@ class LaropayLinkModel extends LaropayLink {
   });
 
   factory LaropayLinkModel.fromJson(Map<String, dynamic> json) {
+    final paymentLinkId = json['paymentLinkId']?.toString().trim() ?? '';
     final linkId = json['linkID']?.toString().trim() ?? '';
     final linkUrlValue = json['linkURL']?.toString().trim() ?? '';
     final response = json['response']?.toString().trim() ?? '';
@@ -21,7 +23,8 @@ class LaropayLinkModel extends LaropayLink {
     final isValidSecureUrl =
         linkUrl != null && linkUrl.isScheme('https') && linkUrl.host.isNotEmpty;
 
-    if (linkId.isEmpty ||
+    if (paymentLinkId.isEmpty ||
+        linkId.isEmpty ||
         !isValidSecureUrl ||
         response.isEmpty ||
         responseDescription.isEmpty) {
@@ -31,6 +34,7 @@ class LaropayLinkModel extends LaropayLink {
     }
 
     return LaropayLinkModel(
+      paymentLinkId: paymentLinkId,
       linkId: linkId,
       linkUrl: linkUrl,
       response: response,

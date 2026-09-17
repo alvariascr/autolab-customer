@@ -37,9 +37,10 @@ void main() {
       },
     );
 
-    await launcher.launchForOrder(orderId: 'order-1');
+    final session = await launcher.launchForOrder(orderId: 'order-1');
 
     final request = linkRepository.lastRequest;
+    expect(session.paymentLinkId, 'payment-link-1');
     expect(openedUrl, Uri.parse('https://pay.test/cart'));
     expect(request?.internalTransactionId, 'order-1');
     expect(request?.amount, 18500);
@@ -171,6 +172,7 @@ class _FakeLaropayLinkRepository implements LaropayLinkRepository {
 
     return right(
       LaropayLink(
+        paymentLinkId: 'payment-link-1',
         linkId: r'$$CARTLINK',
         linkUrl: Uri.parse('https://pay.test/cart'),
         response: '00',

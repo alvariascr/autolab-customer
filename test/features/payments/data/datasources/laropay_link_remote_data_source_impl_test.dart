@@ -25,6 +25,7 @@ void main() {
 
           return http.Response(
             jsonEncode({
+              'paymentLinkId': 'payment-link-1',
               'response': '00',
               'responseDescription': 'Success',
               'linkID': 'link-1',
@@ -44,6 +45,7 @@ void main() {
       final link = await dataSource.generateLink(_request());
 
       expect(link.linkId, 'link-1');
+      expect(link.paymentLinkId, 'payment-link-1');
       expect(link.linkUrl, Uri.parse('https://pay.test/link-1'));
       expect(payload.containsKey('idTransaction'), isFalse);
       expect(payload['amount'], 10);
@@ -180,6 +182,7 @@ void main() {
       () => LaropayLinkModel.fromJson({
         'response': '00',
         'responseDescription': 'Success',
+        'paymentLinkId': 'payment-link-1',
         'linkID': 'link-1',
         'linkURL': 'http://pay.test/link-1',
       }),
@@ -203,6 +206,7 @@ void main() {
       final model = LaropayLinkModel.fromJson({
         'response': '99',
         'responseDescription': 'Rejected',
+        'paymentLinkId': 'payment-link-1',
         'linkID': 'link-1',
         'linkURL': 'https://pay.test/link-1',
       });

@@ -215,6 +215,7 @@ LaropayLinkRequest _request({
 
 LaropayLinkModel _link() {
   return LaropayLinkModel(
+    paymentLinkId: 'payment-link-1',
     linkId: 'link-1',
     linkUrl: Uri.parse('https://pay.test/link-1'),
     response: '00',

@@ -8,6 +8,12 @@ import '../domain/usecases/get_laropay_payment_context.dart';
 
 typedef LaropayExternalUrlLauncher = Future<bool> Function(Uri uri);
 
+class LaropayCheckoutSession {
+  const LaropayCheckoutSession({required this.paymentLinkId});
+
+  final String paymentLinkId;
+}
+
 class LaropayCheckoutLauncher {
   LaropayCheckoutLauncher({
     required GenerateLaropayLink generateLaropayLink,
@@ -21,7 +27,7 @@ class LaropayCheckoutLauncher {
   final GetLaropayPaymentContext _getPaymentContext;
   final LaropayExternalUrlLauncher _launchExternalUrl;
 
-  Future<void> launch({
+  Future<LaropayCheckoutSession> launch({
     required String appointmentId,
     required String workshopName,
     required double chargeableAmount,
@@ -39,7 +45,7 @@ class LaropayCheckoutLauncher {
       );
     }
 
-    await _launchPayment(
+    return _launchPayment(
       paymentContext: paymentContext,
       amount: chargeableAmount,
       document: _documentFromContext(paymentContext, appointmentId),
@@ -47,13 +53,15 @@ class LaropayCheckoutLauncher {
     );
   }
 
-  Future<void> launchForOrder({required String orderId}) async {
+  Future<LaropayCheckoutSession> launchForOrder({
+    required String orderId,
+  }) async {
     final contextResult = await _getPaymentContext.forOrder(orderId);
     final paymentContext = contextResult.fold((failure) {
       throw LaropayCheckoutLaunchException(_failureMessage(failure));
     }, (context) => context);
 
-    await _launchPayment(
+    return _launchPayment(
       paymentContext: paymentContext,
       amount: paymentContext.amount,
       document: _documentFromContext(paymentContext, orderId),
@@ -61,7 +69,7 @@ class LaropayCheckoutLauncher {
     );
   }
 
-  Future<void> _launchPayment({
+  Future<LaropayCheckoutSession> _launchPayment({
     required LaropayPaymentContext paymentContext,
     required double amount,
     required String document,
@@ -100,6 +108,8 @@ class LaropayCheckoutLauncher {
         linkUrl: link.linkUrl,
       );
     }
+
+    return LaropayCheckoutSession(paymentLinkId: link.paymentLinkId);
   }
 
   static String _documentFromContext(

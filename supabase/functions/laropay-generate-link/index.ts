@@ -73,6 +73,7 @@ Deno.serve(async (request) => {
     if ("existingLink" in reservation) {
       const existingLink = reservation.existingLink;
       return json({
+        paymentLinkId: existingLink.id,
         response: stringValue(existingLink.response_code),
         responseDescription: stringValue(existingLink.response_description),
         linkID: stringValue(existingLink.link_id),
@@ -272,6 +273,7 @@ Deno.serve(async (request) => {
     );
 
     return json({
+      paymentLinkId: reservation.id,
       response: stringValue(laropayResponse.response),
       responseDescription: stringValue(laropayResponse.responseDescription),
       linkID,

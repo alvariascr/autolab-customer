@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:autolab_core/autolab_core.dart';
+import 'package:dartz/dartz.dart' show Either;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +15,8 @@ import '../../../../core/widgets/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../payments/application/laropay_checkout_launcher.dart';
 import '../../../payments/application/laropay_return_navigation_controller.dart';
+import '../../../payments/domain/entities/laropay_purchase.dart';
+import '../../../payments/domain/usecases/refresh_laropay_purchase_status.dart';
 import '../../../products/presentation/widgets/product_image.dart';
 import '../../application/cart_cubit.dart';
 import '../../domain/entities/cart_checkout.dart';
@@ -30,16 +34,18 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   static const _checkoutLaunchTimeout = Duration(seconds: 45);
   static const _externalCheckoutTransitionTimeout = Duration(seconds: 5);
   static const _paymentReturnFallbackDelay = Duration(seconds: 3);
+  static const _paymentStatusVerificationTimeout = Duration(seconds: 10);
 
   bool _showCheckout = false;
   bool _isPreparingCheckout = false;
   String? _selectedWorkshopId;
   _CartCheckoutLoadingPhase? _checkoutLoadingPhase;
-  Completer<void>? _externalCheckoutTransitionCompleter;
+  Completer<bool>? _externalCheckoutTransitionCompleter;
   Timer? _checkoutReturnFallbackTimer;
   bool _awaitingCheckoutReturn = false;
   bool _checkoutReturnFallbackScheduled = false;
   int? _checkoutReturnBaselineCallbackCount;
+  String? _pendingPaymentLinkId;
 
   @override
   void initState() {
@@ -100,26 +106,79 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         // A real Laropay deep-link result was processed while we were
         // waiting -- it owns navigation, not this fallback.
         _awaitingCheckoutReturn = false;
+        _pendingPaymentLinkId = null;
         _cancelCheckoutReturnFallback();
         return;
       }
-      _awaitingCheckoutReturn = false;
-      _cancelCheckoutReturnFallback();
-      final l10n = AppLocalizations.of(context)!;
-      setState(() => _checkoutLoadingPhase = null);
-      showAppSnackBar(
-        context,
-        message: l10n.laropayPaymentGatewayClosedMessage,
-        type: AppMessageType.warning,
-      );
-      context.go('/purchases');
+      unawaited(_verifyCheckoutReturnFallback(baselineCallbackCount));
     });
   }
 
-  void _startAwaitingCheckoutReturn() {
+  Future<void> _verifyCheckoutReturnFallback(int? baselineCallbackCount) async {
+    final paymentLinkId = _pendingPaymentLinkId?.trim() ?? '';
+    if (paymentLinkId.isEmpty) {
+      _finishUnverifiedCheckoutReturn();
+      return;
+    }
+
+    late final Either<Failure, LaropayPurchase> result;
+    try {
+      result = await sl<RefreshLaropayPurchaseStatus>()(
+        paymentLinkId,
+      ).timeout(_paymentStatusVerificationTimeout);
+    } on TimeoutException {
+      _finishUnverifiedCheckoutReturn();
+      return;
+    }
+
+    if (!mounted || !_awaitingCheckoutReturn) {
+      return;
+    }
+    if (LaropayReturnNavigationController.handledCallbackCount.value !=
+        baselineCallbackCount) {
+      _awaitingCheckoutReturn = false;
+      _pendingPaymentLinkId = null;
+      _cancelCheckoutReturnFallback();
+      return;
+    }
+
+    _awaitingCheckoutReturn = false;
+    _pendingPaymentLinkId = null;
+    _cancelCheckoutReturnFallback();
+    setState(() => _checkoutLoadingPhase = null);
+
+    result.fold((_) {
+      _showPendingPaymentReviewMessage();
+      context.go('/purchases');
+    }, (_) => context.go('/purchases?paymentLinkId=$paymentLinkId'));
+  }
+
+  void _finishUnverifiedCheckoutReturn() {
+    if (!mounted) {
+      return;
+    }
+    _awaitingCheckoutReturn = false;
+    _pendingPaymentLinkId = null;
+    _cancelCheckoutReturnFallback();
+    setState(() => _checkoutLoadingPhase = null);
+    _showPendingPaymentReviewMessage();
+    context.go('/purchases');
+  }
+
+  void _showPendingPaymentReviewMessage() {
+    final l10n = AppLocalizations.of(context)!;
+    showAppSnackBar(
+      context,
+      message: l10n.laropayPaymentResultPendingMessage,
+      type: AppMessageType.warning,
+    );
+  }
+
+  void _startAwaitingCheckoutReturn(String paymentLinkId) {
     _cancelCheckoutReturnFallback();
     _checkoutReturnBaselineCallbackCount =
         LaropayReturnNavigationController.handledCallbackCount.value;
+    _pendingPaymentLinkId = paymentLinkId;
     _awaitingCheckoutReturn = true;
   }
 
@@ -403,12 +462,12 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         () => _checkoutLoadingPhase = _CartCheckoutLoadingPhase.openingLaropay,
       );
       await WidgetsBinding.instance.endOfFrame;
-      await sl<LaropayCheckoutLauncher>()
+      final checkoutSession = await sl<LaropayCheckoutLauncher>()
           .launchForOrder(orderId: result.orderId)
           .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
-      _startAwaitingCheckoutReturn();
-      await _waitForExternalCheckoutTransition();
+      _startAwaitingCheckoutReturn(checkoutSession.paymentLinkId);
+      final didLeaveForCheckout = await _waitForExternalCheckoutTransition();
       if (!mounted || !context.mounted) return;
       if (targetWorkshopId == null) {
         cartCubit.clear();
@@ -416,13 +475,15 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
         cartCubit.clearWorkshop(targetWorkshopId);
       }
       setState(() {
+        if (!didLeaveForCheckout) {
+          _checkoutLoadingPhase = null;
+        }
         _showCheckout = false;
         _selectedWorkshopId = null;
       });
-      // Keep the payment overlay visible; only navigate away if the
-      // customer comes back without a payment result already having taken
-      // over (see _handleCheckoutReturnIfAbandoned).
-      _handleCheckoutReturnIfAbandoned();
+      // When the app really left for Laropay, wait for AppLifecycleState.resumed
+      // to decide whether a fallback status check is needed. Running it here
+      // would query Laropay while the gateway is still opening.
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
       setState(() => _checkoutLoadingPhase = null);
@@ -453,18 +514,19 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _waitForExternalCheckoutTransition() async {
-    final transitionCompleter = Completer<void>();
+  Future<bool> _waitForExternalCheckoutTransition() async {
+    final transitionCompleter = Completer<bool>();
     _externalCheckoutTransitionCompleter = transitionCompleter;
 
     try {
-      await transitionCompleter.future.timeout(
+      return await transitionCompleter.future.timeout(
         _externalCheckoutTransitionTimeout,
       );
     } on TimeoutException {
       // Some in-app browser implementations do not emit lifecycle changes.
-      // Keep the payment overlay visible briefly, then continue with the
-      // existing flow instead of leaving the customer blocked.
+      // Do not treat this as a return from Laropay; the gateway may still be
+      // opening and checking status now can produce a false provider error.
+      return false;
     } finally {
       if (identical(
         _externalCheckoutTransitionCompleter,
@@ -478,7 +540,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
   void _completeExternalCheckoutTransition() {
     final completer = _externalCheckoutTransitionCompleter;
     if (completer != null && !completer.isCompleted) {
-      completer.complete();
+      completer.complete(true);
     }
     if (identical(_externalCheckoutTransitionCompleter, completer)) {
       _externalCheckoutTransitionCompleter = null;

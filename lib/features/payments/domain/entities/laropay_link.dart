@@ -1,5 +1,6 @@
 class LaropayLink {
   const LaropayLink({
+    required this.paymentLinkId,
     required this.linkId,
     required this.linkUrl,
     required this.response,
@@ -9,6 +10,7 @@ class LaropayLink {
     this.authResponseCode,
   });
 
+  final String paymentLinkId;
   final String linkId;
   final Uri linkUrl;
   final String response;
