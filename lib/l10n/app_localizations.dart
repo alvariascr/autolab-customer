@@ -4750,6 +4750,18 @@ abstract class AppLocalizations {
   /// **'{price} IVA'**
   String appointmentPriceWithTaxSuffix(Object price);
 
+  /// No description provided for @appointmentProductsOnlyPaymentNoticeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo pagarás el producto'**
+  String get appointmentProductsOnlyPaymentNoticeTitle;
+
+  /// No description provided for @appointmentProductsOnlyPaymentNoticeBody.
+  ///
+  /// In es, this message translates to:
+  /// **'El servicio se paga directamente en el taller al momento de realizarlo.'**
+  String get appointmentProductsOnlyPaymentNoticeBody;
+
   /// No description provided for @appointmentPriceToConfirm.
   ///
   /// In es, this message translates to:

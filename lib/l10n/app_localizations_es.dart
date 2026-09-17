@@ -2632,6 +2632,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get appointmentProductsOnlyPaymentNoticeTitle =>
+      'Solo pagarás el producto';
+
+  @override
+  String get appointmentProductsOnlyPaymentNoticeBody =>
+      'El servicio se paga directamente en el taller al momento de realizarlo.';
+
+  @override
   String get appointmentPriceToConfirm => 'Por confirmar';
 
   @override

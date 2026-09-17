@@ -907,6 +907,8 @@
       "price": {}
     }
   },
+  "appointmentProductsOnlyPaymentNoticeTitle": "Solo pagarás el producto",
+  "appointmentProductsOnlyPaymentNoticeBody": "El servicio se paga directamente en el taller al momento de realizarlo.",
   "appointmentPriceToConfirm": "Por confirmar",
   "cartTitle": "Mi carrito",
   "cartCartsTitle": "Carritos",
