@@ -300,6 +300,7 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
           time: state.selectedTime ?? '9:00 AM',
           onNoteChanged: context.read<AppointmentCubit>().updateCustomerNote,
           note: state.customerNote,
+          hasChargeableProducts: state.hasChargeableProducts,
         );
       default:
         return const SizedBox.shrink();
@@ -1944,6 +1945,7 @@ class _BookingReviewStep extends StatelessWidget {
     required this.time,
     required this.onNoteChanged,
     required this.note,
+    required this.hasChargeableProducts,
   });
 
   final String title;
@@ -1955,6 +1957,14 @@ class _BookingReviewStep extends StatelessWidget {
   final String time;
   final ValueChanged<String> onNoteChanged;
   final String note;
+  // Whether submitting this booking will charge the customer online through
+  // Laropay for the selected products (see submitBooking() /
+  // AppointmentState.hasChargeableProducts). "Total a pagar" below already
+  // folds the service price in as an informational figure, so without this
+  // notice a customer could easily read that combined total as what they're
+  // about to pay right now, when only the products portion is actually
+  // charged -- the service itself is paid at the workshop, separately.
+  final bool hasChargeableProducts;
 
   @override
   Widget build(BuildContext context) {
@@ -2121,6 +2131,10 @@ class _BookingReviewStep extends StatelessWidget {
                       ),
                 emphasize: true,
               ),
+              if (hasChargeableProducts) ...[
+                const SizedBox(height: AutolabCustomer.spacingSm),
+                const _ProductsOnlyPaymentNotice(),
+              ],
               const SizedBox(height: AutolabCustomer.spacingSm),
               Center(
                 child: Text(
@@ -2160,6 +2174,62 @@ class _BookingReviewStep extends StatelessWidget {
     }
 
     return l10n.appointmentDurationHoursMinutes(wholeHours, remainingMinutes);
+  }
+}
+
+class _ProductsOnlyPaymentNotice extends StatelessWidget {
+  const _ProductsOnlyPaymentNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AutolabCustomer.spacingSm),
+      decoration: BoxDecoration(
+        // A darker red than AutolabCustomer.error -- that one only gives
+        // ~3.7:1 contrast against white text, under the 4.5:1 AA minimum
+        // for text this size. This shade keeps the same urgency but stays
+        // legible.
+        color: const Color(0xFFDC2626),
+        borderRadius: BorderRadius.circular(AutolabCustomer.radiusSm),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            color: AutolabCustomer.white,
+            size: AutolabCustomer.iconSm,
+          ),
+          const SizedBox(width: AutolabCustomer.spacingSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.appointmentProductsOnlyPaymentNoticeTitle,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.white,
+                    fontWeight: FontWeight.w900,
+                    height: 1.35,
+                  ),
+                ),
+                Text(
+                  l10n.appointmentProductsOnlyPaymentNoticeBody,
+                  style: AutolabCustomer.caption.copyWith(
+                    color: AutolabCustomer.white,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
