@@ -11,6 +11,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../products/domain/entities/product.dart';
 import '../../products/domain/repositories/product_repository.dart';
 import '../../products/domain/services/workshop_product_search_grouper.dart';
+import '../../products/presentation/widgets/product_add_badge.dart';
 import '../../products/presentation/widgets/product_image.dart';
 import '../../products/presentation/widgets/product_price_text.dart';
 import '../../workshops/domain/entities/workshop.dart';
@@ -581,11 +582,6 @@ class _SearchProductPreview extends StatelessWidget {
     final secondaryTextColor = AutolabCustomer.customerSecondaryTextColor(
       context,
     );
-    final addBackground = AutolabCustomer.customerInvertedSurfaceColor(context);
-    final addIconColor = AutolabCustomer.customerOnInvertedSurfaceColor(
-      context,
-    );
-
     return SizedBox(
       width: 138,
       child: Column(
@@ -604,19 +600,9 @@ class _SearchProductPreview extends StatelessWidget {
               Positioned(
                 right: 6,
                 bottom: -12,
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: addBackground,
-                    shape: BoxShape.circle,
-                    boxShadow: AutolabCustomer.shadowLevel1,
-                  ),
-                  child: Icon(
-                    Icons.add_rounded,
-                    color: addIconColor,
-                    size: AutolabCustomer.iconLg - 6,
-                  ),
+                child: const ProductAddBadge(
+                  size: 34,
+                  iconSize: AutolabCustomer.iconLg - 6,
                 ),
               ),
             ],

@@ -9,6 +9,7 @@ import '../../../home/domain/home_service_inventory_matcher.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/services/product_search_filter.dart';
+import '../widgets/product_add_badge.dart';
 import '../widgets/product_image.dart';
 import '../widgets/product_price_text.dart';
 
@@ -553,22 +554,7 @@ class _SearchProductTile extends StatelessWidget {
               Positioned(
                 right: -2,
                 bottom: -14,
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: const BoxDecoration(
-                    color: AutolabCustomer.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AutolabCustomer.shadowBlackStrong,
-                        blurRadius: 12,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.add_rounded, size: 31),
-                ),
+                child: const ProductAddBadge(),
               ),
             ],
           ),
