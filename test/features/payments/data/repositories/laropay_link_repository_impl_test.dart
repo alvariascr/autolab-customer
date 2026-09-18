@@ -6,6 +6,7 @@ import 'package:autolab_customer/core/logging/feature_logger.dart';
 import 'package:autolab_customer/features/auth/domain/errors/auth_error_catalog.dart';
 import 'package:autolab_customer/features/payments/data/datasources/laropay_link_remote_data_source.dart';
 import 'package:autolab_customer/features/payments/data/datasources/laropay_link_remote_data_source_impl.dart';
+import 'package:autolab_customer/features/payments/data/exceptions/laropay_invalid_response_exception.dart';
 import 'package:autolab_customer/features/payments/data/models/laropay_link_model.dart';
 import 'package:autolab_customer/features/payments/data/repositories/laropay_link_repository_impl.dart';
 import 'package:autolab_customer/features/payments/domain/entities/laropay_link_request.dart';
@@ -175,6 +176,23 @@ void main() {
       (failure) => expect(
         failure.code,
         CustomerErrorCatalog.laropayGatewayRejected.code,
+      ),
+      (_) => fail('expected failure'),
+    );
+  });
+
+  test('maps invalid gateway response to controlled failure', () async {
+    when(
+      () => remoteDataSource.generateLink(any()),
+    ).thenThrow(const LaropayInvalidResponseException('missing metadata'));
+
+    final result = await repository.generateLink(_request());
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(
+        failure.code,
+        CustomerErrorCatalog.laropayInvalidResponse.code,
       ),
       (_) => fail('expected failure'),
     );

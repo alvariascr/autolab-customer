@@ -188,6 +188,12 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
     _awaitingPaymentReturn = true;
   }
 
+  void _stopAwaitingPaymentReturn() {
+    _awaitingPaymentReturn = false;
+    _pendingPaymentLinkId = null;
+    _cancelPaymentReturnFallback();
+  }
+
   void _cancelPaymentReturnFallback() {
     _paymentReturnFallbackTimer?.cancel();
     _paymentReturnFallbackTimer = null;
@@ -456,12 +462,19 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
               return;
             }
             _startAwaitingPaymentReturn(checkoutSession.paymentLinkId);
+            await sl<LaropayCheckoutBrowserLauncher>()
+                .open(checkoutSession)
+                .timeout(_externalPaymentTransitionTimeout);
+            if (!context.mounted) {
+              return;
+            }
             final didLeaveForPayment =
                 await _waitForExternalPaymentTransition();
             if (!context.mounted) {
               return;
             }
             if (!didLeaveForPayment) {
+              _stopAwaitingPaymentReturn();
               setState(() => _loadingPhase = null);
               return;
             }
@@ -474,6 +487,20 @@ class _WorkshopAppointmentPageState extends State<WorkshopAppointmentPage>
               return;
             }
 
+            _stopAwaitingPaymentReturn();
+            setState(() => _loadingPhase = null);
+            _showAppointmentMessage(
+              context,
+              message: l10n.laropayPaymentStartError,
+              type: AppMessageType.error,
+            );
+            _goToWorkshopProfileOrHome(context);
+          } on TimeoutException {
+            if (!context.mounted) {
+              return;
+            }
+
+            _stopAwaitingPaymentReturn();
             setState(() => _loadingPhase = null);
             _showAppointmentMessage(
               context,

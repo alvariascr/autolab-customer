@@ -11,6 +11,7 @@ import '../../domain/entities/laropay_link_request.dart';
 import '../../domain/repositories/laropay_link_repository.dart';
 import '../datasources/laropay_link_remote_data_source.dart';
 import '../datasources/laropay_link_remote_data_source_impl.dart';
+import '../exceptions/laropay_invalid_response_exception.dart';
 
 class LaropayLinkRepositoryImpl implements LaropayLinkRepository {
   const LaropayLinkRepositoryImpl({
@@ -101,7 +102,7 @@ class LaropayLinkRepositoryImpl implements LaropayLinkRepository {
         'statusCode': error.statusCode,
       }, error);
       return Left(failure);
-    } on FormatException catch (error, stackTrace) {
+    } on LaropayInvalidResponseException catch (error, stackTrace) {
       final failure = ValidationFailure.fromErrorItem(
         CustomerErrorCatalog.laropayInvalidResponse,
         cause: error,

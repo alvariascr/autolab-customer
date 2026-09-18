@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:autolab_customer/core/config/laropay_gateway_config.dart';
 import 'package:autolab_customer/features/payments/data/datasources/laropay_link_remote_data_source_impl.dart';
+import 'package:autolab_customer/features/payments/data/exceptions/laropay_invalid_response_exception.dart';
 import 'package:autolab_customer/features/payments/data/models/laropay_link_model.dart';
 import 'package:autolab_customer/features/payments/domain/entities/laropay_link_request.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -167,17 +168,20 @@ void main() {
     );
   });
 
-  test('throws format exception when response does not include link data', () {
-    expect(
-      () => LaropayLinkModel.fromJson({
-        'response': '00',
-        'responseDescription': 'Success',
-      }),
-      throwsA(isA<FormatException>()),
-    );
-  });
+  test(
+    'throws invalid response exception when response does not include link data',
+    () {
+      expect(
+        () => LaropayLinkModel.fromJson({
+          'response': '00',
+          'responseDescription': 'Success',
+        }),
+        throwsA(isA<LaropayInvalidResponseException>()),
+      );
+    },
+  );
 
-  test('throws format exception when link url is not https', () {
+  test('throws invalid response exception when link url is not https', () {
     expect(
       () => LaropayLinkModel.fromJson({
         'response': '00',
@@ -186,19 +190,22 @@ void main() {
         'linkID': 'link-1',
         'linkURL': 'http://pay.test/link-1',
       }),
-      throwsA(isA<FormatException>()),
+      throwsA(isA<LaropayInvalidResponseException>()),
     );
   });
 
-  test('throws format exception when response metadata is missing', () {
-    expect(
-      () => LaropayLinkModel.fromJson({
-        'linkID': 'link-1',
-        'linkURL': 'https://pay.test/link-1',
-      }),
-      throwsA(isA<FormatException>()),
-    );
-  });
+  test(
+    'throws invalid response exception when response metadata is missing',
+    () {
+      expect(
+        () => LaropayLinkModel.fromJson({
+          'linkID': 'link-1',
+          'linkURL': 'https://pay.test/link-1',
+        }),
+        throwsA(isA<LaropayInvalidResponseException>()),
+      );
+    },
+  );
 
   test(
     'parses gateway response metadata even when response is not successful',

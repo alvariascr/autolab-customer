@@ -288,6 +288,9 @@ void _registerFeatureDependencies() {
       getPaymentContext: sl<GetLaropayPaymentContext>(),
     ),
   );
+  sl.registerLazySingleton<LaropayCheckoutBrowserLauncher>(
+    LaropayCheckoutBrowserLauncher.new,
+  );
   sl.registerLazySingleton<WorkshopRemoteDataSource>(
     () => WorkshopRemoteDataSourceImpl(sl<SupabaseClient>()),
   );

@@ -9,23 +9,81 @@ import '../domain/usecases/get_laropay_payment_context.dart';
 typedef LaropayExternalUrlLauncher = Future<bool> Function(Uri uri);
 
 class LaropayCheckoutSession {
-  const LaropayCheckoutSession({required this.paymentLinkId});
+  const LaropayCheckoutSession({
+    required this.paymentLinkId,
+    required this.linkUrl,
+  });
 
   final String paymentLinkId;
+  final Uri linkUrl;
+}
+
+class LaropayCheckoutBrowserLauncher {
+  LaropayCheckoutBrowserLauncher({
+    LaropayExternalUrlLauncher? launchExternalUrl,
+  }) : _launchExternalUrl = launchExternalUrl ?? _launchInBrowser;
+
+  final LaropayExternalUrlLauncher _launchExternalUrl;
+
+  Future<void> open(LaropayCheckoutSession session) async {
+    final opened = await _launchExternalUrl(session.linkUrl);
+    if (!opened) {
+      throw LaropayCheckoutLaunchException(
+        'No fue posible abrir el navegador seguro de Laropay.',
+        linkUrl: session.linkUrl,
+      );
+    }
+  }
+
+  static Future<bool> _launchInBrowser(Uri uri) async {
+    final url = uri.toString();
+    try {
+      final openedInAppBrowser = await launchUrlString(
+        url,
+        mode: LaunchMode.inAppBrowserView,
+      );
+      if (openedInAppBrowser) {
+        return true;
+      }
+    } on Exception {
+      // Fall back to an external browser below. Some Android environments do
+      // not expose Custom Tabs even when a regular browser is installed.
+    }
+
+    try {
+      final openedExternal = await launchUrlString(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+      if (openedExternal) {
+        return true;
+      }
+    } on Exception {
+      // Fall back to the platform default below. Some Android environments
+      // reject external browser launches even when the URL itself is valid.
+    }
+
+    try {
+      final openedDefault = await launchUrlString(
+        url,
+        mode: LaunchMode.platformDefault,
+      );
+      return openedDefault;
+    } on Exception {
+      return false;
+    }
+  }
 }
 
 class LaropayCheckoutLauncher {
   LaropayCheckoutLauncher({
     required GenerateLaropayLink generateLaropayLink,
     required GetLaropayPaymentContext getPaymentContext,
-    LaropayExternalUrlLauncher? launchExternalUrl,
   }) : _generateLaropayLink = generateLaropayLink,
-       _getPaymentContext = getPaymentContext,
-       _launchExternalUrl = launchExternalUrl ?? _launchInBrowser;
+       _getPaymentContext = getPaymentContext;
 
   final GenerateLaropayLink _generateLaropayLink;
   final GetLaropayPaymentContext _getPaymentContext;
-  final LaropayExternalUrlLauncher _launchExternalUrl;
 
   Future<LaropayCheckoutSession> launch({
     required String appointmentId,
@@ -101,15 +159,10 @@ class LaropayCheckoutLauncher {
       throw LaropayCheckoutLaunchException(_failureMessage(failure));
     }, (link) => link);
 
-    final opened = await _launchExternalUrl(link.linkUrl);
-    if (!opened) {
-      throw LaropayCheckoutLaunchException(
-        'No fue posible abrir el navegador seguro de Laropay.',
-        linkUrl: link.linkUrl,
-      );
-    }
-
-    return LaropayCheckoutSession(paymentLinkId: link.paymentLinkId);
+    return LaropayCheckoutSession(
+      paymentLinkId: link.paymentLinkId,
+      linkUrl: link.linkUrl,
+    );
   }
 
   static String _documentFromContext(
@@ -118,45 +171,6 @@ class LaropayCheckoutLauncher {
   ) {
     final orderNumber = paymentContext.orderNumber?.trim() ?? '';
     return orderNumber.isEmpty ? fallback : orderNumber;
-  }
-
-  static Future<bool> _launchInBrowser(Uri uri) async {
-    final url = uri.toString();
-    try {
-      final openedInAppBrowser = await launchUrlString(
-        url,
-        mode: LaunchMode.inAppBrowserView,
-      );
-      if (openedInAppBrowser) {
-        return true;
-      }
-    } on Exception {
-      // Fall back to an external browser below. Some Android environments do
-      // not expose Custom Tabs even when a regular browser is installed.
-    }
-
-    try {
-      final openedExternal = await launchUrlString(
-        url,
-        mode: LaunchMode.externalApplication,
-      );
-      if (openedExternal) {
-        return true;
-      }
-    } on Exception {
-      // Fall back to the platform default below. Some Android environments
-      // reject external browser launches even when the URL itself is valid.
-    }
-
-    try {
-      final openedDefault = await launchUrlString(
-        url,
-        mode: LaunchMode.platformDefault,
-      );
-      return openedDefault;
-    } on Exception {
-      return false;
-    }
   }
 
   static String _failureMessage(Failure failure) {

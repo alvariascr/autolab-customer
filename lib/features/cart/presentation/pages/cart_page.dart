@@ -182,6 +182,12 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
     _awaitingCheckoutReturn = true;
   }
 
+  void _stopAwaitingCheckoutReturn() {
+    _awaitingCheckoutReturn = false;
+    _pendingPaymentLinkId = null;
+    _cancelCheckoutReturnFallback();
+  }
+
   void _cancelCheckoutReturnFallback() {
     _checkoutReturnFallbackTimer?.cancel();
     _checkoutReturnFallbackTimer = null;
@@ -467,25 +473,35 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
           .timeout(_checkoutLaunchTimeout);
       if (!mounted || !context.mounted) return;
       _startAwaitingCheckoutReturn(checkoutSession.paymentLinkId);
+      await sl<LaropayCheckoutBrowserLauncher>()
+          .open(checkoutSession)
+          .timeout(_checkoutLaunchTimeout);
+      if (!mounted || !context.mounted) return;
       final didLeaveForCheckout = await _waitForExternalCheckoutTransition();
       if (!mounted || !context.mounted) return;
-      if (targetWorkshopId == null) {
-        cartCubit.clear();
+      if (didLeaveForCheckout) {
+        if (targetWorkshopId == null) {
+          cartCubit.clear();
+        } else {
+          cartCubit.clearWorkshop(targetWorkshopId);
+        }
       } else {
-        cartCubit.clearWorkshop(targetWorkshopId);
+        _stopAwaitingCheckoutReturn();
       }
       setState(() {
         if (!didLeaveForCheckout) {
           _checkoutLoadingPhase = null;
+        } else {
+          _showCheckout = false;
+          _selectedWorkshopId = null;
         }
-        _showCheckout = false;
-        _selectedWorkshopId = null;
       });
       // When the app really left for Laropay, wait for AppLifecycleState.resumed
       // to decide whether a fallback status check is needed. Running it here
       // would query Laropay while the gateway is still opening.
     } on LaropayCheckoutLaunchException {
       if (!mounted || !context.mounted) return;
+      _stopAwaitingCheckoutReturn();
       setState(() => _checkoutLoadingPhase = null);
       await _showPaymentReviewDialog(
         context,
@@ -495,6 +511,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       );
     } on TimeoutException {
       if (!mounted || !context.mounted) return;
+      _stopAwaitingCheckoutReturn();
       setState(() => _checkoutLoadingPhase = null);
       await _showPaymentReviewDialog(
         context,
@@ -504,6 +521,7 @@ class _CartPageState extends State<CartPage> with WidgetsBindingObserver {
       );
     } catch (_) {
       if (!mounted || !context.mounted) return;
+      _stopAwaitingCheckoutReturn();
       setState(() => _checkoutLoadingPhase = null);
       await _showPaymentReviewDialog(
         context,

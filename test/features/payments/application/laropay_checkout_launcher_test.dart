@@ -22,26 +22,21 @@ void main() {
     workshopName: 'Taller Demo',
   );
 
-  test('launches Laropay checkout for a cart order', () async {
+  test('generates Laropay checkout session for a cart order', () async {
     final linkRepository = _FakeLaropayLinkRepository();
     final checkoutRepository = _FakeLaropayCheckoutRepository(
       orderContext: orderContext,
     );
-    Uri? openedUrl;
     final launcher = _launcher(
       linkRepository: linkRepository,
       checkoutRepository: checkoutRepository,
-      launchExternalUrl: (uri) async {
-        openedUrl = uri;
-        return true;
-      },
     );
 
     final session = await launcher.launchForOrder(orderId: 'order-1');
 
     final request = linkRepository.lastRequest;
     expect(session.paymentLinkId, 'payment-link-1');
-    expect(openedUrl, Uri.parse('https://pay.test/cart'));
+    expect(session.linkUrl, Uri.parse('https://pay.test/cart'));
     expect(request?.internalTransactionId, 'order-1');
     expect(request?.amount, 18500);
     expect(request?.document, 'CART-1');
@@ -113,43 +108,64 @@ void main() {
     );
   });
 
-  test('throws when external checkout cannot be opened', () async {
-    final launcher = _launcher(
-      linkRepository: _FakeLaropayLinkRepository(),
-      checkoutRepository: _FakeLaropayCheckoutRepository(
-        orderContext: orderContext,
-      ),
-      launchExternalUrl: (_) async => false,
+  test('browser launcher opens external checkout session', () async {
+    Uri? openedUrl;
+    final browserLauncher = LaropayCheckoutBrowserLauncher(
+      launchExternalUrl: (uri) async {
+        openedUrl = uri;
+        return true;
+      },
     );
 
-    await expectLater(
-      launcher.launchForOrder(orderId: 'order-1'),
-      throwsA(
-        isA<LaropayCheckoutLaunchException>()
-            .having(
-              (error) => error.message,
-              'message',
-              'No fue posible abrir el navegador seguro de Laropay.',
-            )
-            .having(
-              (error) => error.linkUrl,
-              'linkUrl',
-              Uri.parse('https://pay.test/cart'),
-            ),
+    await browserLauncher.open(
+      LaropayCheckoutSession(
+        paymentLinkId: 'payment-link-1',
+        linkUrl: Uri.parse('https://pay.test/cart'),
       ),
     );
+
+    expect(openedUrl, Uri.parse('https://pay.test/cart'));
   });
+
+  test(
+    'browser launcher throws when external checkout cannot be opened',
+    () async {
+      final browserLauncher = LaropayCheckoutBrowserLauncher(
+        launchExternalUrl: (_) async => false,
+      );
+
+      await expectLater(
+        browserLauncher.open(
+          LaropayCheckoutSession(
+            paymentLinkId: 'payment-link-1',
+            linkUrl: Uri.parse('https://pay.test/cart'),
+          ),
+        ),
+        throwsA(
+          isA<LaropayCheckoutLaunchException>()
+              .having(
+                (error) => error.message,
+                'message',
+                'No fue posible abrir el navegador seguro de Laropay.',
+              )
+              .having(
+                (error) => error.linkUrl,
+                'linkUrl',
+                Uri.parse('https://pay.test/cart'),
+              ),
+        ),
+      );
+    },
+  );
 }
 
 LaropayCheckoutLauncher _launcher({
   required _FakeLaropayLinkRepository linkRepository,
   required _FakeLaropayCheckoutRepository checkoutRepository,
-  LaropayExternalUrlLauncher? launchExternalUrl,
 }) {
   return LaropayCheckoutLauncher(
     generateLaropayLink: GenerateLaropayLink(linkRepository),
     getPaymentContext: GetLaropayPaymentContext(checkoutRepository),
-    launchExternalUrl: launchExternalUrl ?? (_) async => true,
   );
 }
 

@@ -1,4 +1,5 @@
 import '../../domain/entities/laropay_link.dart';
+import '../exceptions/laropay_invalid_response_exception.dart';
 
 class LaropayLinkModel extends LaropayLink {
   const LaropayLinkModel({
@@ -28,7 +29,7 @@ class LaropayLinkModel extends LaropayLink {
         !isValidSecureUrl ||
         response.isEmpty ||
         responseDescription.isEmpty) {
-      throw const FormatException(
+      throw const LaropayInvalidResponseException(
         'Laropay response is missing secure link metadata',
       );
     }

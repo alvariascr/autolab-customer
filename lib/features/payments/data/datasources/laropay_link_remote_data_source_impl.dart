@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../core/config/laropay_gateway_config.dart';
 import '../../domain/entities/laropay_link_request.dart';
+import '../exceptions/laropay_invalid_response_exception.dart';
 import '../mappers/laropay_link_request_mapper.dart';
 import '../models/laropay_link_model.dart';
 import 'laropay_link_remote_data_source.dart';
@@ -58,7 +59,9 @@ class LaropayLinkRemoteDataSourceImpl implements LaropayLinkRemoteDataSource {
 
     final decoded = jsonDecode(response.body);
     if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Laropay response must be a JSON object');
+      throw const LaropayInvalidResponseException(
+        'Laropay response must be a JSON object',
+      );
     }
 
     final responseCode = decoded['response']?.toString().trim() ?? '';
